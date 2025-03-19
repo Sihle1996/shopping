@@ -28,17 +28,25 @@ public class AuthenticationService {
                     throw new IllegalArgumentException("User with email " + request.getEmail() + " already exists");
                 });
 
-        // Hash the password
+        // Hash the password only once during registration
         String hashedPassword = passwordEncoder.encode(request.getPassword());
 
-        // ✅ Corrected user creation
-        User user = new User(request.getEmail(), hashedPassword, Role.USER);
-        user = repository.save(user); // ✅ Save to database
+        // Create and save the user
+        User user = User.builder()
+                .email(request.getEmail())
+                .password(hashedPassword) // Save hashed password
+                .role(Role.USER) // Default to USER role
+                .build();
 
-        // ✅ Ensure correct method is used for JWT generation
-        String jwtToken = jwtService.generateToken(user);
+        user = repository.save(user);
 
-        return new AuthenticationResponse(jwtToken);
+        // Generate JWT token
+        String jwtToken = jwtService.generateTokenWithId(user, user.getId());
+
+        // Return the token in the response
+        return AuthenticationResponse.builder()
+                .token(jwtToken)
+                .build();
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
@@ -50,22 +58,27 @@ public class AuthenticationService {
                 )
         );
 
-        // ✅ Fetch the authenticated user
+        // Retrieve the user after successful authentication
         User user = repository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
 
-        // ✅ Corrected JWT token generation
-        String jwtToken = jwtService.generateToken(user);
+        // Generate JWT token
+        String jwtToken = jwtService.generateTokenWithId(user, user.getId());
 
-        return new AuthenticationResponse(jwtToken);
+        // Return the token in the response
+        return AuthenticationResponse.builder()
+                .token(jwtToken)
+                .build();
     }
 
     public User findById(Long id) {
+        // Retrieve a user by ID
         return repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + id));
     }
 
     public List<User> getAllUsers() {
+        // Retrieve all users
         try {
             return repository.findAll();
         } catch (Exception e) {
