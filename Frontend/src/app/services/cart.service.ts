@@ -25,13 +25,15 @@ export class CartService {
       tap(() => this.refreshCart(userId))
     );
   }
+  
 
   // ✅ Method to update cart item quantity
   updateCartItem(cartItemId: number, quantity: number, userId: number): Observable<any> {
-    return this.http.put(`${this.apiUrlCart}/update/${cartItemId}`, null, { params: { quantity } }).pipe(
+    return this.http.put(`${this.apiUrlCart}/update/${cartItemId}`, { quantity }).pipe(
       tap(() => this.refreshCart(userId))
     );
   }
+  
 
   // ✅ Method to remove an item from the cart
   removeFromCart(cartItemId: number, userId: number): Observable<any> {

@@ -12,6 +12,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NavbarComponent } from './components/navbar/navbar.component'; // ✅ Added for forms
 import { AppComponent } from './app.component';
 import { FooterComponent } from './components/footer/footer.component';
+import { ProductDetailsComponent } from './pages/product-details/product-details.component';
 
 @NgModule({
   declarations: [
@@ -23,7 +24,8 @@ import { FooterComponent } from './components/footer/footer.component';
     LoginComponent,
     RegisterComponent,
     NavbarComponent,
-    FooterComponent
+    FooterComponent,
+    ProductDetailsComponent
   ],
   imports: [
     BrowserModule,
