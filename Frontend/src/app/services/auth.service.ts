@@ -48,10 +48,11 @@ export class AuthService {
   }
 
   // Method to extract user ID from JWT token payload
-  getUserId(): string | null {
+  getUserId(): number | null {
     const token = this.getToken();
     if (token) {
-      return this.extractUserIdFromToken(token);
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.id ? Number(payload.id) : null; // ✅ Ensure it's a number
     }
     return null;
   }

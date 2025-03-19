@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
+import { AuthService } from 'src/app/services/auth.service';
 import { CartService } from 'src/app/services/cart.service';
+
 
 @Component({
   selector: 'app-footer',
@@ -8,12 +10,17 @@ import { CartService } from 'src/app/services/cart.service';
 })
 export class FooterComponent {
   cartItemCount = 0;
+  userId: number | null = null;
 
-  constructor(private cartService: CartService) {}
+  constructor(private cartService: CartService, private authService: AuthService) {}
 
   ngOnInit(): void {
-    this.cartService.getCartItems().subscribe(cartItems => {
-      this.cartItemCount = cartItems.length;
-    });
+    this.userId = this.authService.getUserId(); // ✅ Get user ID
+
+    if (this.userId !== null) {
+      this.cartService.getCartItems(this.userId).subscribe(cartItems => {
+        this.cartItemCount = cartItems.length;
+      });
+    }
   }
 }
