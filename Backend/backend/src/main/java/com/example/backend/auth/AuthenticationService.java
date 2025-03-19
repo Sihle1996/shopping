@@ -28,18 +28,16 @@ public class AuthenticationService {
                     throw new IllegalArgumentException("User with email " + request.getEmail() + " already exists");
                 });
 
-        // Hash the password only once during registration
+        // Hash the password
         String hashedPassword = passwordEncoder.encode(request.getPassword());
 
-        // ✅ Use constructor instead of User.builder()
+        // ✅ Corrected user creation
         User user = new User(request.getEmail(), hashedPassword, Role.USER);
+        user = repository.save(user); // ✅ Save to database
 
-        user = repository.save(user);
+        // ✅ Ensure correct method is used for JWT generation
+        String jwtToken = jwtService.generateToken(user);
 
-        // Generate JWT token
-        String jwtToken = jwtService.generateTokenWithId(user, user.getId());
-
-        // ✅ Directly return new AuthenticationResponse object
         return new AuthenticationResponse(jwtToken);
     }
 
@@ -52,12 +50,12 @@ public class AuthenticationService {
                 )
         );
 
-        // Retrieve the user after successful authentication
+        // ✅ Fetch the authenticated user
         User user = repository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
 
-        // Generate JWT token
-        String jwtToken = jwtService.generateTokenWithId(user, user.getId());
+        // ✅ Corrected JWT token generation
+        String jwtToken = jwtService.generateToken(user);
 
         return new AuthenticationResponse(jwtToken);
     }
