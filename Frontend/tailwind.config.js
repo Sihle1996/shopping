@@ -6,7 +6,7 @@ export default {
       colors: {
         primary: "#FF6F00",  // Orange (buttons & accents)
         secondary: "#FFB74D", // Light orange (background)
-        background: "#FFF8E1", // Light yellow (main BG)
+        background: "#ffff", 
         textDark: "#212121", // Dark text
         textLight: "#757575", // Light gray text
         borderColor: "#E0E0E0", // Border color

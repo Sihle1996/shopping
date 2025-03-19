@@ -1,1 +1,31 @@
-<p>login works!</p>
+<div class="flex justify-center items-center h-screen bg-[#FFFBF5]">
+    <div class="bg-[#FFFFFF] p-6 rounded-2xl shadow-lg w-96">
+      <h2 class="text-2xl font-bold text-center mb-4 text-[#272727]">Login</h2>
+      
+      <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="space-y-4">
+        <div>
+          <label class="block font-medium text-[#272727]">Email</label>
+          <input type="email" formControlName="email" 
+                 class="w-full border border-[#E5E5E5] p-3 rounded-lg focus:outline-none focus:border-[#E78E3C]" />
+        </div>
+  
+        <div>
+          <label class="block font-medium text-[#272727]">Password</label>
+          <input type="password" formControlName="password" 
+                 class="w-full border border-[#E5E5E5] p-3 rounded-lg focus:outline-none focus:border-[#E78E3C]" />
+        </div>
+  
+        <p class="text-red-500 text-sm" *ngIf="errorMessage">{{ errorMessage }}</p>
+  
+        <button type="submit" 
+                class="w-full bg-[#E78E3C] text-white font-semibold p-3 rounded-lg hover:bg-[#D1762E] transition">
+          Login
+        </button>
+      </form>
+  
+      <p class="text-center text-sm mt-4 text-[#272727]">
+        Don't have an account? <a routerLink="/register" class="text-[#E78E3C] font-semibold">Register</a>
+      </p>
+    </div>
+  </div>
+  

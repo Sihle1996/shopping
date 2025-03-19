@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 })
 export class AuthService {
   private tokenKey = 'token'; // Key for localStorage where the token is stored
-  private apiUrlAuth = ""
+  private apiUrlAuth = "http://localhost:8080/api"
   constructor(private http: HttpClient, private router: Router) {}
 
   // Method to handle user registration
