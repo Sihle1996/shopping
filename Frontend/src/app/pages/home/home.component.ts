@@ -2,8 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
 import { CartService } from 'src/app/services/cart.service';
-import { MenuService } from 'src/app/services/menu.service';
-import { ProductService } from 'src/app/services/product.service';
+import { MenuService, MenuItem } from 'src/app/services/menu.service';
 
 @Component({
   selector: 'app-home',
@@ -11,8 +10,8 @@ import { ProductService } from 'src/app/services/product.service';
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent {
-  menuItems: any[] = [];
-  filteredMenuItems: any[] = [];
+  menuItems: MenuItem[] = [];
+  filteredMenuItems: MenuItem[] = [];
   categories = [
     { name: 'Pizzas', icon: 'assets/icons/pizza.png' },
     { name: 'Burgers', icon: 'assets/icons/burger.png' },
@@ -20,11 +19,10 @@ export class HomeComponent {
   ];
   selectedCategory = '';
   searchQuery = '';
-  selectedSort = '';
   isLoggedIn = false;
 
   constructor(
-    private productService: ProductService,
+    private menuService: MenuService,
     private cartService: CartService,
     private authService: AuthService,
     private router: Router
@@ -32,7 +30,7 @@ export class HomeComponent {
 
   ngOnInit(): void {
     this.isLoggedIn = this.authService.isLoggedIn();
-    this.productService.getMenuItems().subscribe(items => {
+    this.menuService.getMenuItems().subscribe(items => {
       this.menuItems = items;
       this.filteredMenuItems = [...this.menuItems];
     });
@@ -43,25 +41,22 @@ export class HomeComponent {
     this.router.navigate(['/product', productId]);
   }
 
-  // ✅ Handle add to cart without redirecting
-  addToCart(itemId: number): void {
-    const userId = Number(localStorage.getItem('userId')); // Get user ID from localStorage
+  // ✅ Handle add to cart
+  addToCart(item: MenuItem): void {
+    const userIdString = localStorage.getItem('userId');
+    const userId = userIdString ? Number(userIdString) : null;
   
-    if (!userId) {
+    if (!userId || isNaN(userId)) {
       console.error("User not logged in.");
-      this.router.navigate(['/login']); // Redirect to login if not logged in
+      this.router.navigate(['/login']);
       return;
     }
   
     const quantity = 1; // Default quantity
   
-    this.cartService.addToCart(userId, itemId, quantity).subscribe({
-      next: () => {
-        console.log('Item added to cart:', itemId);
-      },
-      error: (err) => {
-        console.error("Error adding item to cart:", err);
-      }
+    this.cartService.addToCart(userId, item.id, quantity).subscribe({
+      next: () => console.log('Item added to cart:', item.id),
+      error: (err) => console.error("Error adding item to cart:", err)
     });
   }
   
@@ -77,14 +72,5 @@ export class HomeComponent {
   filterByCategory(category: string) {
     this.selectedCategory = category;
     this.filteredMenuItems = this.menuItems.filter(item => item.category === category);
-  }
-
-  // ✅ Sort Menu Items
-  sortMenu() {
-    if (this.selectedSort === 'priceLowHigh') {
-      this.filteredMenuItems.sort((a, b) => a.price - b.price);
-    } else if (this.selectedSort === 'priceHighLow') {
-      this.filteredMenuItems.sort((a, b) => b.price - a.price);
-    }
   }
 }

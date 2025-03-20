@@ -22,33 +22,21 @@
         </button>
     </div>
 
-    <!-- Sorting & Filtering -->
-    <div class="flex justify-between items-center mt-4">
-        <h3 class="text-lg font-semibold text-gray-800">Popular</h3>
-        <select [(ngModel)]="selectedSort" (change)="sortMenu()" 
-                class="p-2 border rounded-md text-gray-600 bg-white shadow-sm">
-            <option value="">Sort</option>
-            <option value="priceLowHigh">Price: Low to High</option>
-            <option value="priceHighLow">Price: High to Low</option>
-        </select>
-    </div>
-
     <!-- Popular Menu Items -->
+    <h3 class="text-lg font-semibold text-gray-800 mt-6">Popular</h3>
     <div class="grid grid-cols-1 gap-4 mt-3">
-        <div *ngFor="let item of filteredMenuItems" 
-             class="bg-white p-4 rounded-xl shadow-md flex items-center transition hover:scale-105 duration-300 cursor-pointer"
+        <div *ngFor="let item of filteredMenuItems" class="bg-white p-4 rounded-xl shadow-md flex items-center transition cursor-pointer"
              (click)="goToProductDetails(item.id)">
-            <img [src]="item.imageUrl" alt="{{ item.name }}" class="w-16 h-16 rounded-md object-cover">
+            <img [src]="item.image" alt="{{ item.name }}" class="w-16 h-16 rounded-md object-cover">
             <div class="ml-3 flex-1">
                 <h4 class="text-md font-semibold text-gray-800">{{ item.name }}</h4>
-                <p class="text-gray-500 text-sm">{{ item.quantity }}g ({{ item.pieces }} pcs)</p>
+                <p class="text-gray-500 text-sm">{{ item.category }}</p>
                 <p class="text-red-600 font-bold">${{ item.price }}</p>
             </div>
-            <button *ngIf="isLoggedIn" (click)="addToCart(item.id)" 
-            class="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition">
-            <i class="fas fa-plus"></i>
+            <button *ngIf="isLoggedIn" (click)="addToCart(item)" 
+                    class="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition">
+                <i class="fas fa-plus"></i>
             </button>
-    
         </div>
     </div>
 </div>

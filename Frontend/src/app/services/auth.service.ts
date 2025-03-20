@@ -1,70 +1,81 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { jwtDecode } from 'jwt-decode';
+import { Observable, tap } from 'rxjs';
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private tokenKey = 'token'; // Key for localStorage where the token is stored
-  private apiUrlAuth = "http://localhost:8080/api"
+  private apiUrlAuth = "http://localhost:8080/api"; // Backend authentication API
+
   constructor(private http: HttpClient, private router: Router) {}
 
-  // Method to handle user registration
+  // ✅ User Registration
   register(data: { email: string; password: string; confirmPassword: string }): Observable<any> {
     return this.http.post(`${this.apiUrlAuth}/register`, data);
   }
 
-  // Method to handle user login
+  // ✅ User Login - Extracts token & userId from JWT
   login(credentials: { email: string; password: string }): Observable<{ token: string }> {
-    return this.http.post<{ token: string }>(`${this.apiUrlAuth}/login`, credentials);
+    return this.http.post<{ token: string }>(`${this.apiUrlAuth}/login`, credentials).pipe(
+      tap(response => {
+        console.log("Login response:", response); // ✅ Debugging log
+
+        if (response.token) {
+          localStorage.setItem(this.tokenKey, response.token);
+          this.extractUserIdFromToken(response.token); // ✅ Extract userId from token
+        }
+      })
+    );
   }
 
-  // Method to save JWT token securely to localStorage
-  saveToken(token: string): void {
-    localStorage.setItem(this.tokenKey, token);
+  // ✅ Extract userId from the JWT token
+  private extractUserIdFromToken(token: string): void {
+    try {
+      const decodedToken: any = jwtDecode(token);
+      if (decodedToken && decodedToken.userId) {
+        localStorage.setItem('userId', decodedToken.userId.toString());
+        console.log("Extracted userId:", decodedToken.userId);
+      } else {
+        console.warn("⚠️ Warning: userId not found in token.");
+      }
+    } catch (error) {
+      console.error("Error decoding token:", error);
+    }
   }
 
-  // Method to retrieve JWT token from localStorage
+  // ✅ Retrieve JWT token from LocalStorage
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
   }
 
-  // Method to remove JWT token from localStorage
-  clearToken(): void {
-    localStorage.removeItem(this.tokenKey);
-  }
-
-  // Method to check if user is logged in
-  isLoggedIn(): boolean {
-    return !!this.getToken();
-  }
-
-  // Method to logout user
-  logout(): void {
-    this.clearToken();
-    this.router.navigate(['/landing']); // Redirect user to landing page
-  }
-
-  // Method to extract user ID from JWT token payload
+  // ✅ Get userId from LocalStorage (or decode if missing)
   getUserId(): number | null {
     const token = this.getToken();
-    if (token) {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.id ? Number(payload.id) : null; // ✅ Ensure it's a number
-    }
-    return null;
-  }
+    if (!token) return null;
 
-  // Private method to decode JWT token and extract user ID
-  private extractUserIdFromToken(token: string): string | null {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.id || null; // Assuming the user ID is stored in the "id" field
+      const decodedToken: any = jwtDecode(token);
+      return decodedToken.userId ? Number(decodedToken.userId) : null;
     } catch (error) {
-      console.error('Error decoding token:', error);
+      console.error("Error extracting userId:", error);
       return null;
     }
+  }
+
+  // ✅ Check if user is logged in
+  isLoggedIn(): boolean {
+    return !!this.getToken() && !!this.getUserId();
+  }
+
+  // ✅ Logout user (Clear token & redirect)
+  logout(): void {
+    localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem('userId');
+    this.router.navigate(['/login']); // Redirect user to login page
   }
 }

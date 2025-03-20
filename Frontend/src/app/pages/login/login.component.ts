@@ -23,14 +23,15 @@ export class LoginComponent {
     if (this.loginForm.invalid) return;
 
     this.authService.login(this.loginForm.value).subscribe({
-      next: (response) => {
-        console.log(response.token);
-        this.authService.saveToken(response.token);
+      next: () => {
+        console.log("Login successful, redirecting...");
         this.router.navigate(['/']);
       },
       error: (err) => {
-        this.errorMessage = 'Invalid email or password'; // ✅ Set the error message
+        console.error("Login error:", err);
+        this.errorMessage = 'Invalid email or password';
       }
     });
   }
+  
 }
