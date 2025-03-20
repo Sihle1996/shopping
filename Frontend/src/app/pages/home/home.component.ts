@@ -54,7 +54,7 @@ export class HomeComponent {
   
     const quantity = 1; // Default quantity
   
-    this.cartService.addToCart(userId, item.id, quantity).subscribe({
+    this.cartService.addToCart( item.id, quantity).subscribe({
       next: () => console.log('Item added to cart:', item.id),
       error: (err) => console.error("Error adding item to cart:", err)
     });

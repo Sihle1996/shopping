@@ -9,91 +9,85 @@ import { Router } from '@angular/router';
 })
 export class CartComponent implements OnInit {
   cartItems: CartItem[] = [];
-  totalPrice = 0;
-  userId: number | null = null;
+  totalPrice: number = 0;
 
   constructor(private cartService: CartService, private router: Router) {}
 
   ngOnInit(): void {
-    const userIdString = localStorage.getItem('userId');
-    this.userId = userIdString ? Number(userIdString) : null;
+    const userId = localStorage.getItem('userId');
 
-    // ✅ Redirect to login if userId is missing or invalid
-    if (!this.userId || isNaN(this.userId) || this.userId <= 0) {
+    if (!userId || isNaN(Number(userId)) || Number(userId) <= 0) {
       console.error("User not logged in. Redirecting to login...");
       this.router.navigate(['/login']);
       return;
     }
 
-    // ✅ Fetch cart items
-    this.cartService.getCartItems(this.userId).subscribe({
-      next: (items) => {
-        this.cartItems = items;
-        this.updateTotalPrice();
-      },
-      error: (err) => {
-        console.error("Error fetching cart items:", err);
-      }
-    });
-
-    // ✅ Fetch total price
-    this.cartService.getTotalPrice().subscribe({
-      next: (price) => {
-        this.totalPrice = price;
-      },
-      error: (err) => {
-        console.error("Error fetching total price:", err);
-      }
-    });
+    this.loadCart();
   }
+
+  // ✅ Load cart items and ensure price & quantity are valid
+  loadCart(): void {
+    this.cartService.getCartItems().subscribe({
+      next: (items) => {
+        console.log("📦 Cart Items from API:", items); // ✅ Debugging line
+
+        this.cartItems = items.map((item: any) => ({
+          id: Number(item.id), // ✅ Ensure number conversion
+          menuItemId: Number(item.menuItemId),
+          menuItemName: String(item.menuItemName), // ✅ Convert to string
+          menuItemPrice: Number(item.menuItemPrice), // ✅ Fix: Convert to number
+          quantity: Number(item.quantity),
+          totalPrice: Number(item.totalPrice), // ✅ Fix: Convert to number
+          image: item.image || 'assets/default-food.jpg', // ✅ Default image
+        }));
+
+        this.updateTotalPrice(); // ✅ Call total price calculation
+      },
+      error: (err) => {
+        console.error("❌ Error fetching cart items:", err);
+      }
+    });
+}
+
+  
+  
+  
+  
 
   // ✅ Increase quantity
   increaseQuantity(item: CartItem): void {
-    this.cartService.updateCartItem(item.id, item.quantity + 1, this.userId!).subscribe({
-      next: () => {
-        item.quantity++;
-        this.updateTotalPrice();
-      },
-      error: (err) => {
-        console.error("Error updating quantity:", err);
-      }
-    });
+    item.quantity++;
+    this.updateTotalPrice();
   }
 
-  // ✅ Decrease quantity
+  // ✅ Decrease quantity (minimum of 1)
   decreaseQuantity(item: CartItem): void {
     if (item.quantity > 1) {
-      this.cartService.updateCartItem(item.id, item.quantity - 1, this.userId!).subscribe({
-        next: () => {
-          item.quantity--;
-          this.updateTotalPrice();
-        },
-        error: (err) => {
-          console.error("Error updating quantity:", err);
-        }
-      });
+      item.quantity--;
+      this.updateTotalPrice();
     }
   }
 
   // ✅ Remove item from cart
   removeItem(itemId: number): void {
-    this.cartService.removeFromCart(itemId, this.userId!).subscribe({
+    this.cartService.removeFromCart(itemId).subscribe({
       next: () => {
         this.cartItems = this.cartItems.filter(item => item.id !== itemId);
         this.updateTotalPrice();
       },
-      error: (err) => {
-        console.error("Error removing item:", err);
-      }
+      error: (err) => console.error("Error removing item:", err)
     });
   }
 
-  // ✅ Update total price
+  // ✅ Fix: Ensure total price updates correctly
   private updateTotalPrice(): void {
-    this.totalPrice = this.cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
-  }
+    const cartArray = this.cartItems; // ✅ Ensure `cartItems` is an array
+    this.totalPrice = cartArray.reduce((sum: number, item: CartItem) => sum + (item.menuItemPrice * item.quantity), 0);
+    console.log("💰 Updated Total Price:", this.totalPrice);
+}
 
-  // ✅ Proceed to checkout
+
+  // ✅ Checkout button
   checkout(): void {
     alert('Proceeding to checkout...');
   }

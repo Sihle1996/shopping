@@ -1,41 +1,49 @@
-<div class="bg-gray-100 min-h-screen p-4">
+<div class="bg-gray-100 min-h-screen p-4 flex flex-col pb-24">
     <h2 class="text-xl font-semibold text-gray-800 text-center mb-4">Your Cart</h2>
 
     <!-- Empty Cart Message -->
-    <div *ngIf="cartItems.length === 0" class="text-center text-gray-500 mt-10">
-        <p>Your cart is empty</p>
-        <a routerLink="/" class="text-red-600 font-bold">Browse Menu</a>
+    <div *ngIf="cartItems.length === 0" class="text-center text-gray-500 mt-10 flex flex-col items-center">
+        <p class="text-lg">Your cart is empty</p>
+        <a routerLink="/" class="text-red-600 font-bold text-md mt-2">Browse Menu</a>
     </div>
 
     <!-- Cart Items -->
     <div *ngFor="let item of cartItems" class="bg-white p-4 rounded-lg shadow-md flex items-center mb-4">
-        <img [src]="item.image" alt="{{ item.name }}" class="w-20 h-20 rounded-md object-cover">
+        <img [src]="item.image || 'assets/default-image.jpg'" alt="{{ item.menuItemName }}" 
+             class="w-16 h-16 rounded-md object-cover">
+
+        <!-- Item Details -->
         <div class="ml-4 flex-1">
-            <h4 class="text-lg font-semibold text-gray-800">{{ item.name }}</h4>
-            <p class="text-red-600 font-bold">${{ item.price }}</p>
+            <h4 class="text-lg font-semibold text-gray-800">{{ item.menuItemName }}</h4>
+            <p class="text-red-600 font-bold text-md">${{ (item.menuItemPrice * item.quantity).toFixed(2) }}</p>
         </div>
 
         <!-- Quantity Controls -->
-        <div class="flex items-center">
-            <button (click)="decreaseQuantity(item)" class="p-2 bg-gray-300 rounded-full hover:bg-gray-400">−</button>
-            <span class="px-4">{{ item.quantity }}</span>
-            <button (click)="increaseQuantity(item)" class="p-2 bg-gray-300 rounded-full hover:bg-gray-400">+</button>
+        <div class="flex items-center space-x-3">
+            <button (click)="decreaseQuantity(item)" class="w-9 h-9 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300">
+                <i class="bi bi-dash-lg text-gray-800 text-lg"></i>
+            </button>
+            <span class="text-lg font-semibold">{{ item.quantity }}</span>
+            <button (click)="increaseQuantity(item)" class="w-9 h-9 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300">
+                <i class="bi bi-plus-lg text-gray-800 text-lg"></i>
+            </button>
         </div>
 
         <!-- Remove Button -->
-        <button (click)="removeItem(item.id)" class="ml-4 p-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-            Remove
+        <button (click)="removeItem(item.id)" class="ml-4 w-9 h-9 flex items-center justify-center bg-red-600 text-white rounded-full hover:bg-red-700">
+            <i class="bi bi-trash text-white text-lg"></i>
         </button>
     </div>
 
-    <!-- Total & Checkout -->
-    <div class="bg-white p-4 rounded-lg shadow-md mt-6">
-        <div class="flex justify-between font-semibold text-lg">
+    <!-- Sticky Checkout Bar (Now above the footer) -->
+    <div class="bg-white p-4 rounded-t-lg shadow-md mt-auto fixed bottom-16 left-0 w-full z-50">
+        <div class="flex justify-between font-semibold text-lg mb-2">
             <span>Total:</span>
-            <span class="text-red-600">${{ totalPrice }}</span>
+            <span class="text-red-600">${{ totalPrice.toFixed(2) }}</span>
         </div>
-        <button (click)="checkout()" class="w-full mt-3 bg-red-600 text-white p-3 rounded-lg hover:bg-red-700">
-            Checkout
+        <button (click)="checkout()" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 flex items-center justify-center space-x-2">
+            <i class="bi bi-cart-check text-lg"></i>
+            <span>Checkout</span>
         </button>
     </div>
 </div>
