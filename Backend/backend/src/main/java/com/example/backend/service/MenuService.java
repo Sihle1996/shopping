@@ -37,6 +37,13 @@ public class MenuService {
     }
 
 
+    public MenuItem getMenuItemById(Long id) {
+        return menuItemRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Menu item not found"));
+    }
+
+
+
     public List<MenuItem> getAllMenuItems() {
         return menuItemRepository.findAll();
     }

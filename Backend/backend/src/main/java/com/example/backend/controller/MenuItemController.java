@@ -20,4 +20,11 @@ public class MenuItemController {
         List<MenuItem> menuItems = menuService.getAllMenuItems();
         return ResponseEntity.ok(menuItems);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<MenuItem> getMenuItemById(@PathVariable Long id) {
+        MenuItem menuItem = menuService.getMenuItemById(id);
+        return ResponseEntity.ok(menuItem);
+    }
+
 }

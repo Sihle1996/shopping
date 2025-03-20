@@ -40,6 +40,9 @@ public class MenuItem {
     @Column(name = "category", nullable = false)
     private String category;
 
+    @Transient // ✅ Not stored in DB, used only for frontend
+    private int quantity = 1; // Default quantity
+
     @OneToMany(mappedBy = "menuItem", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore // Prevent serialization of cart items in menu item
     private List<CartItem> cartItems = new ArrayList<>();
