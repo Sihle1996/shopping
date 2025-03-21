@@ -1,1 +1,54 @@
-<p>historyorders works!</p>
+<div class="pt-24 max-w-4xl mx-auto px-4 pb-12">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+      <i class="bi bi-clock-history text-red-600 text-2xl"></i>
+      Order History
+    </h2>
+  
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-gray-500 animate-pulse flex items-center gap-2">
+      <i class="bi bi-arrow-repeat animate-spin text-xl"></i> Loading orders...
+    </div>
+  
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="bg-red-100 border border-red-300 text-red-700 rounded-lg p-4 mb-4 flex items-center gap-2">
+      <i class="bi bi-exclamation-circle-fill text-xl"></i>
+      {{ errorMessage }}
+    </div>
+  
+    <!-- Orders List -->
+    <div *ngFor="let order of orders" class="bg-white shadow-md rounded-xl p-6 mb-6 border border-gray-100 hover:shadow-lg transition-all duration-200">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-lg font-semibold text-red-600 flex items-center gap-2">
+          <i class="bi bi-receipt-cutoff text-red-500"></i>
+          Order #{{ order.id }}
+        </h3>
+        <span class="text-sm font-medium px-3 py-1 rounded-full"
+              [ngClass]="{
+                'bg-green-100 text-green-700': order.status === 'COMPLETED',
+                'bg-yellow-100 text-yellow-700': order.status === 'PENDING',
+                'bg-red-100 text-red-700': order.status === 'CANCELLED'
+              }">
+          <i class="bi"
+             [ngClass]="{
+                'bi-check-circle-fill': order.status === 'COMPLETED',
+                'bi-hourglass-split': order.status === 'PENDING',
+                'bi-x-circle-fill': order.status === 'CANCELLED'
+             }"></i>
+          {{ order.status }}
+        </span>
+      </div>
+  
+      <div class="text-sm text-gray-700 space-y-1">
+        <p><i class="bi bi-currency-exchange text-red-500 mr-2"></i><strong>Total:</strong> R{{ order.totalAmount.toFixed(2) }}</p>
+        <p><i class="bi bi-calendar-event text-red-500 mr-2"></i><strong>Date:</strong> {{ order.orderDate }}</p>
+        <p><i class="bi bi-geo-alt-fill text-red-500 mr-2"></i><strong>Delivery:</strong> {{ order.deliveryAddress }}</p>
+      </div>
+    </div>
+  
+    <!-- No Orders -->
+    <div *ngIf="orders.length === 0 && !loading" class="text-gray-500 text-center py-12">
+      <i class="bi bi-inbox text-5xl mb-4 text-gray-400"></i>
+      <p class="text-lg">No past orders found.</p>
+    </div>
+  </div>
+  
