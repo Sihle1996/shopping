@@ -12,6 +12,7 @@ import { MenuService, MenuItem } from 'src/app/services/menu.service';
 export class HomeComponent {
   menuItems: MenuItem[] = [];
   filteredMenuItems: MenuItem[] = [];
+  favoriteItems: Set<number> = new Set();
   categories = [
     { name: 'Pizzas', icon: 'assets/icons/pizza.png' },
     { name: 'Burgers', icon: 'assets/icons/burger.png' },
@@ -19,6 +20,7 @@ export class HomeComponent {
   ];
   selectedCategory = '';
   searchQuery = '';
+  selectedSort = 'default';
   isLoggedIn = false;
 
   constructor(
@@ -41,25 +43,19 @@ export class HomeComponent {
     this.router.navigate(['/product', productId]);
   }
 
-  // ✅ Handle add to cart
-  addToCart(item: MenuItem): void {
-    const userIdString = localStorage.getItem('userId');
-    const userId = userIdString ? Number(userIdString) : null;
-  
-    if (!userId || isNaN(userId)) {
-      console.error("User not logged in.");
-      this.router.navigate(['/login']);
-      return;
+  // ✅ Toggle Favorite Item (Add/Remove)
+  toggleFavorite(item: MenuItem): void {
+    if (this.favoriteItems.has(item.id)) {
+      this.favoriteItems.delete(item.id);
+    } else {
+      this.favoriteItems.add(item.id);
     }
-  
-    const quantity = 1; // Default quantity
-  
-    this.cartService.addToCart( item.id, quantity).subscribe({
-      next: () => console.log('Item added to cart:', item.id),
-      error: (err) => console.error("Error adding item to cart:", err)
-    });
   }
-  
+
+  // ✅ Check if an item is in favorites
+  isFavorite(item: MenuItem): boolean {
+    return this.favoriteItems.has(item.id);
+  }
 
   // ✅ Search functionality
   filterMenu() {
@@ -72,5 +68,16 @@ export class HomeComponent {
   filterByCategory(category: string) {
     this.selectedCategory = category;
     this.filteredMenuItems = this.menuItems.filter(item => item.category === category);
+  }
+
+  // ✅ Sort Menu Items (Low to High, High to Low)
+  sortMenu() {
+    if (this.selectedSort === 'priceLowHigh') {
+      this.filteredMenuItems.sort((a, b) => a.price - b.price);
+    } else if (this.selectedSort === 'priceHighLow') {
+      this.filteredMenuItems.sort((a, b) => b.price - a.price);
+    } else {
+      this.filteredMenuItems = [...this.menuItems]; // Reset sorting
+    }
   }
 }

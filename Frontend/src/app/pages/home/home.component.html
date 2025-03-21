@@ -1,42 +1,64 @@
-<div class="bg-yellow-100 min-h-screen p-4">
+<div class="bg-yellow-100 min-h-screen flex flex-col pb-20">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-semibold text-gray-800">Special food for you!</h2>
-        <img src="assets/user-avatar.jpg" class="w-10 h-10 rounded-full border border-gray-300" alt="User Avatar">
-    </div>
-
-    <!-- Search Bar -->
-    <div class="relative mb-4">
+    <div class="p-4">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-semibold text-gray-800">Special food for you!</h2>
+        <img src="assets/user-avatar.jpg" class="w-12 h-12 rounded-full border border-gray-300" alt="User Avatar">
+      </div>
+  
+      <!-- Search Bar -->
+      <div class="relative mb-4">
         <input type="text" [(ngModel)]="searchQuery" (input)="filterMenu()"
-               placeholder="Search here..." class="w-full p-3 pl-10 rounded-xl shadow-md bg-white text-gray-700">
-        <i class="absolute left-3 top-4 text-gray-400 fas fa-search"></i>
-    </div>
-
-    <!-- Categories -->
-    <div class="flex space-x-4 overflow-x-auto pb-3 scrollbar-hide">
+               placeholder="Search here..." class="w-full p-3 pl-12 rounded-xl shadow-md bg-white text-gray-700">
+        <i class="bi bi-search absolute left-4 top-4 text-gray-400 text-lg"></i>
+      </div>
+  
+      <!-- Categories -->
+      <div class="flex space-x-4 overflow-x-auto pb-2 scrollbar-hide mb-4">
         <button *ngFor="let category of categories" (click)="filterByCategory(category.name)"
                 [class.bg-yellow-500]="selectedCategory === category.name"
                 class="flex flex-col items-center p-3 rounded-xl bg-white shadow-md hover:bg-yellow-400 transition">
-            <img [src]="category.icon" class="w-12 h-12 object-cover" alt="{{ category.name }}">
-            <span class="text-sm text-gray-800 mt-1">{{ category.name }}</span>
+          <img [src]="category.icon" class="w-14 h-14 object-cover" alt="{{ category.name }}">
+          <span class="text-sm text-gray-800 mt-1">{{ category.name }}</span>
         </button>
+      </div>
+  
+      <!-- Popular & Sort -->
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-xl font-semibold text-gray-800">Popular</h3>
+        <select [(ngModel)]="selectedSort" (change)="sortMenu()"
+                class="p-2 px-3 border rounded-md text-gray-600 bg-white shadow-sm focus:outline-none">
+          <option value="default">Sort</option>
+          <option value="priceLowHigh">Price: Low to High</option>
+          <option value="priceHighLow">Price: High to Low</option>
+        </select>
+      </div>
     </div>
-
-    <!-- Popular Menu Items -->
-    <h3 class="text-lg font-semibold text-gray-800 mt-6">Popular</h3>
-    <div class="grid grid-cols-1 gap-4 mt-3">
-        <div *ngFor="let item of filteredMenuItems" class="bg-white p-4 rounded-xl shadow-md flex items-center transition cursor-pointer"
+  
+    <!-- 🔥 Scrollable Items Only -->
+    <div class="overflow-y-auto px-4 pb-28" style="max-height: calc(100vh - 300px);">
+      <div class="grid grid-cols-1 gap-4">
+        <div *ngFor="let item of filteredMenuItems"
+             class="bg-white p-4 rounded-xl shadow-md flex items-center transition hover:bg-yellow-50 cursor-pointer"
              (click)="goToProductDetails(item.id)">
-            <img [src]="item.image" alt="{{ item.name }}" class="w-16 h-16 rounded-md object-cover">
-            <div class="ml-3 flex-1">
-                <h4 class="text-md font-semibold text-gray-800">{{ item.name }}</h4>
-                <p class="text-gray-500 text-sm">{{ item.category }}</p>
-                <p class="text-red-600 font-bold">${{ item.price }}</p>
-            </div>
-            <button *ngIf="isLoggedIn" (click)="addToCart(item)" 
-                    class="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition">
-                <i class="fas fa-plus"></i>
-            </button>
+          <img [src]="item.image" alt="{{ item.name }}" class="w-20 h-20 rounded-md object-cover">
+          <div class="ml-4 flex-1">
+            <h4 class="text-lg font-semibold text-gray-800">{{ item.name }}</h4>
+            <p class="text-gray-500 text-sm">{{ item.category }}</p>
+            <p class="text-red-600 font-bold text-lg">${{ item.price }}</p>
+          </div>
+  
+          <!-- Favorite Icon -->
+          <button *ngIf="isLoggedIn" (click)="toggleFavorite(item)"
+                  class="p-3 bg-gray-300 text-red-600 rounded-full hover:bg-red-600 hover:text-white transition"
+                  (click)="$event.stopPropagation()">
+            <i class="bi bi-heart text-xl"></i>
+          </button>
         </div>
+      </div>
     </div>
-</div>
+  
+    <!-- Fixed Footer -->
+    <app-footer class="fixed bottom-0 left-0 w-full"></app-footer>
+  </div>
+  

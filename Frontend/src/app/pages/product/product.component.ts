@@ -10,8 +10,9 @@ import { AuthService } from 'src/app/services/auth.service';
   styleUrls: ['./product.component.scss']
 })
 export class ProductComponent {
-  product: MenuItem | null = null; // ✅ Ensure product is nullable
-  quantity: number = 1; // ✅ Fix: Initialize default quantity
+  product: MenuItem | null = null; 
+  quantity: number = 1; 
+  selectedSize: string = 'M'; // ✅ Default size is Medium
 
   constructor(
     private route: ActivatedRoute,
@@ -27,7 +28,7 @@ export class ProductComponent {
 
     if (!productId) {
       console.error("❌ Invalid product ID");
-      this.router.navigate(['/']); // Redirect if ID is invalid
+      this.router.navigate(['/']); 
       return;
     }
 
@@ -39,7 +40,7 @@ export class ProductComponent {
       },
       error: (err) => {
         console.error("❌ Error fetching product:", err);
-        this.router.navigate(['/']); // Redirect if product not found
+        this.router.navigate(['/']); 
       }
     });
   }
@@ -57,10 +58,10 @@ export class ProductComponent {
       return;
     }
 
-    // ✅ Fix: Ensure `quantity` is always passed
-    this.cartService.addToCart(this.product.id, this.quantity).subscribe({
+    // ✅ Fix: Ensure `quantity` and `size` are passed
+    this.cartService.addToCart(this.product.id, this.quantity, this.selectedSize).subscribe({
       next: () => {
-        console.log('✅ Added to cart:', this.product!.id, 'Quantity:', this.quantity);
+        console.log('✅ Added to cart:', this.product!.id, 'Quantity:', this.quantity, 'Size:', this.selectedSize);
       },
       error: (err) => {
         console.error("❌ Error adding to cart:", err);
@@ -83,5 +84,11 @@ export class ProductComponent {
     if (this.quantity > 1) {
       this.quantity--;
     }
+  }
+
+  // ✅ Select Size
+  selectSize(size: string): void {
+    this.selectedSize = size;
+    console.log("📏 Selected Size:", this.selectedSize);
   }
 }

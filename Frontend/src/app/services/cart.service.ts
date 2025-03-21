@@ -12,6 +12,7 @@ export interface CartItem {
   quantity: number;
   totalPrice: number;
   image?: string;
+  size?: string;
 }
 
 @Injectable({
@@ -62,7 +63,8 @@ export class CartService {
       menuItemPrice: item.menuItemPrice,
       quantity: item.quantity,
       totalPrice: item.totalPrice,
-      image: item.image || 'assets/default-food.jpg'
+      image: item.image || 'assets/default-food.jpg',
+      size: item.size || 'M' // ✅ Default size is Medium
     }));
   }
 
@@ -85,17 +87,20 @@ export class CartService {
   }
 
   // ✅ Add item to cart and update states
-  addToCart(menuItemId: number, quantity: number): Observable<any> {
+  addToCart(menuItemId: number, quantity: number, size: string): Observable<any> {
     const userId = this.authService.getUserId();
     if (!userId) {
       console.error("❌ User not logged in. Cannot add to cart.");
       return new Observable(observer => observer.error("User not logged in."));
     }
 
-    return this.http.post(`${this.apiUrlCart}/add`, { userId, menuItemId, quantity }, { headers: this.getAuthHeaders() }).pipe(
-      tap(() => this.refreshCart()) // ✅ UI updates instantly
+    return this.http.post(`${this.apiUrlCart}/add`, 
+      { userId, menuItemId, quantity, size }, // ✅ Add `size` to the request
+      { headers: this.getAuthHeaders() }
+    ).pipe(
+      tap(() => this.refreshCart()) // ✅ Refresh cart after adding item
     );
-  }
+}
 
   // ✅ Update cart item quantity
   updateCartItem(cartItemId: number, quantity: number): Observable<any> {

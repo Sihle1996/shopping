@@ -1,26 +1,53 @@
-<div class="bg-white min-h-screen p-4">
-    <!-- Back Button -->
-    <button (click)="goBack()" class="text-gray-600 mb-4 flex items-center">
-        <span class="mr-2">&larr;</span> Back
+<div class="bg-white min-h-screen flex flex-col items-center p-6 relative">
+  
+    <!-- 🔙 Back Button -->
+    <button (click)="goBack()" class="absolute top-4 left-4 text-gray-600 flex items-center">
+      <i class="bi bi-arrow-left text-2xl"></i>
     </button>
-
-    <!-- Product Details -->
-    <div *ngIf="product" class="text-center">
-        <img [src]="product.image" class="w-40 h-40 mx-auto rounded-lg">
-        <h2 class="text-2xl font-bold text-gray-800 mt-4">{{ product.name }}</h2>
-        <p class="text-gray-500">{{ product.description }}</p>
-        <p class="text-red-600 font-bold text-xl mt-2">${{ product.price }}</p>
-
-        <!-- Quantity Selector -->
-        <div class="flex justify-center items-center space-x-4 mt-4">
-            <button (click)="decreaseQuantity()" class="bg-gray-300 px-3 py-1 rounded-lg">-</button>
-            <p class="text-gray-700 text-lg font-semibold">{{ quantity }}</p>
-            <button (click)="increaseQuantity()" class="bg-gray-300 px-3 py-1 rounded-lg">+</button>
-        </div>
-
-        <!-- Add to Cart Button -->
-        <button (click)="addToCart()" class="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-            Add to Cart
-        </button>
+  
+    <!-- ❤️ Favorite Icon -->
+    <button class="absolute top-4 right-4 text-gray-600">
+      <i class="bi bi-heart text-2xl"></i>
+    </button>
+  
+    <!-- 🍔 Product Image -->
+    <div class="w-full flex justify-center mt-10">
+      <img [src]="product?.image || 'assets/default-image.jpg'" class="w-64 h-64 object-cover rounded-xl shadow-md" alt="{{ product?.name }}">
     </div>
-</div>
+  
+    <!-- 📝 Product Info -->
+    <h2 class="text-2xl font-bold text-gray-900 mt-4">{{ product?.name }}</h2>
+    <p class="text-gray-500 text-center px-6 mt-2">{{ product?.description }}</p>
+  
+    <!-- 📏 Size Selector -->
+    <div class="flex justify-center space-x-4 mt-4">
+      <button *ngFor="let size of ['S', 'M', 'L']" (click)="selectSize(size)"
+              [class.bg-yellow-500]="selectedSize === size"
+              class="w-12 h-12 flex items-center justify-center border border-gray-300 rounded-full text-lg font-semibold hover:bg-yellow-500 hover:text-white transition">
+        {{ size }}
+      </button>
+    </div>
+  
+    <!-- 🔢 Quantity Selector -->
+    <div class="flex justify-center items-center space-x-6 mt-6">
+      <button (click)="decreaseQuantity()" class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center hover:bg-gray-400 transition">
+        <i class="bi bi-dash text-xl text-gray-800"></i>
+      </button>
+      
+      <p class="text-xl font-semibold text-gray-900">{{ quantity }}</p>
+      
+      <button (click)="increaseQuantity()" class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center hover:bg-gray-400 transition">
+        <i class="bi bi-plus text-xl text-gray-800"></i>
+      </button>
+    </div>
+  
+    <!-- 💰 Price -->
+    <p class="text-2xl font-bold text-red-600 mt-6">${{ product?.price?.toFixed(2) }}</p>
+  
+    <!-- 🛒 Add to Cart Button -->
+    <button (click)="addToCart()"
+            class="w-full max-w-sm mt-4 px-6 py-3 bg-red-600 text-white text-lg font-semibold rounded-xl flex items-center justify-center hover:bg-red-700 transition">
+      <i class="bi bi-cart-fill text-xl mr-2"></i> Add to Cart
+    </button>
+  </div>
+  
