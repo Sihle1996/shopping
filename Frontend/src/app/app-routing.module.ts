@@ -8,18 +8,19 @@ import { RegisterComponent } from './pages/register/register.component';
 import { ProductComponent } from './pages/product/product.component';
 import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { ThankYouComponent } from './components/thank-you/thank-you.component';
+import { HistoryordersComponent } from './pages/historyorders/historyorders.component';
 
 
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'cart', component: CartComponent },
-  { path: 'orders', component: OrdersComponent },
   { path: 'product/:id', component: ProductComponent },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'checkout', component: CheckoutComponent },
   { path: 'thank-you', component: ThankYouComponent }, // ✅ move up here
+  { path: 'orders', component: HistoryordersComponent },
   { path: '**', redirectTo: '' }, // 👈 always LAST
 ];
 
