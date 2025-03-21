@@ -8,6 +8,7 @@ import com.example.backend.repository.CartItemRepository;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.user.User;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -78,4 +79,12 @@ public class CartService {
         dto.setTotalPrice(cartItem.getTotalPrice());
         return dto;
     }
+
+
+    @Transactional
+    public void clearCartByUserId(Long userId) {
+        List<CartItem> userCart = cartItemRepository.findByUserId(userId);
+        cartItemRepository.deleteAll(userCart);
+    }
+
 }

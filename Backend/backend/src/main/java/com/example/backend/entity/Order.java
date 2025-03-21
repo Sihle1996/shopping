@@ -35,6 +35,9 @@ public class Order {
     private String status;
     private String deliveryAddress; // Added delivery address field
 
+    private String paymentId;
+    private String payerId;
+
     public Order(User user, List<OrderItem> orderItems, Double totalAmount, Instant orderDate, String status, String deliveryAddress) {
         this.user = user;
         this.totalAmount = totalAmount;

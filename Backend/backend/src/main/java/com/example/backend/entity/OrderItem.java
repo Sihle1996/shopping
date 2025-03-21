@@ -20,6 +20,9 @@ public class OrderItem {
     @JoinColumn(name = "order_id", nullable = false)
     @JsonBackReference // Breaks cyclic reference with Order
     private Order order;
+    private String size;
+    private String name;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "menu_item_id", nullable = false)
