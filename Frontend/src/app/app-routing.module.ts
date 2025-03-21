@@ -6,6 +6,8 @@ import { OrdersComponent } from './pages/orders/orders.component';
 import { LoginComponent } from './pages/login/login.component';
 import { RegisterComponent } from './pages/register/register.component';
 import { ProductComponent } from './pages/product/product.component';
+import { CheckoutComponent } from './pages/checkout/checkout.component';
+import { ThankYouComponent } from './components/thank-you/thank-you.component';
 
 
 
@@ -16,7 +18,14 @@ const routes: Routes = [
   { path: 'product/:id', component: ProductComponent },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
-  { path: '**', redirectTo: '' } // Redirect unknown paths to home
+  { path: '**', redirectTo: '' }, // Redirect unknown paths to home
+  { path: 'checkout', component: CheckoutComponent },
+  {
+    path: 'thank-you',
+    component: ThankYouComponent
+  }
+  
+
 ];
 
 @NgModule({

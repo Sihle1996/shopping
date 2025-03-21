@@ -120,4 +120,18 @@ export class CartService {
   private refreshCart(): void {
     this.getCartItems().subscribe();
   }
+
+
+  saveOrder(order: any): Observable<any> {
+    return this.http.post('http://localhost:8080/api/orders', order, {
+      headers: this.getAuthHeaders()
+    });
+  }
+  
+
+  clearCart(): void {
+    this.cartItems.next([]);
+    this.totalPrice.next(0);
+  }
+  
 }

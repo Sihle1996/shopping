@@ -16,6 +16,8 @@ import { ProductComponent } from './pages/product/product.component';
 
 // ✅ Import Lucide Icons & Module
 import { LucideAngularModule } from 'lucide-angular';
+import { CheckoutComponent } from './pages/checkout/checkout.component';
+import { ThankYouComponent } from './components/thank-you/thank-you.component';
 
 @NgModule({
   declarations: [
@@ -28,6 +30,8 @@ import { LucideAngularModule } from 'lucide-angular';
     NavbarComponent,
     FooterComponent,
     ProductComponent,
+    CheckoutComponent,
+    ThankYouComponent,
   ],
   imports: [
     BrowserModule,
