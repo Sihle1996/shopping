@@ -11,7 +11,7 @@
     <div class="overflow-y-auto flex-grow px-4" style="max-height: calc(100vh - 260px);">
       <div *ngFor="let item of cartItems" class="bg-white p-4 rounded-lg shadow-md flex items-center mb-4">
         <img [src]="item.image || 'assets/default-image.jpg'" alt="{{ item.menuItemName }}"
-          class="w-16 h-16 rounded-md object-cover">
+          class="w-16 h-16 rounded-md object-cover" />
   
         <!-- Item Details -->
         <div class="ml-4 flex-1">
@@ -41,15 +41,18 @@
       </div>
     </div>
   
-    <!-- Sticky Checkout Bar with PayPal Button -->
+    <!-- Sticky Checkout Bar -->
     <div class="bg-white p-4 shadow-md fixed bottom-20 left-0 w-full z-50 border-t">
-      <div class="flex justify-between font-semibold text-xl mb-2">
+      <div class="flex justify-between font-semibold text-xl mb-3">
         <span>Total:</span>
         <span class="text-red-600">${{ totalPrice.toFixed(2) }}</span>
       </div>
   
-      <!-- PayPal Button Container -->
-      <div id="paypal-button-container" class="mt-3"></div>
+      <!-- Checkout Button -->
+      <button (click)="proceedToCheckout()"
+        class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-lg font-semibold transition duration-200">
+        Proceed to Checkout
+      </button>
     </div>
   </div>
   
