@@ -18,6 +18,7 @@ import { ProductComponent } from './pages/product/product.component';
 import { LucideAngularModule } from 'lucide-angular';
 import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { ThankYouComponent } from './components/thank-you/thank-you.component';
+import { HistoryordersComponent } from './pages/historyorders/historyorders.component';
 
 @NgModule({
   declarations: [
@@ -32,6 +33,7 @@ import { ThankYouComponent } from './components/thank-you/thank-you.component';
     ProductComponent,
     CheckoutComponent,
     ThankYouComponent,
+    HistoryordersComponent,
   ],
   imports: [
     BrowserModule,

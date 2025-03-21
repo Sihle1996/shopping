@@ -12,21 +12,17 @@ import { ThankYouComponent } from './components/thank-you/thank-you.component';
 
 
 const routes: Routes = [
-  { path: '', component: HomeComponent }, // Default route (Menu)
-  { path: 'cart', component: CartComponent, }, // Requires login
-  { path: 'orders', component: OrdersComponent, }, // Requires login
+  { path: '', component: HomeComponent },
+  { path: 'cart', component: CartComponent },
+  { path: 'orders', component: OrdersComponent },
   { path: 'product/:id', component: ProductComponent },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
-  { path: '**', redirectTo: '' }, // Redirect unknown paths to home
   { path: 'checkout', component: CheckoutComponent },
-  {
-    path: 'thank-you',
-    component: ThankYouComponent
-  }
-  
-
+  { path: 'thank-you', component: ThankYouComponent }, // ✅ move up here
+  { path: '**', redirectTo: '' }, // 👈 always LAST
 ];
+
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],

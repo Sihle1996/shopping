@@ -130,8 +130,27 @@ export class CartService {
   
 
   clearCart(): void {
-    this.cartItems.next([]);
-    this.totalPrice.next(0);
+    const userId = this.authService.getUserId();
+    if (!userId) {
+      console.error("❌ No user ID for cart clearing.");
+      return;
+    }
+  
+    this.http.delete(`http://localhost:8080/api/cart/clear/${userId}`, {
+      headers: this.getAuthHeaders()
+    }).subscribe({
+      next: () => {
+        console.log("🧹 Backend cart cleared.");
+        this.cartItems.next([]);
+        this.totalPrice.next(0);
+        this.cartItemCount.next(0);
+      },
+      error: err => {
+        console.error("❌ Failed to clear backend cart:", err);
+      }
+    });
   }
+  
+  
   
 }

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CartService, CartItem } from 'src/app/services/cart.service';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from 'src/app/services/auth.service';
 
 // Declare PayPal global variable
@@ -52,7 +52,7 @@ export class CartComponent implements OnInit {
         this.updateTotalPrice();
       },
       error: (err) => {
-        console.error("Error fetching cart items:", err);
+        console.error("❌ Error fetching cart items:", err);
       }
     });
   }
@@ -80,32 +80,8 @@ export class CartComponent implements OnInit {
           onApprove: (data: any, actions: any) => {
             return actions.order.capture().then((details: any) => {
               console.log('✅ Payment approved:', details);
-
-              const orderData = {
-                userId: this.authService.getUserId(),
-                items: this.cartItems.map(item => ({
-                  productId: item.menuItemId,
-                  name: item.menuItemName,
-                  price: item.menuItemPrice,
-                  quantity: item.quantity,
-                  size: item.size
-                })),
-                total: this.totalPrice,
-                paymentId: details.id,
-                payerId: details.payer.payer_id,
-                status: details.status
-              };
-
-              this.http.post('http://localhost:8080/api/orders', orderData).subscribe({
-                next: () => {
-                  console.log('✅ Order saved to backend.');
-                  this.cartService.clearCart();
-                  this.router.navigate(['/thank-you']);
-                },
-                error: err => {
-                  console.error('❌ Error saving order:', err);
-                }
-              });
+              
+              this.saveOrderToBackend(details);
             });
           },
           onError: (err: any) => {
@@ -116,6 +92,62 @@ export class CartComponent implements OnInit {
       }
     }, 0);
   }
+
+  private saveOrderToBackend(details: any): void {
+    const token = this.authService.getToken();
+  
+    if (!token) {
+      console.error("❌ No auth token found. Redirecting to login...");
+      alert("Session expired! Please log in again.");
+      this.router.navigate(['/login']);
+      return;
+    }
+  
+    const orderData = {
+      userId: this.authService.getUserId(),
+      items: this.cartItems.map(item => ({
+        productId: item.menuItemId,
+        name: item.menuItemName,
+        price: item.menuItemPrice,
+        quantity: item.quantity,
+        size: item.size
+      })),
+      total: this.totalPrice,
+      paymentId: details.id,
+      payerId: details.payer.payer_id,
+      status: details.status
+    };
+  
+    const headers = { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token.trim()}`
+    };
+  
+    this.http.post('http://localhost:8080/api/orders/place', orderData, { headers }).subscribe({
+      next: () => {
+        console.log('✅ Order saved to backend.');
+  
+        // Clear frontend + backend cart
+        this.cartService.clearCart();
+  
+        // Delay redirection to ensure cart clears first
+        setTimeout(() => this.router.navigate(['/thank-you']), 300); // 300ms delay
+      },
+      error: err => {
+        console.error('❌ Error saving order:', err);
+        if (err.status === 403) {
+          alert("Session expired! Please log in again.");
+          this.router.navigate(['/login']);
+        } else {
+          alert("Failed to save order. Please try again.");
+        }
+      }
+    });
+  }
+  
+  
+  
+  
 
   increaseQuantity(item: CartItem): void {
     item.quantity++;
@@ -135,7 +167,7 @@ export class CartComponent implements OnInit {
         this.cartItems = this.cartItems.filter(item => item.id !== itemId);
         this.updateTotalPrice();
       },
-      error: (err) => console.error("Error removing item:", err)
+      error: (err) => console.error("❌ Error removing item:", err)
     });
   }
 
