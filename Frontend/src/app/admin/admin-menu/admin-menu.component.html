@@ -1,10 +1,13 @@
-<div class="p-4">
-    <h2 class="text-2xl font-bold mb-4 text-gray-800">🍽 Admin Menu Management</h2>
+<div class="pt-20 px-4">
+    <h5 class="text-2xl font-bold mb-6 text-gray-800">🍽 Admin Menu Management</h5>
   
     <!-- Add Item Button -->
-    <button (click)="toggleForm()" class="mb-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-      {{ showForm ? 'Cancel' : '➕ Add Menu Item' }}
-    </button>
+    <div class="flex justify-end mb-4">
+      <button (click)="toggleForm()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 flex items-center gap-2">
+        <i class="bi" [ngClass]="showForm ? 'bi-x-circle' : 'bi-plus-circle'"></i>
+        {{ showForm ? 'Cancel' : 'Add Menu Item' }}
+      </button>
+    </div>
   
     <!-- Add/Edit Form -->
     <div *ngIf="showForm" class="bg-white shadow p-4 rounded mb-6">
@@ -13,22 +16,24 @@
         <input type="text" [(ngModel)]="formData.category" name="category" placeholder="Category" class="form-input" required />
         <input type="number" [(ngModel)]="formData.price" name="price" placeholder="Price" class="form-input" required />
         <input type="text" [(ngModel)]="formData.image" name="image" placeholder="Image URL" class="form-input" />
-        <textarea [(ngModel)]="formData.description" name="description" placeholder="Description" class="form-textarea md:col-span-2"></textarea>
-        <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 md:col-span-2">
+        <textarea [(ngModel)]="formData.description" name="description" placeholder="Description"
+                  class="form-textarea md:col-span-2"></textarea>
+        <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 md:col-span-2 flex items-center justify-center gap-2">
+          <i class="bi" [ngClass]="isEditing ? 'bi-pencil-square' : 'bi-plus-circle'"></i>
           {{ isEditing ? 'Update' : 'Add' }} Item
         </button>
       </form>
     </div>
   
-    <!-- Filters -->
-    <div class="flex flex-wrap items-center gap-3 mb-6">
-      <input [(ngModel)]="searchQuery" placeholder="Search..." class="px-4 py-2 rounded border" />
-      <select [(ngModel)]="selectedSort" class="px-3 py-2 border rounded">
+    <!-- Filters (Search, Sort, Category) -->
+    <div class="flex flex-wrap gap-4 items-center mb-6">
+      <input [(ngModel)]="searchQuery" placeholder="Search..." class="px-4 py-2 rounded border w-full sm:w-auto flex-1" />
+      <select [(ngModel)]="selectedSort" class="px-3 py-2 border rounded w-full sm:w-auto">
         <option value="default">Sort</option>
         <option value="priceLowHigh">Price: Low to High</option>
         <option value="priceHighLow">Price: High to Low</option>
       </select>
-      <select [(ngModel)]="selectedCategory" class="px-3 py-2 border rounded">
+      <select [(ngModel)]="selectedCategory" class="px-3 py-2 border rounded w-full sm:w-auto">
         <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
       </select>
     </div>
@@ -41,14 +46,20 @@
           <h4 class="text-lg font-semibold text-gray-800">{{ item.name }}</h4>
           <p class="text-gray-500 text-sm">{{ item.category }}</p>
           <p class="text-red-600 font-bold text-md">R{{ item.price.toFixed(2) }}</p>
-          <div class="mt-2 space-x-3">
-            <button (click)="editItem(item)" class="text-blue-600 hover:underline">Edit</button>
-            <button (click)="deleteItem(item.id)" class="text-red-600 hover:underline">Delete</button>
+          <div class="mt-2 flex gap-3">
+            <button (click)="editItem(item)" class="text-blue-600 hover:text-blue-800 flex items-center gap-1">
+              <i class="bi bi-pencil"></i> Edit
+            </button>
+            <button (click)="deleteItem(item.id)" class="text-red-600 hover:text-red-800 flex items-center gap-1">
+              <i class="bi bi-trash"></i> Delete
+            </button>
           </div>
         </div>
       </div>
     </div>
   
-    <div *ngIf="filteredMenu.length === 0" class="text-center text-gray-500 mt-6">No items match your search/filter.</div>
+    <div *ngIf="filteredMenu.length === 0" class="text-center text-gray-500 mt-6">
+      No items match your search/filter.
+    </div>
   </div>
   
