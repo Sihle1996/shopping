@@ -119,6 +119,15 @@ public class OrderService {
         LocalDateTime sastDateTime = LocalDateTime.ofInstant(order.getOrderDate(), ZoneId.of("Africa/Johannesburg"));
         String formattedDate = sastDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
+        List<OrderItemDTO> itemDTOs = order.getOrderItems().stream().map(item -> {
+            OrderItemDTO dto = new OrderItemDTO();
+            dto.setName(item.getName());
+            dto.setQuantity(item.getQuantity());
+            dto.setSize(item.getSize());
+            dto.setPrice(item.getTotalPrice()); // Optional: include price
+            return dto;
+        }).toList();
+
         return new OrderDTO(
                 order.getId(),
                 order.getTotalAmount(),
@@ -126,7 +135,28 @@ public class OrderService {
                 formattedDate,
                 order.getDeliveryAddress(),
                 order.getUser().getId(),
-                order.getUser().getEmail()
+                order.getUser().getEmail(),
+                order.getPaymentId(),
+                order.getPayerId(),
+                itemDTOs // ✅ include itemDTOs
         );
     }
+
+
+
+    public long getTotalOrders() {
+        return orderRepository.count();
+    }
+
+    public double getTotalRevenue() {
+        return orderRepository.findAll()
+                .stream()
+                .mapToDouble(Order::getTotalAmount)
+                .sum();
+    }
+
+    public long getPendingOrdersCount() {
+        return orderRepository.findByStatus("Pending").size();
+    }
+
 }

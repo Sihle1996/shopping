@@ -7,7 +7,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/orders")
@@ -40,6 +42,21 @@ public class AdminOrderController {
             return ResponseEntity.status(404).body("Order not found.");
         }
     }
+
+    @GetMapping("/stats")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAdminStats() {
+        try {
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("totalOrders", orderService.getTotalOrders());
+            stats.put("totalRevenue", orderService.getTotalRevenue());
+            stats.put("pendingOrders", orderService.getPendingOrdersCount());
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error fetching stats");
+        }
+    }
+
 
     // ✅ Fetch Orders by Status (Admin)
     @PreAuthorize("hasRole('ADMIN')")

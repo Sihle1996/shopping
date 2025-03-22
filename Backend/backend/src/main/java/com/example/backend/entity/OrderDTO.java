@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -16,10 +17,14 @@ public class OrderDTO {
     private Long id;
     private Double totalAmount;
     private String status;
-    private String orderDate; // ✅ Convert Instant to readable South African time
+    private String orderDate;
     private String deliveryAddress;
     private Long userId;
     private String userEmail;
+    private String paymentId;
+    private String payerId;
+    private List<OrderItemDTO> items; // ✅ New: Include items
+
 
     public OrderDTO(Long id, Double totalAmount, String status, Instant orderDate,
                     String deliveryAddress, Long userId, String userEmail) {
@@ -29,6 +34,8 @@ public class OrderDTO {
         this.deliveryAddress = deliveryAddress;
         this.userId = userId;
         this.userEmail = userEmail;
+
+
 
         // ✅ Convert Instant (UTC) to South African Standard Time (SAST)
         LocalDateTime sastDateTime = LocalDateTime.ofInstant(orderDate, ZoneId.of("Africa/Johannesburg"));

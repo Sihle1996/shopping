@@ -33,6 +33,7 @@ public class AdminMenuController {
         menuService.deleteMenuItem(id);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')") // ✅ Protect GET as well
     @GetMapping
     public List<MenuItem> getAllMenuItems() {
         return menuService.getAllMenuItems();
