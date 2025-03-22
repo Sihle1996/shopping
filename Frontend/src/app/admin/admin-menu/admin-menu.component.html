@@ -1,0 +1,54 @@
+<div class="p-4">
+    <h2 class="text-2xl font-bold mb-4 text-gray-800">🍽 Admin Menu Management</h2>
+  
+    <!-- Add Item Button -->
+    <button (click)="toggleForm()" class="mb-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+      {{ showForm ? 'Cancel' : '➕ Add Menu Item' }}
+    </button>
+  
+    <!-- Add/Edit Form -->
+    <div *ngIf="showForm" class="bg-white shadow p-4 rounded mb-6">
+      <form (ngSubmit)="submitForm()" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input type="text" [(ngModel)]="formData.name" name="name" placeholder="Name" class="form-input" required />
+        <input type="text" [(ngModel)]="formData.category" name="category" placeholder="Category" class="form-input" required />
+        <input type="number" [(ngModel)]="formData.price" name="price" placeholder="Price" class="form-input" required />
+        <input type="text" [(ngModel)]="formData.image" name="image" placeholder="Image URL" class="form-input" />
+        <textarea [(ngModel)]="formData.description" name="description" placeholder="Description" class="form-textarea md:col-span-2"></textarea>
+        <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 md:col-span-2">
+          {{ isEditing ? 'Update' : 'Add' }} Item
+        </button>
+      </form>
+    </div>
+  
+    <!-- Filters -->
+    <div class="flex flex-wrap items-center gap-3 mb-6">
+      <input [(ngModel)]="searchQuery" placeholder="Search..." class="px-4 py-2 rounded border" />
+      <select [(ngModel)]="selectedSort" class="px-3 py-2 border rounded">
+        <option value="default">Sort</option>
+        <option value="priceLowHigh">Price: Low to High</option>
+        <option value="priceHighLow">Price: High to Low</option>
+      </select>
+      <select [(ngModel)]="selectedCategory" class="px-3 py-2 border rounded">
+        <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+      </select>
+    </div>
+  
+    <!-- Menu Items -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div *ngFor="let item of filteredMenu" class="bg-white rounded shadow p-4 flex">
+        <img [src]="item.image || 'https://via.placeholder.com/80'" class="w-24 h-24 rounded object-cover" />
+        <div class="ml-4 flex-1">
+          <h4 class="text-lg font-semibold text-gray-800">{{ item.name }}</h4>
+          <p class="text-gray-500 text-sm">{{ item.category }}</p>
+          <p class="text-red-600 font-bold text-md">R{{ item.price.toFixed(2) }}</p>
+          <div class="mt-2 space-x-3">
+            <button (click)="editItem(item)" class="text-blue-600 hover:underline">Edit</button>
+            <button (click)="deleteItem(item.id)" class="text-red-600 hover:underline">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <div *ngIf="filteredMenu.length === 0" class="text-center text-gray-500 mt-6">No items match your search/filter.</div>
+  </div>
+  

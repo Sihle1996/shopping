@@ -19,6 +19,12 @@ import { LucideAngularModule } from 'lucide-angular';
 import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { ThankYouComponent } from './components/thank-you/thank-you.component';
 import { HistoryordersComponent } from './pages/historyorders/historyorders.component';
+import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
+import { AdminOrdersComponent } from './admin/admin-orders/admin-orders.component';
+import { AdminMenuComponent } from './admin/admin-menu/admin-menu.component';
+import { ToastrModule } from 'ngx-toastr';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
 
 @NgModule({
   declarations: [
@@ -34,6 +40,10 @@ import { HistoryordersComponent } from './pages/historyorders/historyorders.comp
     CheckoutComponent,
     ThankYouComponent,
     HistoryordersComponent,
+    AdminDashboardComponent,
+    AdminOrdersComponent,
+    AdminMenuComponent,
+  
   ],
   imports: [
     BrowserModule,
@@ -41,7 +51,13 @@ import { HistoryordersComponent } from './pages/historyorders/historyorders.comp
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
-    LucideAngularModule
+    BrowserAnimationsModule, // ✅ must be above Toastr
+    ToastrModule.forRoot({
+      positionClass: 'toast-bottom-right',
+      timeOut: 4000,
+      closeButton: true,
+      progressBar: true
+    })
   ],
   providers: [],
   bootstrap: [AppComponent]

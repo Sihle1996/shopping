@@ -78,4 +78,20 @@ export class AuthService {
     localStorage.removeItem('userId');
     this.router.navigate(['/login']); // Redirect user to login page
   }
+
+  getUserRole(): string | null {
+    const token = this.getToken();
+    if (!token) return null;
+  
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log("Decoded Role:", payload.role); // ✅ Debug log
+      return payload.role || null;
+    } catch (error) {
+      console.error("Error decoding role:", error);
+      return null;
+    }
+  }
+  
+  
 }

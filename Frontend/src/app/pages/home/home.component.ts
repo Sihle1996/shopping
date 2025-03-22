@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { AdminService } from 'src/app/services/admin.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { CartService } from 'src/app/services/cart.service';
 import { MenuService, MenuItem } from 'src/app/services/menu.service';
@@ -10,74 +11,103 @@ import { MenuService, MenuItem } from 'src/app/services/menu.service';
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent {
-  menuItems: MenuItem[] = [];
-  filteredMenuItems: MenuItem[] = [];
-  favoriteItems: Set<number> = new Set();
-  categories = [
-    { name: 'Pizzas', icon: 'assets/icons/pizza.png' },
-    { name: 'Burgers', icon: 'assets/icons/burger.png' },
-    { name: 'Desserts', icon: 'assets/icons/dessert.png' }
-  ];
-  selectedCategory = '';
-  searchQuery = '';
-  selectedSort = 'default';
-  isLoggedIn = false;
+  menuItems: any[] = [];
+  filteredMenuItems: any[] = [];
+  isAdmin: boolean = false;
+  searchQuery: string = '';
+  selectedCategory: string = 'All';
+  selectedSort: string = 'default';
+  showForm: boolean = false;
+  isEditing: boolean = false;
+
+  formData = {
+    id: null,
+    name: '',
+    description: '',
+    price: 0,
+    category: '',
+    image: ''
+  };
 
   constructor(
-    private menuService: MenuService,
-    private cartService: CartService,
     private authService: AuthService,
-    private router: Router
+    private adminService: AdminService
   ) {}
 
   ngOnInit(): void {
-    this.isLoggedIn = this.authService.isLoggedIn();
-    this.menuService.getMenuItems().subscribe(items => {
-      this.menuItems = items;
-      this.filteredMenuItems = [...this.menuItems];
+    this.isAdmin = this.authService.getUserRole() === 'ROLE_ADMIN';
+    this.fetchMenu();
+  }
+
+  fetchMenu(): void {
+    this.adminService.getMenuItems().subscribe({
+      next: data => {
+        this.menuItems = data;
+        this.filteredMenuItems = data;
+      }
     });
   }
 
-  // ✅ Redirect to Product Details Page
-  goToProductDetails(productId: number): void {
-    this.router.navigate(['/product', productId]);
-  }
-
-  // ✅ Toggle Favorite Item (Add/Remove)
-  toggleFavorite(item: MenuItem): void {
-    if (this.favoriteItems.has(item.id)) {
-      this.favoriteItems.delete(item.id);
-    } else {
-      this.favoriteItems.add(item.id);
-    }
-  }
-
-  // ✅ Check if an item is in favorites
-  isFavorite(item: MenuItem): boolean {
-    return this.favoriteItems.has(item.id);
-  }
-
-  // ✅ Search functionality
-  filterMenu() {
+  filterMenu(): void {
     this.filteredMenuItems = this.menuItems.filter(item =>
       item.name.toLowerCase().includes(this.searchQuery.toLowerCase())
     );
   }
 
-  // ✅ Filter by category
-  filterByCategory(category: string) {
+  filterByCategory(category: string): void {
     this.selectedCategory = category;
-    this.filteredMenuItems = this.menuItems.filter(item => item.category === category);
+    this.filteredMenuItems = category === 'All'
+      ? this.menuItems
+      : this.menuItems.filter(item => item.category === category);
   }
 
-  // ✅ Sort Menu Items (Low to High, High to Low)
-  sortMenu() {
+  sortMenu(): void {
     if (this.selectedSort === 'priceLowHigh') {
       this.filteredMenuItems.sort((a, b) => a.price - b.price);
     } else if (this.selectedSort === 'priceHighLow') {
       this.filteredMenuItems.sort((a, b) => b.price - a.price);
-    } else {
-      this.filteredMenuItems = [...this.menuItems]; // Reset sorting
     }
+  }
+
+  toggleForm(): void {
+    this.showForm = !this.showForm;
+    if (!this.showForm) this.resetForm();
+  }
+
+  editItem(item: any): void {
+    this.formData = { ...item };
+    this.isEditing = true;
+    this.showForm = true;
+  }
+
+  submitForm(): void {
+    const action = this.isEditing
+      ? this.adminService.updateMenuItem(this.formData.id!, this.formData)
+      : this.adminService.createMenuItem(this.formData);
+
+    action.subscribe({
+      next: () => {
+        this.fetchMenu();
+        this.toggleForm();
+      }
+    });
+  }
+
+  deleteItem(id: number): void {
+    if (confirm('Are you sure?')) {
+      this.adminService.deleteMenuItem(id).subscribe(() => this.fetchMenu());
+    }
+  }
+
+  resetForm(): void {
+    this.formData = {
+      id: null,
+      name: '',
+      description: '',
+      price: 0,
+      category: '',
+      image: ''
+    };
+    this.isEditing = false;
   }
 }
