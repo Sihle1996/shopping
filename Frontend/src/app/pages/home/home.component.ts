@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
-import { AdminService } from 'src/app/services/admin.service';
 import { AuthService } from 'src/app/services/auth.service';
-import { CartService } from 'src/app/services/cart.service';
+import { AdminService } from 'src/app/services/admin.service';
 import { MenuService, MenuItem } from 'src/app/services/menu.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -11,40 +10,46 @@ import { MenuService, MenuItem } from 'src/app/services/menu.service';
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent {
-  menuItems: any[] = [];
-  filteredMenuItems: any[] = [];
-  isAdmin: boolean = false;
-  searchQuery: string = '';
-  selectedCategory: string = 'All';
-  selectedSort: string = 'default';
-  showForm: boolean = false;
-  isEditing: boolean = false;
+  menuItems: MenuItem[] = [];
+  filteredMenuItems: MenuItem[] = [];
+  categories = [
+    { name: 'All', icon: 'assets/icons/all.png' },
+    { name: 'Burgers', icon: 'assets/icons/burger.png' },
+    { name: 'Pizza', icon: 'assets/icons/pizza.png' },
+    { name: 'Desserts', icon: 'assets/icons/dessert.png' },
+    { name: 'Drinks', icon: 'assets/icons/drink.png' },
+  ];
+  selectedCategory = 'All';
+  selectedSort = 'default';
+  searchQuery = '';
 
-  formData = {
-    id: null,
-    name: '',
-    description: '',
-    price: 0,
-    category: '',
-    image: ''
-  };
+  isAdmin = false;
+  isLoggedIn = false;
 
   constructor(
     private authService: AuthService,
-    private adminService: AdminService
+    private menuService: MenuService,
+    private adminService: AdminService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.isAdmin = this.authService.getUserRole() === 'ROLE_ADMIN';
+    this.isLoggedIn = this.authService.isLoggedIn();
     this.fetchMenu();
   }
 
   fetchMenu(): void {
-    this.adminService.getMenuItems().subscribe({
-      next: data => {
+    const source = this.isAdmin
+      ? this.adminService.getMenuItems()
+      : this.menuService.getMenuItems();
+
+    source.subscribe({
+      next: (data) => {
         this.menuItems = data;
         this.filteredMenuItems = data;
-      }
+      },
+      error: (err) => console.error('❌ Failed to load menu:', err)
     });
   }
 
@@ -69,45 +74,14 @@ export class HomeComponent {
     }
   }
 
-  toggleForm(): void {
-    this.showForm = !this.showForm;
-    if (!this.showForm) this.resetForm();
-  }
-
-  editItem(item: any): void {
-    this.formData = { ...item };
-    this.isEditing = true;
-    this.showForm = true;
-  }
-
-  submitForm(): void {
-    const action = this.isEditing
-      ? this.adminService.updateMenuItem(this.formData.id!, this.formData)
-      : this.adminService.createMenuItem(this.formData);
-
-    action.subscribe({
-      next: () => {
-        this.fetchMenu();
-        this.toggleForm();
-      }
-    });
-  }
-
-  deleteItem(id: number): void {
-    if (confirm('Are you sure?')) {
-      this.adminService.deleteMenuItem(id).subscribe(() => this.fetchMenu());
+  goToProductDetails(productId: number | null): void {
+    if (productId !== null) {
+      this.router.navigate(['/product', productId]);
     }
   }
 
-  resetForm(): void {
-    this.formData = {
-      id: null,
-      name: '',
-      description: '',
-      price: 0,
-      category: '',
-      image: ''
-    };
-    this.isEditing = false;
+  toggleFavorite(item: MenuItem): void {
+    console.log("💖 Favorite clicked for:", item.name);
+    // Add future favorite logic here
   }
 }

@@ -10,9 +10,9 @@ import { AuthService } from 'src/app/services/auth.service';
   styleUrls: ['./product.component.scss']
 })
 export class ProductComponent {
-  product: MenuItem | null = null; 
-  quantity: number = 1; 
-  selectedSize: string = 'M'; // ✅ Default size is Medium
+  product: MenuItem | null = null;
+  quantity: number = 1;
+  selectedSize: string = 'M';
 
   constructor(
     private route: ActivatedRoute,
@@ -28,11 +28,10 @@ export class ProductComponent {
 
     if (!productId) {
       console.error("❌ Invalid product ID");
-      this.router.navigate(['/']); 
+      this.router.navigate(['/']);
       return;
     }
 
-    // ✅ Fetch product details
     this.menuService.getProductById(Number(productId)).subscribe({
       next: (product) => {
         console.log("✅ Fetched product:", product);
@@ -40,12 +39,11 @@ export class ProductComponent {
       },
       error: (err) => {
         console.error("❌ Error fetching product:", err);
-        this.router.navigate(['/']); 
+        this.router.navigate(['/']);
       }
     });
   }
 
-  // ✅ Handle "Add to Cart"
   addToCart(): void {
     if (!this.product) {
       console.error("❌ Product is null, cannot add to cart.");
@@ -58,7 +56,11 @@ export class ProductComponent {
       return;
     }
 
-    // ✅ Fix: Ensure `quantity` and `size` are passed
+    if (this.product.id === null) {
+      console.error("❌ Product ID is null.");
+      return;
+    }
+
     this.cartService.addToCart(this.product.id, this.quantity, this.selectedSize).subscribe({
       next: () => {
         console.log('✅ Added to cart:', this.product!.id, 'Quantity:', this.quantity, 'Size:', this.selectedSize);
@@ -69,24 +71,20 @@ export class ProductComponent {
     });
   }
 
-  // ✅ Go Back to Home
   goBack(): void {
     this.router.navigate(['/']);
   }
 
-  // ✅ Increase Quantity
   increaseQuantity(): void {
     this.quantity++;
   }
 
-  // ✅ Decrease Quantity (Ensure it doesn’t go below 1)
   decreaseQuantity(): void {
     if (this.quantity > 1) {
       this.quantity--;
     }
   }
 
-  // ✅ Select Size
   selectSize(size: string): void {
     this.selectedSize = size;
     console.log("📏 Selected Size:", this.selectedSize);

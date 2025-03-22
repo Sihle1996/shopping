@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 // ✅ Updated MenuItem interface to match backend response
 export interface MenuItem {
-  id: number;
+  id: number | null;
   name: string;
   description: string;
   price: number;
