@@ -15,8 +15,11 @@ import { AdminOrdersComponent } from './admin/admin-orders/admin-orders.componen
 import { AdminMenuComponent } from './admin/admin-menu/admin-menu.component';
 import { AdminGuard } from './guards/admin.guard';
 import { UserGuard } from './guards/user.guard';
+import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashboard.component';
+import { DriverGuard } from './guards/driver.guard';
 
 const routes: Routes = [
+  // 🌐 User Routes
   { path: '', component: HomeComponent, canActivate: [UserGuard] },
   { path: 'cart', component: CartComponent, canActivate: [UserGuard] },
   { path: 'product/:id', component: ProductComponent, canActivate: [UserGuard] },
@@ -27,7 +30,7 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
 
-  // ✅ Admin routes
+  // 🛠️ Admin Routes
   {
     path: 'admin',
     canActivate: [AdminGuard],
@@ -39,8 +42,17 @@ const routes: Routes = [
     ]
   },
 
+  // 🚚 Driver Route
+  {
+    path: 'driver/dashboard',
+    component: DriverDashboardComponent,
+    canActivate: [DriverGuard]
+  },
+
+  // Fallback
   { path: '**', redirectTo: '' },
 ];
+
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],

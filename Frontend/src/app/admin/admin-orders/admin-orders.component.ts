@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from 'src/app/services/auth.service';
+import { AdminService } from 'src/app/services/admin.service';
 
 interface OrderItem {
   name: string;
@@ -30,13 +31,17 @@ export class AdminOrdersComponent implements OnInit {
   errorMessage = '';
   selectedOrder: Order | null = null;
   filterStatus = 'All';
+  availableDrivers: any[] = [];
+  selectedDriverId: number | null = null;
+
 
   currentPage = 1;
   pageSize = 5;
 
   constructor(
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    private adminSerivce: AdminService
   ) {}
 
   ngOnInit(): void {
@@ -107,11 +112,33 @@ export class AdminOrdersComponent implements OnInit {
 
   openModal(order: Order): void {
     this.selectedOrder = order;
+    this.adminSerivce.getAvailableDrivers().subscribe({
+      next: (drivers) => this.availableDrivers = drivers,
+      error: (err) => console.error('Failed to load drivers', err)
+    });
   }
+  
 
   closeModal(): void {
     this.selectedOrder = null;
   }
+
+  assignDriver(): void {
+    if (!this.selectedOrder || !this.selectedDriverId) return;
+  
+    this.adminSerivce.assignDriver(this.selectedOrder.id, this.selectedDriverId).subscribe({
+      next: (updated) => {
+        // Optionally update local order with driver info
+        this.selectedOrder = updated;
+        alert('✅ Driver assigned!');
+      },
+      error: (err) => {
+        console.error('Failed to assign driver', err);
+        alert('❌ Failed to assign driver');
+      }
+    });
+  }
+  
 
   getStatusColor(status: string): string {
     switch (status) {

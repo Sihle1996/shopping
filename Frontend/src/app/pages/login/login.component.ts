@@ -33,11 +33,12 @@ export class LoginComponent {
         console.log('✅ User role:', role);
   
         if (role === 'ROLE_ADMIN') {
-          // 👇 Use full redirect with replaceUrl to prevent fallback
           this.router.navigate(['/admin/dashboard'], { replaceUrl: true });
+        } else if (role === 'ROLE_DRIVER') {
+          this.router.navigate(['/driver/dashboard'], { replaceUrl: true });
         } else {
           this.router.navigate(['/'], { replaceUrl: true });
-        }
+        }        
       },
       error: (err) => {
         console.error("Login error:", err);

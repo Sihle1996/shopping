@@ -74,4 +74,20 @@ export class AdminService {
       headers: this.getAuthHeaders()
     });
   }
+
+   // admin.service.ts
+  assignDriver(orderId: number, driverId: number): Observable<any> {
+  return this.http.post(
+    `${this.baseUrl}/orders/${orderId}/assign-driver?driverId=${driverId}`,
+    null,
+    { headers: this.getAuthHeaders() }
+  );
+  }
+
+  getAvailableDrivers(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}/orders/available-drivers`, {
+    headers: this.getAuthHeaders()
+  });
+  }
+
 }

@@ -1,8 +1,10 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
-import { HttpClientModule } from '@angular/common/http'; // ✅ Added for HTTP requests
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { ToastrModule } from 'ngx-toastr';
 
 import { AppComponent } from './app.component';
 import { HomeComponent } from './pages/home/home.component';
@@ -13,17 +15,15 @@ import { RegisterComponent } from './pages/register/register.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { ProductComponent } from './pages/product/product.component';
-
-// ✅ Import Lucide Icons & Module
-import { LucideAngularModule } from 'lucide-angular';
 import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { ThankYouComponent } from './components/thank-you/thank-you.component';
 import { HistoryordersComponent } from './pages/historyorders/historyorders.component';
 import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
 import { AdminOrdersComponent } from './admin/admin-orders/admin-orders.component';
 import { AdminMenuComponent } from './admin/admin-menu/admin-menu.component';
-import { ToastrModule } from 'ngx-toastr';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashboard.component';
+import { AuthInterceptor } from './authInterceptor/auth.interceptor';
+
 
 
 @NgModule({
@@ -43,7 +43,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     AdminDashboardComponent,
     AdminOrdersComponent,
     AdminMenuComponent,
-  
+    DriverDashboardComponent,
   ],
   imports: [
     BrowserModule,
@@ -51,7 +51,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
-    BrowserAnimationsModule, // ✅ must be above Toastr
+    BrowserAnimationsModule,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',
       timeOut: 4000,
@@ -59,7 +59,13 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
       progressBar: true
     })
   ],
-  providers: [],
+  providers: [
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    }
+  ],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {}

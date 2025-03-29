@@ -1,0 +1,20 @@
+<div class="p-4 space-y-4">
+    <h2 class="text-xl font-bold">Assigned Orders</h2>
+  
+    <button class="bg-blue-500 text-white px-4 py-2 rounded" (click)="toggleAvailability()">
+      Toggle Availability ({{ availability }})
+    </button>
+  
+    <div *ngFor="let order of orders" class="border rounded p-3 shadow">
+      <div><strong>ID:</strong> {{ order.id }}</div>
+      <div><strong>Status:</strong> {{ order.status }}</div>
+      <div><strong>Delivery Address:</strong> {{ order.deliveryAddress }}</div>
+      <button
+        *ngIf="order.status !== 'Delivered'"
+        class="mt-2 bg-green-500 text-white px-3 py-1 rounded"
+        (click)="markDelivered(order.id)">
+        Mark as Delivered
+      </button>
+    </div>
+  </div>
+  
