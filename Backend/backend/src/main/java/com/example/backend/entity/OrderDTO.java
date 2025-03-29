@@ -23,8 +23,8 @@ public class OrderDTO {
     private String userEmail;
     private String paymentId;
     private String payerId;
-    private List<OrderItemDTO> items; // ✅ New: Include items
-
+    private List<OrderItemDTO> items;
+    private String driverName; // ✅ NEW FIELD
 
     public OrderDTO(Long id, Double totalAmount, String status, Instant orderDate,
                     String deliveryAddress, Long userId, String userEmail) {
@@ -35,12 +35,7 @@ public class OrderDTO {
         this.userId = userId;
         this.userEmail = userEmail;
 
-
-
-        // ✅ Convert Instant (UTC) to South African Standard Time (SAST)
         LocalDateTime sastDateTime = LocalDateTime.ofInstant(orderDate, ZoneId.of("Africa/Johannesburg"));
-
-        // ✅ Format the date as a readable string
         this.orderDate = sastDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 }

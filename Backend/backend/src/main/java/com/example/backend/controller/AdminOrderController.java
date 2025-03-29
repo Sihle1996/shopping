@@ -112,4 +112,25 @@ public class AdminOrderController {
             return ResponseEntity.status(500).body("An error occurred while deleting the order.");
         }
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/available-drivers")
+    public ResponseEntity<?> getAvailableDrivers() {
+        return ResponseEntity.ok(orderService.getAvailableDrivers());
+    }
+
+    @PostMapping("/{orderId}/assign-driver")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> assignDriverToOrder(
+            @PathVariable Long orderId,
+            @RequestParam Long driverId) {
+        try {
+            OrderDTO updated = orderService.assignDriverToOrder(orderId, driverId);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            e.printStackTrace(); // 👈 Logs the real reason
+            return ResponseEntity.status(400).body(e.getMessage()); // 👈 sends readable error to frontend
+        }
+    }
+
 }

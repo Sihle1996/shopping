@@ -14,7 +14,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 
 import java.util.Collections;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -35,10 +34,11 @@ public class SecurityConfiguration {
                     config.addAllowedMethod("*");
                     return config;
                 }))
-                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for development
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/menu/**", "/api/register", "/api/login").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/driver/**").hasRole("DRIVER") // ✅ Driver access
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
@@ -55,5 +55,4 @@ public class SecurityConfiguration {
 
         return http.build();
     }
-
 }

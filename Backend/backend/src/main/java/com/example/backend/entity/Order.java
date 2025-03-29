@@ -30,6 +30,12 @@ public class Order {
     @JsonBackReference
     private User user;
 
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "driver_id")
+    @JsonBackReference
+    private User driver;
+
     private Double totalAmount;
     private Instant orderDate;
     private String status;

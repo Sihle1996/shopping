@@ -1,6 +1,5 @@
 package com.example.backend.config;
 
-
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -41,6 +40,10 @@ public class JwtService {
         return extractClaim(token, claims -> claims.get("userId", Long.class));
     }
 
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class)); // 🔥 NEW
+    }
+
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
     }
@@ -58,15 +61,14 @@ public class JwtService {
         claims.put("userId", userId);
 
         if (userDetails instanceof User user) {
-            claims.put("role", "ROLE_" + user.getRole().name()); // Ensure role is prefixed with "ROLE_"
+            claims.put("role", "ROLE_" + user.getRole().name()); // Ensure role is prefixed
         }
 
         return buildToken(claims, userDetails, jwtExpiration);
     }
 
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
-        return Jwts
-                .builder()
+        return Jwts.builder()
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
@@ -95,8 +97,7 @@ public class JwtService {
 
     private Claims extractAllClaims(String token) {
         try {
-            return Jwts
-                    .parserBuilder()
+            return Jwts.parserBuilder()
                     .setSigningKey(getSignInKey())
                     .build()
                     .parseClaimsJws(token)
@@ -108,7 +109,6 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        System.out.println("Using secret key for signing: " + secretKey);
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 }

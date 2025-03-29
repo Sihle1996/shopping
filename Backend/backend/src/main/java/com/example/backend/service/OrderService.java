@@ -4,6 +4,8 @@ import com.example.backend.entity.*;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.user.DriverStatus;
+import com.example.backend.user.Role;
 import com.example.backend.user.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +30,6 @@ public class OrderService {
     private final UserRepository userRepository;
     private final MenuItemRepository menuItemRepository;
 
-    // ✅ PayPal order creation
     @Transactional
     public OrderDTO placeOrderFromPayment(OrderRequestDTO request, User user) {
         List<OrderItem> orderItems = new ArrayList<>();
@@ -39,11 +40,8 @@ public class OrderService {
             item.setQuantity(itemDTO.getQuantity());
             item.setTotalPrice(itemDTO.getPrice() * itemDTO.getQuantity());
             item.setSize(itemDTO.getSize());
-
-            // ✅ Link menu item
             item.setMenuItem(menuItemRepository.findById(itemDTO.getProductId())
                     .orElseThrow(() -> new RuntimeException("Menu item not found: " + itemDTO.getProductId())));
-
             orderItems.add(item);
         }
 
@@ -61,7 +59,6 @@ public class OrderService {
         order.setPaymentId(request.getPaymentId());
         order.setPayerId(request.getPayerId());
 
-        // ✅ Set back-reference to Order for each OrderItem
         for (OrderItem item : orderItems) {
             item.setOrder(order);
         }
@@ -115,7 +112,31 @@ public class OrderService {
         return convertToOrderDTO(orderRepository.save(order));
     }
 
-    private OrderDTO convertToOrderDTO(Order order) {
+    public List<User> getAvailableDrivers() {
+        return userRepository.findByRoleAndDriverStatus(Role.DRIVER, DriverStatus.AVAILABLE);
+    }
+
+    @Transactional
+    public OrderDTO assignDriverToOrder(Long orderId, Long driverId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        User driver = userRepository.findById(driverId)
+                .orElseThrow(() -> new RuntimeException("Driver not found"));
+
+        if (driver.getRole() != Role.DRIVER || driver.getDriverStatus() != DriverStatus.AVAILABLE) {
+            throw new RuntimeException("Driver is not available");
+        }
+
+        order.setDriver(driver);
+        driver.setDriverStatus(DriverStatus.UNAVAILABLE);
+
+        userRepository.save(driver);
+        Order updated = orderRepository.save(order);
+        return convertToOrderDTO(updated);
+    }
+
+    public OrderDTO convertToOrderDTO(Order order) {
         LocalDateTime sastDateTime = LocalDateTime.ofInstant(order.getOrderDate(), ZoneId.of("Africa/Johannesburg"));
         String formattedDate = sastDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
@@ -124,11 +145,11 @@ public class OrderService {
             dto.setName(item.getName());
             dto.setQuantity(item.getQuantity());
             dto.setSize(item.getSize());
-            dto.setPrice(item.getTotalPrice()); // Optional: include price
+            dto.setPrice(item.getTotalPrice());
             return dto;
         }).toList();
 
-        return new OrderDTO(
+        OrderDTO dto = new OrderDTO(
                 order.getId(),
                 order.getTotalAmount(),
                 order.getStatus(),
@@ -138,11 +159,16 @@ public class OrderService {
                 order.getUser().getEmail(),
                 order.getPaymentId(),
                 order.getPayerId(),
-                itemDTOs // ✅ include itemDTOs
+                itemDTOs,
+                null // driverName, set below
         );
+
+        if (order.getDriver() != null) {
+            dto.setDriverName(order.getDriver().getEmail()); // or .getFullName() if you have it
+        }
+
+        return dto;
     }
-
-
 
     public long getTotalOrders() {
         return orderRepository.count();
@@ -158,5 +184,4 @@ public class OrderService {
     public long getPendingOrdersCount() {
         return orderRepository.findByStatus("Pending").size();
     }
-
 }
