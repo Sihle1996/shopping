@@ -1,8 +1,10 @@
 import {
   AfterViewInit,
   Component,
+  EventEmitter,
   Input,
-  OnDestroy
+  OnDestroy,
+  Output
 } from '@angular/core';
 import * as L from 'leaflet';
 import * as mapboxPolyline from '@mapbox/polyline';
@@ -16,12 +18,14 @@ import { GeocodingService } from 'src/app/services/geocoding.service';
 export class DriverMapComponent implements AfterViewInit, OnDestroy {
   @Input() deliveryAddress!: string;
   @Input() mapId: string = 'map';
+  @Output() mapLoaded = new EventEmitter<void>();
 
   private map: L.Map | null = null;
   private driverMarker: L.Marker | null = null;
   private routeLine: L.Polyline | null = null;
   private watchId: number | null = null;
   private destinationCoords: [number, number] | null = null;
+  private driverCoords: [number, number] | null = null;
 
   constructor(private geocodingService: GeocodingService) {}
 
@@ -43,19 +47,24 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
       (mapContainer as any)._leaflet_id = null;
     }
 
+    const johannesburgBounds = L.latLngBounds(
+      [-26.7, 27.5], // Southwest
+      [-25.9, 28.3]  // Northeast
+    );
+
     this.map = L.map(this.mapId, {
-      maxBounds: L.latLngBounds(
-        [-26.4700, 27.7580],
-        [-26.4450, 27.7800]
-      ),
-      maxBoundsViscosity: 1.0
-    }).setView([-26.4568, 27.7670], 14);
+      maxBounds: johannesburgBounds,
+      maxBoundsViscosity: 0.5,
+      zoomControl: true,
+      dragging: true
+    });
+
+    this.map.setView([-26.2041, 28.0473], 12); // Johannesburg CBD fallback
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(this.map);
 
-    // Geocode destination address
     this.geocodingService.geocodeAddress(this.deliveryAddress).subscribe(
       coords => {
         this.destinationCoords = [coords.lat, coords.lon];
@@ -63,31 +72,34 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
           .addTo(this.map!)
           .bindPopup('Delivery Destination')
           .openPopup();
+
+        this.tryFitBounds();
+        this.mapLoaded.emit(); // Notify parent that map is ready
       },
       err => {
         console.error(`❌ Geocoding failed for "${this.deliveryAddress}":`, err);
       }
     );
 
-    // Watch driver position
     this.watchId = navigator.geolocation.watchPosition(
       pos => {
-        const driverCoords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        console.log('📍 GPS Position:', pos);
+        this.driverCoords = [pos.coords.latitude, pos.coords.longitude];
 
         if (this.driverMarker) {
-          this.driverMarker.setLatLng(driverCoords);
+          this.driverMarker.setLatLng(this.driverCoords);
         } else {
-          this.driverMarker = L.marker(driverCoords, { icon: this.driverIcon() })
+          this.driverMarker = L.marker(this.driverCoords, { icon: this.driverIcon() })
             .addTo(this.map!)
             .bindPopup('You are here')
             .openPopup();
         }
 
-        this.map!.setView(driverCoords, 15);
+        this.tryFitBounds();
 
         if (this.destinationCoords) {
           this.drawRoute(
-            [driverCoords[1], driverCoords[0]],
+            [this.driverCoords[1], this.driverCoords[0]],
             [this.destinationCoords[1], this.destinationCoords[0]]
           );
         }
@@ -101,6 +113,18 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
         maximumAge: 0
       }
     );
+  }
+
+  private tryFitBounds(): void {
+    if (this.driverCoords && this.destinationCoords && this.map) {
+      setTimeout(() => {
+        const bounds = L.latLngBounds([
+          this.driverCoords!,
+          this.destinationCoords!
+        ]);
+        this.map!.fitBounds(bounds, { padding: [40, 40] });
+      }, 200); // delay to let map fully render
+    }
   }
 
   private drawRoute(start: [number, number], end: [number, number]): void {
@@ -120,12 +144,17 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
 
           const path: [number, number][] = mapboxPolyline.decode(response.routes[0].geometry);
 
-          if (this.routeLine) this.map!.removeLayer(this.routeLine);
+          setTimeout(() => {
+            if (this.routeLine) this.map!.removeLayer(this.routeLine);
 
-          this.routeLine = L.polyline(path as L.LatLngTuple[], {
-            color: 'blue',
-            weight: 4
-          }).addTo(this.map!);
+            this.routeLine = L.polyline(path as L.LatLngTuple[], {
+              color: 'blue',
+              weight: 4
+            }).addTo(this.map!);
+
+            const bounds = L.latLngBounds(path.map(p => L.latLng(p[0], p[1])));
+            this.map!.fitBounds(bounds, { padding: [30, 30] });
+          }, 100);
         } catch (err) {
           console.error('❌ Failed to parse routing response:', err, request.responseText);
         }

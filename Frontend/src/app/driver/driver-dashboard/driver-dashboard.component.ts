@@ -31,4 +31,10 @@ export class DriverDashboardComponent implements OnInit {
     this.availability = this.availability === 'AVAILABLE' ? 'UNAVAILABLE' : 'AVAILABLE';
     this.driverService.updateAvailability(this.availability).subscribe();
   }
+
+  get firstUndeliveredOrder() {
+    return this.orders.find(order =>
+      order.status && order.status.trim().toLowerCase() !== 'delivered'
+    );
+  }
 }

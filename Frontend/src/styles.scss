@@ -24,3 +24,14 @@ h1, h2, h3 {
   font-family: var(--font-numbers);
 }
 
+[id^="map-"] {
+  height: 250px;
+  width: 100%;
+  min-height: 200px;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
