@@ -32,7 +32,7 @@ export class CheckoutComponent implements AfterViewInit {
   ) {}
 
   ngAfterViewInit(): void {
-    // nothing here until "Continue to Payment" is clicked
+    // PayPal button will be rendered after delivery form is submitted
   }
 
   onSubmit(): void {
@@ -44,13 +44,12 @@ export class CheckoutComponent implements AfterViewInit {
     this.cartService.getCartItems().subscribe(items => {
       this.cartItems = items;
       this.totalPrice = items.reduce((sum, item) => sum + item.menuItemPrice * item.quantity, 0);
-
       this.showPayPal = true;
 
       setTimeout(() => {
         const container = document.getElementById('paypal-button-container');
         if (container) {
-          container.innerHTML = ''; // Clear any existing button
+          container.innerHTML = ''; // clear previous button if any
           paypal.Buttons({
             createOrder: (data: any, actions: any) => {
               return actions.order.create({
@@ -65,11 +64,12 @@ export class CheckoutComponent implements AfterViewInit {
               const details = await actions.order.capture();
               console.log('✅ Payment successful!', details);
 
-              const deliveryAddress = `${this.deliveryDetails.fullName}, ${this.deliveryDetails.address}, ${this.deliveryDetails.city}, ${this.deliveryDetails.zip}, ${this.deliveryDetails.phone}`;
+              // 📦 Format address for geocoding and display
+              const deliveryAddressForGeocoding = `${this.deliveryDetails.address}, ${this.deliveryDetails.city}, ${this.deliveryDetails.zip}, South Africa`;
 
               const orderData = {
                 userId: this.authService.getUserId(),
-                deliveryAddress,
+                deliveryAddress: deliveryAddressForGeocoding,
                 items: this.cartItems.map(item => ({
                   productId: item.menuItemId,
                   name: item.menuItemName,

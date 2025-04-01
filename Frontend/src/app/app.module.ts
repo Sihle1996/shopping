@@ -23,6 +23,7 @@ import { AdminOrdersComponent } from './admin/admin-orders/admin-orders.componen
 import { AdminMenuComponent } from './admin/admin-menu/admin-menu.component';
 import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashboard.component';
 import { AuthInterceptor } from './authInterceptor/auth.interceptor';
+import { DriverMapComponent } from './driver/driver-map/driver-map.component';
 
 
 
@@ -44,6 +45,7 @@ import { AuthInterceptor } from './authInterceptor/auth.interceptor';
     AdminOrdersComponent,
     AdminMenuComponent,
     DriverDashboardComponent,
+    DriverMapComponent,
   ],
   imports: [
     BrowserModule,
