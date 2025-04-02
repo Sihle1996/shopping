@@ -36,9 +36,14 @@ public class SecurityConfiguration {
                 }))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/menu/**", "/api/register", "/api/login").permitAll()
+                        .requestMatchers(
+                                "/api/menu/**",
+                                "/api/register",
+                                "/api/login",
+                                "/api/map/route" // ✅ public route endpoint
+                        ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/driver/**").hasRole("DRIVER") // ✅ Driver access
+                        .requestMatchers("/api/driver/**").hasRole("DRIVER")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

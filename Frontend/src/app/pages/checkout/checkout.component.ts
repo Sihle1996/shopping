@@ -1,8 +1,16 @@
-import { Component, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  AfterViewInit,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
 import { CartService } from 'src/app/services/cart.service';
 import { AuthService } from 'src/app/services/auth.service';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { GeocodingService } from 'src/app/services/geocoding.service';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { FormControl } from '@angular/forms';
 
 declare var paypal: any;
 
@@ -16,6 +24,16 @@ export class CheckoutComponent implements AfterViewInit {
   totalPrice: number = 0;
   showPayPal: boolean = false;
 
+  addressSuggestions: {
+    label: string;
+    street?: string;
+    city?: string;
+    zip?: string;
+    country?: string;
+  }[] = [];
+
+  addressControl = new FormControl();
+
   deliveryDetails = {
     fullName: '',
     address: '',
@@ -24,19 +42,61 @@ export class CheckoutComponent implements AfterViewInit {
     phone: ''
   };
 
+  @ViewChild('addressInput') addressInputRef!: ElementRef;
+
   constructor(
     private cartService: CartService,
     private authService: AuthService,
+    private geocodingService: GeocodingService,
     private http: HttpClient,
     private router: Router
   ) {}
 
   ngAfterViewInit(): void {
-    // PayPal button will be rendered after delivery form is submitted
+    this.addressControl.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(query => {
+        if (query && query.length > 2) {
+          this.geocodingService.autocomplete(query).subscribe({
+            next: suggestions => this.addressSuggestions = suggestions,
+            error: () => this.addressSuggestions = []
+          });
+        } else {
+          this.addressSuggestions = [];
+        }
+      });
+  }
+
+  selectAddress(suggestion: any) {
+    this.deliveryDetails.address = suggestion.label;
+    this.deliveryDetails.city = suggestion.city || '';
+    this.addressControl.setValue(suggestion.label);
+    this.addressSuggestions = [];
+
+    if (suggestion.zip) {
+      this.deliveryDetails.zip = suggestion.zip;
+    } else {
+      this.geocodingService.geocodeAddress(suggestion.label).subscribe({
+        next: coords => this.fetchZipFromCoords(coords.lat, coords.lon),
+        error: () => console.warn('Zip fallback failed')
+      });
+    }
+  }
+
+  fetchZipFromCoords(lat: number, lon: number) {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
+    this.http.get<any>(url).subscribe({
+      next: data => {
+        const postcode = data?.address?.postcode;
+        if (postcode) this.deliveryDetails.zip = postcode;
+      },
+      error: err => console.error('Reverse geocode error', err)
+    });
   }
 
   onSubmit(): void {
-    if (!this.deliveryDetails.fullName || !this.deliveryDetails.address || !this.deliveryDetails.city || !this.deliveryDetails.zip || !this.deliveryDetails.phone) {
+    const d = this.deliveryDetails;
+    if (!d.fullName || !d.address || !d.city || !d.zip || !d.phone) {
       alert("Please fill in all delivery fields.");
       return;
     }
@@ -49,27 +109,22 @@ export class CheckoutComponent implements AfterViewInit {
       setTimeout(() => {
         const container = document.getElementById('paypal-button-container');
         if (container) {
-          container.innerHTML = ''; // clear previous button if any
+          container.innerHTML = '';
+
           paypal.Buttons({
             createOrder: (data: any, actions: any) => {
               return actions.order.create({
                 purchase_units: [{
-                  amount: {
-                    value: this.totalPrice.toFixed(2)
-                  }
+                  amount: { value: this.totalPrice.toFixed(2) }
                 }]
               });
             },
             onApprove: async (data: any, actions: any) => {
               const details = await actions.order.capture();
-              console.log('✅ Payment successful!', details);
-
-              // 📦 Format address for geocoding and display
-              const deliveryAddressForGeocoding = `${this.deliveryDetails.address}, ${this.deliveryDetails.city}, ${this.deliveryDetails.zip}, South Africa`;
 
               const orderData = {
                 userId: this.authService.getUserId(),
-                deliveryAddress: deliveryAddressForGeocoding,
+                deliveryAddress: `${d.address}, ${d.city}, ${d.zip}, South Africa`,
                 items: this.cartItems.map(item => ({
                   productId: item.menuItemId,
                   name: item.menuItemName,
@@ -83,20 +138,17 @@ export class CheckoutComponent implements AfterViewInit {
                 status: details.status
               };
 
-              const headers = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.authService.getToken()}`
-              };
-
-              this.http.post('http://localhost:8080/api/orders/place', orderData, { headers }).subscribe({
+              this.http.post('http://localhost:8080/api/orders/place', orderData, {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${this.authService.getToken()}`
+                }
+              }).subscribe({
                 next: () => {
-                  console.log('✅ Order placed and cart cleared');
                   this.cartService.clearCart();
                   this.router.navigate(['/thank-you']);
                 },
-                error: (err) => {
-                  console.error('❌ Error saving order:', err);
-                }
+                error: err => console.error('❌ Order saving failed', err)
               });
             },
             onError: (err: any) => {

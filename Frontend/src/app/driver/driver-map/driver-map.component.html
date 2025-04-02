@@ -1,1 +1,11 @@
-<div id="map" style="height: 400px; width: 100%; border-radius: 8px;"></div>
+template: `
+  <div class="relative h-full w-full rounded shadow">
+    <div [id]="mapId" class="h-full w-full rounded"></div>
+    <button
+      class="absolute top-3 right-3 z-50 bg-white p-2 rounded-full shadow-lg hover:bg-gray-100 transition"
+      (click)="recenterMap()"
+      title="Recenter">
+      📍
+    </button>
+  </div>
+`,

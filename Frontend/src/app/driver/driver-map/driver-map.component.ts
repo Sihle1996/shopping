@@ -6,13 +6,25 @@ import {
   OnDestroy,
   Output
 } from '@angular/core';
-import * as L from 'leaflet';
+import 'leaflet';
+import 'leaflet.awesome-markers';
+declare const L: any;
 import * as mapboxPolyline from '@mapbox/polyline';
 import { GeocodingService } from 'src/app/services/geocoding.service';
 
 @Component({
   selector: 'app-driver-map',
-  template: `<div [id]="mapId" class="h-full w-full rounded shadow"></div>`,
+  template: `
+    <div class="relative h-full w-full rounded shadow">
+      <div [id]="mapId" class="h-full w-full rounded"></div>
+      <button
+        class="absolute top-3 right-3 z-50 bg-white text-black px-3 py-2 rounded-full shadow-lg hover:bg-gray-100 transition"
+        (click)="recenterMap()"
+        title="Recenter on you">
+        📍
+      </button>
+    </div>
+  `,
   styleUrls: ['./driver-map.component.scss']
 })
 export class DriverMapComponent implements AfterViewInit, OnDestroy {
@@ -59,7 +71,9 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
       dragging: true
     });
 
-    this.map.setView([-26.2041, 28.0473], 12); // Johannesburg CBD fallback
+    if (this.map) {
+  this.map.setView([-26.2041, 28.0473], 12); // Johannesburg CBD fallback
+}
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
@@ -83,7 +97,6 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
 
     this.watchId = navigator.geolocation.watchPosition(
       pos => {
-        console.log('📍 GPS Position:', pos);
         this.driverCoords = [pos.coords.latitude, pos.coords.longitude];
 
         if (this.driverMarker) {
@@ -115,6 +128,15 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
     );
   }
 
+  recenterMap(): void {
+    if (this.map && this.driverCoords) {
+      this.map.flyTo(this.driverCoords, 16, {
+        animate: true,
+        duration: 1.2
+      });
+    }
+  }
+
   private tryFitBounds(): void {
     if (this.driverCoords && this.destinationCoords && this.map) {
       setTimeout(() => {
@@ -123,15 +145,17 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
           this.destinationCoords!
         ]);
         this.map!.fitBounds(bounds, { padding: [40, 40] });
-      }, 200); // delay to let map fully render
+      }, 200);
     }
   }
 
   private drawRoute(start: [number, number], end: [number, number]): void {
+    console.log('🛣️ Drawing route from:', start, 'to:', end);
+  
     const request = new XMLHttpRequest();
     const token = '5b3ce3597851110001cf62486eb46190526c4d34b70f6499f1ba52c2';
 
-    request.open('POST', 'https://api.openrouteservice.org/v2/directions/driving-car');
+    request.open('POST', 'http://localhost:8080/api/map/route'); // change to your Spring Boot base URL
     request.setRequestHeader('Accept', 'application/json');
     request.setRequestHeader('Content-Type', 'application/json');
     request.setRequestHeader('Authorization', token);
@@ -165,18 +189,21 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
   }
 
   private driverIcon(): L.Icon {
-    return L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/512/1946/1946775.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30]
+    return L.AwesomeMarkers.icon({
+      icon: 'location-arrow',
+      prefix: 'fa',
+      markerColor: 'blue',
+      iconColor: 'white',
+      extraClasses: 'blinking-marker'
     });
   }
 
   private destinationIcon(): L.Icon {
-    return L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/512/854/854878.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30]
+    return L.AwesomeMarkers.icon({
+      icon: 'box',
+      prefix: 'fa',
+      markerColor: 'red',
+      iconColor: 'white'
     });
   }
 }
