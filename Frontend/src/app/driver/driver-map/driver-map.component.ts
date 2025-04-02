@@ -55,13 +55,13 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
 
   private initMap(): void {
     const mapContainer = L.DomUtil.get(this.mapId) as HTMLElement;
-    if (mapContainer && (mapContainer as any)._leaflet_id != null) {
+    if ((mapContainer as any)._leaflet_id != null) {
       (mapContainer as any)._leaflet_id = null;
     }
 
     const johannesburgBounds = L.latLngBounds(
-      [-26.7, 27.5], // Southwest
-      [-25.9, 28.3]  // Northeast
+      [-26.7, 27.5], // SW
+      [-25.9, 28.3]  // NE
     );
 
     this.map = L.map(this.mapId, {
@@ -69,36 +69,17 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
       maxBoundsViscosity: 0.5,
       zoomControl: true,
       dragging: true
-    });
-
-    if (this.map) {
-  this.map.setView([-26.2041, 28.0473], 12); // Johannesburg CBD fallback
-}
+    }).setView([-26.2041, 28.0473], 12);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(this.map);
 
-    this.geocodingService.geocodeAddress(this.deliveryAddress).subscribe(
-      coords => {
-        this.destinationCoords = [coords.lat, coords.lon];
-        L.marker(this.destinationCoords, { icon: this.destinationIcon() })
-          .addTo(this.map!)
-          .bindPopup('Delivery Destination')
-          .openPopup();
-
-        this.tryFitBounds();
-        this.mapLoaded.emit(); // Notify parent that map is ready
-      },
-      err => {
-        console.error(`❌ Geocoding failed for "${this.deliveryAddress}":`, err);
-      }
-    );
+    this.geocodeDeliveryAddress(this.deliveryAddress);
 
     this.watchId = navigator.geolocation.watchPosition(
       pos => {
         this.driverCoords = [pos.coords.latitude, pos.coords.longitude];
-
         if (this.driverMarker) {
           this.driverMarker.setLatLng(this.driverCoords);
         } else {
@@ -128,13 +109,34 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
     );
   }
 
-  recenterMap(): void {
-    if (this.map && this.driverCoords) {
-      this.map.flyTo(this.driverCoords, 16, {
-        animate: true,
-        duration: 1.2
-      });
-    }
+  private geocodeDeliveryAddress(address: string) {
+    const cleaned = this.cleanAddress(address);
+    this.geocodingService.geocodeAddress(cleaned).subscribe({
+      next: coords => {
+        this.setDestination(coords.lat, coords.lon);
+      },
+      error: () => {
+        // fallback: try reducing to street + city
+        const fallback = this.getFallbackAddress(cleaned);
+        this.geocodingService.geocodeAddress(fallback).subscribe({
+          next: coords => this.setDestination(coords.lat, coords.lon),
+          error: err => {
+            console.error(`❌ Final geocoding attempt failed for: "${address}"`, err);
+          }
+        });
+      }
+    });
+  }
+
+  private setDestination(lat: number, lon: number) {
+    this.destinationCoords = [lat, lon];
+    L.marker(this.destinationCoords, { icon: this.destinationIcon() })
+      .addTo(this.map!)
+      .bindPopup('Delivery Destination')
+      .openPopup();
+
+    this.tryFitBounds();
+    this.mapLoaded.emit();
   }
 
   private tryFitBounds(): void {
@@ -150,27 +152,20 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
   }
 
   private drawRoute(start: [number, number], end: [number, number]): void {
-    console.log('🛣️ Drawing route from:', start, 'to:', end);
-  
     const request = new XMLHttpRequest();
-    const token = '5b3ce3597851110001cf62486eb46190526c4d34b70f6499f1ba52c2';
-
-    request.open('POST', 'http://localhost:8080/api/map/route'); // change to your Spring Boot base URL
+    request.open('POST', 'http://localhost:8080/api/map/route');
     request.setRequestHeader('Accept', 'application/json');
     request.setRequestHeader('Content-Type', 'application/json');
-    request.setRequestHeader('Authorization', token);
 
     request.onreadystatechange = () => {
       if (request.readyState === 4) {
         try {
           const response = JSON.parse(request.responseText);
           if (!response.routes?.length) throw new Error('No route data found');
-
-          const path: [number, number][] = mapboxPolyline.decode(response.routes[0].geometry);
+          const path = mapboxPolyline.decode(response.routes[0].geometry);
 
           setTimeout(() => {
             if (this.routeLine) this.map!.removeLayer(this.routeLine);
-
             this.routeLine = L.polyline(path as L.LatLngTuple[], {
               color: 'blue',
               weight: 4
@@ -186,6 +181,28 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
     };
 
     request.send(JSON.stringify({ coordinates: [start, end] }));
+  }
+
+  recenterMap(): void {
+    if (this.map && this.driverCoords) {
+      this.map.flyTo(this.driverCoords, 16, {
+        animate: true,
+        duration: 1.2
+      });
+    }
+  }
+
+  private cleanAddress(address: string): string {
+    return address
+      .split(',')
+      .map(p => p.trim())
+      .filter((val, idx, arr) => val && arr.indexOf(val) === idx)
+      .join(', ');
+  }
+
+  private getFallbackAddress(cleaned: string): string {
+    const parts = cleaned.split(',').map(p => p.trim());
+    return parts.slice(0, 2).join(', ');
   }
 
   private driverIcon(): L.Icon {

@@ -67,31 +67,63 @@ export class CheckoutComponent implements AfterViewInit {
       });
   }
 
-  selectAddress(suggestion: any) {
-    this.deliveryDetails.address = suggestion.label;
-    this.deliveryDetails.city = suggestion.city || '';
-    this.addressControl.setValue(suggestion.label);
-    this.addressSuggestions = [];
+  // only TS (not HTML)
+selectAddress(suggestion: any) {
+  this.deliveryDetails.address = suggestion.label;
+  this.deliveryDetails.city = suggestion.city || '';
+  this.deliveryDetails.zip = suggestion.zip || '';
+  this.addressControl.setValue(suggestion.label);
+  this.addressSuggestions = [];
 
-    if (suggestion.zip) {
-      this.deliveryDetails.zip = suggestion.zip;
-    } else {
-      this.geocodingService.geocodeAddress(suggestion.label).subscribe({
-        next: coords => this.fetchZipFromCoords(coords.lat, coords.lon),
-        error: () => console.warn('Zip fallback failed')
-      });
-    }
+  this.geocodingService.reverseGeocode(suggestion.lat, suggestion.lon).subscribe({
+    next: reverse => {
+      const address = reverse.address;
+      const region = (address.city || address.town || address.suburb || '').toLowerCase();
+      const province = (address.state || '').toLowerCase();
+
+      const isAllowed = ['johannesburg', 'sandton', 'fourways', 'randburg', 'bryanston']
+        .some(area => region.includes(area)) || province.includes('gauteng');
+
+      if (!isAllowed) {
+        alert('🚫 We currently only deliver within Johannesburg (Gauteng region).');
+        this.deliveryDetails.city = '';
+        this.deliveryDetails.zip = '';
+        return;
+      }
+
+      this.deliveryDetails.city = address.city || address.town || address.suburb || this.deliveryDetails.city;
+      this.deliveryDetails.zip = address.postcode || this.deliveryDetails.zip;
+    },
+    error: () => alert('❌ Address validation failed.')
+  });
+}
+
+  
+  
+  cleanAddressLabel(label: string): string {
+    const ignoreWords = ['GT', 'Gauteng', 'South Africa', 'RSA'];
+    const parts = label
+      .split(',')
+      .map(p => p.trim())
+      .filter((part, index, arr) =>
+        part &&
+        arr.indexOf(part) === index && // remove duplicates
+        !ignoreWords.includes(part) && // remove noisy parts
+        !/^\d{4,5}$/.test(part)        // remove postal codes like 2125
+      );
+    return parts.join(', ');
   }
+  
+  
+  
+  
 
-  fetchZipFromCoords(lat: number, lon: number) {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
-    this.http.get<any>(url).subscribe({
-      next: data => {
-        const postcode = data?.address?.postcode;
-        if (postcode) this.deliveryDetails.zip = postcode;
-      },
-      error: err => console.error('Reverse geocode error', err)
-    });
+  sanitizeAddress(...parts: string[]): string {
+    return parts
+      .filter(Boolean)
+      .map(p => p.trim())
+      .filter((p, i, arr) => arr.indexOf(p) === i)
+      .join(', ');
   }
 
   onSubmit(): void {
@@ -114,9 +146,7 @@ export class CheckoutComponent implements AfterViewInit {
           paypal.Buttons({
             createOrder: (data: any, actions: any) => {
               return actions.order.create({
-                purchase_units: [{
-                  amount: { value: this.totalPrice.toFixed(2) }
-                }]
+                purchase_units: [{ amount: { value: this.totalPrice.toFixed(2) } }]
               });
             },
             onApprove: async (data: any, actions: any) => {
@@ -151,9 +181,7 @@ export class CheckoutComponent implements AfterViewInit {
                 error: err => console.error('❌ Order saving failed', err)
               });
             },
-            onError: (err: any) => {
-              console.error('❌ Payment error', err);
-            }
+            onError: (err: any) => console.error('❌ Payment error', err)
           }).render('#paypal-button-container');
         }
       }, 0);
