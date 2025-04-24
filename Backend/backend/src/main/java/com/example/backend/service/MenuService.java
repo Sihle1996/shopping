@@ -22,12 +22,19 @@ public class MenuService {
     public MenuItem updateMenuItem(Long id, MenuItem updatedMenuItem) {
         MenuItem menuItem = menuItemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Menu item not found"));
+
         menuItem.setName(updatedMenuItem.getName());
         menuItem.setDescription(updatedMenuItem.getDescription());
         menuItem.setPrice(updatedMenuItem.getPrice());
         menuItem.setIsAvailable(updatedMenuItem.getIsAvailable());
+
+        // ✅ Update image and category
+        menuItem.setImage(updatedMenuItem.getImage());
+        menuItem.setCategory(updatedMenuItem.getCategory());
+
         return menuItemRepository.save(menuItem);
     }
+
 
     public void deleteMenuItem(Long id) {
         if (!menuItemRepository.existsById(id)) {

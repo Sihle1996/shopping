@@ -1,6 +1,5 @@
 package com.example.backend.service;
 
-
 import com.example.backend.entity.CartItem;
 import com.example.backend.entity.CartItemDTO;
 import com.example.backend.entity.MenuItem;
@@ -69,6 +68,12 @@ public class CartService {
         cartItemRepository.deleteById(cartItemId);
     }
 
+    @Transactional
+    public void clearCartByUserId(Long userId) {
+        List<CartItem> userCart = cartItemRepository.findByUserId(userId);
+        cartItemRepository.deleteAll(userCart);
+    }
+
     private CartItemDTO convertToDTO(CartItem cartItem) {
         CartItemDTO dto = new CartItemDTO();
         dto.setId(cartItem.getId());
@@ -77,14 +82,7 @@ public class CartService {
         dto.setMenuItemPrice(cartItem.getMenuItem().getPrice());
         dto.setQuantity(cartItem.getQuantity());
         dto.setTotalPrice(cartItem.getTotalPrice());
+        dto.setImage(cartItem.getMenuItem().getImage()); // ✅ Set the correct image
         return dto;
     }
-
-
-    @Transactional
-    public void clearCartByUserId(Long userId) {
-        List<CartItem> userCart = cartItemRepository.findByUserId(userId);
-        cartItemRepository.deleteAll(userCart);
-    }
-
 }

@@ -36,14 +36,23 @@ public class SecurityConfiguration {
                 }))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        // ✅ Public routes
                         .requestMatchers(
                                 "/api/menu/**",
                                 "/api/register",
                                 "/api/login",
-                                "/api/map/route" // ✅ public route endpoint
+                                "/api/map/route",
+                                "/images/**",         // ✅ Allow public access to static images
+                                "/uploads/**"         // ✅ Just in case direct file path is hit
                         ).permitAll()
+
+                        // ✅ Admin-only routes
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        // ✅ Driver-only routes
                         .requestMatchers("/api/driver/**").hasRole("DRIVER")
+
+                        // ✅ Everything else requires authentication
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

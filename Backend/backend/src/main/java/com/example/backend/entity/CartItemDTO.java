@@ -10,4 +10,7 @@ public class CartItemDTO {
     private Double menuItemPrice;
     private Integer quantity;
     private Double totalPrice;
+    private String image; // ✅ this field
+
+
 }
