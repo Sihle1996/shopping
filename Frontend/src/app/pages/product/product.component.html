@@ -12,7 +12,8 @@
   
     <!-- 🍔 Product Image -->
     <div class="w-full flex justify-center mt-10">
-      <img [src]="product?.image || 'assets/default-image.jpg'" class="w-64 h-64 object-cover rounded-xl shadow-md" alt="{{ product?.name }}">
+      <img [src]="getImageUrl(product?.image)" class="w-full max-w-sm object-cover rounded-xl shadow-md" alt="{{ product?.name }}">
+
     </div>
   
     <!-- 📝 Product Info -->

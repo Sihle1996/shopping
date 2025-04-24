@@ -69,4 +69,12 @@ export class CartComponent implements OnInit {
   proceedToCheckout(): void {
     this.router.navigate(['/checkout']);
   }
+
+  getImageUrl(path: string | null | undefined): string {
+    if (!path) return 'assets/default-image.jpg';
+    return path.startsWith('/images/') ? `http://localhost:8080${path}` : path;
+  }
+  
+  
+  
 }

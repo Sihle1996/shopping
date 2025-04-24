@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -89,5 +89,12 @@ export class AdminService {
     headers: this.getAuthHeaders()
   });
   }
-
+  
+  uploadImage(formData: FormData): Observable<string> {
+    return this.http.post<{ imageUrl: string }>('http://localhost:8080/api/admin/menu/upload-image', formData).pipe(
+      map((res: { imageUrl: string }) => res.imageUrl) // ✅ FIX: Add proper type to res
+    );
+  }
+  
+  
 }

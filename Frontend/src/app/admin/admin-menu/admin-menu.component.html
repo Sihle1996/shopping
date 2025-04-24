@@ -12,7 +12,8 @@
         <input type="text" [(ngModel)]="formData.name" name="name" placeholder="Name" class="form-input" required />
         <input type="text" [(ngModel)]="formData.category" name="category" placeholder="Category" class="form-input" required />
         <input type="number" [(ngModel)]="formData.price" name="price" placeholder="Price" class="form-input" required />
-        <input type="text" [(ngModel)]="formData.image" name="image" placeholder="Image URL" class="form-input" />
+        <!-- <input type="text" [(ngModel)]="formData.image" name="image" placeholder="Image URL" class="form-input" /> -->
+        <input type="file" (change)="onImageSelected($event)" accept="image/*" class="form-input" />
         <textarea [(ngModel)]="formData.description" name="description" placeholder="Description" class="form-textarea md:col-span-2"></textarea>
         <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 md:col-span-2">
           {{ isEditing ? 'Update' : 'Add' }} Item
@@ -36,7 +37,7 @@
     <!-- Menu Items -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div *ngFor="let item of filteredMenu" class="bg-white rounded shadow p-4 flex">
-        <img [src]="item.image || 'https://via.placeholder.com/80'" class="w-24 h-24 rounded object-cover" />
+        <img [src]="item.image?.startsWith('/images/') ? 'http://localhost:8080' + item.image : item.image || 'assets/RedDot_Burger.jpg'" class="w-24 h-24 rounded object-cover" />
         <div class="ml-4 flex-1">
           <h4 class="text-lg font-semibold text-gray-800">{{ item.name }}</h4>
           <p class="text-gray-500 text-sm">{{ item.category }}</p>

@@ -13,11 +13,11 @@ export class HomeComponent {
   menuItems: MenuItem[] = [];
   filteredMenuItems: MenuItem[] = [];
   categories = [
-    { name: 'All', icon: 'assets/icons/all.png' },
-    { name: 'Burgers', icon: 'assets/icons/burger.png' },
-    { name: 'Pizza', icon: 'assets/icons/pizza.png' },
-    { name: 'Desserts', icon: 'assets/icons/dessert.png' },
-    { name: 'Drinks', icon: 'assets/icons/drink.png' },
+    { name: 'All', icon: 'assets/istockphoto-1419247070-612x612.jpg' },
+    { name: 'Burgers', icon: 'assets/istockphoto-468676382-612x612.jpg' },
+    { name: 'Pizza', icon: 'assets/photo-1513104890138-7c749659a591.jpg' },
+    { name: 'Desserts', icon: 'assets/domino-s-pizza.jpg' },
+    { name: 'Drinks', icon: 'assets/photo-1513104890138-7c749659a591.jpg' },
   ];
   selectedCategory = 'All';
   selectedSort = 'default';
@@ -84,4 +84,11 @@ export class HomeComponent {
     console.log("💖 Favorite clicked for:", item.name);
     // Add future favorite logic here
   }
+
+  getImageUrl(path: string | null): string {
+    if (!path) return 'assets/placeholder.png'; // fallback if null or empty
+    return path.startsWith('http') ? path : `http://localhost:8080${path}`;
+  }
+  
+  
 }

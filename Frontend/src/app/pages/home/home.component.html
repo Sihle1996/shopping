@@ -41,7 +41,7 @@
       <div *ngFor="let item of filteredMenuItems"
            class="bg-white p-4 rounded-xl shadow-md flex items-center transition hover:bg-yellow-50 cursor-pointer"
            (click)="goToProductDetails(item.id)">
-        <img [src]="item.image" alt="{{ item.name }}" class="w-20 h-20 rounded-md object-cover">
+           <img [src]="getImageUrl(item.image)" alt="{{ item.name }}" class="w-20 h-20 rounded-md object-cover">
         <div class="ml-4 flex-1">
           <h4 class="text-lg font-semibold text-gray-800">{{ item.name }}</h4>
           <p class="text-gray-500 text-sm">{{ item.category }}</p>

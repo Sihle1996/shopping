@@ -89,4 +89,13 @@ export class ProductComponent {
     this.selectedSize = size;
     console.log("📏 Selected Size:", this.selectedSize);
   }
+
+  getImageUrl(path?: string): string {
+    if (!path) return 'assets/default-image.jpg';
+    return path.startsWith('/images/')
+      ? `http://localhost:8080${path}`
+      : path;
+  }
+  
+  
 }

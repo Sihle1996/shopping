@@ -112,4 +112,20 @@ export class AdminMenuComponent implements OnInit {
     };
     this.isEditing = false;
   }
+
+  onImageSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append('file', file);
+  
+      this.adminService.uploadImage(formData).subscribe({
+        next: (url: string) => {
+          this.formData.image = url;
+        },
+        error: err => console.error('Image upload failed', err)
+      });
+    }
+  }
+  
 }
