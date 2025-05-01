@@ -1,1 +1,37 @@
-/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap');
+
+:root {
+  --font-primary: 'Poppins', sans-serif;
+  --font-heading: 'Montserrat', sans-serif;
+  --font-numbers: 'Inter', sans-serif;
+}
+
+body {
+  font-family: var(--font-primary);
+  @apply bg-background text-textDark;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-heading);
+}
+
+.price {
+  font-family: var(--font-numbers);
+}
+
+[id^="map-"] {
+  height: 250px;
+  width: 100%;
+  min-height: 200px;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}

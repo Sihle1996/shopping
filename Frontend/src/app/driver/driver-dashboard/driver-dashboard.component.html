@@ -1,0 +1,38 @@
+<div class="h-screen w-full flex flex-col bg-gray-50">
+
+  <!-- 🚀 Top bar -->
+  <div class="p-4 bg-white shadow z-10">
+    <div class="flex justify-between items-center">
+      <h2 class="text-lg font-semibold">🚚 Assigned Delivery</h2>
+      <button
+        class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded"
+        (click)="toggleAvailability()">
+        {{ availability === 'AVAILABLE' ? 'Go Offline' : 'Go Online' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- 🧾 Delivery Info -->
+  <div *ngIf="firstUndeliveredOrder" class="p-4 bg-white border-b z-10 space-y-2 shadow-sm text-sm">
+    <div class="text-gray-700">
+      <span class="font-medium">Order:</span> #{{ firstUndeliveredOrder.id }}
+    </div>
+    <div class="text-gray-700 truncate">
+      <span class="font-medium">To:</span> {{ firstUndeliveredOrder.deliveryAddress }}
+    </div>
+    <button
+      class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-1.5 rounded w-full mt-2"
+      (click)="markDelivered(firstUndeliveredOrder.id)">
+      ✅ Mark Delivered
+    </button>
+  </div>
+
+  <!-- 🗺️ Map (takes rest of screen) -->
+  <div *ngIf="firstUndeliveredOrder" class="flex-1">
+    <app-driver-map
+      [deliveryAddress]="firstUndeliveredOrder.deliveryAddress"
+      [mapId]="'main-driver-map'">
+    </app-driver-map>
+  </div>
+
+</div>

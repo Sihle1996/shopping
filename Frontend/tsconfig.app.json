@@ -3,7 +3,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
-    "types": []
+    "types": ["node"],
+    "paths": {
+      "crypto": ["./node_modules/crypto-browserify"]
+    }
   },
   "files": [
     "src/main.ts"
