@@ -8,7 +8,7 @@ export interface MenuItem {
   name: string;
   description: string;
   price: number;
-  image: string;  // ✅ Changed from imageUrl to image
+  image: string; 
   category: string;
   isAvailable: boolean;
   quantity?: number; // ✅ Ensure quantity exists

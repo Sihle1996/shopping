@@ -149,8 +149,5 @@ export class CartService {
         console.error("❌ Failed to clear backend cart:", err);
       }
     });
-  }
-  
-  
-  
+  } 
 }

@@ -95,6 +95,5 @@ export class AdminService {
       map((res: { imageUrl: string }) => res.imageUrl) // ✅ FIX: Add proper type to res
     );
   }
-  
-  
+    
 }

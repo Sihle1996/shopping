@@ -20,9 +20,9 @@ import { DriverGuard } from './guards/driver.guard';
 
 const routes: Routes = [
   // 🌐 User Routes
-  { path: '', component: HomeComponent, canActivate: [UserGuard] },
+  { path: '', component: HomeComponent},
   { path: 'cart', component: CartComponent, canActivate: [UserGuard] },
-  { path: 'product/:id', component: ProductComponent, canActivate: [UserGuard] },
+  { path: 'product/:id', component: ProductComponent },
   { path: 'checkout', component: CheckoutComponent, canActivate: [UserGuard] },
   { path: 'orders', component: HistoryordersComponent, canActivate: [UserGuard] },
   { path: 'thank-you', component: ThankYouComponent, canActivate: [UserGuard] },
