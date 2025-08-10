@@ -8,7 +8,7 @@ import { AdminService } from 'src/app/services/admin.service';
 })
 export class AdminDriversComponent implements OnInit {
   drivers: any[] = [];
-  newDriver = { email: '', password: '', status: '' };
+  newDriver = { email: '', password: '' };
 
   constructor(private adminService: AdminService) {}
 
@@ -30,7 +30,7 @@ export class AdminDriversComponent implements OnInit {
 
     this.adminService.createDriver(this.newDriver).subscribe({
       next: () => {
-        this.newDriver = { email: '', password: '', status: '' };
+        this.newDriver = { email: '', password: '' };
         this.loadDrivers();
       },
       error: err => console.error('Failed to create driver', err)
