@@ -1,6 +1,7 @@
 package com.example.backend.service;
 
 import com.example.backend.auth.RegisterRequest;
+import com.example.backend.entity.DriverDTO;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.user.DriverStatus;
 import com.example.backend.user.Role;
@@ -47,15 +48,18 @@ class AdminDriverServiceTest {
                 .build();
         when(userRepository.save(any(User.class))).thenReturn(saved);
 
-        User result = adminDriverService.createDriver(request);
+        DriverDTO result = adminDriverService.createDriver(request);
 
-        assertEquals(Role.DRIVER, result.getRole());
+        assertEquals("driver@example.com", result.getEmail());
         assertEquals(DriverStatus.AVAILABLE, result.getDriverStatus());
-        assertEquals("encoded", result.getPassword());
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
-        assertEquals("driver@example.com", captor.getValue().getEmail());
+        User captured = captor.getValue();
+        assertEquals(Role.DRIVER, captured.getRole());
+        assertEquals(DriverStatus.AVAILABLE, captured.getDriverStatus());
+        assertEquals("encoded", captured.getPassword());
+        assertEquals("driver@example.com", captured.getEmail());
     }
 
     @Test
@@ -69,10 +73,14 @@ class AdminDriverServiceTest {
 
     @Test
     void getAllDriversReturnsList() {
-        List<User> drivers = List.of(new User());
+        List<User> drivers = List.of(User.builder().id(1L).email("a@b.com").driverStatus(DriverStatus.AVAILABLE).build());
         when(userRepository.findByRole(Role.DRIVER)).thenReturn(drivers);
 
-        assertEquals(drivers, adminDriverService.getAllDrivers());
+        List<DriverDTO> result = adminDriverService.getAllDrivers();
+
+        assertEquals(1, result.size());
+        assertEquals("a@b.com", result.get(0).getEmail());
+        assertEquals(DriverStatus.AVAILABLE, result.get(0).getDriverStatus());
     }
 
     @Test
