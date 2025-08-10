@@ -56,6 +56,7 @@ export class AdminService {
           return items;
         })
       );
+  }
   // ✅ Get paginated & searchable orders
   getOrders(page: number, size: number, query: string): Observable<any> {
     const params: any = { page, size };
