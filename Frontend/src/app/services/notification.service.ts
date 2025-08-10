@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { CompatClient, IMessage, Stomp } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +12,7 @@ export class NotificationService {
   private stompClient: CompatClient | null = null;
   private notificationSubject = new Subject<string>();
 
-  constructor() {
+  constructor(private toastr: ToastrService) {
     this.connect();
   }
 
@@ -21,13 +22,20 @@ export class NotificationService {
     // Disable verbose debug logging
     (this.stompClient as any).debug = () => {};
 
-    this.stompClient.connect({}, () => {
-      this.stompClient?.subscribe('/topic/orders', (message: IMessage) => {
-        if (message.body) {
-          this.notificationSubject.next(message.body);
-        }
-      });
-    });
+    this.stompClient.connect(
+      {},
+      () => {
+        this.stompClient?.subscribe('/topic/orders', (message: IMessage) => {
+          if (message.body) {
+            this.notificationSubject.next(message.body);
+          }
+        });
+      },
+      (error: any) => {
+        console.error('STOMP connection error', error);
+        this.toastr.error('Failed to connect to notifications', 'Connection Error');
+      }
+    );
   }
 
   get notifications(): Observable<string> {
