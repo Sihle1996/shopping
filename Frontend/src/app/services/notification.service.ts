@@ -24,7 +24,15 @@ export class NotificationService {
     this.stompClient.connect({}, () => {
       this.stompClient?.subscribe('/topic/orders', (message: IMessage) => {
         if (message.body) {
-          this.notificationSubject.next(message.body);
+          try {
+            const data = JSON.parse(message.body);
+            const userEmail = data.userEmail ?? 'Unknown user';
+            const totalAmount = Number(data.totalAmount ?? 0).toFixed(2);
+            const formatted = `New order from ${userEmail} totaling R${totalAmount}`;
+            this.notificationSubject.next(formatted);
+          } catch (e) {
+            console.error('Failed to parse notification', e);
+          }
         }
       });
     });
