@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -29,6 +30,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final MenuItemRepository menuItemRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public OrderDTO placeOrderFromPayment(OrderRequestDTO request, User user) {
@@ -64,7 +66,9 @@ public class OrderService {
         }
 
         Order saved = orderRepository.save(order);
-        return convertToOrderDTO(saved);
+        OrderDTO dto = convertToOrderDTO(saved);
+        messagingTemplate.convertAndSend("/topic/orders", dto);
+        return dto;
     }
 
     public List<OrderDTO> getOrdersByUser(Long userId) {
