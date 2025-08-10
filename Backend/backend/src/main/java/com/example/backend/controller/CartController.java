@@ -39,7 +39,8 @@ public class CartController {
     // Update cart item quantity
     @PutMapping("/update/{cartItemId}")
     public ResponseEntity<CartItemDTO> updateCartItem(@PathVariable Long cartItemId,
-                                                      @RequestParam Integer quantity) {
+                                                      @RequestBody Map<String, Object> payload) {
+        Integer quantity = Integer.valueOf(payload.get("quantity").toString());
         CartItemDTO updatedCartItemDTO = cartService.updateCartItem(cartItemId, quantity);
         return ResponseEntity.ok(updatedCartItemDTO);
     }
