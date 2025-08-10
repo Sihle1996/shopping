@@ -25,6 +25,7 @@ import { AdminDriversComponent } from './admin/admin-drivers/admin-drivers.compo
 import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashboard.component';
 import { AuthInterceptor } from './authInterceptor/auth.interceptor';
 import { DriverMapComponent } from './driver/driver-map/driver-map.component';
+import { AdminNotificationsComponent } from './admin/admin-notifications/admin-notifications.component';
 
 
 
@@ -46,6 +47,7 @@ import { DriverMapComponent } from './driver/driver-map/driver-map.component';
     AdminOrdersComponent,
     AdminMenuComponent,
     AdminDriversComponent,
+    AdminNotificationsComponent,
     DriverDashboardComponent,
     DriverMapComponent,
   ],
