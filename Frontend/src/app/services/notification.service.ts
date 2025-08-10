@@ -3,39 +3,47 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
+import { AuthService } from './auth.service';
+import { ToastrService } from 'ngx-toastr';
+
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService implements OnDestroy {
   private client: Client;
   private notificationSubject = new Subject<string>();
 
-  constructor() {
-    this.client = new Client({
-      // Use SockJS
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
-      // Optional: automatic reconnect
-      reconnectDelay: 5000,
-      // Silence logs
-      debug: () => {}
-    });
 
-    // Called after the connection is established
-    this.client.onConnect = () => {
-      this.client.subscribe('/topic/orders', (message: IMessage) => {
-        if (message.body) this.notificationSubject.next(message.body);
+  constructor(private authService: AuthService, private toastr: ToastrService) {
+
+    this.connect();
+  }
+
+  private connect(): void {
+    const socket = new SockJS('http://localhost:8080/ws');
+    this.stompClient = Stomp.over(socket);
+    (this.stompClient as any).debug = () => {};
+
+    const headers: { [key: string]: string } = {};
+    const token = this.authService.getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    this.stompClient.connect(headers, () => {
+      this.stompClient?.subscribe('/user/queue/orders', (message: IMessage) => {
+        if (message.body) {
+          try {
+            const data = JSON.parse(message.body);
+            const userEmail = data.userEmail ?? 'Unknown user';
+            const totalAmount = Number(data.totalAmount ?? 0).toFixed(2);
+            const formatted = `New order from ${userEmail} totaling R${totalAmount}`;
+            this.notificationSubject.next(formatted);
+          } catch (e) {
+            console.error('Failed to parse notification', e);
+          }
+        }
       });
-    };
-
-    // Optional: error hooks
-    this.client.onStompError = frame => {
-      console.error('Broker reported error:', frame.headers['message'], frame.body);
-    };
-    this.client.onWebSocketClose = evt => {
-      console.warn('WebSocket closed', evt);
-    };
-
-    // Open the connection
-    this.client.activate();
+    });
   }
 
   get notifications(): Observable<string> {
