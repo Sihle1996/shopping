@@ -1,3 +1,5 @@
+
+import { Component, OnInit } from '@angular/core';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -42,6 +44,13 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   private searchSubject = new Subject<string>();
   private searchSub!: Subscription;
 
+  constructor(private adminSerivce: AdminService) {}
+
+  ngOnInit(): void {
+    this.loading = true;
+    this.adminSerivce.orders$.subscribe(orders => this.orders = orders);
+    this.adminSerivce.loadOrders().subscribe({
+      next: () => (this.loading = false),
   constructor(
     private adminSerivce: AdminService
   ) {}
@@ -84,6 +93,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   }
 
   updateStatus(orderId: number, newStatus: string): void {
+    this.adminSerivce.updateOrderStatus(orderId, newStatus);
     this.adminSerivce.updateOrderStatus(orderId, newStatus).subscribe({
       next: () => {
         this.orders = this.orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
