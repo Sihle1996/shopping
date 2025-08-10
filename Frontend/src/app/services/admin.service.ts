@@ -114,5 +114,25 @@ export class AdminService {
       map((res: { imageUrl: string }) => res.imageUrl) // ✅ FIX: Add proper type to res
     );
   }
+
+  // ✅ Inventory Management
+  adjustInventory(adjustments: any[]): Observable<any> {
+    return this.http.post(`${this.baseUrl}/inventory/adjust`, adjustments, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  exportInventoryCsv(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/inventory/export`, {
+      headers: this.getAuthHeaders(),
+      responseType: 'blob'
+    });
+  }
+
+  getInventoryAuditLogs(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/inventory/audit`, {
+      headers: this.getAuthHeaders()
+    });
+  }
     
 }
