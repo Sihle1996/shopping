@@ -11,25 +11,5 @@
     </button>
   </form>
 
-  <table class="w-full bg-white rounded shadow">
-    <thead>
-      <tr class="bg-gray-200 text-left">
-        <th class="p-2">Email</th>
-        <th class="p-2">Status</th>
-        <th class="p-2">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let driver of drivers" class="border-t">
-        <td class="p-2">{{ driver.email }}</td>
-        <td class="p-2">{{ driver.driverStatus }}</td>
-        <td class="p-2">
-          <button (click)="deleteDriver(driver.id)" class="text-red-600 hover:underline">Delete</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div *ngIf="drivers.length === 0" class="text-center text-gray-500 mt-4">No drivers found.</div>
+  <app-admin-driver-map></app-admin-driver-map>
 </div>
-
