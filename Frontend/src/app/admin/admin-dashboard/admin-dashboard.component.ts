@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AdminService } from 'src/app/services/admin.service';
+import { AdminNotificationsComponent } from '../admin-notifications/admin-notifications.component';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -8,7 +9,6 @@ import { AdminService } from 'src/app/services/admin.service';
   styleUrls: ['./admin-dashboard.component.scss']
 })
 export class AdminDashboardComponent implements OnInit {
-;
 
 totalOrders: number = 0;
 totalRevenue: number = 0;
