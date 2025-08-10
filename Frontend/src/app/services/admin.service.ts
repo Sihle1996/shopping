@@ -56,6 +56,23 @@ export class AdminService {
           return items;
         })
       );
+  // ✅ Get paginated & searchable orders
+  getOrders(page: number, size: number, query: string): Observable<any> {
+    const params: any = { page, size };
+    if (query) {
+      params.query = query;
+    }
+    return this.http.get(`${this.baseUrl}/orders/search`, {
+      headers: this.getAuthHeaders(),
+      params
+    });
+  }
+
+  // ✅ Get all menu items
+  getMenuItems(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/menu`, {
+      headers: this.getAuthHeaders()
+    });
   }
 
   // ✅ Add menu item (optimistic)
@@ -184,5 +201,27 @@ export class AdminService {
       map((res: { imageUrl: string }) => res.imageUrl) // ✅ FIX: Add proper type to res
     );
   }
-    
+
+  getHealth(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/health`, {
+  // ✅ Inventory Management
+  adjustInventory(adjustments: any[]): Observable<any> {
+    return this.http.post(`${this.baseUrl}/inventory/adjust`, adjustments, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  exportInventoryCsv(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/inventory/export`, {
+      headers: this.getAuthHeaders(),
+      responseType: 'blob'
+    });
+  }
+
+  getInventoryAuditLogs(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/inventory/audit`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
 }

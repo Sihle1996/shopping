@@ -36,9 +36,11 @@ export class LoginComponent {
           this.router.navigate(['/admin/dashboard'], { replaceUrl: true });
         } else if (role === 'ROLE_DRIVER') {
           this.router.navigate(['/driver/dashboard'], { replaceUrl: true });
+        } else if (role === 'ROLE_MANAGER') {
+          this.router.navigate(['/manager/dashboard'], { replaceUrl: true });
         } else {
           this.router.navigate(['/'], { replaceUrl: true });
-        }        
+        }
       },
       error: (err) => {
         console.error("Login error:", err);
