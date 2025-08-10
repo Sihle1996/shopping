@@ -19,6 +19,7 @@ import { AdminGuard } from './guards/admin.guard';
 import { UserGuard } from './guards/user.guard';
 import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashboard.component';
 import { DriverGuard } from './guards/driver.guard';
+import { AdminDiagnosticsComponent } from './admin/admin-diagnostics/admin-diagnostics.component';
 import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-dashboard.component';
 import { ManagerGuard } from './guards/manager.guard';
 
@@ -43,6 +44,7 @@ const routes: Routes = [
       { path: 'orders', component: AdminOrdersComponent },
       { path: 'menu', component: AdminMenuComponent },
       { path: 'drivers', component: AdminDriversComponent },
+      { path: 'diagnostics', component: AdminDiagnosticsComponent },
       { path: 'inventory', component: InventoryManagementComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
