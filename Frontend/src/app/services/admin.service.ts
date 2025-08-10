@@ -56,6 +56,8 @@ export class AdminService {
           return items;
         })
       );
+  }
+
   // ✅ Get paginated & searchable orders
   getOrders(page: number, size: number, query: string): Observable<any> {
     const params: any = { page, size };
@@ -210,6 +212,10 @@ export class AdminService {
 
   getHealth(): Observable<any> {
     return this.http.get(`${this.baseUrl}/health`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
   // ✅ Inventory Management
   adjustInventory(adjustments: any[]): Observable<any> {
     return this.http.post(`${this.baseUrl}/inventory/adjust`, adjustments, {
