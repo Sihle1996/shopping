@@ -18,7 +18,7 @@ import { ProductComponent } from './pages/product/product.component';
 import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { ThankYouComponent } from './components/thank-you/thank-you.component';
 import { HistoryordersComponent } from './pages/historyorders/historyorders.component';
-import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
+import { AdminDashboardModule } from './admin/admin-dashboard/admin-dashboard.module';
 import { AdminOrdersComponent } from './admin/admin-orders/admin-orders.component';
 import { AdminMenuComponent } from './admin/admin-menu/admin-menu.component';
 import { AdminDriversComponent } from './admin/admin-drivers/admin-drivers.component';
@@ -44,7 +44,6 @@ import { AdminFooterComponent } from './admin/admin-footer/admin-footer.componen
     CheckoutComponent,
     ThankYouComponent,
     HistoryordersComponent,
-    AdminDashboardComponent,
     AdminOrdersComponent,
     AdminMenuComponent,
     AdminDriversComponent,
@@ -60,6 +59,7 @@ import { AdminFooterComponent } from './admin/admin-footer/admin-footer.componen
     FormsModule,
     ReactiveFormsModule,
     BrowserAnimationsModule,
+    AdminDashboardModule,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',
       timeOut: 4000,
