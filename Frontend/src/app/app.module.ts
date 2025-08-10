@@ -29,6 +29,8 @@ import { AdminNotificationsComponent } from './admin/admin-notifications/admin-n
 import { AdminFooterComponent } from './admin/admin-footer/admin-footer.component';
 import { LoadersModule } from './shared/loaders/loaders.module';
 import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
+import { PaginationComponent } from './components/pagination/pagination.component';
+import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-dashboard.component';
 
 
 
@@ -54,6 +56,8 @@ import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
     AdminFooterComponent,
     DriverDashboardComponent,
     DriverMapComponent,
+    PaginationComponent,
+    ManagerDashboardComponent,
   ],
   imports: [
     BrowserModule,
