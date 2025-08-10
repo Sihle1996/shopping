@@ -22,20 +22,21 @@ export class NotificationService {
     // Disable verbose debug logging
     (this.stompClient as any).debug = () => {};
 
-    this.stompClient.connect(
-      {},
-      () => {
-        this.stompClient?.subscribe('/topic/orders', (message: IMessage) => {
-          if (message.body) {
-            this.notificationSubject.next(message.body);
+    this.stompClient.connect({}, () => {
+      this.stompClient?.subscribe('/topic/orders', (message: IMessage) => {
+        if (message.body) {
+          try {
+            const data = JSON.parse(message.body);
+            const userEmail = data.userEmail ?? 'Unknown user';
+            const totalAmount = Number(data.totalAmount ?? 0).toFixed(2);
+            const formatted = `New order from ${userEmail} totaling R${totalAmount}`;
+            this.notificationSubject.next(formatted);
+          } catch (e) {
+            console.error('Failed to parse notification', e);
           }
-        });
-      },
-      (error: any) => {
-        console.error('STOMP connection error', error);
-        this.toastr.error('Failed to connect to notifications', 'Connection Error');
-      }
-    );
+        }
+      });
+    });
   }
 
   get notifications(): Observable<string> {
