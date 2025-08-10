@@ -28,6 +28,7 @@ import { DriverMapComponent } from './driver/driver-map/driver-map.component';
 import { AdminNotificationsComponent } from './admin/admin-notifications/admin-notifications.component';
 import { AdminFooterComponent } from './admin/admin-footer/admin-footer.component';
 import { PaginationComponent } from './components/pagination/pagination.component';
+import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-dashboard.component';
 
 
 
@@ -54,6 +55,7 @@ import { PaginationComponent } from './components/pagination/pagination.componen
     DriverDashboardComponent,
     DriverMapComponent,
     PaginationComponent,
+    ManagerDashboardComponent,
   ],
   imports: [
     BrowserModule,
