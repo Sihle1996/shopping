@@ -39,7 +39,9 @@
     "tslib": "^2.8.1",
     "util": "^0.12.5",
     "vm-browserify": "^1.1.2",
-    "zone.js": "~0.13.0"
+    "zone.js": "~0.13.0",
+    "chart.js": "^4.4.0",
+    "ng2-charts": "^5.0.1"
   },
   "devDependencies": {
     "@angular-builders/custom-webpack": "^16.0.1",
