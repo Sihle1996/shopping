@@ -46,6 +46,9 @@ public class SecurityConfiguration {
                                 "/uploads/**"         // ✅ Just in case direct file path is hit
                         ).permitAll()
 
+                        // ✅ Allow WebSocket (SockJS) connections
+                        .requestMatchers("/ws/**").permitAll()
+
                         // ✅ Admin-only routes
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
