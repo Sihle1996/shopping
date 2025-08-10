@@ -1,6 +1,6 @@
 // src/app/services/notification.service.ts
 import { Injectable } from '@angular/core';
-import { Client, IMessage, Stomp } from '@stomp/stompjs';
+import { CompatClient, IMessage, Stomp } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
 
@@ -8,7 +8,7 @@ import { Observable, Subject } from 'rxjs';
   providedIn: 'root'
 })
 export class NotificationService {
-  private stompClient: Client | null = null;
+  private stompClient: CompatClient | null = null;
   private notificationSubject = new Subject<string>();
 
   constructor() {
