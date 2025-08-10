@@ -12,6 +12,7 @@
     "src/main.ts"
   ],
   "include": [
+    "src/polyfills.ts",
     "src/**/*.d.ts"
   ]
 }
