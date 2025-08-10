@@ -8,9 +8,9 @@ import com.example.backend.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
@@ -24,21 +24,21 @@ public class DriverController {
     private final AuthUtil authUtil;
 
     @GetMapping("/orders")
-    public ResponseEntity<List<OrderDTO>> getMyAssignedOrders(Principal principal) {
-        User driver = authUtil.getCurrentUser(principal);
+    public ResponseEntity<List<OrderDTO>> getMyAssignedOrders(Authentication authentication) {
+        User driver = authUtil.getCurrentUser(authentication);
         return ResponseEntity.ok(driverService.getOrdersAssignedToDriver(driver));
     }
 
     @PutMapping("/orders/{orderId}/delivered")
-    public ResponseEntity<?> markOrderAsDelivered(@PathVariable Long orderId, Principal principal) {
-        User driver = authUtil.getCurrentUser(principal);
+    public ResponseEntity<?> markOrderAsDelivered(@PathVariable Long orderId, Authentication authentication) {
+        User driver = authUtil.getCurrentUser(authentication);
         driverService.markOrderDelivered(driver, orderId);
         return ResponseEntity.ok(Map.of("message", "Order marked as delivered."));
     }
 
     @PutMapping("/availability")
-    public ResponseEntity<?> updateAvailability(@RequestParam DriverStatus status, Principal principal) {
-        User driver = authUtil.getCurrentUser(principal);
+    public ResponseEntity<?> updateAvailability(@RequestParam DriverStatus status, Authentication authentication) {
+        User driver = authUtil.getCurrentUser(authentication);
         driverService.updateAvailability(driver, status);
         return ResponseEntity.ok(Map.of("message", "Availability updated."));
     }
