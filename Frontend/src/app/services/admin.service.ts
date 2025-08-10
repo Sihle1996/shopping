@@ -33,6 +33,18 @@ export class AdminService {
     });
   }
 
+  // ✅ Get paginated & searchable orders
+  getOrders(page: number, size: number, query: string): Observable<any> {
+    const params: any = { page, size };
+    if (query) {
+      params.query = query;
+    }
+    return this.http.get(`${this.baseUrl}/orders/search`, {
+      headers: this.getAuthHeaders(),
+      params
+    });
+  }
+
   // ✅ Get all menu items
   getMenuItems(): Observable<any> {
     return this.http.get(`${this.baseUrl}/menu`, {

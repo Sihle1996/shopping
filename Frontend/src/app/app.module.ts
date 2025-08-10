@@ -28,7 +28,10 @@ import { DriverMapComponent } from './driver/driver-map/driver-map.component';
 import { AdminNotificationsComponent } from './admin/admin-notifications/admin-notifications.component';
 import { AdminFooterComponent } from './admin/admin-footer/admin-footer.component';
 import { InventoryManagementComponent } from './admin/inventory-management/inventory-management.component';
-
+import { LoadersModule } from './shared/loaders/loaders.module';
+import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
+import { PaginationComponent } from './components/pagination/pagination.component';
+import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-dashboard.component';
 
 
 @NgModule({
@@ -54,6 +57,8 @@ import { InventoryManagementComponent } from './admin/inventory-management/inven
     DriverDashboardComponent,
     DriverMapComponent,
     InventoryManagementComponent,
+    PaginationComponent,
+    ManagerDashboardComponent,
   ],
   imports: [
     BrowserModule,
@@ -62,6 +67,7 @@ import { InventoryManagementComponent } from './admin/inventory-management/inven
     FormsModule,
     ReactiveFormsModule,
     BrowserAnimationsModule,
+    LoadersModule,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',
       timeOut: 4000,
@@ -73,6 +79,11 @@ import { InventoryManagementComponent } from './admin/inventory-management/inven
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: LoaderInterceptor,
       multi: true
     }
   ],

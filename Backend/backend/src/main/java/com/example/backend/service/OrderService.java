@@ -126,6 +126,17 @@ public class OrderService {
                 .map(this::convertToOrderDTO);
     }
 
+    public Page<OrderDTO> searchOrders(String query, int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by("orderDate"));
+        Page<Order> orders;
+        if (query == null || query.isBlank()) {
+            orders = orderRepository.findAll(pageable);
+        } else {
+            orders = orderRepository.findByUserEmailContainingIgnoreCase(query, pageable);
+        }
+        return orders.map(this::convertToOrderDTO);
+    }
+
     @Transactional
     public OrderDTO updateOrderStatus(Long orderId, String status) {
         Order order = orderRepository.findById(orderId)
