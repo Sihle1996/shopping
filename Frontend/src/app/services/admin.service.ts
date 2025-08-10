@@ -114,5 +114,11 @@ export class AdminService {
       map((res: { imageUrl: string }) => res.imageUrl) // ✅ FIX: Add proper type to res
     );
   }
-    
+
+  getHealth(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/health`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
 }
