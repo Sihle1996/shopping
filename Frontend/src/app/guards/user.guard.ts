@@ -13,10 +13,15 @@ export class UserGuard implements CanActivate {
     const role = this.authService.getUserRole();
     if (role === 'ROLE_USER') {
       return true;
-    } else {
-      // Redirect admin to dashboard
+    } else if (role === 'ROLE_ADMIN') {
       this.router.navigate(['/admin/dashboard']);
-      return false;
+    } else if (role === 'ROLE_MANAGER') {
+      this.router.navigate(['/manager/dashboard']);
+    } else if (role === 'ROLE_DRIVER') {
+      this.router.navigate(['/driver/dashboard']);
+    } else {
+      this.router.navigate(['/login']);
     }
+    return false;
   }
 }

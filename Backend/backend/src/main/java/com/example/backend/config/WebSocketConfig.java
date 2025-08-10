@@ -66,9 +66,21 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     } else if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
                         String destination = accessor.getDestination();
                         String userId = accessor.getUser() != null ? accessor.getUser().getName() : null;
-                        if (destination != null && destination.startsWith("/topic/orders/")) {
-                            String destUserId = destination.substring("/topic/orders/".length());
-                            if (userId == null || !userId.equals(destUserId)) {
+                        String role = accessor.getUser() != null && accessor.getUser().getAuthorities() != null
+                                ? accessor.getUser().getAuthorities().stream().findFirst().map(Object::toString).orElse(null)
+                                : null;
+
+                        if (destination != null) {
+                            if (destination.startsWith("/topic/orders/")) {
+                                String destUserId = destination.substring("/topic/orders/".length());
+                                if (userId == null || !userId.equals(destUserId)) {
+                                    throw new IllegalArgumentException("Forbidden subscription");
+                                }
+                            } else if (destination.startsWith("/topic/admin") && !"ROLE_ADMIN".equals(role)) {
+                                throw new IllegalArgumentException("Forbidden subscription");
+                            } else if (destination.startsWith("/topic/driver") && !"ROLE_DRIVER".equals(role)) {
+                                throw new IllegalArgumentException("Forbidden subscription");
+                            } else if (destination.startsWith("/topic/manager") && !"ROLE_MANAGER".equals(role)) {
                                 throw new IllegalArgumentException("Forbidden subscription");
                             }
                         }
