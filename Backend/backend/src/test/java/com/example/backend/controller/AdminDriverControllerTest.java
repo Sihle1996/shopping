@@ -1,8 +1,9 @@
 package com.example.backend.controller;
 
 import com.example.backend.auth.RegisterRequest;
+import com.example.backend.entity.DriverDTO;
 import com.example.backend.service.AdminDriverService;
-import com.example.backend.user.User;
+import com.example.backend.user.DriverStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -33,7 +34,7 @@ class AdminDriverControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void createDriverReturnsCreatedDriver() throws Exception {
-        User driver = User.builder().id(1L).email("driver@example.com").build();
+        DriverDTO driver = new DriverDTO(1L, "driver@example.com", DriverStatus.AVAILABLE);
         when(adminDriverService.createDriver(any(RegisterRequest.class))).thenReturn(driver);
 
         mockMvc.perform(post("/api/admin/drivers")
@@ -46,7 +47,7 @@ class AdminDriverControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void getAllDriversReturnsList() throws Exception {
-        List<User> drivers = List.of(User.builder().id(1L).email("a@b.com").build());
+        List<DriverDTO> drivers = List.of(new DriverDTO(1L, "a@b.com", DriverStatus.AVAILABLE));
         when(adminDriverService.getAllDrivers()).thenReturn(drivers);
 
         mockMvc.perform(get("/api/admin/drivers"))
