@@ -1,8 +1,8 @@
 package com.example.backend.controller;
 
 import com.example.backend.auth.RegisterRequest;
+import com.example.backend.entity.DriverDTO;
 import com.example.backend.service.AdminDriverService;
-import com.example.backend.user.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,12 +21,12 @@ public class AdminDriverController {
     private final AdminDriverService adminDriverService;
 
     @PostMapping
-    public ResponseEntity<User> createDriver(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<DriverDTO> createDriver(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(adminDriverService.createDriver(request));
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllDrivers() {
+    public ResponseEntity<List<DriverDTO>> getAllDrivers() {
         return ResponseEntity.ok(adminDriverService.getAllDrivers());
     }
 

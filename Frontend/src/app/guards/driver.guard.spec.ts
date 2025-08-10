@@ -1,17 +1,26 @@
 import { TestBed } from '@angular/core/testing';
-import { CanActivateFn } from '@angular/router';
+import { Router } from '@angular/router';
+import { DriverGuard } from './driver.guard';
+import { AuthService } from '../services/auth.service';
 
-import { driverGuard } from './driver.guard';
-
-describe('driverGuard', () => {
-  const executeGuard: CanActivateFn = (...guardParameters) => 
-      TestBed.runInInjectionContext(() => driverGuard(...guardParameters));
+describe('DriverGuard', () => {
+  let guard: DriverGuard;
+  let authServiceSpy: jasmine.SpyObj<AuthService>;
+  const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['getUserRole']);
+    TestBed.configureTestingModule({
+      providers: [
+        DriverGuard,
+        { provide: AuthService, useValue: authServiceSpy },
+        { provide: Router, useValue: routerSpy }
+      ]
+    });
+    guard = TestBed.inject(DriverGuard);
   });
 
   it('should be created', () => {
-    expect(executeGuard).toBeTruthy();
+    expect(guard).toBeTruthy();
   });
 });
