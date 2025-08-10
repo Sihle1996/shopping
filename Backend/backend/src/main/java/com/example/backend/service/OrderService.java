@@ -4,6 +4,7 @@ import com.example.backend.entity.*;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.repository.InventoryLogRepository;
 import com.example.backend.user.DriverStatus;
 import com.example.backend.user.Role;
 import com.example.backend.user.User;
@@ -30,6 +31,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final MenuItemRepository menuItemRepository;
+    private final InventoryLogRepository inventoryLogRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
@@ -42,8 +44,20 @@ public class OrderService {
             item.setQuantity(itemDTO.getQuantity());
             item.setTotalPrice(itemDTO.getPrice() * itemDTO.getQuantity());
             item.setSize(itemDTO.getSize());
-            item.setMenuItem(menuItemRepository.findById(itemDTO.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Menu item not found: " + itemDTO.getProductId())));
+            MenuItem menuItem = menuItemRepository.findById(itemDTO.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Menu item not found: " + itemDTO.getProductId()));
+            menuItem.setStock(menuItem.getStock() - itemDTO.getQuantity());
+            menuItem.setReservedStock(menuItem.getReservedStock() + itemDTO.getQuantity());
+            menuItemRepository.save(menuItem);
+
+            InventoryLog log = new InventoryLog();
+            log.setMenuItem(menuItem);
+            log.setStockChange(-itemDTO.getQuantity());
+            log.setReservedChange(itemDTO.getQuantity());
+            log.setType("ORDER_PAYMENT");
+            inventoryLogRepository.save(log);
+
+            item.setMenuItem(menuItem);
             orderItems.add(item);
         }
 
