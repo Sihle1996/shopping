@@ -1,0 +1,14 @@
+<div class="p-4">
+  <h2 class="text-xl font-bold mb-4">System Health</h2>
+  <div *ngIf="health">
+    <p>REST Status: {{health.rest.status}} (Last: {{health.rest.lastUpdate}})</p>
+    <p>WebSocket Status: {{health.websocket.status}} (Last: {{health.websocket.lastUpdate}})</p>
+  </div>
+
+  <h2 class="text-xl font-bold mt-6 mb-4">Diagnostics Logs</h2>
+  <div class="bg-gray-100 p-2 h-64 overflow-y-auto text-sm log-container">
+    <div *ngFor="let log of logs">
+      [{{log.timestamp}}] {{log.level}} - {{log.message}}
+    </div>
+  </div>
+</div>

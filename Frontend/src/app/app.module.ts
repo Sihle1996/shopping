@@ -27,6 +27,7 @@ import { AuthInterceptor } from './authInterceptor/auth.interceptor';
 import { DriverMapComponent } from './driver/driver-map/driver-map.component';
 import { AdminNotificationsComponent } from './admin/admin-notifications/admin-notifications.component';
 import { AdminFooterComponent } from './admin/admin-footer/admin-footer.component';
+import { AdminDiagnosticsComponent } from './admin/admin-diagnostics/admin-diagnostics.component';
 import { InventoryManagementComponent } from './admin/inventory-management/inventory-management.component';
 import { LoadersModule } from './shared/loaders/loaders.module';
 import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
@@ -54,6 +55,7 @@ import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-d
     AdminDriversComponent,
     AdminNotificationsComponent,
     AdminFooterComponent,
+    AdminDiagnosticsComponent,
     DriverDashboardComponent,
     DriverMapComponent,
     InventoryManagementComponent,

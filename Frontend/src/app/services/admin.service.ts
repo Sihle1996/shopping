@@ -127,6 +127,8 @@ export class AdminService {
     );
   }
 
+  getHealth(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/health`, {
   // ✅ Inventory Management
   adjustInventory(adjustments: any[]): Observable<any> {
     return this.http.post(`${this.baseUrl}/inventory/adjust`, adjustments, {
@@ -146,5 +148,5 @@ export class AdminService {
       headers: this.getAuthHeaders()
     });
   }
-    
+
 }
