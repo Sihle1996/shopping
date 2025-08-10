@@ -1,0 +1,9 @@
+<div class="driver-map-wrapper">
+  <div class="filter-controls mb-2">
+    <label class="mr-4" *ngFor="let status of ['AVAILABLE','UNAVAILABLE']">
+      <input type="checkbox" [checked]="selectedStatuses.has(status)" (change)="toggleStatus(status, $event)" />
+      {{status}}
+    </label>
+  </div>
+  <div id="adminDriverMap" class="map-container"></div>
+</div>
