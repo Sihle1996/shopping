@@ -40,17 +40,23 @@ export class HomeComponent {
   }
 
   fetchMenu(): void {
-    const source = this.isAdmin
-      ? this.adminService.getMenuItems()
-      : this.menuService.getMenuItems();
-
-    source.subscribe({
-      next: (data) => {
+    if (this.isAdmin) {
+      this.adminService.menuItems$.subscribe((data: any[]) => {
         this.menuItems = data;
         this.filteredMenuItems = data;
-      },
-      error: (err) => console.error('❌ Failed to load menu:', err)
-    });
+      });
+      this.adminService.loadMenuItems().subscribe({
+        error: (err) => console.error('❌ Failed to load menu:', err)
+      });
+    } else {
+      this.menuService.getMenuItems().subscribe({
+        next: (data: any[]) => {
+          this.menuItems = data;
+          this.filteredMenuItems = data;
+        },
+        error: (err) => console.error('❌ Failed to load menu:', err)
+      });
+    }
   }
 
   filterMenu(): void {

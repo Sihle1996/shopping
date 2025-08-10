@@ -1,6 +1,8 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { OptimisticService } from './optimistic.service';
 
 @Injectable({
   providedIn: 'root'
@@ -8,7 +10,13 @@ import { map, Observable } from 'rxjs';
 export class AdminService {
   private baseUrl = 'http://localhost:8080/api/admin';
 
-  constructor(private http: HttpClient) {}
+  private ordersSubject = new BehaviorSubject<any[]>([]);
+  orders$ = this.ordersSubject.asObservable();
+
+  private menuItemsSubject = new BehaviorSubject<any[]>([]);
+  menuItems$ = this.menuItemsSubject.asObservable();
+
+  constructor(private http: HttpClient, private optimistic: OptimisticService) {}
 
   // ✅ Helper to attach token
   private getAuthHeaders(): HttpHeaders {
@@ -26,46 +34,108 @@ export class AdminService {
     });
   }
 
-  // ✅ Get all admin orders
-  getAllOrders(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/orders`, {
-      headers: this.getAuthHeaders()
-    });
+  // ✅ Initial load of orders into local state
+  loadOrders(): Observable<any[]> {
+    return this.http
+      .get<any[]>(`${this.baseUrl}/orders`, { headers: this.getAuthHeaders() })
+      .pipe(
+        map(orders => {
+          this.ordersSubject.next(orders);
+          return orders;
+        })
+      );
   }
 
-  // ✅ Get all menu items
-  getMenuItems(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/menu`, {
-      headers: this.getAuthHeaders()
-    });
+  // ✅ Initial load of menu items into local state
+  loadMenuItems(): Observable<any[]> {
+    return this.http
+      .get<any[]>(`${this.baseUrl}/menu`, { headers: this.getAuthHeaders() })
+      .pipe(
+        map(items => {
+          this.menuItemsSubject.next(items);
+          return items;
+        })
+      );
   }
 
-  // ✅ Add menu item
-  createMenuItem(item: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/menu`, item, {
+  // ✅ Add menu item (optimistic)
+  createMenuItem(item: any): void {
+    const current = this.menuItemsSubject.getValue();
+    const tempItem = { ...item, id: Date.now() };
+
+    const request$ = this.http.post<any>(`${this.baseUrl}/menu`, item, {
       headers: this.getAuthHeaders()
-    });
+    }).pipe(map(res => ({ ...item, ...res })));
+
+    this.optimistic.enqueue(
+      () => this.menuItemsSubject.next([...current, tempItem]),
+      request$,
+      () => this.menuItemsSubject.next(current),
+      'Menu item created',
+      'Failed to create menu item'
+    );
   }
 
-  // ✅ Update menu item
-  updateMenuItem(id: number, item: any): Observable<any> {
-    return this.http.put(`${this.baseUrl}/menu/${id}`, item, {
+  // ✅ Update menu item (optimistic)
+  updateMenuItem(id: number, item: any): void {
+    const current = this.menuItemsSubject.getValue();
+    const index = current.findIndex((i: any) => i.id === id);
+    const previous = { ...current[index] };
+    const updated = [...current];
+    updated[index] = { ...item, id };
+
+    const request$ = this.http.put(`${this.baseUrl}/menu/${id}`, item, {
       headers: this.getAuthHeaders()
     });
+
+    this.optimistic.enqueue(
+      () => this.menuItemsSubject.next(updated),
+      request$,
+      () => {
+        const rollback = [...current];
+        rollback[index] = previous;
+        this.menuItemsSubject.next(rollback);
+      },
+      'Menu item updated',
+      'Failed to update menu item'
+    );
   }
 
-  // ✅ Delete menu item
-  deleteMenuItem(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/menu/${id}`, {
+  // ✅ Delete menu item (optimistic)
+  deleteMenuItem(id: number): void {
+    const current = this.menuItemsSubject.getValue();
+    const updated = current.filter((i: any) => i.id !== id);
+
+    const request$ = this.http.delete(`${this.baseUrl}/menu/${id}`, {
       headers: this.getAuthHeaders()
     });
+
+    this.optimistic.enqueue(
+      () => this.menuItemsSubject.next(updated),
+      request$,
+      () => this.menuItemsSubject.next(current),
+      'Menu item deleted',
+      'Failed to delete menu item'
+    );
   }
 
-  // ✅ Update order status
-  updateOrderStatus(orderId: number, status: string): Observable<any> {
-    return this.http.put(`${this.baseUrl}/orders/update/${orderId}?status=${status}`, null, {
-      headers: this.getAuthHeaders()
-    });
+  // ✅ Update order status (optimistic)
+  updateOrderStatus(orderId: number, status: string): void {
+    const current = this.ordersSubject.getValue();
+    const updated = current.map(o => (o.id === orderId ? { ...o, status } : o));
+    const request$ = this.http.put(
+      `${this.baseUrl}/orders/update/${orderId}?status=${status}`,
+      null,
+      { headers: this.getAuthHeaders() }
+    );
+
+    this.optimistic.enqueue(
+      () => this.ordersSubject.next(updated),
+      request$,
+      () => this.ordersSubject.next(current),
+      'Order status updated',
+      'Failed to update order status'
+    );
   }
 
   // ✅ Delete order
