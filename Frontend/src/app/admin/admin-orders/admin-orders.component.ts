@@ -1,6 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { AuthService } from 'src/app/services/auth.service';
 import { AdminService } from 'src/app/services/admin.service';
 
 interface OrderItem {
@@ -38,31 +36,13 @@ export class AdminOrdersComponent implements OnInit {
   currentPage = 1;
   pageSize = 5;
 
-  constructor(
-    private http: HttpClient,
-    private authService: AuthService,
-    private adminSerivce: AdminService
-  ) {}
+  constructor(private adminSerivce: AdminService) {}
 
   ngOnInit(): void {
-    this.fetchOrders();
-  }
-
-  get authHeaders() {
-    return {
-      headers: new HttpHeaders({
-        Authorization: `Bearer ${this.authService.getToken()}`
-      })
-    };
-  }
-
-  fetchOrders(): void {
     this.loading = true;
-    this.http.get<Order[]>('http://localhost:8080/api/admin/orders', this.authHeaders).subscribe({
-      next: (data) => {
-        this.orders = data;
-        this.loading = false;
-      },
+    this.adminSerivce.orders$.subscribe(orders => this.orders = orders);
+    this.adminSerivce.loadOrders().subscribe({
+      next: () => (this.loading = false),
       error: (err) => {
         this.errorMessage = 'Failed to load orders.';
         this.loading = false;
@@ -72,16 +52,7 @@ export class AdminOrdersComponent implements OnInit {
   }
 
   updateStatus(orderId: number, newStatus: string): void {
-    this.http.put(
-      `http://localhost:8080/api/admin/orders/update/${orderId}?status=${newStatus}`,
-      {},
-      this.authHeaders
-    ).subscribe({
-      next: () => {
-        this.orders = this.orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
-      },
-      error: (err) => console.error('Failed to update status', err)
-    });
+    this.adminSerivce.updateOrderStatus(orderId, newStatus);
   }
 
   filterOrders(): void {
