@@ -6,6 +6,7 @@ import com.example.backend.repository.UserRepository;
 import com.example.backend.user.DriverStatus;
 import com.example.backend.user.Role;
 import com.example.backend.user.User;
+import com.example.backend.config.EmailAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,7 @@ public class AdminDriverService {
     public DriverDTO createDriver(RegisterRequest request) {
         userRepository.findByEmail(request.getEmail())
                 .ifPresent(u -> {
-                    throw new IllegalArgumentException("Email already exists");
+                    throw new EmailAlreadyExistsException("Email already exists");
                 });
 
         User driver = User.builder()
