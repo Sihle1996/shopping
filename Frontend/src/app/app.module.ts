@@ -27,6 +27,7 @@ import { AuthInterceptor } from './authInterceptor/auth.interceptor';
 import { DriverMapComponent } from './driver/driver-map/driver-map.component';
 import { AdminNotificationsComponent } from './admin/admin-notifications/admin-notifications.component';
 import { AdminFooterComponent } from './admin/admin-footer/admin-footer.component';
+import { PaginationComponent } from './components/pagination/pagination.component';
 
 
 
@@ -52,6 +53,7 @@ import { AdminFooterComponent } from './admin/admin-footer/admin-footer.componen
     AdminFooterComponent,
     DriverDashboardComponent,
     DriverMapComponent,
+    PaginationComponent,
   ],
   imports: [
     BrowserModule,
