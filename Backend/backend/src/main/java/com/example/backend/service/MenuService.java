@@ -31,6 +31,9 @@ public class MenuService {
         // ✅ Update image and category
         menuItem.setImage(updatedMenuItem.getImage());
         menuItem.setCategory(updatedMenuItem.getCategory());
+        menuItem.setStock(updatedMenuItem.getStock());
+        menuItem.setReservedStock(updatedMenuItem.getReservedStock());
+        menuItem.setLowStockThreshold(updatedMenuItem.getLowStockThreshold());
 
         return menuItemRepository.save(menuItem);
     }
