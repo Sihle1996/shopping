@@ -1,14 +1,12 @@
 // src/app/services/notification.service.ts
-import { Injectable } from '@angular/core';
-import { CompatClient, IMessage, Stomp } from '@stomp/stompjs';
+import { Injectable, OnDestroy } from '@angular/core';
+import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
 
-@Injectable({
-  providedIn: 'root'
-})
-export class NotificationService {
-  private stompClient: CompatClient | null = null;
+@Injectable({ providedIn: 'root' })
+export class NotificationService implements OnDestroy {
+  private client: Client;
   private notificationSubject = new Subject<string>();
 
   constructor() {
