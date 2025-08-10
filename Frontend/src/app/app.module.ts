@@ -21,6 +21,7 @@ import { HistoryordersComponent } from './pages/historyorders/historyorders.comp
 import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
 import { AdminOrdersComponent } from './admin/admin-orders/admin-orders.component';
 import { AdminMenuComponent } from './admin/admin-menu/admin-menu.component';
+import { AdminDriversComponent } from './admin/admin-drivers/admin-drivers.component';
 import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashboard.component';
 import { AuthInterceptor } from './authInterceptor/auth.interceptor';
 import { DriverMapComponent } from './driver/driver-map/driver-map.component';
@@ -44,6 +45,7 @@ import { DriverMapComponent } from './driver/driver-map/driver-map.component';
     AdminDashboardComponent,
     AdminOrdersComponent,
     AdminMenuComponent,
+    AdminDriversComponent,
     DriverDashboardComponent,
     DriverMapComponent,
   ],
