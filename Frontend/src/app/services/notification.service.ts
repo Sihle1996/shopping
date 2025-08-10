@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { CompatClient, IMessage, Stomp } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
+import { throttleTime } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { ToastrService } from 'ngx-toastr';
 
@@ -49,6 +50,6 @@ export class NotificationService {
   }
 
   get notifications(): Observable<string> {
-    return this.notificationSubject.asObservable();
+    return this.notificationSubject.asObservable().pipe(throttleTime(1000));
   }
 }
