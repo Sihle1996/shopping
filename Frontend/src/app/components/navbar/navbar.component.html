@@ -9,6 +9,9 @@
         <li><a routerLink="/menu" class="hover:text-red-500 transition">Menu</a></li>
         <li><a routerLink="/cart" class="hover:text-red-500 transition">Cart</a></li>
         <li><a routerLink="/orders" class="hover:text-red-500 transition">Orders</a></li>
+        <li *ngIf="isLoggedIn && userRole === 'ROLE_MANAGER'"><a routerLink="/manager/dashboard" class="hover:text-red-500 transition">Manager</a></li>
+        <li *ngIf="isLoggedIn && userRole === 'ROLE_ADMIN'"><a routerLink="/admin/dashboard" class="hover:text-red-500 transition">Admin</a></li>
+        <li *ngIf="isLoggedIn && userRole === 'ROLE_DRIVER'"><a routerLink="/driver/dashboard" class="hover:text-red-500 transition">Driver</a></li>
         <li *ngIf="!isLoggedIn">
           <a routerLink="/login" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">Login</a>
         </li>
@@ -43,6 +46,9 @@
         <a routerLink="/menu" (click)="toggleMenu()" class="block py-3 px-5 hover:bg-gray-800">Menu</a>
         <a routerLink="/cart" (click)="toggleMenu()" class="block py-3 px-5 hover:bg-gray-800">Cart</a>
         <a routerLink="/orders" (click)="toggleMenu()" class="block py-3 px-5 hover:bg-gray-800">Orders</a>
+        <a *ngIf="isLoggedIn && userRole === 'ROLE_MANAGER'" routerLink="/manager/dashboard" (click)="toggleMenu()" class="block py-3 px-5 hover:bg-gray-800">Manager</a>
+        <a *ngIf="isLoggedIn && userRole === 'ROLE_ADMIN'" routerLink="/admin/dashboard" (click)="toggleMenu()" class="block py-3 px-5 hover:bg-gray-800">Admin</a>
+        <a *ngIf="isLoggedIn && userRole === 'ROLE_DRIVER'" routerLink="/driver/dashboard" (click)="toggleMenu()" class="block py-3 px-5 hover:bg-gray-800">Driver</a>
         <a routerLink="/login" *ngIf="!isLoggedIn" (click)="toggleMenu()" class="block py-3 px-5 bg-red-600 rounded-lg hover:bg-red-700 transition">Login</a>
         <button *ngIf="isLoggedIn" (click)="logout()" class="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
           Logout

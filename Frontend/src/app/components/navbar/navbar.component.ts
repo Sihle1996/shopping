@@ -10,11 +10,13 @@ import { AuthService } from 'src/app/services/auth.service';
 export class NavbarComponent {
   menuOpen = false;
   isLoggedIn = false;
+  userRole: string | null = null;
 
   constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit() {
     this.isLoggedIn = this.authService.isLoggedIn();
+    this.userRole = this.authService.getUserRole();
   }
 
   toggleMenu() {
