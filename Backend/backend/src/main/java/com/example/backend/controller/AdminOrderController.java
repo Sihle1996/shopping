@@ -85,6 +85,21 @@ public class AdminOrderController {
         }
     }
 
+    // ✅ Search Orders with Pagination (Admin)
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/search")
+    public ResponseEntity<?> searchOrders(
+            @RequestParam(defaultValue = "") String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        try {
+            return ResponseEntity.ok(orderService.searchOrders(query, page, size));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error searching orders: " + e.getMessage());
+        }
+    }
+
     // ✅ Update Order Status (Admin)
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/update/{orderId}")

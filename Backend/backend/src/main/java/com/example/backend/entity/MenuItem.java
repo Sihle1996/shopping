@@ -40,6 +40,15 @@ public class MenuItem {
     @Column(name = "category", nullable = false)
     private String category;
 
+    @Column(nullable = false)
+    private int stock = 0;
+
+    @Column(nullable = false)
+    private int reservedStock = 0;
+
+    @Column(nullable = false)
+    private int lowStockThreshold = 0;
+
     @Transient // ✅ Not stored in DB, used only for frontend
     private int quantity = 1; // Default quantity
 

@@ -33,6 +33,18 @@ export class AdminService {
     });
   }
 
+  // ✅ Get paginated & searchable orders
+  getOrders(page: number, size: number, query: string): Observable<any> {
+    const params: any = { page, size };
+    if (query) {
+      params.query = query;
+    }
+    return this.http.get(`${this.baseUrl}/orders/search`, {
+      headers: this.getAuthHeaders(),
+      params
+    });
+  }
+
   // ✅ Get all menu items
   getMenuItems(): Observable<any> {
     return this.http.get(`${this.baseUrl}/menu`, {
@@ -117,6 +129,22 @@ export class AdminService {
 
   getHealth(): Observable<any> {
     return this.http.get(`${this.baseUrl}/health`, {
+  // ✅ Inventory Management
+  adjustInventory(adjustments: any[]): Observable<any> {
+    return this.http.post(`${this.baseUrl}/inventory/adjust`, adjustments, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  exportInventoryCsv(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/inventory/export`, {
+      headers: this.getAuthHeaders(),
+      responseType: 'blob'
+    });
+  }
+
+  getInventoryAuditLogs(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/inventory/audit`, {
       headers: this.getAuthHeaders()
     });
   }

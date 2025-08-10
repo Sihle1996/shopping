@@ -1,0 +1,5 @@
+<div class="flex justify-center items-center mt-6 space-x-2">
+  <button (click)="prev()" [disabled]="currentPage === 1" class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm">Prev</button>
+  <span class="text-sm text-gray-600">Page {{ currentPage }} of {{ totalPages }}</span>
+  <button (click)="next()" [disabled]="currentPage === totalPages" class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm">Next</button>
+</div>
