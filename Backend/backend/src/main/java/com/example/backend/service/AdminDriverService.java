@@ -1,6 +1,7 @@
 package com.example.backend.service;
 
 import com.example.backend.auth.RegisterRequest;
+import com.example.backend.entity.DriverDTO;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.user.DriverStatus;
 import com.example.backend.user.Role;
@@ -18,7 +19,7 @@ public class AdminDriverService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public User createDriver(RegisterRequest request) {
+    public DriverDTO createDriver(RegisterRequest request) {
         userRepository.findByEmail(request.getEmail())
                 .ifPresent(u -> {
                     throw new IllegalArgumentException("Email already exists");
@@ -31,11 +32,14 @@ public class AdminDriverService {
                 .driverStatus(DriverStatus.AVAILABLE)
                 .build();
 
-        return userRepository.save(driver);
+        User saved = userRepository.save(driver);
+        return new DriverDTO(saved.getId(), saved.getEmail(), saved.getDriverStatus());
     }
 
-    public List<User> getAllDrivers() {
-        return userRepository.findByRole(Role.DRIVER);
+    public List<DriverDTO> getAllDrivers() {
+        return userRepository.findByRole(Role.DRIVER).stream()
+                .map(u -> new DriverDTO(u.getId(), u.getEmail(), u.getDriverStatus()))
+                .toList();
     }
 
     public void deleteDriver(Long id) {

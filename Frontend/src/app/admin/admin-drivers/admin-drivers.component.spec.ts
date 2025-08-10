@@ -31,7 +31,7 @@ describe('AdminDriversComponent', () => {
   });
 
   it('should call createDriver on addDriver', () => {
-    component.newDriver = { email: 'test@example.com', password: '123456', status: '' };
+    component.newDriver = { email: 'test@example.com', password: '123456' };
     component.addDriver();
     expect(adminServiceSpy.createDriver).toHaveBeenCalledWith(component.newDriver);
   });

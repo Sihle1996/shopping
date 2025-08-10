@@ -6,8 +6,7 @@
   <form (ngSubmit)="addDriver()" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
     <input type="email" [(ngModel)]="newDriver.email" name="email" placeholder="Email" class="form-input" required />
     <input type="password" [(ngModel)]="newDriver.password" name="password" placeholder="Password" class="form-input" required />
-    <input type="text" [(ngModel)]="newDriver.status" name="status" placeholder="Status (optional)" class="form-input" />
-    <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded md:col-span-3 hover:bg-green-700">
+    <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded md:col-span-2 hover:bg-green-700">
       Add Driver
     </button>
   </form>
@@ -23,7 +22,7 @@
     <tbody>
       <tr *ngFor="let driver of drivers" class="border-t">
         <td class="p-2">{{ driver.email }}</td>
-        <td class="p-2">{{ driver.status }}</td>
+        <td class="p-2">{{ driver.driverStatus }}</td>
         <td class="p-2">
           <button (click)="deleteDriver(driver.id)" class="text-red-600 hover:underline">Delete</button>
         </td>
