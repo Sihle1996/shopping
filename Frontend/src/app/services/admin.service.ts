@@ -181,6 +181,12 @@ export class AdminService {
     });
   }
 
+  getDriverLocations(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/drivers/locations`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
    // admin.service.ts
   assignDriver(orderId: number, driverId: number): Observable<any> {
   return this.http.post(
