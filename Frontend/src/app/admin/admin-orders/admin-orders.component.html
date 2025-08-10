@@ -17,7 +17,7 @@
     </div>
   
     <!-- Orders List -->
-    <div *ngIf="loading" class="text-gray-500">Loading orders...</div>
+    <app-table-skeleton *ngIf="loading"></app-table-skeleton>
     <div *ngIf="errorMessage" class="text-red-500">{{ errorMessage }}</div>
   
     <div *ngFor="let order of filteredOrders()" class="bg-white rounded-lg shadow p-4 mb-4 border border-gray-200">
@@ -83,9 +83,12 @@
         
             <button
               (click)="assignDriver()"
-              [disabled]="!selectedDriverId"
-              class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-              Assign
+              [disabled]="!selectedDriverId || assigning"
+              class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center justify-center">
+              <ng-container *ngIf="!assigning; else loadingTpl">Assign</ng-container>
+              <ng-template #loadingTpl>
+                <app-button-spinner></app-button-spinner>
+              </ng-template>
             </button>
           </div>
         </div>
