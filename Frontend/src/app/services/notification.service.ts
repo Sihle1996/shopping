@@ -4,6 +4,8 @@ import { CompatClient, IMessage, Stomp } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
 import { AuthService } from './auth.service';
+import { ToastrService } from 'ngx-toastr';
+
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +14,9 @@ export class NotificationService {
   private stompClient: CompatClient | null = null;
   private notificationSubject = new Subject<string>();
 
-  constructor(private authService: AuthService) {
+
+  constructor(private authService: AuthService, private toastr: ToastrService) {
+
     this.connect();
   }
 
@@ -30,7 +34,15 @@ export class NotificationService {
     this.stompClient.connect(headers, () => {
       this.stompClient?.subscribe('/user/queue/orders', (message: IMessage) => {
         if (message.body) {
-          this.notificationSubject.next(message.body);
+          try {
+            const data = JSON.parse(message.body);
+            const userEmail = data.userEmail ?? 'Unknown user';
+            const totalAmount = Number(data.totalAmount ?? 0).toFixed(2);
+            const formatted = `New order from ${userEmail} totaling R${totalAmount}`;
+            this.notificationSubject.next(formatted);
+          } catch (e) {
+            console.error('Failed to parse notification', e);
+          }
         }
       });
     });
