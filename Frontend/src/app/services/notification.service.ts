@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { CompatClient, IMessage, Stomp } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +12,7 @@ export class NotificationService {
   private stompClient: CompatClient | null = null;
   private notificationSubject = new Subject<string>();
 
-  constructor() {
+  constructor(private toastr: ToastrService) {
     this.connect();
   }
 
