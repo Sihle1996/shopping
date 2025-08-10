@@ -65,10 +65,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         }
                     } else if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
                         String destination = accessor.getDestination();
-                        String userId = accessor.getUser() != null ? accessor.getUser().getName() : null;
-                        String role = accessor.getUser() != null && accessor.getUser().getAuthorities() != null
-                                ? accessor.getUser().getAuthorities().stream().findFirst().map(Object::toString).orElse(null)
-                                : null;
+                        java.security.Principal userPrincipal = accessor.getUser();
+                        String userId = userPrincipal != null ? userPrincipal.getName() : null;
+                        String role = null;
+                        if (userPrincipal instanceof UsernamePasswordAuthenticationToken) {
+                            UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) userPrincipal;
+                            role = token.getAuthorities().stream()
+                                    .findFirst()
+                                    .map(Object::toString)
+                                    .orElse(null);
+                        }
 
                         if (destination != null) {
                             if (destination.startsWith("/topic/orders/")) {
