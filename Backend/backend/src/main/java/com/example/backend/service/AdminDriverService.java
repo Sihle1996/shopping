@@ -2,6 +2,7 @@ package com.example.backend.service;
 
 import com.example.backend.auth.RegisterRequest;
 import com.example.backend.entity.DriverDTO;
+import com.example.backend.entity.DriverLocationDTO;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.user.DriverStatus;
 import com.example.backend.user.Role;
@@ -12,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -43,11 +45,25 @@ public class AdminDriverService {
                 .toList();
     }
 
-    public void deleteDriver(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new RuntimeException("Driver not found");
-        }
-        userRepository.deleteById(id);
-    }
+  public void deleteDriver(Long id) {
+      if (!userRepository.existsById(id)) {
+          throw new RuntimeException("Driver not found");
+      }
+      userRepository.deleteById(id);
+  }
+
+  public List<DriverLocationDTO> getDriverLocations() {
+      return userRepository.findByRole(Role.DRIVER).stream()
+              .map(u -> new DriverLocationDTO(
+                      u.getId(),
+                      u.getEmail(),
+                      u.getDriverStatus(),
+                      u.getLatitude(),
+                      u.getLongitude(),
+                      u.getSpeed(),
+                      u.getLastPing()
+              ))
+              .collect(Collectors.toList());
+  }
 }
 
