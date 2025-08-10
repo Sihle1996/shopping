@@ -13,6 +13,7 @@ import { HistoryordersComponent } from './pages/historyorders/historyorders.comp
 import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
 import { AdminOrdersComponent } from './admin/admin-orders/admin-orders.component';
 import { AdminMenuComponent } from './admin/admin-menu/admin-menu.component';
+import { AdminDriversComponent } from './admin/admin-drivers/admin-drivers.component';
 import { AdminGuard } from './guards/admin.guard';
 import { UserGuard } from './guards/user.guard';
 import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashboard.component';
@@ -38,6 +39,7 @@ const routes: Routes = [
       { path: 'dashboard', component: AdminDashboardComponent },
       { path: 'orders', component: AdminOrdersComponent },
       { path: 'menu', component: AdminMenuComponent },
+      { path: 'drivers', component: AdminDriversComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

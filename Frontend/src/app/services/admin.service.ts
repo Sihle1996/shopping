@@ -75,6 +75,25 @@ export class AdminService {
     });
   }
 
+  // ✅ Driver Management
+  getDrivers(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/drivers`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  createDriver(dto: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/drivers`, dto, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  deleteDriver(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/drivers/${id}`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
    // admin.service.ts
   assignDriver(orderId: number, driverId: number): Observable<any> {
   return this.http.post(
