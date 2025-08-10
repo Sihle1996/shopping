@@ -67,7 +67,11 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         OrderDTO dto = convertToOrderDTO(saved);
-        messagingTemplate.convertAndSend("/topic/orders", dto);
+        messagingTemplate.convertAndSendToUser(
+                String.valueOf(user.getId()),
+                "/queue/orders",
+                dto
+        );
         return dto;
     }
 
