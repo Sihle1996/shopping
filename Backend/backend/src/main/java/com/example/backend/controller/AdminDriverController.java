@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.auth.RegisterRequest;
 import com.example.backend.entity.DriverDTO;
+import com.example.backend.entity.DriverLocationDTO;
 import com.example.backend.service.AdminDriverService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,11 @@ public class AdminDriverController {
     public ResponseEntity<?> deleteDriver(@PathVariable Long id) {
         adminDriverService.deleteDriver(id);
         return ResponseEntity.ok(Map.of("message", "Driver deleted"));
+    }
+
+    @GetMapping("/locations")
+    public ResponseEntity<List<DriverLocationDTO>> getDriverLocations() {
+        return ResponseEntity.ok(adminDriverService.getDriverLocations());
     }
 }
 

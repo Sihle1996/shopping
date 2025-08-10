@@ -28,17 +28,15 @@ export class AdminMenuComponent implements OnInit {
   constructor(private adminService: AdminService) {}
 
   ngOnInit(): void {
+    this.adminService.menuItems$.subscribe(data => {
+      this.menuItems = data;
+      this.categories = ['All', ...Array.from(new Set<string>(data.map((item: any) => item.category)))];
+    });
     this.fetchMenuItems();
   }
 
   fetchMenuItems(): void {
-    this.adminService.getMenuItems().subscribe({
-      next: data => {
-        this.menuItems = data;
-        this.categories = ['All', ...Array.from(new Set<string>((data.map((item: any) => item.category))))];
-
-
-      },
+    this.adminService.loadMenuItems().subscribe({
       error: err => console.error('Failed to fetch menu items:', err)
     });
   }
@@ -68,17 +66,12 @@ export class AdminMenuComponent implements OnInit {
       return;
     }
 
-    const action = this.isEditing
-      ? this.adminService.updateMenuItem(this.formData.id!, this.formData)
-      : this.adminService.createMenuItem(this.formData);
-
-    action.subscribe({
-      next: () => {
-        this.fetchMenuItems();
-        this.toggleForm();
-      },
-      error: err => console.error('Error saving menu item:', err)
-    });
+    if (this.isEditing) {
+      this.adminService.updateMenuItem(this.formData.id!, this.formData);
+    } else {
+      this.adminService.createMenuItem(this.formData);
+    }
+    this.toggleForm();
   }
 
   editItem(item: any): void {
@@ -89,10 +82,7 @@ export class AdminMenuComponent implements OnInit {
 
   deleteItem(id: number): void {
     if (confirm('Are you sure you want to delete this item?')) {
-      this.adminService.deleteMenuItem(id).subscribe({
-        next: () => this.fetchMenuItems(),
-        error: err => console.error('Error deleting item:', err)
-      });
+      this.adminService.deleteMenuItem(id);
     }
   }
 

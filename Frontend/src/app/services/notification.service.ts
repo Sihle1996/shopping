@@ -3,6 +3,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { Client, IMessage, StompHeaders } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
+import { throttleTime } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { ToastrService } from 'ngx-toastr';
 
@@ -27,7 +28,7 @@ export class NotificationService implements OnDestroy {
   }
 
   get notifications(): Observable<string> {
-    return this.notificationSubject.asObservable();
+    return this.notificationSubject.asObservable().pipe(throttleTime(1000));
   }
 
   private connect(): void {
