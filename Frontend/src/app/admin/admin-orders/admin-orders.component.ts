@@ -33,6 +33,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   filterStatus = 'All';
   availableDrivers: any[] = [];
   selectedDriverId: number | null = null;
+  assigning = false;
 
   currentPage = 1;
   pageSize = 5;
@@ -105,15 +106,17 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
 
   assignDriver(): void {
     if (!this.selectedOrder || !this.selectedDriverId) return;
-
+    this.assigning = true;
     this.adminSerivce.assignDriver(this.selectedOrder.id, this.selectedDriverId).subscribe({
       next: (updated) => {
         this.selectedOrder = updated;
         alert('✅ Driver assigned!');
+        this.assigning = false;
       },
       error: (err) => {
         console.error('Failed to assign driver', err);
         alert('❌ Failed to assign driver');
+        this.assigning = false;
       }
     });
   }
