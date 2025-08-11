@@ -6,7 +6,8 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class AnalyticsService {
-  private baseUrl = '/api/admin/analytics';
+  // Use full backend URL since Angular dev server doesn't proxy /api requests
+  private baseUrl = 'http://localhost:8080/api/admin/analytics';
 
   constructor(private http: HttpClient) {}
 
