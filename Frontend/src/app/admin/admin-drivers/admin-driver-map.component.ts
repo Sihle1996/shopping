@@ -151,8 +151,8 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
   }
 
   private connectWebSocket(): void {
-    const socket = new SockJS('/ws');
-    this.stompClient = Stomp.over(socket);
+    const socketFactory = () => new SockJS('http://localhost:8080/ws');
+    this.stompClient = Stomp.over(socketFactory);
     this.stompClient.debug = () => {};
     const headers: { [key: string]: string } = {};
     const token = this.authService.getToken();
