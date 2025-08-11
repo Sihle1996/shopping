@@ -41,12 +41,18 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- ✅ Database (PostgreSQL) -->
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<scope>runtime</scope>
-		</dependency>
+                <!-- ✅ Database (PostgreSQL) -->
+                <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <scope>runtime</scope>
+                </dependency>
+
+                <!-- ✅ Database Migrations -->
+                <dependency>
+                        <groupId>org.flywaydb</groupId>
+                        <artifactId>flyway-core</artifactId>
+                </dependency>
 
 		<!-- ✅ Lombok (For Clean Code) -->
 		<dependency>
