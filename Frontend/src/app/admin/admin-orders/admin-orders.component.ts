@@ -62,19 +62,26 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     });
   }
 
+  // template data helpers
+  filteredOrders(): Order[] {
+    if (this.filterStatus === 'All') return this.orders;
+    return this.orders.filter(o => o.status === this.filterStatus);
+  }
+  trackByOrderId = (_: number, o: Order) => o.id;
+
+  // ui handlers
   onSearch(term: string): void { this.searchSubject.next(term); }
   onPageChange(page: number): void { this.fetchOrders(page); }
   onFilterChange(status: typeof this.filterStatus): void { this.filterStatus = status; this.fetchOrders(1); }
 
   updateStatus(orderId: number, newStatus: string): void {
-    // optional local optimistic UI
+    // optimistic update with rollback on error
     const prev = this.orders.slice();
     this.orders = this.orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
 
     this.adminSerivce.updateOrderStatus(orderId, newStatus).subscribe({
       next: () => {},
       error: (err: unknown) => {
-        // rollback on failure
         this.orders = prev;
         console.error('Failed to update status', err);
       }
@@ -116,7 +123,6 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     });
   }
 
-  trackByOrderId = (_: number, o: Order) => o.id;
   getStatusColor(status: string): string {
     switch (status) {
       case 'PAID': return 'green';
