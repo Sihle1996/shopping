@@ -10,8 +10,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.backend.entity.MenuItem;
 import com.example.backend.service.MenuService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/menu")
 @RequiredArgsConstructor
+@Slf4j
 public class AdminMenuController {
 
     private final MenuService menuService;
@@ -53,6 +54,7 @@ public class AdminMenuController {
             List<MenuItem> items = menuService.getAllMenuItems();
             return ResponseEntity.ok(items);
         } catch (Exception e) {
+            log.error("Error fetching menu items", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error fetching menu items: " + e.getMessage());
         }
@@ -80,6 +82,7 @@ public class AdminMenuController {
             String imageUrl = "/images/" + filename;
             return ResponseEntity.ok().body(java.util.Collections.singletonMap("imageUrl", imageUrl));
         } catch (IOException e) {
+            log.error("Image upload failed for file {}", file.getOriginalFilename(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Image upload failed: " + e.getMessage());
         }

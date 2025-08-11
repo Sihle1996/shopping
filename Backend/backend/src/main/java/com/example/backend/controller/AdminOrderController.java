@@ -3,6 +3,7 @@ package com.example.backend.controller;
 import com.example.backend.entity.OrderDTO;
 import com.example.backend.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/orders")
 @RequiredArgsConstructor
+@Slf4j
 public class AdminOrderController {
 
     private final OrderService orderService;
@@ -26,7 +28,7 @@ public class AdminOrderController {
             List<OrderDTO> orders = orderService.getAllOrders();
             return ResponseEntity.ok(orders);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error fetching orders", e);
             return ResponseEntity.status(500).body("Error fetching orders: " + e.getMessage());
         }
     }
@@ -39,6 +41,7 @@ public class AdminOrderController {
             OrderDTO orderDTO = orderService.getOrderById(id);
             return ResponseEntity.ok(orderDTO);
         } catch (RuntimeException e) {
+            log.error("Order not found for id {}", id, e);
             return ResponseEntity.status(404).body("Order not found.");
         }
     }
@@ -53,6 +56,7 @@ public class AdminOrderController {
             stats.put("pendingOrders", orderService.getPendingOrdersCount());
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
+            log.error("Error fetching stats", e);
             return ResponseEntity.status(500).body("Error fetching stats");
         }
     }
@@ -66,6 +70,7 @@ public class AdminOrderController {
             List<OrderDTO> orders = orderService.getOrdersByStatus(status);
             return ResponseEntity.ok(orders);
         } catch (Exception e) {
+            log.error("Error fetching orders with status {}", status, e);
             return ResponseEntity.status(500).body("Error fetching orders: " + e.getMessage());
         }
     }
@@ -81,6 +86,7 @@ public class AdminOrderController {
         try {
             return ResponseEntity.ok(orderService.getPaginatedOrders(page, size, sortBy));
         } catch (Exception e) {
+            log.error("Error fetching paginated orders for page {}, size {}, sort {}", page, size, sortBy, e);
             return ResponseEntity.status(500).body("Error fetching paginated orders: " + e.getMessage());
         }
     }
@@ -96,6 +102,7 @@ public class AdminOrderController {
         try {
             return ResponseEntity.ok(orderService.searchOrders(query, page, size));
         } catch (Exception e) {
+            log.error("Error searching orders with query {}, page {}, size {}", query, page, size, e);
             return ResponseEntity.status(500).body("Error searching orders: " + e.getMessage());
         }
     }
@@ -108,8 +115,10 @@ public class AdminOrderController {
             OrderDTO updatedOrder = orderService.updateOrderStatus(orderId, status);
             return ResponseEntity.ok(updatedOrder);
         } catch (RuntimeException e) {
+            log.error("Order not found with id {}", orderId, e);
             return ResponseEntity.status(404).body("Order not found.");
         } catch (Exception e) {
+            log.error("Error updating order {} status to {}", orderId, status, e);
             return ResponseEntity.status(500).body("An error occurred while updating the order status.");
         }
     }
@@ -122,8 +131,10 @@ public class AdminOrderController {
             orderService.deleteOrder(orderId);
             return ResponseEntity.ok("Order deleted successfully.");
         } catch (RuntimeException e) {
+            log.error("Order not found with id {}", orderId, e);
             return ResponseEntity.status(404).body("Order not found.");
         } catch (Exception e) {
+            log.error("Error deleting order {}", orderId, e);
             return ResponseEntity.status(500).body("An error occurred while deleting the order.");
         }
     }
@@ -146,8 +157,8 @@ public class AdminOrderController {
             OrderDTO updated = orderService.assignDriverToOrder(orderId, driverId);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
-            e.printStackTrace(); // 👈 Logs the real reason
-            return ResponseEntity.status(400).body(e.getMessage()); // 👈 sends readable error to frontend
+            log.error("Error assigning driver {} to order {}", driverId, orderId, e);
+            return ResponseEntity.status(400).body(e.getMessage());
         }
     }
 
