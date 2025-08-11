@@ -20,7 +20,7 @@ import { AdminService } from 'src/app/services/admin.service';
         next: () => {
           this.newDriver = { email: '', password: '' };
         },
-        error: err => console.error('Failed to create driver', err)
+        error: (err: unknown) => console.error('Failed to create driver', err)
       });
     }
   }

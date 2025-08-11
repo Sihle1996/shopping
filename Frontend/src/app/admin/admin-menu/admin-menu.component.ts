@@ -28,7 +28,7 @@ export class AdminMenuComponent implements OnInit {
   constructor(private adminService: AdminService) {}
 
   ngOnInit(): void {
-    this.adminService.menuItems$.subscribe(data => {
+    this.adminService.menuItems$.subscribe((data: any[]) => {
       this.menuItems = data;
       this.categories = ['All', ...Array.from(new Set<string>(data.map((item: any) => item.category)))];
     });

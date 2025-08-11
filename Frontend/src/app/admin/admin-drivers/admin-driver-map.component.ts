@@ -142,8 +142,8 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
   }
 
   private loadInitialLocations(): void {
-    this.adminService.getDriverLocations().subscribe(data => {
-      data.forEach(d => {
+    this.adminService.getDriverLocations().subscribe((data: DriverLocation[]) => {
+      data.forEach((d: DriverLocation) => {
         this.drivers[d.id] = { ...d, history: [[d.longitude, d.latitude]] };
       });
       this.refreshSource();
