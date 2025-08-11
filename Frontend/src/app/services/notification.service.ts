@@ -22,8 +22,8 @@ export class NotificationService {
   }
 
   private connect(): void {
-    const socket = new SockJS('http://localhost:8080/ws');
-    this.stompClient = Stomp.over(socket);
+    const socketFactory = () => new SockJS('http://localhost:8080/ws');
+    this.stompClient = Stomp.over(socketFactory);
     (this.stompClient as any).debug = () => {};
 
     const headers: { [key: string]: string } = {};
