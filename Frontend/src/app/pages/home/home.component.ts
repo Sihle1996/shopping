@@ -46,17 +46,17 @@ export class HomeComponent {
         this.filteredMenuItems = data;
       });
       this.adminService.loadMenuItems().subscribe({
-        error: (err) => console.error('❌ Failed to load menu:', err)
+        error: (err: unknown) => console.error('❌ Failed to load menu:', err)
       });
     } else {
-      this.menuService.getMenuItems().subscribe({
-        next: (data: any[]) => {
-          this.menuItems = data;
-          this.filteredMenuItems = data;
-        },
-        error: (err) => console.error('❌ Failed to load menu:', err)
-      });
-    }
+        this.menuService.getMenuItems().subscribe({
+          next: (data: any[]) => {
+            this.menuItems = data;
+            this.filteredMenuItems = data;
+          },
+          error: (err: unknown) => console.error('❌ Failed to load menu:', err)
+        });
+      }
   }
 
   filterMenu(): void {
