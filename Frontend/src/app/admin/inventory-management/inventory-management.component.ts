@@ -17,9 +17,12 @@ export class InventoryManagementComponent implements OnInit {
   }
 
   fetchInventory(): void {
-    this.adminService.getMenuItems().subscribe({
-      next: data => this.inventory = data,
-      error: err => console.error('Failed to fetch inventory', err)
+    // Use the service's loader which fetches menu items and updates the
+    // internal observable state. Explicit typing avoids the implicit `any`
+    // errors flagged by the TypeScript compiler.
+    this.adminService.loadMenuItems().subscribe({
+      next: (data: any[]) => (this.inventory = data),
+      error: (err: unknown) => console.error('Failed to fetch inventory', err)
     });
   }
 
@@ -31,13 +34,13 @@ export class InventoryManagementComponent implements OnInit {
     const adjustment = [{ menuItemId: item.id, stockChange: item.adjustStock || 0, reservedChange: 0 }];
     this.adminService.adjustInventory(adjustment).subscribe({
       next: () => this.fetchInventory(),
-      error: err => console.error('Failed to adjust inventory', err)
+      error: (err: unknown) => console.error('Failed to adjust inventory', err)
     });
   }
 
   exportCsv(): void {
     this.adminService.exportInventoryCsv().subscribe({
-      next: blob => {
+      next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -45,14 +48,14 @@ export class InventoryManagementComponent implements OnInit {
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: err => console.error('Failed to export CSV', err)
+      error: (err: unknown) => console.error('Failed to export CSV', err)
     });
   }
 
   loadAudit(): void {
     this.adminService.getInventoryAuditLogs().subscribe({
-      next: data => this.auditLog = data,
-      error: err => console.error('Failed to load audit log', err)
+      next: (data: any[]) => (this.auditLog = data),
+      error: (err: unknown) => console.error('Failed to load audit log', err)
     });
   }
 }
