@@ -1,10 +1,11 @@
 package com.example.backend.service;
 
 import com.example.backend.entity.Order;
-import com.example.backend.entity.OrderItem;
 import com.example.backend.entity.SalesTrendDTO;
 import com.example.backend.entity.TopProductDTO;
 import com.example.backend.repository.OrderRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -34,19 +35,8 @@ public class AnalyticsService {
     }
 
     public List<TopProductDTO> getTopProducts(Instant start, Instant end) {
-        List<Order> orders = orderRepository.findByOrderDateBetween(start, end);
-        Map<String, Long> counts = new HashMap<>();
-        for (Order order : orders) {
-            for (OrderItem item : order.getOrderItems()) {
-                String name = item.getMenuItem().getName();
-                counts.merge(name, (long) item.getQuantity(), Long::sum);
-            }
-        }
-        return counts.entrySet().stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .limit(5)
-                .map(e -> new TopProductDTO(e.getKey(), e.getValue()))
-                .collect(Collectors.toList());
+        Pageable limit = PageRequest.of(0, 5);
+        return orderRepository.findTopProducts(start, end, limit);
     }
 
     public double getAverageOrderValue(Instant start, Instant end) {
