@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -52,7 +53,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             log.debug("Extracted userId: {} and role: {}", userId, role);
 
-            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (userEmail != null && StringUtils.hasText(role) && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
                 if (jwtService.isTokenValid(jwt, userDetails)) {
                     List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role)); // 🔥 NEW
@@ -67,6 +68,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 } else {
                     log.debug("Invalid token for user: {}", userEmail);
                 }
+            } else if (!StringUtils.hasText(role)) {
+                log.warn("JWT token for {} is missing role information", userEmail);
             }
         } catch (Exception ex) {
             log.error("Authentication error: {}", ex.getMessage());
