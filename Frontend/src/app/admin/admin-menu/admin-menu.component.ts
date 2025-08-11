@@ -37,7 +37,7 @@ export class AdminMenuComponent implements OnInit {
 
   fetchMenuItems(): void {
     this.adminService.loadMenuItems().subscribe({
-      error: err => console.error('Failed to fetch menu items:', err)
+      error: (err: unknown) => console.error('Failed to fetch menu items:', err)
     });
   }
 
@@ -113,7 +113,7 @@ export class AdminMenuComponent implements OnInit {
         next: (url: string) => {
           this.formData.image = url;
         },
-        error: err => console.error('Image upload failed', err)
+        error: (err: unknown) => console.error('Image upload failed', err)
       });
     }
   }
