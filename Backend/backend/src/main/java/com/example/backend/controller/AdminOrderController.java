@@ -138,7 +138,10 @@ public class AdminOrderController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> assignDriverToOrder(
             @PathVariable Long orderId,
-            @RequestParam Long driverId) {
+            @RequestParam(required = false) Long driverId) {
+        if (driverId == null || driverId <= 0) {
+            return ResponseEntity.badRequest().body("Invalid driver ID");
+        }
         try {
             OrderDTO updated = orderService.assignDriverToOrder(orderId, driverId);
             return ResponseEntity.ok(updated);
