@@ -4,6 +4,19 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { OptimisticService } from './optimistic.service';
 
+/**
+ * Represents a driver's current location and status as returned from the API.
+ */
+export interface DriverLocation {
+  id: number;
+  email: string;
+  driverStatus: string;
+  latitude: number;
+  longitude: number;
+  speed: number;
+  lastPing: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -47,7 +60,7 @@ export class AdminService {
   }
 
   // ✅ Initial load of menu items into local state
-  loadMenuItems(): Observable<any[]> {
+  public loadMenuItems(): Observable<any[]> {
     return this.http
       .get<any[]>(`${this.baseUrl}/menu`, { headers: this.getAuthHeaders() })
       .pipe(
@@ -78,7 +91,7 @@ export class AdminService {
   }
 
   // ✅ Add menu item (optimistic)
-  createMenuItem(item: any): void {
+  public createMenuItem(item: any): void {
     const current = this.menuItemsSubject.getValue();
     const tempItem = { ...item, id: Date.now() };
 
@@ -96,7 +109,7 @@ export class AdminService {
   }
 
   // ✅ Update menu item (optimistic)
-  updateMenuItem(id: number, item: any): void {
+  public updateMenuItem(id: number, item: any): void {
     const current = this.menuItemsSubject.getValue();
     const index = current.findIndex((i: any) => i.id === id);
     const previous = { ...current[index] };
@@ -121,7 +134,7 @@ export class AdminService {
   }
 
   // ✅ Delete menu item (optimistic)
-  deleteMenuItem(id: number): void {
+  public deleteMenuItem(id: number): void {
     const current = this.menuItemsSubject.getValue();
     const updated = current.filter((i: any) => i.id !== id);
 
@@ -171,20 +184,23 @@ export class AdminService {
     });
   }
 
-  createDriver(dto: any): Observable<any> {
+  public createDriver(dto: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/drivers`, dto, {
       headers: this.getAuthHeaders()
     });
   }
 
-  deleteDriver(id: number): Observable<any> {
+  public deleteDriver(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/drivers/${id}`, {
       headers: this.getAuthHeaders()
     });
   }
 
-  getDriverLocations(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/drivers/locations`, {
+  /**
+   * Fetches real-time driver locations for the admin map view.
+   */
+  public getDriverLocations(): Observable<DriverLocation[]> {
+    return this.http.get<DriverLocation[]>(`${this.baseUrl}/drivers/locations`, {
       headers: this.getAuthHeaders()
     });
   }
