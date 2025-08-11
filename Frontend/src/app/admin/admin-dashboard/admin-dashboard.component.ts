@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { Chart } from 'chart.js/auto';
+import { Chart, registerables } from 'chart.js';
 import { AnalyticsService } from './analytics.service';
+import { AdminService } from 'src/app/services/admin.service';
+
+Chart.register(...registerables);
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -17,18 +20,22 @@ export class AdminDashboardComponent implements OnInit {
   aov = 0;
   onTime = 0;
   cancellations = 0;
+  totalOrders = 0;
+  totalRevenue = 0;
+  pendingOrders = 0;
 
-  constructor(private analyticsService: AnalyticsService) {}
+  constructor(private analyticsService: AnalyticsService, private adminService: AdminService) {}
 
   ngOnInit(): void {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    this.startDate = start.toISOString().substring(0,10);
-    this.endDate = now.toISOString().substring(0,10);
+    this.startDate = start.toISOString().substring(0, 10);
+    this.endDate = now.toISOString().substring(0, 10);
     this.loadAnalytics();
+    this.loadStats();
   }
 
-  loadAnalytics() {
+  loadAnalytics(): void {
     const start = new Date(this.startDate).toISOString();
     const end = new Date(this.endDate).toISOString();
 
@@ -53,8 +60,17 @@ export class AdminDashboardComponent implements OnInit {
       });
     });
 
-    this.analyticsService.getAverageOrderValue(start, end).subscribe(v => this.aov = v);
-    this.analyticsService.getOnTimePercentage(start, end).subscribe(v => this.onTime = v);
-    this.analyticsService.getCancellationRate(start, end).subscribe(v => this.cancellations = v);
+    this.analyticsService.getAverageOrderValue(start, end).subscribe(v => (this.aov = v));
+    this.analyticsService.getOnTimePercentage(start, end).subscribe(v => (this.onTime = v));
+    this.analyticsService.getCancellationRate(start, end).subscribe(v => (this.cancellations = v));
+  }
+
+  private loadStats(): void {
+    this.adminService.getDashboardStats().subscribe(stats => {
+      this.totalOrders = stats.totalOrders || 0;
+      this.totalRevenue = stats.totalRevenue || 0;
+      this.pendingOrders = stats.pendingOrders || 0;
+    });
   }
 }
+

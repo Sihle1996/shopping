@@ -4,7 +4,7 @@ import { AuthService } from 'src/app/services/auth.service';
 import { Stomp } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import maplibregl, { Map, GeoJSONSource, LngLatLike } from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import { Feature, FeatureCollection, LineString, Point } from 'geojson';
 
 interface DriverLocation {
   id: number;
@@ -113,7 +113,7 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
         const id = feature.properties && feature.properties['id'];
         const driver = this.drivers[id];
         if (!driver) return;
-        const coords = feature.geometry['coordinates'];
+        const coords = (feature.geometry as any)['coordinates'];
         new maplibregl.Popup()
           .setLngLat(coords as LngLatLike)
           .setHTML(this.popupHtml(driver))
@@ -179,7 +179,7 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
   }
 
   private refreshSource(): void {
-    const features = Object.values(this.drivers)
+    const features: Feature<Point>[] = Object.values(this.drivers)
       .filter((d: any) => this.selectedStatuses.has(d.driverStatus))
       .map((d: any) => ({
         type: 'Feature',
@@ -188,10 +188,11 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
           type: 'Point',
           coordinates: d.history[d.history.length - 1]
         }
-      }));
+      } as Feature<Point>));
     const source = this.map.getSource('drivers') as GeoJSONSource;
     if (source) {
-      source.setData({ type: 'FeatureCollection', features });
+      const collection: FeatureCollection<Point> = { type: 'FeatureCollection', features };
+      source.setData(collection);
     }
   }
 
@@ -199,8 +200,9 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
     const driver = this.drivers[id];
     if (!driver || driver.history.length < 2) return;
     const routeId = `route-${id}`;
-    const data = {
+    const data: Feature<LineString> = {
       type: 'Feature',
+      properties: {},
       geometry: { type: 'LineString', coordinates: driver.history }
     };
     if (this.map.getSource(routeId)) {
