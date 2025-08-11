@@ -28,37 +28,43 @@ public class AdminMenuController {
     @Value("${menu.images.directory:uploads/images}")
     private String imageDirectory;
 
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public MenuItem createMenuItem(@RequestBody MenuItem menuItem) {
         return menuService.saveMenuItem(menuItem);
     }
 
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public MenuItem updateMenuItem(@PathVariable Long id, @RequestBody MenuItem menuItem) {
         return menuService.updateMenuItem(id, menuItem);
     }
 
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteMenuItem(@PathVariable Long id) {
         menuService.deleteMenuItem(id);
     }
 
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public List<MenuItem> getAllMenuItems() {
-        return menuService.getAllMenuItems();
+    public ResponseEntity<?> getAllMenuItems() {
+        try {
+            List<MenuItem> items = menuService.getAllMenuItems();
+            return ResponseEntity.ok(items);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching menu items: " + e.getMessage());
+        }
     }
 
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/bulk")
     public List<MenuItem> createBulkMenuItems(@RequestBody List<MenuItem> menuItems) {
         return menuService.saveAllMenuItems(menuItems);
     }
 
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/upload-image")
     public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
