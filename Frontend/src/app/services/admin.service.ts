@@ -153,9 +153,14 @@ export class AdminService {
   }
 
   assignDriver(orderId: number, driverId: number): Observable<void> {
-    // use body so it works with typical Spring @RequestBody
-    return this.http.post<void>(`${this.baseUrl}/orders/${orderId}/assign-driver`, { driverId }, { headers: this.getAuthHeaders() });
-  }
+  const params = new HttpParams().set('driverId', String(driverId));
+  return this.http.post<void>(
+    `${this.baseUrl}/orders/${orderId}/assign-driver`,
+    null,
+    { headers: this.getAuthHeaders(), params }
+  );
+}
+
 
   /** Upload (multipart): don’t set Content-Type manually */
   uploadImage(formData: FormData): Observable<string> {
