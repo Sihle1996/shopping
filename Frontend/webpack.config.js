@@ -15,6 +15,20 @@ module.exports = {
       tls: false,
     },
   },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        enforce: 'pre',
+        use: ['source-map-loader'],
+        exclude: [
+          /node_modules\/sockjs-client/,
+          /node_modules\/@stomp\/stompjs/,
+          /node_modules\/chart.js/
+        ]
+      }
+    ]
+  },
   plugins: [
     new webpack.ProvidePlugin({
       process: 'process/browser',
