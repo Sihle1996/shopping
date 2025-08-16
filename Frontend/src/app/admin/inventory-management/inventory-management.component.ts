@@ -9,6 +9,9 @@ import { AdminService } from 'src/app/services/admin.service';
 export class InventoryManagementComponent implements OnInit {
   inventory: any[] = [];
   auditLog: any[] = [];
+  searchTerm = '';
+  lowStockOnly = false;
+  showAudit = false;
 
   constructor(private adminService: AdminService) {}
 
@@ -28,6 +31,16 @@ export class InventoryManagementComponent implements OnInit {
 
   isLowStock(item: any): boolean {
     return item.stock <= item.lowStockThreshold;
+  }
+
+  get filteredInventory(): any[] {
+    return this.inventory.filter((item) => {
+      const matchesName = item.name
+        .toLowerCase()
+        .includes(this.searchTerm.toLowerCase());
+      const matchesLowStock = !this.lowStockOnly || this.isLowStock(item);
+      return matchesName && matchesLowStock;
+    });
   }
 
   adjust(item: any): void {
@@ -50,6 +63,13 @@ export class InventoryManagementComponent implements OnInit {
       },
       error: (err: unknown) => console.error('Failed to export CSV', err)
     });
+  }
+
+  toggleAudit(): void {
+    this.showAudit = !this.showAudit;
+    if (this.showAudit && !this.auditLog.length) {
+      this.loadAudit();
+    }
   }
 
   loadAudit(): void {
