@@ -3,13 +3,14 @@ const webpack = require('webpack');
 module.exports = {
   resolve: {
     fallback: {
+      buffer: require.resolve('buffer'),
       stream: require.resolve('stream-browserify'),
       crypto: require.resolve('crypto-browserify'),
       assert: require.resolve('assert'),
-      buffer: require.resolve('buffer'),
       util: require.resolve('util'),
       process: require.resolve('process/browser'),
-      vm: require.resolve('vm-browserify'), // ✅ this line is the fix
+      vm: require.resolve('vm-browserify'),
+      path: require.resolve('path-browserify'), // often needed by libs
       fs: false,
       net: false,
       tls: false,
@@ -33,7 +34,9 @@ module.exports = {
     new webpack.ProvidePlugin({
       process: 'process/browser',
       Buffer: ['buffer', 'Buffer'],
-      global: require.resolve('./global.js')
+    }),
+    new webpack.DefinePlugin({
+      global: 'globalThis',
     }),
   ],
 };
