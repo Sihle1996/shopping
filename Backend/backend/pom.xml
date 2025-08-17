@@ -18,8 +18,14 @@
 
 	<properties>
 		<java.version>17</java.version>
-		<flyway.version>10.20.1</flyway.version>
+
+		<!-- Bump Flyway so it supports PostgreSQL 16.x -->
+		<flyway.version>10.21.0</flyway.version>
+
+		<!-- Optional but recommended: a recent JDBC driver -->
+		<postgresql.version>42.7.4</postgresql.version>
 	</properties>
+
 
 	<dependencies>
 		<!-- ✅ Spring Boot Dependencies -->
@@ -42,18 +48,26 @@
 			<optional>true</optional>
 		</dependency>
 
-                <!-- ✅ Database (PostgreSQL) -->
-                <dependency>
-                        <groupId>org.postgresql</groupId>
-                        <artifactId>postgresql</artifactId>
-                        <scope>runtime</scope>
-                </dependency>
+		<!-- ✅ Database (PostgreSQL) -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>${postgresql.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 
-                <!-- ✅ Database Migrations -->
-                <dependency>
-                        <groupId>org.flywaydb</groupId>
-                        <artifactId>flyway-core</artifactId>
-                </dependency>
+		<!-- ✅ Flyway core + PostgreSQL database plugin -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+			<version>${flyway.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+			<version>${flyway.version}</version>
+		</dependency>
+
 
 		<!-- ✅ Lombok (For Clean Code) -->
 		<dependency>

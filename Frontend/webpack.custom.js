@@ -25,7 +25,7 @@ module.exports = {
         exclude: [
           /node_modules\/sockjs-client/,
           /node_modules\/@stomp\/stompjs/,
-          /node_modules\/chart.js/
+          /node_modules\/chart\.js/
         ]
       }
     ]
@@ -34,10 +34,10 @@ module.exports = {
     new webpack.ProvidePlugin({
       process: 'process/browser',
       Buffer: ['buffer', 'Buffer'],
-      global: require.resolve('./global.js')
+      // ❌ remove: global: require.resolve('./global.js')
     }),
     new webpack.DefinePlugin({
-      global: 'globalThis', // ✅ from the first config
+      global: 'globalThis',
     }),
   ],
 };
