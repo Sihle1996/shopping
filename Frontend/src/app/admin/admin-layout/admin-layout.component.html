@@ -1,0 +1,25 @@
+<div class="flex min-h-screen bg-gray-100">
+  <aside class="w-64 bg-gray-800 text-white flex flex-col">
+    <div class="p-4 text-2xl font-bold">Admin</div>
+    <nav class="flex-1 p-2 space-y-1">
+      <a routerLink="dashboard" routerLinkActive="bg-gray-900" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center p-2 rounded hover:bg-gray-700">
+        <span class="mr-3">🏠</span><span>Dashboard</span>
+      </a>
+      <a routerLink="orders" routerLinkActive="bg-gray-900" class="flex items-center p-2 rounded hover:bg-gray-700">
+        <span class="mr-3">🧾</span><span>Orders</span>
+      </a>
+      <a routerLink="menu" routerLinkActive="bg-gray-900" class="flex items-center p-2 rounded hover:bg-gray-700">
+        <span class="mr-3">🍔</span><span>Menu</span>
+      </a>
+      <a routerLink="drivers" routerLinkActive="bg-gray-900" class="flex items-center p-2 rounded hover:bg-gray-700">
+        <span class="mr-3">🚚</span><span>Drivers</span>
+      </a>
+      <a routerLink="inventory" routerLinkActive="bg-gray-900" class="flex items-center p-2 rounded hover:bg-gray-700">
+        <span class="mr-3">📦</span><span>Inventory</span>
+      </a>
+    </nav>
+  </aside>
+  <main class="flex-1 p-6 overflow-y-auto">
+    <router-outlet></router-outlet>
+  </main>
+</div>

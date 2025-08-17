@@ -1,7 +1,7 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { OptimisticService } from './optimistic.service';
 
 /**
@@ -23,8 +23,8 @@ export interface DriverLocation {
 export class AdminService {
   private baseUrl = 'http://localhost:8080/api/admin';
 
-  private ordersSubject = new BehaviorSubject<any[]>([]);
-  orders$ = this.ordersSubject.asObservable();
+private ordersSubject = new BehaviorSubject<any[]>([]);
+orders$ = this.ordersSubject.asObservable();
 
   private menuItemsSubject = new BehaviorSubject<any[]>([]);
   menuItems$ = this.menuItemsSubject.asObservable();
@@ -72,16 +72,20 @@ export class AdminService {
   }
 
   // ✅ Get paginated & searchable orders
-  getOrders(page: number, size: number, query: string): Observable<any> {
-    const params: any = { page, size };
-    if (query) {
-      params.query = query;
-    }
-    return this.http.get(`${this.baseUrl}/orders/search`, {
-      headers: this.getAuthHeaders(),
-      params
-    });
-  }
+  getOrders(page: number, size: number, query: string) {
+  let params = new HttpParams()
+    .set('page', page)
+    .set('size', size);
+  if (query) params = params.set('query', query);
+
+  return this.http.get<{ content: any[]; totalPages: number }>(
+    `${this.baseUrl}/orders/search`,
+    { headers: this.getAuthHeaders(), params }
+  )
+  .pipe(
+    tap(res => this.ordersSubject.next(res.content ?? []))
+  );
+}
 
   // ✅ Get all menu items
   getMenuItems(): Observable<any> {
