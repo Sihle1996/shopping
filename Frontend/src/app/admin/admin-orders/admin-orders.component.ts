@@ -16,8 +16,8 @@ interface OrderItem {
 interface Order {
   id: number;
   totalAmount: number;
-  status: Status | string;        // API may return other strings; we accept string for safety
-  orderDate: string;              // ISO string
+  status: Status | string;   // API tolerance
+  orderDate: string;         // ISO string
   deliveryAddress: string;
   userEmail: string;
   paymentId?: string;
@@ -37,18 +37,17 @@ interface StatusOption { value: StatusFilter; label: string; }
 export class AdminOrdersComponent implements OnInit, OnDestroy {
   orders: Order[] = [];
 
-  // ui state
+  // UI state
   loading = false;
   errorMessage = '';
   selectedOrder: Order | null = null;
 
-  // driver assign
+  // Driver assign
   availableDrivers: Array<{ id: number; email: string }> = [];
   selectedDriverId: number | null = null;
   assigning = false;
 
-
-  // filters / search / sort / paging
+  // Filters / search / sort / paging
   statuses: ReadonlyArray<StatusOption> = [
     { value: 'All',         label: 'All' },
     { value: 'Pending',     label: 'Pending' },
@@ -63,9 +62,6 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   private searchSub?: Subscription;
 
   sortBy: keyof Order = 'id';
-
-  sortColumn: keyof Order = 'id';
-
   sortDirection: 'asc' | 'desc' = 'asc';
 
   currentPage = 1;
@@ -170,10 +166,9 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
 
   // ──────────────────────────────────────────────────────────────────────────────
   updateStatus(orderId: number, newStatus: Status): void {
-    // Local optimistic UI update
+    // Optimistic UI
     this.orders = this.orders.map(o => (o.id === orderId ? { ...o, status: newStatus } : o));
-
-    // Fire-and-forget: service handles HTTP + its own optimistic/revert if you wired it that way
+    // Fire-and-forget: service returns void (handles optimistic/revert itself if needed)
     this.adminSerivce.updateOrderStatus(orderId, newStatus);
   }
 
@@ -229,51 +224,6 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
       'bg-sky-500': s === 'In Progress',
       'bg-emerald-500': s === 'Delivered',
     };
-
-  setSort(column: keyof Order): void {
-    if (this.sortColumn === column) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.sortColumn = column;
-      this.sortDirection = 'asc';
-    }
-  }
-
-  getSortIcon(column: keyof Order): string {
-    if (this.sortColumn !== column) return '';
-    return this.sortDirection === 'asc' ? '▲' : '▼';
-  }
-
-  filteredOrders(): Order[] {
-    const list = this.filterStatus === 'All'
-      ? [...this.orders]
-      : this.orders.filter(o => o.status === this.filterStatus);
-    return list.sort((a, b) => {
-      const col = this.sortColumn;
-      const valA = (a as any)[col];
-      const valB = (b as any)[col];
-      if (valA < valB) {
-        return this.sortDirection === 'asc' ? -1 : 1;
-      }
-      if (valA > valB) {
-        return this.sortDirection === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-  }
-
-  getStatusColor(status: string): string {
-    switch (status) {
-      case 'Pending':
-        return 'text-red-600';
-      case 'In Progress':
-        return 'text-yellow-600';
-      case 'Delivered':
-        return 'text-green-600';
-      default:
-        return 'text-gray-600';
-    }
-
   }
 
   /** KPIs for the header cards (based on filtered list) */
