@@ -64,8 +64,8 @@ import { AdminLayoutComponent } from './admin/admin-layout/admin-layout.componen
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule,
     AdminRoutingModule,
+    AppRoutingModule,
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
