@@ -47,6 +47,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   selectedDriverId: number | null = null;
   assigning = false;
 
+
   // filters / search / sort / paging
   statuses: ReadonlyArray<StatusOption> = [
     { value: 'All',         label: 'All' },
@@ -62,6 +63,9 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   private searchSub?: Subscription;
 
   sortBy: keyof Order = 'id';
+
+  sortColumn: keyof Order = 'id';
+
   sortDirection: 'asc' | 'desc' = 'asc';
 
   currentPage = 1;
@@ -225,6 +229,51 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
       'bg-sky-500': s === 'In Progress',
       'bg-emerald-500': s === 'Delivered',
     };
+
+  setSort(column: keyof Order): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+  }
+
+  getSortIcon(column: keyof Order): string {
+    if (this.sortColumn !== column) return '';
+    return this.sortDirection === 'asc' ? '▲' : '▼';
+  }
+
+  filteredOrders(): Order[] {
+    const list = this.filterStatus === 'All'
+      ? [...this.orders]
+      : this.orders.filter(o => o.status === this.filterStatus);
+    return list.sort((a, b) => {
+      const col = this.sortColumn;
+      const valA = (a as any)[col];
+      const valB = (b as any)[col];
+      if (valA < valB) {
+        return this.sortDirection === 'asc' ? -1 : 1;
+      }
+      if (valA > valB) {
+        return this.sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'Pending':
+        return 'text-red-600';
+      case 'In Progress':
+        return 'text-yellow-600';
+      case 'Delivered':
+        return 'text-green-600';
+      default:
+        return 'text-gray-600';
+    }
+
   }
 
   /** KPIs for the header cards (based on filtered list) */
