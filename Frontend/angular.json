@@ -39,7 +39,7 @@
             ],
             "scripts": [],
             "customWebpackConfig": {
-              "path": "./webpack.config.js"
+              "path": "./webpack.custom.js"
             }
           },
           "configurations": {
