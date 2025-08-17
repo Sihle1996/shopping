@@ -63,7 +63,6 @@ import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-d
   ],
   imports: [
     BrowserModule,
-    AdminRoutingModule,
     AppRoutingModule,
     HttpClientModule,
     FormsModule,

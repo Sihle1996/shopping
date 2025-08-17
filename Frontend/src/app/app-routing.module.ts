@@ -35,10 +35,10 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
 
-  // 🧭 Manager Routes
+  // 🛠️ Admin Routes
   {
-    path: 'manager',
-    canActivate: [ManagerGuard],
+    path: 'admin',
+    canActivate: [AdminGuard],
     children: [
       { path: 'dashboard', component: AdminDashboardComponent },
       { path: 'orders', component: AdminOrdersComponent },

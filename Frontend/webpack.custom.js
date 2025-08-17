@@ -4,10 +4,10 @@ const webpack = require('webpack');
 module.exports = {
   resolve: {
     fallback: {
-      buffer: require.resolve('buffer'),
       stream: require.resolve('stream-browserify'),
       crypto: require.resolve('crypto-browserify'),
       assert: require.resolve('assert'),
+      buffer: require.resolve('buffer'),
       util: require.resolve('util'),
       process: require.resolve('process/browser'),
       vm: require.resolve('vm-browserify'),
@@ -15,20 +15,6 @@ module.exports = {
       net: false,
       tls: false,
     },
-  },
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        enforce: 'pre',
-        use: ['source-map-loader'],
-        exclude: [
-          /node_modules\/sockjs-client/,
-          /node_modules\/@stomp\/stompjs/,
-          /node_modules\/chart.js/
-        ]
-      }
-    ]
   },
   plugins: [
     new webpack.ProvidePlugin({

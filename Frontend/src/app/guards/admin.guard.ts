@@ -10,24 +10,13 @@ export class AdminGuard implements CanActivate {
   constructor(private authService: AuthService, private router: Router) {}
 
   canActivate(): boolean {
-    if (!this.authService.isLoggedIn()) {
-      this.router.navigate(['/login']);
-      return false;
-    }
-
     const role = this.authService.getUserRole();
     console.log("🛡️ AdminGuard checked role:", role); // should show ROLE_ADMIN
     if (role === 'ROLE_ADMIN') {
       return true;
-    } else if (role === 'ROLE_MANAGER') {
-      this.router.navigate(['/manager/dashboard']);
-    } else if (role === 'ROLE_DRIVER') {
-      this.router.navigate(['/driver/dashboard']);
-    } else if (role === 'ROLE_USER') {
-      this.router.navigate(['/']);
     } else {
-      this.router.navigate(['/login']);
+      this.router.navigate(['/']);
+      return false;
     }
-    return false;
   }
 }

@@ -1,27 +1,3 @@
-.filters {
-  @apply flex flex-col gap-2 md:flex-row md:items-center;
-}
-
-.filter-input {
-  @apply border p-2 rounded w-full md:flex-1;
-}
-
-.filter-checkbox {
-  @apply h-4 w-4 text-blue-600;
-}
-
-.card-grid {
-  @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
-}
-
-.card {
-  @apply bg-white shadow rounded p-4;
-}
-
-.low-stock-badge {
-  @apply inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-800 text-xs font-medium;
-}
-
-.audit-toggle {
-  @apply flex items-center justify-between bg-gray-100 p-3 rounded;
+.low-stock {
+  color: red;
 }
