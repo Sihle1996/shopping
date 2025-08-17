@@ -35,6 +35,9 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   selectedDriverId: number | null = null;
   assigning = false;
 
+  sortColumn: keyof Order = 'id';
+  sortDirection: 'asc' | 'desc' = 'asc';
+
   currentPage = 1;
   pageSize = 5;
   totalPages = 0;
@@ -86,7 +89,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     this.orders = this.orders.map(o => (o.id === orderId ? { ...o, status: newStatus } : o));
   }
 
-  openModal(order: Order): void {
+  openDrawer(order: Order): void {
     this.selectedOrder = order;
     this.adminSerivce.getAvailableDrivers().subscribe({
       next: drivers => (this.availableDrivers = drivers),
@@ -94,7 +97,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     });
   }
 
-  closeModal(): void {
+  closeDrawer(): void {
     this.selectedOrder = null;
   }
 
@@ -115,9 +118,36 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     });
   }
 
+  setSort(column: keyof Order): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+  }
+
+  getSortIcon(column: keyof Order): string {
+    if (this.sortColumn !== column) return '';
+    return this.sortDirection === 'asc' ? '▲' : '▼';
+  }
+
   filteredOrders(): Order[] {
-    if (this.filterStatus === 'All') return this.orders;
-    return this.orders.filter(o => o.status === this.filterStatus);
+    const list = this.filterStatus === 'All'
+      ? [...this.orders]
+      : this.orders.filter(o => o.status === this.filterStatus);
+    return list.sort((a, b) => {
+      const col = this.sortColumn;
+      const valA = (a as any)[col];
+      const valB = (b as any)[col];
+      if (valA < valB) {
+        return this.sortDirection === 'asc' ? -1 : 1;
+      }
+      if (valA > valB) {
+        return this.sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
   }
 
   getStatusColor(status: string): string {
