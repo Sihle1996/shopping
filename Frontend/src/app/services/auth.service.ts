@@ -82,9 +82,9 @@ export class AuthService {
   getUserRole(): string | null {
     const token = this.getToken();
     if (!token) return null;
-  
+
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const payload: any = jwtDecode(token);
       console.log("Decoded Role:", payload.role); // ✅ Debug log
       return payload.role || null;
     } catch (error) {
