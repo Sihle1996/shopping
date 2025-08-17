@@ -33,6 +33,13 @@
       </div>
     </div>
 
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <a routerLink="/admin/orders" class="block bg-red-600 text-white p-4 rounded-lg shadow text-center hover:bg-red-700 transition">🔍 Manage Orders</a>
+      <a routerLink="/admin/menu" class="block bg-gray-700 text-white p-4 rounded-lg shadow text-center hover:bg-gray-800 transition">🍔 Manage Menu</a>
+      <a routerLink="/admin/drivers" class="block bg-blue-600 text-white p-4 rounded-lg shadow text-center hover:bg-blue-700 transition">🚚 Manage Drivers</a>
+      <a routerLink="/admin/inventory" class="block bg-purple-600 text-white p-4 rounded-lg shadow text-center hover:bg-purple-700 transition">📦 Inventory</a>
+    </div>
+
     <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
       <div class="bg-white p-4 shadow rounded">Average Order Value: {{ aov | number:'1.2-2' }}</div>
       <div class="bg-white p-4 shadow rounded">On-time %: {{ onTime | number:'1.0-0' }}%</div>

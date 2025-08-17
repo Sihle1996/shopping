@@ -1,3 +1,4 @@
+// webpack.config.js
 const webpack = require('webpack');
 
 module.exports = {
@@ -10,7 +11,6 @@ module.exports = {
       util: require.resolve('util'),
       process: require.resolve('process/browser'),
       vm: require.resolve('vm-browserify'),
-      path: require.resolve('path-browserify'), // often needed by libs
       fs: false,
       net: false,
       tls: false,
@@ -34,9 +34,10 @@ module.exports = {
     new webpack.ProvidePlugin({
       process: 'process/browser',
       Buffer: ['buffer', 'Buffer'],
+      global: require.resolve('./global.js')
     }),
     new webpack.DefinePlugin({
-      global: 'globalThis',
+      global: 'globalThis', // ✅ from the first config
     }),
   ],
 };

@@ -26,14 +26,13 @@ import { AdminDriverMapComponent } from './admin/admin-drivers/admin-driver-map.
 import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashboard.component';
 import { AuthInterceptor } from './authInterceptor/auth.interceptor';
 import { DriverMapComponent } from './driver/driver-map/driver-map.component';
+import { AdminFooterComponent } from './admin/admin-footer/admin-footer.component';
 import { AdminDiagnosticsComponent } from './admin/admin-diagnostics/admin-diagnostics.component';
 import { InventoryManagementComponent } from './admin/inventory-management/inventory-management.component';
 import { LoadersModule } from './shared/loaders/loaders.module';
 import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
 import { PaginationComponent } from './components/pagination/pagination.component';
 import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-dashboard.component';
-import { AdminRoutingModule } from './admin/admin-routing.module';
-import { AdminLayoutComponent } from './admin/admin-layout/admin-layout.component';
 
 
 @NgModule({
@@ -54,13 +53,13 @@ import { AdminLayoutComponent } from './admin/admin-layout/admin-layout.componen
     AdminMenuComponent,
     AdminDriversComponent,
     AdminDriverMapComponent,
+    AdminFooterComponent,
     AdminDiagnosticsComponent,
     DriverDashboardComponent,
     DriverMapComponent,
     InventoryManagementComponent,
     PaginationComponent,
     ManagerDashboardComponent,
-    AdminLayoutComponent,
   ],
   imports: [
     BrowserModule,
