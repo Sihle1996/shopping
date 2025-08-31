@@ -33,5 +33,11 @@ import { SharedModule } from '../../shared/shared.module';
   ],
   imports: [CommonModule, FormsModule, RouterModule, SharedModule],
   exports: [AdminDashboardComponent, AdminFooterComponent]
+import { AdminRoutingModule } from '../admin-routing.module';
+
+@NgModule({
+  declarations: [AdminDashboardComponent, AdminNotificationsComponent],
+  imports: [CommonModule, FormsModule, AdminRoutingModule],
+  exports: [AdminDashboardComponent]
 })
 export class AdminDashboardModule {}
