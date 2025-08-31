@@ -1,9 +1,7 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
-import { AdminRoutingModule } from './admin/admin-routing.module';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { SharedModule } from './shared/shared.module';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 import { ToastrModule } from 'ngx-toastr';
@@ -29,7 +27,9 @@ import { AdminDiagnosticsComponent } from './admin/admin-diagnostics/admin-diagn
 import { InventoryManagementComponent } from './admin/inventory-management/inventory-management.component';
 import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-dashboard.component';
 import { PaginationComponent } from './components/pagination/pagination.component';
+import { SharedModule } from './shared/shared.module';
 import { ManagerModule } from './manager/manager.module';
+import { LoadersModule } from './shared/loaders/loaders.module';
 
 
 @NgModule({
@@ -49,6 +49,7 @@ import { ManagerModule } from './manager/manager.module';
   ],
   imports: [
     BrowserModule,
+    RouterModule,
     AppRoutingModule,
     HttpClientModule,
     BrowserAnimationsModule,
