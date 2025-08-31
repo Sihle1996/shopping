@@ -5,6 +5,7 @@ import { AdminRoutingModule } from './admin/admin-routing.module';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { SharedModule } from './shared/shared.module';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { RouterModule } from '@angular/router';
 import { ToastrModule } from 'ngx-toastr';
 
 import { AppComponent } from './app.component';
@@ -20,12 +21,9 @@ import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { ThankYouComponent } from './components/thank-you/thank-you.component';
 import { HistoryordersComponent } from './pages/historyorders/historyorders.component';
 import { AdminDashboardModule } from './admin/admin-dashboard/admin-dashboard.module';
-import { AdminOrdersComponent } from './admin/admin-orders/admin-orders.component';
-import { AdminMenuComponent } from './admin/admin-menu/admin-menu.component';
-import { AdminDriversComponent } from './admin/admin-drivers/admin-drivers.component';
-import { AdminDriverMapComponent } from './admin/admin-drivers/admin-driver-map.component';
-import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashboard.component';
 import { AuthInterceptor } from './authInterceptor/auth.interceptor';
+import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
+import { SharedModule } from './shared/shared.module';
 import { DriverMapComponent } from './driver/driver-map/driver-map.component';
 import { AdminFooterComponent } from './admin/admin-footer/admin-footer.component';
 import { AdminDiagnosticsComponent } from './admin/admin-diagnostics/admin-diagnostics.component';
@@ -50,6 +48,10 @@ import { ManagerModule } from './manager/manager.module';
     CheckoutComponent,
     ThankYouComponent,
     HistoryordersComponent,
+  ],
+  imports: [
+    BrowserModule,
+    RouterModule,
     AdminOrdersComponent,
     AdminMenuComponent,
     AdminDriversComponent,
