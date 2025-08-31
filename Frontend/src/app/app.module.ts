@@ -32,6 +32,12 @@ import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
 import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-dashboard.component';
 import { PaginationComponent } from './components/pagination/pagination.component';
 import { ManagerModule } from './manager/manager.module';
+import { LoadersModule } from './shared/loaders/loaders.module';
+import { AdminOrdersComponent } from './admin/admin-orders/admin-orders.component';
+import { AdminMenuComponent } from './admin/admin-menu/admin-menu.component';
+import { AdminDriverMapComponent } from './admin/admin-drivers/admin-driver-map.component';
+import { AdminDriversComponent } from './admin/admin-drivers/admin-drivers.component';
+import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashboard.component';
 
 
 @NgModule({
