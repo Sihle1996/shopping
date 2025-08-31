@@ -1,9 +1,11 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
+import { AdminRoutingModule } from './admin/admin-routing.module';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { SharedModule } from './shared/shared.module';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { RouterModule } from '@angular/router';
 import { ToastrModule } from 'ngx-toastr';
 
 import { AppComponent } from './app.component';
@@ -19,20 +21,17 @@ import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { ThankYouComponent } from './components/thank-you/thank-you.component';
 import { HistoryordersComponent } from './pages/historyorders/historyorders.component';
 import { AdminDashboardModule } from './admin/admin-dashboard/admin-dashboard.module';
-import { AdminOrdersComponent } from './admin/admin-orders/admin-orders.component';
-import { AdminMenuComponent } from './admin/admin-menu/admin-menu.component';
-import { AdminDriversComponent } from './admin/admin-drivers/admin-drivers.component';
-import { AdminDriverMapComponent } from './admin/admin-drivers/admin-driver-map.component';
-import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashboard.component';
 import { AuthInterceptor } from './authInterceptor/auth.interceptor';
+import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
+import { SharedModule } from './shared/shared.module';
 import { DriverMapComponent } from './driver/driver-map/driver-map.component';
 import { AdminFooterComponent } from './admin/admin-footer/admin-footer.component';
 import { AdminDiagnosticsComponent } from './admin/admin-diagnostics/admin-diagnostics.component';
 import { InventoryManagementComponent } from './admin/inventory-management/inventory-management.component';
-import { LoadersModule } from './shared/loaders/loaders.module';
 import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
-import { PaginationComponent } from './components/pagination/pagination.component';
 import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-dashboard.component';
+import { PaginationComponent } from './components/pagination/pagination.component';
+import { ManagerModule } from './manager/manager.module';
 
 
 @NgModule({
@@ -49,6 +48,10 @@ import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-d
     CheckoutComponent,
     ThankYouComponent,
     HistoryordersComponent,
+  ],
+  imports: [
+    BrowserModule,
+    RouterModule,
     AdminOrdersComponent,
     AdminMenuComponent,
     AdminDriversComponent,
@@ -58,18 +61,17 @@ import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-d
     DriverDashboardComponent,
     DriverMapComponent,
     InventoryManagementComponent,
-    PaginationComponent,
     ManagerDashboardComponent,
+    PaginationComponent,
   ],
   imports: [
     BrowserModule,
-    AdminRoutingModule,
     AppRoutingModule,
     HttpClientModule,
-    FormsModule,
-    ReactiveFormsModule,
     BrowserAnimationsModule,
     AdminDashboardModule,
+    SharedModule,
+    ManagerModule,
     LoadersModule,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',

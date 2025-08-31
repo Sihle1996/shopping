@@ -1,10 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { SharedModule } from '../../shared/shared.module';
 import { of } from 'rxjs';
 
 import { AdminOrdersComponent } from './admin-orders.component';
 import { AdminService } from 'src/app/services/admin.service';
-import { PaginationComponent } from '../../components/pagination/pagination.component';
 
 describe('AdminOrdersComponent', () => {
   let component: AdminOrdersComponent;
@@ -19,8 +18,8 @@ describe('AdminOrdersComponent', () => {
     };
 
     TestBed.configureTestingModule({
-      declarations: [AdminOrdersComponent, PaginationComponent],
-      imports: [FormsModule],
+      declarations: [AdminOrdersComponent],
+      imports: [SharedModule],
       providers: [{ provide: AdminService, useValue: adminServiceStub }]
     });
     fixture = TestBed.createComponent(AdminOrdersComponent);
