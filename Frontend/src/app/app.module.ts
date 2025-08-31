@@ -32,7 +32,7 @@ import { InventoryManagementComponent } from './admin/inventory-management/inven
 import { LoadersModule } from './shared/loaders/loaders.module';
 import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
 import { PaginationComponent } from './components/pagination/pagination.component';
-import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-dashboard.component';
+import { ManagerModule } from './manager/manager.module';
 
 
 @NgModule({
@@ -59,17 +59,16 @@ import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-d
     DriverMapComponent,
     InventoryManagementComponent,
     PaginationComponent,
-    ManagerDashboardComponent,
   ],
   imports: [
     BrowserModule,
-    AdminRoutingModule,
     AppRoutingModule,
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
     BrowserAnimationsModule,
     AdminDashboardModule,
+    ManagerModule,
     LoadersModule,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',
