@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
-import { SharedModule } from '../../shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+
 import { AdminDashboardComponent } from './admin-dashboard.component';
 import { AdminNotificationsComponent } from '../admin-notifications/admin-notifications.component';
 import { AdminOrdersComponent } from '../admin-orders/admin-orders.component';
@@ -15,7 +15,9 @@ import { InventoryManagementComponent } from '../inventory-management/inventory-
 import { DriverDashboardComponent } from '../../driver/driver-dashboard/driver-dashboard.component';
 import { DriverMapComponent } from '../../driver/driver-map/driver-map.component';
 import { ManagerDashboardComponent } from '../../manager/manager-dashboard/manager-dashboard.component';
+import { AdminLayoutComponent } from '../admin-layout/admin-layout.component';
 import { SharedModule } from '../../shared/shared.module';
+import { AdminRoutingModule } from '../admin-routing.module';
 
 @NgModule({
   declarations: [
@@ -31,15 +33,10 @@ import { SharedModule } from '../../shared/shared.module';
     DriverDashboardComponent,
     DriverMapComponent,
     ManagerDashboardComponent,
+    AdminLayoutComponent,
   ],
-  imports: [CommonModule, FormsModule, RouterModule, SharedModule],
-  exports: [AdminDashboardComponent, AdminFooterComponent]
-import { AdminRoutingModule } from '../admin-routing.module';
-
-@NgModule({
-  declarations: [AdminDashboardComponent, AdminNotificationsComponent],
-  imports: [SharedModule],
-  imports: [CommonModule, FormsModule, AdminRoutingModule],
-  exports: [AdminDashboardComponent]
+  imports: [CommonModule, FormsModule, RouterModule, SharedModule, AdminRoutingModule],
+  exports: [AdminDashboardComponent, AdminFooterComponent],
 })
 export class AdminDashboardModule {}
+
