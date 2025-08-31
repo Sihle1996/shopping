@@ -15,7 +15,7 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-builders/custom-webpack:browser",
+          "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "outputPath": "dist/temp-frontend",
             "index": "src/index.html",
@@ -37,10 +37,7 @@
               "node_modules/font-awesome/css/font-awesome.min.css",
               "src/styles.scss"
             ],
-            "scripts": [],
-            "customWebpackConfig": {
-              "path": "./webpack.custom.js"
-            }
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -70,7 +67,7 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-builders/custom-webpack:dev-server",
+          "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
               "browserTarget": "temp-frontend:build:production"
