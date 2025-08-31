@@ -32,6 +32,8 @@ import { AdminDiagnosticsComponent } from './admin/admin-diagnostics/admin-diagn
 import { InventoryManagementComponent } from './admin/inventory-management/inventory-management.component';
 import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
 import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-dashboard.component';
+import { PaginationComponent } from './components/pagination/pagination.component';
+import { ManagerModule } from './manager/manager.module';
 
 
 @NgModule({
@@ -58,15 +60,17 @@ import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-d
     DriverMapComponent,
     InventoryManagementComponent,
     ManagerDashboardComponent,
+    PaginationComponent,
   ],
   imports: [
     BrowserModule,
-    AdminRoutingModule,
     AppRoutingModule,
     HttpClientModule,
     BrowserAnimationsModule,
     AdminDashboardModule,
     SharedModule,
+    ManagerModule,
+    LoadersModule,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',
       timeOut: 4000,
