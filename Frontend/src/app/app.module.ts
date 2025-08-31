@@ -1,8 +1,9 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
+import { AdminRoutingModule } from './admin/admin-routing.module';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { SharedModule } from './shared/shared.module';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ToastrModule } from 'ngx-toastr';
 
@@ -29,8 +30,8 @@ import { DriverMapComponent } from './driver/driver-map/driver-map.component';
 import { AdminFooterComponent } from './admin/admin-footer/admin-footer.component';
 import { AdminDiagnosticsComponent } from './admin/admin-diagnostics/admin-diagnostics.component';
 import { InventoryManagementComponent } from './admin/inventory-management/inventory-management.component';
-import { LoadersModule } from './shared/loaders/loaders.module';
 import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
+import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-dashboard.component';
 import { PaginationComponent } from './components/pagination/pagination.component';
 import { ManagerModule } from './manager/manager.module';
 
@@ -58,16 +59,16 @@ import { ManagerModule } from './manager/manager.module';
     DriverDashboardComponent,
     DriverMapComponent,
     InventoryManagementComponent,
+    ManagerDashboardComponent,
     PaginationComponent,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
-    FormsModule,
-    ReactiveFormsModule,
     BrowserAnimationsModule,
     AdminDashboardModule,
+    SharedModule,
     ManagerModule,
     LoadersModule,
     ToastrModule.forRoot({
