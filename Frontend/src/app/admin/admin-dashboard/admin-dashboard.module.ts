@@ -12,9 +12,7 @@ import { AdminDriverMapComponent } from '../admin-drivers/admin-driver-map.compo
 import { AdminFooterComponent } from '../admin-footer/admin-footer.component';
 import { AdminDiagnosticsComponent } from '../admin-diagnostics/admin-diagnostics.component';
 import { InventoryManagementComponent } from '../inventory-management/inventory-management.component';
-import { DriverDashboardComponent } from '../../driver/driver-dashboard/driver-dashboard.component';
-import { DriverMapComponent } from '../../driver/driver-map/driver-map.component';
-import { ManagerDashboardComponent } from '../../manager/manager-dashboard/manager-dashboard.component';
+import { ManagerModule } from '../../manager/manager.module';
 import { AdminLayoutComponent } from '../admin-layout/admin-layout.component';
 import { SharedModule } from '../../shared/shared.module';
 import { AdminRoutingModule } from '../admin-routing.module';
@@ -30,12 +28,9 @@ import { AdminRoutingModule } from '../admin-routing.module';
     AdminFooterComponent,
     AdminDiagnosticsComponent,
     InventoryManagementComponent,
-    DriverDashboardComponent,
-    DriverMapComponent,
-    ManagerDashboardComponent,
     AdminLayoutComponent,
   ],
-  imports: [CommonModule, FormsModule, RouterModule, SharedModule, AdminRoutingModule],
+  imports: [CommonModule, FormsModule, RouterModule, SharedModule, AdminRoutingModule, ManagerModule],
   exports: [AdminDashboardComponent, AdminFooterComponent],
 })
 export class AdminDashboardModule {}
