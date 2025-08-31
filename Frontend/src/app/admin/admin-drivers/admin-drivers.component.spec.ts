@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { SharedModule } from '../../shared/shared.module';
 import { of } from 'rxjs';
 import { AdminService } from 'src/app/services/admin.service';
 import { AdminDriversComponent } from './admin-drivers.component';
@@ -15,7 +15,7 @@ describe('AdminDriversComponent', () => {
 
       TestBed.configureTestingModule({
         declarations: [AdminDriversComponent],
-        imports: [FormsModule],
+        imports: [SharedModule],
         providers: [{ provide: AdminService, useValue: adminServiceSpy }]
       });
 
