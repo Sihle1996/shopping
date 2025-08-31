@@ -23,12 +23,10 @@ import { HistoryordersComponent } from './pages/historyorders/historyorders.comp
 import { AdminDashboardModule } from './admin/admin-dashboard/admin-dashboard.module';
 import { AuthInterceptor } from './authInterceptor/auth.interceptor';
 import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
-import { SharedModule } from './shared/shared.module';
 import { DriverMapComponent } from './driver/driver-map/driver-map.component';
 import { AdminFooterComponent } from './admin/admin-footer/admin-footer.component';
 import { AdminDiagnosticsComponent } from './admin/admin-diagnostics/admin-diagnostics.component';
 import { InventoryManagementComponent } from './admin/inventory-management/inventory-management.component';
-import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
 import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-dashboard.component';
 import { PaginationComponent } from './components/pagination/pagination.component';
 import { ManagerModule } from './manager/manager.module';
@@ -51,28 +49,12 @@ import { ManagerModule } from './manager/manager.module';
   ],
   imports: [
     BrowserModule,
-    RouterModule,
-    AdminOrdersComponent,
-    AdminMenuComponent,
-    AdminDriversComponent,
-    AdminDriverMapComponent,
-    AdminFooterComponent,
-    AdminDiagnosticsComponent,
-    DriverDashboardComponent,
-    DriverMapComponent,
-    InventoryManagementComponent,
-    ManagerDashboardComponent,
-    PaginationComponent,
-  ],
-  imports: [
-    BrowserModule,
     AppRoutingModule,
     HttpClientModule,
     BrowserAnimationsModule,
     AdminDashboardModule,
     SharedModule,
     ManagerModule,
-    LoadersModule,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',
       timeOut: 4000,
