@@ -9,8 +9,8 @@ import { Observable, tap } from 'rxjs';
   providedIn: 'root'
 })
 export class AuthService {
-  private tokenKey = 'token'; // Key for localStorage where the token is stored
-  private apiUrlAuth = "http://localhost:8080/api"; // Backend authentication API
+  private tokenKey = 'token'; 
+  private apiUrlAuth = "http://localhost:8080/api"; 
 
   constructor(private http: HttpClient, private router: Router) {}
 
