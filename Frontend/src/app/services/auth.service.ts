@@ -14,26 +14,26 @@ export class AuthService {
 
   constructor(private http: HttpClient, private router: Router) {}
 
-  // ✅ User Registration
+  
   register(data: { email: string; password: string; confirmPassword: string }): Observable<any> {
     return this.http.post(`${this.apiUrlAuth}/register`, data);
   }
 
-  // ✅ User Login - Extracts token & userId from JWT
+  
   login(credentials: { email: string; password: string }): Observable<{ token: string }> {
     return this.http.post<{ token: string }>(`${this.apiUrlAuth}/login`, credentials).pipe(
       tap(response => {
-        console.log("Login response:", response); // ✅ Debugging log
+        console.log("Login response:", response); 
 
         if (response.token) {
           localStorage.setItem(this.tokenKey, response.token);
-          this.extractUserIdFromToken(response.token); // ✅ Extract userId from token
+          this.extractUserIdFromToken(response.token); 
         }
       })
     );
   }
 
-  // ✅ Extract userId from the JWT token
+ 
   private extractUserIdFromToken(token: string): void {
     try {
       const decodedToken: any = jwtDecode(token);
@@ -48,12 +48,12 @@ export class AuthService {
     }
   }
 
-  // ✅ Retrieve JWT token from LocalStorage
+  e
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
   }
 
-  // ✅ Get userId from LocalStorage (or decode if missing)
+  
   getUserId(): number | null {
     const token = this.getToken();
     if (!token) return null;
@@ -67,12 +67,12 @@ export class AuthService {
     }
   }
 
-  // ✅ Check if user is logged in
+  
   isLoggedIn(): boolean {
     return !!this.getToken() && !!this.getUserId();
   }
 
-  // ✅ Logout user (Clear token & redirect)
+  
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem('userId');
