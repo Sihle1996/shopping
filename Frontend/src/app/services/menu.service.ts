@@ -11,7 +11,7 @@ export interface MenuItem {
   image: string; 
   category: string;
   isAvailable: boolean;
-  quantity?: number; // ✅ Ensure quantity exists
+  quantity?: number;
 }
 
 @Injectable({
