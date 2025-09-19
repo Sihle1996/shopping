@@ -76,7 +76,7 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem('userId');
-    this.router.navigate(['/login']); // Redirect user to login page
+    this.router.navigate(['/login']);
   }
 
   getUserRole(): string | null {
