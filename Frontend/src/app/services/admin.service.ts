@@ -31,7 +31,7 @@ orders$ = this.ordersSubject.asObservable();
 
   constructor(private http: HttpClient, private optimistic: OptimisticService) {}
 
-  // ✅ Helper to attach token
+  
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('token'); // Make sure token is stored here
     return new HttpHeaders({
@@ -40,14 +40,12 @@ orders$ = this.ordersSubject.asObservable();
     });
   }
 
-  // ✅ Get Admin Dashboard Stats
   getDashboardStats(): Observable<any> {
     return this.http.get(`${this.baseUrl}/orders/stats`, {
       headers: this.getAuthHeaders()
     });
   }
 
-  // ✅ Initial load of orders into local state
   loadOrders(): Observable<any[]> {
     return this.http
       .get<any[]>(`${this.baseUrl}/orders`, { headers: this.getAuthHeaders() })
@@ -59,7 +57,6 @@ orders$ = this.ordersSubject.asObservable();
       );
   }
 
-  // ✅ Initial load of menu items into local state
   public loadMenuItems(): Observable<any[]> {
     return this.http
       .get<any[]>(`${this.baseUrl}/menu`, { headers: this.getAuthHeaders() })
@@ -71,7 +68,7 @@ orders$ = this.ordersSubject.asObservable();
       );
   }
 
-  // ✅ Get paginated & searchable orders
+  
   getOrders(page: number, size: number, query: string) {
   let params = new HttpParams()
     .set('page', page)
@@ -87,14 +84,14 @@ orders$ = this.ordersSubject.asObservable();
   );
 }
 
-  // ✅ Get all menu items
+
   getMenuItems(): Observable<any> {
     return this.http.get(`${this.baseUrl}/menu`, {
       headers: this.getAuthHeaders()
     });
   }
 
-  // ✅ Add menu item (optimistic)
+ 
   public createMenuItem(item: any): void {
     const current = this.menuItemsSubject.getValue();
     const tempItem = { ...item, id: Date.now() };
@@ -112,7 +109,7 @@ orders$ = this.ordersSubject.asObservable();
     );
   }
 
-  // ✅ Update menu item (optimistic)
+  
   public updateMenuItem(id: number, item: any): void {
     const current = this.menuItemsSubject.getValue();
     const index = current.findIndex((i: any) => i.id === id);
@@ -137,7 +134,6 @@ orders$ = this.ordersSubject.asObservable();
     );
   }
 
-  // ✅ Delete menu item (optimistic)
   public deleteMenuItem(id: number): void {
     const current = this.menuItemsSubject.getValue();
     const updated = current.filter((i: any) => i.id !== id);
@@ -155,7 +151,6 @@ orders$ = this.ordersSubject.asObservable();
     );
   }
 
-  // ✅ Update order status (optimistic)
   updateOrderStatus(orderId: number, status: string): void {
     const current = this.ordersSubject.getValue();
     const updated = current.map(o => (o.id === orderId ? { ...o, status } : o));
@@ -174,14 +169,12 @@ orders$ = this.ordersSubject.asObservable();
     );
   }
 
-  // ✅ Delete order
   deleteOrder(orderId: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/orders/delete/${orderId}`, {
       headers: this.getAuthHeaders()
     });
   }
 
-  // ✅ Driver Management
   getDrivers(): Observable<any> {
     return this.http.get(`${this.baseUrl}/drivers`, {
       headers: this.getAuthHeaders()
@@ -209,7 +202,6 @@ orders$ = this.ordersSubject.asObservable();
     });
   }
 
-   // admin.service.ts
   assignDriver(orderId: number, driverId: number): Observable<any> {
   return this.http.post(
     `${this.baseUrl}/orders/${orderId}/assign-driver?driverId=${driverId}`,
@@ -236,7 +228,6 @@ orders$ = this.ordersSubject.asObservable();
     });
   }
 
-  // ✅ Inventory Management
   adjustInventory(adjustments: any[]): Observable<any> {
     return this.http.post(`${this.baseUrl}/inventory/adjust`, adjustments, {
       headers: this.getAuthHeaders()
