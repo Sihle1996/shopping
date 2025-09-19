@@ -85,7 +85,7 @@ export class AuthService {
 
     try {
       const payload: any = jwtDecode(token);
-      console.log("Decoded Role:", payload.role); // ✅ Debug log
+      console.log("Decoded Role:", payload.role);
       return payload.role || null;
     } catch (error) {
       console.error("Error decoding role:", error);
