@@ -35,7 +35,7 @@ export class CartComponent implements OnInit {
         this.updateTotalPrice();
       },
       error: (err) => {
-        console.error("❌ Error fetching cart items:", err);
+        console.error("Error fetching cart items:", err);
       }
     });
   }
@@ -62,7 +62,7 @@ export class CartComponent implements OnInit {
         this.cartItems = this.cartItems.filter(item => item.id !== itemId);
         this.updateTotalPrice();
       },
-      error: (err) => console.error("❌ Error removing item:", err)
+      error: (err) => console.error("Error removing item:", err)
     });
   }
 

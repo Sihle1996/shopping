@@ -27,7 +27,18 @@ import { HistoryordersComponent } from './pages/historyorders/historyorders.comp
 
 @NgModule({
   declarations: [
-    AppComponent,
+    AppComponent
+  ],
+  imports: [
+    BrowserModule,
+    RouterModule,
+    AppRoutingModule,
+    HttpClientModule,
+    BrowserAnimationsModule,
+    AdminDashboardModule,
+    SharedModule,
+    ManagerModule,
+    LoadersModule,
     HomeComponent,
     CartComponent,
     OrdersComponent,
@@ -39,18 +50,6 @@ import { HistoryordersComponent } from './pages/historyorders/historyorders.comp
     CheckoutComponent,
     ThankYouComponent,
     HistoryordersComponent,
-  ],
-  imports: [
-    BrowserModule,
-    RouterModule,
-    HttpClientModule,
-    BrowserAnimationsModule,
-    // Register feature modules with their forChild routes BEFORE AppRoutingModule
-    AdminDashboardModule,
-    ManagerModule,
-    // Root routes with wildcard should come last
-    AppRoutingModule,
-    SharedModule,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',
       timeOut: 4000,

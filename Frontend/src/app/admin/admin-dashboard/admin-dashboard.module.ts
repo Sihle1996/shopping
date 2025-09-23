@@ -37,6 +37,7 @@ import { AdminPromotionsComponent } from '../admin-promotions/admin-promotions.c
     AdminPromotionsComponent,
   ],
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, SharedModule, AdminRoutingModule],
+  imports: [CommonModule, FormsModule, RouterModule, SharedModule, AdminRoutingModule, ManagerModule],
   exports: [AdminDashboardComponent, AdminFooterComponent],
 })
 export class AdminDashboardModule {}
