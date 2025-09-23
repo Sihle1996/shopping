@@ -5,6 +5,7 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 import { ToastrModule } from 'ngx-toastr';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AppComponent } from './app.component';
 import { HomeComponent } from './pages/home/home.component';
 import { CartComponent } from './pages/cart/cart.component';
@@ -27,18 +28,7 @@ import { HistoryordersComponent } from './pages/historyorders/historyorders.comp
 
 @NgModule({
   declarations: [
-    AppComponent
-  ],
-  imports: [
-    BrowserModule,
-    RouterModule,
-    AppRoutingModule,
-    HttpClientModule,
-    BrowserAnimationsModule,
-    AdminDashboardModule,
-    SharedModule,
-    ManagerModule,
-    LoadersModule,
+    AppComponent,
     HomeComponent,
     CartComponent,
     OrdersComponent,
@@ -50,6 +40,18 @@ import { HistoryordersComponent } from './pages/historyorders/historyorders.comp
     CheckoutComponent,
     ThankYouComponent,
     HistoryordersComponent,
+  ],
+  imports: [
+    BrowserModule,
+    RouterModule,
+    HttpClientModule,
+    BrowserAnimationsModule,
+    FormsModule,
+    ReactiveFormsModule,
+    AdminDashboardModule,
+    SharedModule,
+    ManagerModule,
+    AppRoutingModule,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',
       timeOut: 4000,
