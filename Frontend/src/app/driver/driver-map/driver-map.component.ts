@@ -6,9 +6,8 @@ import {
   OnDestroy,
   Output
 } from '@angular/core';
-import 'leaflet';
+import * as L from 'leaflet';
 import 'leaflet.awesome-markers';
-declare const L: any;
 import * as mapboxPolyline from '@mapbox/polyline';
 import { GeocodingService } from 'src/app/services/geocoding.service';
 
@@ -32,9 +31,9 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
   @Input() mapId: string = 'map';
   @Output() mapLoaded = new EventEmitter<void>();
 
-  private map: L.Map | null = null;
-  private driverMarker: L.Marker | null = null;
-  private routeLine: L.Polyline | null = null;
+  private map: any | null = null;
+  private driverMarker: any | null = null;
+  private routeLine: any | null = null;
   private watchId: number | null = null;
   private destinationCoords: [number, number] | null = null;
   private driverCoords: [number, number] | null = null;
@@ -166,12 +165,12 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
 
           setTimeout(() => {
             if (this.routeLine) this.map!.removeLayer(this.routeLine);
-            this.routeLine = L.polyline(path as L.LatLngTuple[], {
+            this.routeLine = L.polyline(path as [number, number][], {
               color: 'blue',
               weight: 4
             }).addTo(this.map!);
 
-            const bounds = L.latLngBounds(path.map(p => L.latLng(p[0], p[1])));
+            const bounds = L.latLngBounds(path.map((p: [number, number]) => L.latLng(p[0], p[1])));
             this.map!.fitBounds(bounds, { padding: [30, 30] });
           }, 100);
         } catch (err) {
@@ -205,8 +204,8 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
     return parts.slice(0, 2).join(', ');
   }
 
-  private driverIcon(): L.Icon {
-    return L.AwesomeMarkers.icon({
+  private driverIcon(): any {
+    return (L as any).AwesomeMarkers.icon({
       icon: 'location-arrow',
       prefix: 'fa',
       markerColor: 'blue',
@@ -215,8 +214,8 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  private destinationIcon(): L.Icon {
-    return L.AwesomeMarkers.icon({
+  private destinationIcon(): any {
+    return (L as any).AwesomeMarkers.icon({
       icon: 'box',
       prefix: 'fa',
       markerColor: 'red',

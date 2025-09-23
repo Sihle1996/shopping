@@ -10,11 +10,21 @@
     <h2 class="text-2xl font-bold text-gray-800 mb-6">📊 Admin Dashboard</h2>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-      <div class="bg-white p-4 shadow rounded">
-        <canvas id="salesChart"></canvas>
+      <div class="bg-white p-4 shadow rounded h-72 flex items-center justify-center">
+        <ng-container *ngIf="!salesEmpty; else noSalesData">
+          <canvas #salesChartCanvas class="w-full h-full"></canvas>
+        </ng-container>
+        <ng-template #noSalesData>
+          <div class="text-gray-500">No sales data for the selected period</div>
+        </ng-template>
       </div>
-      <div class="bg-white p-4 shadow rounded">
-        <canvas id="productsChart"></canvas>
+      <div class="bg-white p-4 shadow rounded h-72 flex items-center justify-center">
+        <ng-container *ngIf="!productsEmpty; else noProductsData">
+          <canvas #productsChartCanvas class="w-full h-full"></canvas>
+        </ng-container>
+        <ng-template #noProductsData>
+          <div class="text-gray-500">No top products for the selected period</div>
+        </ng-template>
       </div>
     </div>
 

@@ -3,6 +3,7 @@ import { AuthService } from 'src/app/services/auth.service';
 import { AdminService } from 'src/app/services/admin.service';
 import { MenuService, MenuItem } from 'src/app/services/menu.service';
 import { Router } from '@angular/router';
+import { PromotionService, Promotion } from 'src/app/services/promotion.service';
 
 @Component({
   selector: 'app-home',
@@ -12,6 +13,8 @@ import { Router } from '@angular/router';
 export class HomeComponent {
   menuItems: MenuItem[] = [];
   filteredMenuItems: MenuItem[] = [];
+  featuredPromotion: Promotion | null = null;
+  promotions: Promotion[] = [];
   categories = [
     { name: 'All', icon: 'assets/istockphoto-1419247070-612x612.jpg' },
     { name: 'Burgers', icon: 'assets/istockphoto-468676382-612x612.jpg' },
@@ -30,13 +33,28 @@ export class HomeComponent {
     private authService: AuthService,
     private menuService: MenuService,
     private adminService: AdminService,
-    private router: Router
+    private router: Router,
+    private promotionService: PromotionService
   ) {}
 
   ngOnInit(): void {
     this.isAdmin = this.authService.getUserRole() === 'ROLE_ADMIN';
     this.isLoggedIn = this.authService.isLoggedIn();
     this.fetchMenu();
+    this.loadPromotions();
+  }
+
+  private loadPromotions(): void {
+    // Featured
+    this.promotionService.getFeaturedPromotion().subscribe({
+      next: (p) => this.featuredPromotion = p,
+      error: (err) => console.error('❌ Failed to load featured promotion:', err)
+    });
+    // Active list
+    this.promotionService.getActivePromotions().subscribe({
+      next: (list) => this.promotions = list,
+      error: (err) => console.error('❌ Failed to load promotions:', err)
+    });
   }
 
   fetchMenu(): void {

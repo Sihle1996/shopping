@@ -48,6 +48,7 @@ public class SecurityConfiguration {
                                 "/api/menu/**",
                                 "/api/register",
                                 "/api/login",
+                                "/api/promotions/**",
                                 "/api/map/route",
                                 "/images/**",         // ✅ Allow public access to static images
                                 "/uploads/**"         // ✅ Just in case direct file path is hit

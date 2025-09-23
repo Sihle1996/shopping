@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 import { AdminDashboardComponent } from './admin-dashboard.component';
@@ -18,6 +18,7 @@ import { ManagerDashboardComponent } from '../../manager/manager-dashboard/manag
 import { AdminLayoutComponent } from '../admin-layout/admin-layout.component';
 import { SharedModule } from '../../shared/shared.module';
 import { AdminRoutingModule } from '../admin-routing.module';
+import { AdminPromotionsComponent } from '../admin-promotions/admin-promotions.component';
 
 @NgModule({
   declarations: [
@@ -32,10 +33,10 @@ import { AdminRoutingModule } from '../admin-routing.module';
     InventoryManagementComponent,
     DriverDashboardComponent,
     DriverMapComponent,
-    ManagerDashboardComponent,
     AdminLayoutComponent,
+    AdminPromotionsComponent,
   ],
-  imports: [CommonModule, FormsModule, RouterModule, SharedModule, AdminRoutingModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, SharedModule, AdminRoutingModule],
   exports: [AdminDashboardComponent, AdminFooterComponent],
 })
 export class AdminDashboardModule {}

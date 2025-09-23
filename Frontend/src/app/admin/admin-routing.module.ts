@@ -8,6 +8,7 @@ import { AdminDriversComponent } from './admin-drivers/admin-drivers.component';
 import { InventoryManagementComponent } from './inventory-management/inventory-management.component';
 import { AdminDiagnosticsComponent } from './admin-diagnostics/admin-diagnostics.component';
 import { AdminGuard } from '../guards/admin.guard';
+import { AdminPromotionsComponent } from './admin-promotions/admin-promotions.component';
 
 const routes: Routes = [
   {
@@ -20,6 +21,7 @@ const routes: Routes = [
       { path: 'menu', component: AdminMenuComponent },
       { path: 'drivers', component: AdminDriversComponent },
       { path: 'inventory', component: InventoryManagementComponent },
+      { path: 'promotions', component: AdminPromotionsComponent },
       { path: 'diagnostics', component: AdminDiagnosticsComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]

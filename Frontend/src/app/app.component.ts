@@ -1,5 +1,8 @@
 import { Component } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
+import { NavbarComponent } from "./components/navbar/navbar.component";
+import { AdminFooterComponent } from "./admin/admin-footer/admin-footer.component";
+import { FooterComponent } from "./components/footer/footer.component";
 
 
 @Component({
