@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { jwtDecode } from 'jwt-decode';
 import { Observable, tap } from 'rxjs';
+import { PushService } from './push.service';
 
 
 @Injectable({
@@ -12,7 +13,7 @@ export class AuthService {
   private tokenKey = 'token'; 
   private apiUrlAuth = "http://localhost:8080/api"; 
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router, private push: PushService) {}
 
   
   register(data: { email: string; password: string; confirmPassword: string }): Observable<any> {
@@ -74,9 +75,12 @@ export class AuthService {
 
   
   logout(): void {
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem('userId');
-    this.router.navigate(['/login']);
+    // Attempt to unregister FCM token on backend while we still have auth
+    this.push.unregister().finally(() => {
+      localStorage.removeItem(this.tokenKey);
+      localStorage.removeItem('userId');
+      this.router.navigate(['/login']);
+    });
   }
 
   getUserRole(): string | null {

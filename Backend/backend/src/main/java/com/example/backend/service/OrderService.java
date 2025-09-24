@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -33,6 +34,8 @@ public class OrderService {
     private final MenuItemRepository menuItemRepository;
     private final InventoryLogRepository inventoryLogRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final PushNotificationService pushNotificationService;
+    private final EmailService emailService;
 
     @Transactional
     public OrderDTO placeOrderFromPayment(OrderRequestDTO request, User user) {
@@ -86,6 +89,18 @@ public class OrderService {
                 "/queue/orders",
                 dto
         );
+
+        // Send transactional push: Order placed
+        if (StringUtils.hasText(user.getFcmToken())) {
+            String title = "Order placed";
+            String body = "Your order #" + saved.getId() + " was placed successfully.";
+            pushNotificationService.sendToToken(user.getFcmToken(), title, body);
+        }
+
+        // Send transactional email: Order placed
+        try {
+            emailService.sendOrderPlaced(user.getEmail(), saved);
+        } catch (Exception ignored) {}
         return dto;
     }
 
@@ -142,7 +157,23 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
         order.setStatus(status);
-        return convertToOrderDTO(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+
+        // Send transactional push when delivered
+        if ("DELIVERED".equalsIgnoreCase(status) && saved.getUser() != null) {
+            User user = saved.getUser();
+            if (StringUtils.hasText(user.getFcmToken())) {
+                String title = "Order delivered";
+                String body = "Your order #" + saved.getId() + " has been delivered.";
+                pushNotificationService.sendToToken(user.getFcmToken(), title, body);
+            }
+            // Email as well
+            try {
+                emailService.sendOrderDelivered(user.getEmail(), saved);
+            } catch (Exception ignored) {}
+        }
+
+        return convertToOrderDTO(saved);
     }
 
     public List<User> getAvailableDrivers() {

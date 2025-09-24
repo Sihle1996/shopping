@@ -34,6 +34,13 @@ public class User implements UserDetails {
     private String password;
     private String resetOtp; // ✅ Stores the OTP
 
+    // Firebase Cloud Messaging Web Push token for this user (latest)
+    private String fcmToken;
+
+    // Whether user consents to receive promotional push notifications
+    @Column(nullable = false)
+    private boolean promoOptIn = false;
+
     @Enumerated(EnumType.STRING)
     private Role role;
 

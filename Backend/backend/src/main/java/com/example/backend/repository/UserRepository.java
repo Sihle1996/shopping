@@ -15,4 +15,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     List<User> findByRoleAndDriverStatus(Role role, DriverStatus driverStatus);
     List<User> findByRole(Role role);
+
+    // Users who consented to promos and have a stored FCM token
+    List<User> findByPromoOptInTrueAndFcmTokenIsNotNull();
 }

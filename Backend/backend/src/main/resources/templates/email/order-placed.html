@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Placed</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; background:#f6f7fb; margin:0; padding:0; }
+    .container { max-width:640px; margin:24px auto; background:#ffffff; border-radius:10px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+    .header { background:#F97316; color:#fff; padding:20px 24px; }
+    .brand { font-size:20px; font-weight:700; }
+    .content { padding:24px; color:#222; }
+    .btn { display:inline-block; padding:12px 18px; background:#F97316; color:#fff; text-decoration:none; border-radius:6px; }
+    .muted { color:#667085; font-size:12px; }
+    .items { width:100%; border-collapse:collapse; margin-top:12px; }
+    .items th, .items td { text-align:left; padding:8px; border-bottom:1px solid #eee; }
+    .footer { padding:16px 24px; color:#667085; font-size:12px; background:#fafafa; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">FastFood</div>
+      <div>Order #<span th:text="${orderId}"></span> placed successfully</div>
+    </div>
+    <div class="content">
+      <p>Hi,</p>
+      <p>Thanks for your purchase! Your order <strong>#<span th:text="${orderId}"></span></strong> was placed on <span th:text="${orderDate}"></span>.</p>
+
+      <table class="items">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="item : ${items}">
+            <td th:text="${item.name}">Burger</td>
+            <td th:text="${item.quantity}">1</td>
+            <td th:text="${item.totalPrice}">R 0.00</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="2">Total</th>
+            <th th:text="${total}">R 0.00</th>
+          </tr>
+        </tfoot>
+      </table>
+
+      <p style="margin-top:18px;">
+        <a class="btn" th:href="${orderLink}">View your order</a>
+      </p>
+
+      <p class="muted">If you did not place this order, please contact support.</p>
+    </div>
+    <div class="footer">
+      © <span th:text="${year}"></span> FastFood. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

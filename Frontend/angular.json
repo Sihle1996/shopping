@@ -26,9 +26,21 @@
             ],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": [
+              "sockjs-client",
+              "maplibre-gl",
+              "@mapbox/polyline",
+              "leaflet",
+              "leaflet.awesome-markers"
+            ],
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              {
+                "glob": "firebase-messaging-sw.js",
+                "input": "src/",
+                "output": "/"
+              }
             ],
             "styles": [
               "node_modules/leaflet/dist/leaflet.css",

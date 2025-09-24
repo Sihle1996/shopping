@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Delivered</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; background:#f6f7fb; margin:0; padding:0; }
+    .container { max-width:640px; margin:24px auto; background:#ffffff; border-radius:10px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+    .header { background:#16a34a; color:#fff; padding:20px 24px; }
+    .brand { font-size:20px; font-weight:700; }
+    .content { padding:24px; color:#222; }
+    .btn { display:inline-block; padding:12px 18px; background:#16a34a; color:#fff; text-decoration:none; border-radius:6px; }
+    .muted { color:#667085; font-size:12px; }
+    .footer { padding:16px 24px; color:#667085; font-size:12px; background:#fafafa; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">FastFood</div>
+      <div>Order #<span th:text="${orderId}"></span> delivered</div>
+    </div>
+    <div class="content">
+      <p>Hi,</p>
+      <p>Your order <strong>#<span th:text="${orderId}"></span></strong> has been delivered.</p>
+
+      <p style="margin-top:18px;">
+        <a class="btn" th:href="${orderLink}">View order details</a>
+      </p>
+
+      <p class="muted">Thank you for ordering with FastFood. We hope you enjoy your meal!</p>
+    </div>
+    <div class="footer">
+      © <span th:text="${year}"></span> FastFood. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

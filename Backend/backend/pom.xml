@@ -124,6 +124,25 @@
 			<version>1.14.0</version>
 		</dependency>
 
+		<!-- ✅ Firebase Admin SDK for FCM HTTP v1 -->
+		<dependency>
+			<groupId>com.google.firebase</groupId>
+			<artifactId>firebase-admin</artifactId>
+			<version>9.4.1</version>
+		</dependency>
+
+		<!-- ✅ Spring Boot Mail for email notifications -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+
+		<!-- ✅ Thymeleaf for HTML email templates -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+
 		<!-- ✅ Testing Dependencies -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

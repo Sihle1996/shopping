@@ -1,8 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
-import { NavbarComponent } from "./components/navbar/navbar.component";
-import { AdminFooterComponent } from "./admin/admin-footer/admin-footer.component";
-import { FooterComponent } from "./components/footer/footer.component";
+import { PushService } from './services/push.service';
 
 
 @Component({
@@ -11,15 +9,20 @@ import { FooterComponent } from "./components/footer/footer.component";
   styleUrls: ['./app.component.scss'],
 
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'App';
   isAdminRoute = false;
 
-  constructor(private router: Router) {
+  constructor(private router: Router, private push: PushService) {
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         this.isAdminRoute = event.urlAfterRedirects.startsWith('/admin');
       }
     });
+  }
+
+  ngOnInit(): void {
+    // Initialize web push (requests permission lazily inside service)
+    this.push.init();
   }
 }
