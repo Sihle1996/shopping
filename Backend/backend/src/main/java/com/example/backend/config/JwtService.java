@@ -61,7 +61,7 @@ public class JwtService {
         claims.put("userId", userId);
 
         if (userDetails instanceof User user) {
-            claims.put("role", "ROLE_" + user.getRole().name()); // Ensure role is prefixed
+            claims.put("role", "ROLE_" + user.getRole().name()); 
         }
 
         return buildToken(claims, userDetails, jwtExpiration);
