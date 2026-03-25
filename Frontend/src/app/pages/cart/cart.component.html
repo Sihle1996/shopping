@@ -1,57 +1,70 @@
-<div class="bg-gray-100 min-h-screen flex flex-col relative pb-32">
-  <h2 class="text-2xl font-semibold text-gray-800 text-center py-4">Your Cart</h2>
-
-  <!-- Empty Cart Message -->
-  <div *ngIf="cartItems.length === 0" class="flex flex-col items-center justify-center flex-grow text-gray-500">
-    <p class="text-lg">Your cart is empty</p>
-    <a routerLink="/" class="text-red-600 font-bold text-md mt-2">Browse Menu</a>
+<div class="min-h-screen bg-surface flex flex-col pb-32">
+  <!-- Header -->
+  <div class="px-4 pt-6 pb-4 lg:px-8">
+    <div class="flex items-center gap-3 mb-2">
+      <button (click)="goBack()" class="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors">
+        <i class="bi bi-arrow-left text-textDark text-lg"></i>
+      </button>
+      <h2 class="font-heading text-2xl font-bold text-textDark">Your Cart</h2>
+      <span *ngIf="cartItems.length" class="text-textMuted text-sm">({{ cartItems.length }} items)</span>
+    </div>
   </div>
 
-  <!-- Scrollable Cart Items List -->
-  <div class="overflow-y-auto flex-grow px-4" style="max-height: calc(100vh - 260px);">
-    <div *ngFor="let item of cartItems" class="bg-white p-4 rounded-lg shadow-md flex items-center mb-4">
-      <img [src]="getImageUrl(item.image)" alt="{{ item.menuItemName }}"
-        class="w-16 h-16 rounded-md object-cover" />
+  <!-- Empty Cart -->
+  <app-empty-state
+    *ngIf="cartItems.length === 0"
+    icon="bi bi-cart3"
+    title="Your cart is empty"
+    message="Browse our menu and add your favourite items to get started"
+    actionLabel="Browse Menu"
+    (action)="goToMenu()">
+  </app-empty-state>
 
-      <!-- Item Details -->
-      <div class="ml-4 flex-1">
-        <h4 class="text-lg font-semibold text-gray-800">{{ item.menuItemName }}</h4>
-        <p class="text-gray-500 text-sm">{{ item.size }}</p>
-        <p class="text-red-600 font-bold text-md">R{{ (item.menuItemPrice * item.quantity).toFixed(2) }}</p>
+  <!-- Cart Items -->
+  <div *ngIf="cartItems.length > 0" class="flex-1 overflow-y-auto px-4 lg:px-8 space-y-3">
+    <div *ngFor="let item of cartItems; trackBy: trackById"
+         class="bg-white p-4 rounded-2xl shadow-card flex items-center gap-4 animate-fade-in">
+      <!-- Image -->
+      <img [src]="getImageUrl(item.image)" [alt]="item.menuItemName"
+           class="w-20 h-20 rounded-xl object-cover flex-shrink-0" />
+
+      <!-- Details -->
+      <div class="flex-1 min-w-0">
+        <h4 class="font-semibold text-textDark truncate">{{ item.menuItemName }}</h4>
+        <p class="text-textMuted text-sm mt-0.5">Size: {{ item.size }}</p>
+        <p class="font-numbers font-bold text-primary mt-1">
+          R{{ (item.menuItemPrice * item.quantity).toFixed(2) }}
+        </p>
       </div>
 
-      <!-- Quantity Controls -->
-      <div class="flex items-center space-x-3">
-        <button (click)="decreaseQuantity(item)"
-          class="w-9 h-9 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300">
-          <i class="bi bi-dash-lg text-gray-800 text-lg"></i>
+      <!-- Quantity & Remove -->
+      <div class="flex flex-col items-end gap-3">
+        <button (click)="removeItem(item.id)"
+                class="text-textMuted hover:text-danger transition-colors">
+          <i class="bi bi-trash text-base"></i>
         </button>
-        <span class="text-lg font-semibold">{{ item.quantity }}</span>
-        <button (click)="increaseQuantity(item)"
-          class="w-9 h-9 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300">
-          <i class="bi bi-plus-lg text-gray-800 text-lg"></i>
-        </button>
+        <app-quantity-selector
+          [quantity]="item.quantity"
+          (quantityChange)="onQuantityChange(item, $event)">
+        </app-quantity-selector>
       </div>
-
-      <!-- Remove Button -->
-      <button (click)="removeItem(item.id)"
-        class="ml-4 w-9 h-9 flex items-center justify-center bg-red-600 text-white rounded-full hover:bg-red-700">
-        <i class="bi bi-trash text-white text-lg"></i>
-      </button>
     </div>
   </div>
 
   <!-- Sticky Checkout Bar -->
-  <div class="bg-white p-4 shadow-md fixed bottom-20 left-0 w-full z-50 border-t">
-    <div class="flex justify-between font-semibold text-xl mb-3">
-      <span>Total:</span>
-      <span class="text-red-600">R{{ totalPrice.toFixed(2) }}</span>
+  <div *ngIf="cartItems.length > 0"
+       class="bg-white border-t border-borderColor fixed bottom-16 lg:bottom-0 left-0 w-full z-40 px-4 lg:px-8 py-4 shadow-float">
+    <div class="flex justify-between items-center mb-3">
+      <span class="text-textLight text-sm">Total</span>
+      <span class="font-numbers font-bold text-2xl text-textDark">R{{ totalPrice.toFixed(2) }}</span>
     </div>
-
-    <!-- Checkout Button -->
-    <button (click)="proceedToCheckout()"
-      class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-lg font-semibold transition duration-200">
+    <app-button
+      variant="primary"
+      size="lg"
+      [fullWidth]="true"
+      iconRight="bi bi-arrow-right"
+      (clicked)="proceedToCheckout()">
       Proceed to Checkout
-    </button>
+    </app-button>
   </div>
 </div>

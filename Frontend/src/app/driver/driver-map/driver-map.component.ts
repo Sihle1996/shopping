@@ -10,6 +10,7 @@ import * as L from 'leaflet';
 import 'leaflet.awesome-markers';
 import * as mapboxPolyline from '@mapbox/polyline';
 import { GeocodingService } from 'src/app/services/geocoding.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-driver-map',
@@ -152,7 +153,7 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
 
   private drawRoute(start: [number, number], end: [number, number]): void {
     const request = new XMLHttpRequest();
-    request.open('POST', 'http://localhost:8080/api/map/route');
+    request.open('POST', `${environment.apiUrl}/api/map/route`);
     request.setRequestHeader('Accept', 'application/json');
     request.setRequestHeader('Content-Type', 'application/json');
 

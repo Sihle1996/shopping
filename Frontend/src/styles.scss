@@ -2,8 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap');
 
 :root {
   --font-primary: 'Poppins', sans-serif;
@@ -13,7 +12,7 @@
 
 body {
   font-family: var(--font-primary);
-  @apply bg-background text-textDark;
+  @apply bg-surface text-textDark antialiased;
 }
 
 h1, h2, h3 {
@@ -24,14 +23,29 @@ h1, h2, h3 {
   font-family: var(--font-numbers);
 }
 
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 [id^="map-"] {
   height: 250px;
   width: 100%;
   min-height: 200px;
 }
 
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
+/* Hide scrollbar for category chips */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Smooth scroll for all scroll containers */
+.scroll-smooth {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }

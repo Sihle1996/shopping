@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
-// ✅ Updated MenuItem interface to match backend response
 export interface MenuItem {
   id: number | null;
   name: string;
   description: string;
   price: number;
-  image: string; 
+  image: string;
   category: string;
   isAvailable: boolean;
   quantity?: number;
@@ -18,7 +18,7 @@ export interface MenuItem {
   providedIn: 'root'
 })
 export class MenuService {
-  private apiUrl = 'http://localhost:8080/api/menu';
+  private apiUrl = `${environment.apiUrl}/api/menu`;
 
   constructor(private http: HttpClient) {}
 

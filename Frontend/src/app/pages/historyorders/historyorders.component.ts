@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from 'src/app/services/auth.service';
+import { environment } from 'src/environments/environment';
 
 interface OrderDTO {
   id: number;
@@ -43,7 +44,7 @@ export class HistoryordersComponent implements OnInit {
       'Authorization': `Bearer ${token}`
     });
 
-    this.http.get<OrderDTO[]>('http://localhost:8080/api/orders', { headers }).subscribe({
+    this.http.get<OrderDTO[]>(`${environment.apiUrl}/api/orders`, { headers }).subscribe({
       next: (orders) => {
         this.orders = orders;
         this.applyFilter();

@@ -37,7 +37,7 @@
     <!-- Menu Items -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div *ngFor="let item of filteredMenu" class="bg-white rounded shadow p-4 flex">
-        <img [src]="item.image?.startsWith('/images/') ? 'http://localhost:8080' + item.image : item.image || 'assets/RedDot_Burger.jpg'" class="w-24 h-24 rounded object-cover" />
+        <img [src]="getImageUrl(item)" class="w-24 h-24 rounded object-cover" />
         <div class="ml-4 flex-1">
           <h4 class="text-lg font-semibold text-gray-800">{{ item.name }}</h4>
           <p class="text-gray-500 text-sm">{{ item.category }}</p>

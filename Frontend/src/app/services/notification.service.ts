@@ -6,6 +6,7 @@ import { Observable, Subject } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { ToastrService } from 'ngx-toastr';
+import { environment } from 'src/environments/environment';
 
 export interface OrderEvent {
   type?: string;
@@ -36,7 +37,7 @@ export class NotificationService implements OnDestroy {
     const connectHeaders: StompHeaders = token ? { Authorization: `Bearer ${token}` } : {};
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS(`${environment.apiUrl}/ws`),
       connectHeaders,
       reconnectDelay: 5000,
       debug: () => {}
