@@ -1,55 +1,126 @@
-<div class="p-4">
-    <h2 class="text-2xl font-bold mb-4 text-gray-800">🍽 Admin Menu Management</h2>
-  
-    <!-- Add Item Button -->
-    <button (click)="toggleForm()" class="mb-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-      {{ showForm ? 'Cancel' : '➕ Add Menu Item' }}
-    </button>
-  
+<div class="px-4 pt-6 lg:px-8">
+  <div class="max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="font-heading text-2xl font-bold text-textDark">Menu Management</h1>
+        <p class="text-textLight text-sm mt-1">Add, edit, and manage your menu items</p>
+      </div>
+      <app-button
+        [variant]="showForm ? 'ghost' : 'primary'"
+        size="md"
+        [iconLeft]="showForm ? 'bi bi-x-lg' : 'bi bi-plus-lg'"
+        (clicked)="toggleForm()">
+        {{ showForm ? 'Cancel' : 'Add Item' }}
+      </app-button>
+    </div>
+
     <!-- Add/Edit Form -->
-    <div *ngIf="showForm" class="bg-white shadow p-4 rounded mb-6">
+    <div *ngIf="showForm" class="bg-white rounded-2xl shadow-card p-6 mb-6 animate-fade-in">
+      <h3 class="font-heading text-base font-semibold text-textDark mb-4">
+        {{ isEditing ? 'Edit Menu Item' : 'New Menu Item' }}
+      </h3>
       <form (ngSubmit)="submitForm()" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <input type="text" [(ngModel)]="formData.name" name="name" placeholder="Name" class="form-input" required />
-        <input type="text" [(ngModel)]="formData.category" name="category" placeholder="Category" class="form-input" required />
-        <input type="number" [(ngModel)]="formData.price" name="price" placeholder="Price" class="form-input" required />
-        <!-- <input type="text" [(ngModel)]="formData.image" name="image" placeholder="Image URL" class="form-input" /> -->
-        <input type="file" (change)="onImageSelected($event)" accept="image/*" class="form-input" />
-        <textarea [(ngModel)]="formData.description" name="description" placeholder="Description" class="form-textarea md:col-span-2"></textarea>
-        <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 md:col-span-2">
-          {{ isEditing ? 'Update' : 'Add' }} Item
-        </button>
+        <div>
+          <label class="block text-xs font-medium text-textDark mb-1">Name</label>
+          <input type="text" [(ngModel)]="formData.name" name="name" required
+                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                 placeholder="Item name" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-textDark mb-1">Category</label>
+          <input type="text" [(ngModel)]="formData.category" name="category" required
+                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                 placeholder="e.g. Burgers, Pizza" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-textDark mb-1">Price (ZAR)</label>
+          <input type="number" [(ngModel)]="formData.price" name="price" required
+                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                 placeholder="0.00" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-textDark mb-1">Image</label>
+          <input type="file" (change)="onImageSelected($event)" accept="image/*"
+                 class="w-full px-4 py-2 rounded-xl border border-borderColor bg-surface text-sm text-textDark file:mr-3 file:rounded-lg file:border-0 file:bg-primary-100 file:px-3 file:py-1 file:text-sm file:font-medium file:text-primary-700 hover:file:bg-primary-200" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-xs font-medium text-textDark mb-1">Description</label>
+          <textarea [(ngModel)]="formData.description" name="description" rows="3"
+                    class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark resize-none
+                           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                    placeholder="Describe the item..."></textarea>
+        </div>
+        <div class="md:col-span-2">
+          <app-button variant="primary" size="md" type="submit" [fullWidth]="true">
+            {{ isEditing ? 'Update Item' : 'Add Item' }}
+          </app-button>
+        </div>
       </form>
     </div>
-  
+
     <!-- Filters -->
     <div class="flex flex-wrap items-center gap-3 mb-6">
-      <input [(ngModel)]="searchQuery" placeholder="Search..." class="px-4 py-2 rounded border" />
-      <select [(ngModel)]="selectedSort" class="px-3 py-2 border rounded">
-        <option value="default">Sort</option>
-        <option value="priceLowHigh">Price: Low to High</option>
-        <option value="priceHighLow">Price: High to Low</option>
+      <div class="relative flex-1 min-w-[200px]">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+          <i class="bi bi-search text-textMuted text-sm"></i>
+        </div>
+        <input [(ngModel)]="searchQuery" placeholder="Search items..."
+               class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-borderColor bg-white text-sm text-textDark
+                      focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent shadow-card" />
+      </div>
+      <select [(ngModel)]="selectedSort"
+              class="px-3 py-2.5 rounded-xl border border-borderColor bg-white text-sm text-textDark shadow-card
+                     focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent">
+        <option value="default">Sort by</option>
+        <option value="priceLowHigh">Price: Low → High</option>
+        <option value="priceHighLow">Price: High → Low</option>
       </select>
-      <select [(ngModel)]="selectedCategory" class="px-3 py-2 border rounded">
+      <select [(ngModel)]="selectedCategory"
+              class="px-3 py-2.5 rounded-xl border border-borderColor bg-white text-sm text-textDark shadow-card
+                     focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent">
         <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
       </select>
     </div>
-  
-    <!-- Menu Items -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div *ngFor="let item of filteredMenu" class="bg-white rounded shadow p-4 flex">
-        <img [src]="getImageUrl(item)" class="w-24 h-24 rounded object-cover" />
-        <div class="ml-4 flex-1">
-          <h4 class="text-lg font-semibold text-gray-800">{{ item.name }}</h4>
-          <p class="text-gray-500 text-sm">{{ item.category }}</p>
-          <p class="text-red-600 font-bold text-md">R{{ item.price.toFixed(2) }}</p>
-          <div class="mt-2 space-x-3">
-            <button (click)="editItem(item)" class="text-blue-600 hover:underline">Edit</button>
-            <button (click)="deleteItem(item.id)" class="text-red-600 hover:underline">Delete</button>
+
+    <!-- Menu Items Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div *ngFor="let item of filteredMenu"
+           class="bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-card-hover transition-shadow animate-fade-in">
+        <div class="aspect-[16/10] overflow-hidden bg-gray-100">
+          <img [src]="getImageUrl(item)" [alt]="item.name"
+               class="w-full h-full object-cover" />
+        </div>
+        <div class="p-4">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <h4 class="font-semibold text-textDark text-sm">{{ item.name }}</h4>
+              <p class="text-textMuted text-xs">{{ item.category }}</p>
+            </div>
+            <span class="font-numbers font-bold text-primary text-sm">R{{ item.price.toFixed(2) }}</span>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <app-button variant="outline" size="sm" iconLeft="bi bi-pencil" (clicked)="editItem(item)">
+              Edit
+            </app-button>
+            <app-button variant="danger" size="sm" iconLeft="bi bi-trash" (clicked)="deleteItem(item.id)">
+              Delete
+            </app-button>
           </div>
         </div>
       </div>
     </div>
-  
-    <div *ngIf="filteredMenu.length === 0" class="text-center text-gray-500 mt-6">No items match your search/filter.</div>
+
+    <!-- Empty state -->
+    <app-empty-state
+      *ngIf="filteredMenu.length === 0"
+      icon="bi bi-journal-x"
+      title="No items found"
+      message="Try adjusting your search or filter, or add a new menu item">
+    </app-empty-state>
   </div>
-  
+</div>

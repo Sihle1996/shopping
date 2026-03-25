@@ -1,125 +1,173 @@
-<div class="min-h-screen bg-gray-100 p-4">
-  <div class="max-w-5xl mx-auto space-y-6">
-    <h2 class="text-2xl font-bold text-gray-800">Promotions</h2>
+<div class="px-4 pt-6 lg:px-8">
+  <div class="max-w-6xl mx-auto">
 
-    <!-- Inline Create/Edit Form -->
-    <div class="bg-white p-4 rounded shadow">
-      <h3 class="text-lg font-semibold mb-3">{{ editingId ? 'Edit Promotion' : 'New Promotion' }}</h3>
+    <!-- Header -->
+    <div class="mb-6">
+      <h1 class="font-heading text-2xl font-bold text-textDark">Promotions</h1>
+      <p class="text-textLight text-sm mt-1">Create and manage promotional campaigns</p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-2xl shadow-card p-6 mb-8">
+      <h3 class="font-heading text-base font-semibold text-textDark mb-4">
+        {{ editingId ? 'Edit Promotion' : 'New Promotion' }}
+      </h3>
       <form [formGroup]="form" (ngSubmit)="submit()" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <label class="block">
-          <span class="text-sm text-gray-600">Title</span>
-          <input type="text" formControlName="title" class="mt-1 w-full border p-2 rounded" />
-        </label>
+        <div>
+          <label class="block text-xs font-medium text-textDark mb-1">Title</label>
+          <input type="text" formControlName="title"
+                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+        </div>
 
-        <label class="block md:col-span-2">
-          <span class="text-sm text-gray-600">Description</span>
-          <textarea formControlName="description" class="mt-1 w-full border p-2 rounded" rows="2"></textarea>
-        </label>
+        <div class="md:col-span-2">
+          <label class="block text-xs font-medium text-textDark mb-1">Description</label>
+          <textarea formControlName="description" rows="2"
+                    class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark resize-none
+                           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"></textarea>
+        </div>
 
-        <label class="block">
-          <span class="text-sm text-gray-600">Image URL</span>
-          <input type="text" formControlName="imageUrl" class="mt-1 w-full border p-2 rounded" />
-        </label>
+        <div>
+          <label class="block text-xs font-medium text-textDark mb-1">Image URL</label>
+          <input type="text" formControlName="imageUrl"
+                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+        </div>
 
-        <label class="block">
-          <span class="text-sm text-gray-600">Badge Text</span>
-          <input type="text" formControlName="badgeText" class="mt-1 w-full border p-2 rounded" />
-        </label>
+        <div>
+          <label class="block text-xs font-medium text-textDark mb-1">Badge Text</label>
+          <input type="text" formControlName="badgeText"
+                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+        </div>
 
-        <label class="block">
-          <span class="text-sm text-gray-600">Discount (%)</span>
-          <input type="number" min="0" max="100" formControlName="discountPercent" class="mt-1 w-full border p-2 rounded" />
-        </label>
+        <div>
+          <label class="block text-xs font-medium text-textDark mb-1">Discount (%)</label>
+          <input type="number" min="0" max="100" formControlName="discountPercent"
+                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+        </div>
 
-        <label class="block">
-          <span class="text-sm text-gray-600">Start</span>
-          <input type="datetime-local" formControlName="startAt" class="mt-1 w-full border p-2 rounded" />
-        </label>
-
-        <label class="block">
-          <span class="text-sm text-gray-600">End</span>
-          <input type="datetime-local" formControlName="endAt" class="mt-1 w-full border p-2 rounded" />
-        </label>
-
-        <label class="block">
-          <span class="text-sm text-gray-600">Applies To</span>
-          <select formControlName="appliesTo" class="mt-1 w-full border p-2 rounded">
+        <div>
+          <label class="block text-xs font-medium text-textDark mb-1">Applies To</label>
+          <select formControlName="appliesTo"
+                  class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                         focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent">
             <option *ngFor="let opt of appliesToOptions" [value]="opt.value">{{ opt.label }}</option>
           </select>
-        </label>
+        </div>
 
-        <label class="block" *ngIf="form.value.appliesTo === 'CATEGORY'">
-          <span class="text-sm text-gray-600">Target Category ID</span>
-          <input type="number" formControlName="targetCategoryId" class="mt-1 w-full border p-2 rounded" />
-        </label>
+        <div>
+          <label class="block text-xs font-medium text-textDark mb-1">Start</label>
+          <input type="datetime-local" formControlName="startAt"
+                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+        </div>
 
-        <label class="block" *ngIf="form.value.appliesTo === 'PRODUCT'">
-          <span class="text-sm text-gray-600">Target Product ID</span>
-          <input type="number" formControlName="targetProductId" class="mt-1 w-full border p-2 rounded" />
-        </label>
+        <div>
+          <label class="block text-xs font-medium text-textDark mb-1">End</label>
+          <input type="datetime-local" formControlName="endAt"
+                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+        </div>
 
-        <label class="block">
-          <span class="text-sm text-gray-600">Promo Code</span>
-          <input type="text" formControlName="code" class="mt-1 w-full border p-2 rounded" />
-        </label>
+        <div *ngIf="form.value.appliesTo === 'CATEGORY'">
+          <label class="block text-xs font-medium text-textDark mb-1">Target Category ID</label>
+          <input type="number" formControlName="targetCategoryId"
+                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+        </div>
 
-        <div class="flex items-center gap-4 md:col-span-2">
-          <label class="inline-flex items-center gap-2">
-            <input type="checkbox" formControlName="active" /> Active
+        <div *ngIf="form.value.appliesTo === 'PRODUCT'">
+          <label class="block text-xs font-medium text-textDark mb-1">Target Product ID</label>
+          <input type="number" formControlName="targetProductId"
+                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-textDark mb-1">Promo Code</label>
+          <input type="text" formControlName="code"
+                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+        </div>
+
+        <div class="flex items-center gap-6 md:col-span-2">
+          <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" formControlName="active"
+                   class="rounded border-borderColor text-primary focus:ring-primary-400" />
+            <span class="text-sm text-textDark">Active</span>
           </label>
-          <label class="inline-flex items-center gap-2">
-            <input type="checkbox" formControlName="featured" /> Featured
+          <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" formControlName="featured"
+                   class="rounded border-borderColor text-primary focus:ring-primary-400" />
+            <span class="text-sm text-textDark">Featured</span>
           </label>
         </div>
 
-        <div class="md:col-span-2 flex gap-2">
-          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded" [disabled]="form.invalid">{{ editingId ? 'Update' : 'Create' }}</button>
-          <button type="button" class="px-4 py-2 bg-gray-200 rounded" (click)="resetForm()" *ngIf="editingId">Cancel</button>
+        <div class="md:col-span-2 flex gap-3">
+          <app-button variant="primary" size="md" type="submit" [disabled]="form.invalid">
+            {{ editingId ? 'Update' : 'Create' }}
+          </app-button>
+          <app-button *ngIf="editingId" variant="ghost" size="md" (clicked)="resetForm()">
+            Cancel
+          </app-button>
         </div>
       </form>
     </div>
 
     <!-- List -->
-    <div class="bg-white p-4 rounded shadow">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-lg font-semibold">All Promotions</h3>
-        <button class="px-3 py-1 bg-green-600 text-white rounded" (click)="refresh()">Refresh</button>
+    <div class="bg-white rounded-2xl shadow-card overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-borderColor">
+        <h3 class="font-heading text-sm font-semibold text-textDark">All Promotions</h3>
+        <app-button variant="secondary" size="sm" iconLeft="bi bi-arrow-clockwise" (clicked)="refresh()">
+          Refresh
+        </app-button>
       </div>
 
-      <div *ngIf="loading" class="text-gray-500">Loading...</div>
-      <table class="min-w-full" *ngIf="!loading">
-        <thead>
-          <tr class="text-left border-b">
-            <th class="py-2">Title</th>
-            <th class="py-2">Period</th>
-            <th class="py-2">Status</th>
-            <th class="py-2">Featured</th>
-            <th class="py-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let p of promotions" class="border-b">
-            <td class="py-2">{{ p.title }}</td>
-            <td class="py-2 text-sm text-gray-600">{{ p.startAt | date:'short' }} — {{ p.endAt | date:'short' }}</td>
-            <td class="py-2">
-              <span class="px-2 py-0.5 text-xs rounded" [class]="p.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'">
-                {{ p.active ? 'Active' : 'Inactive' }}
-              </span>
-            </td>
-            <td class="py-2">
-              <span class="px-2 py-0.5 text-xs rounded" [class]="p.featured ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-700'">
-                {{ p.featured ? 'Yes' : 'No' }}
-              </span>
-            </td>
-            <td class="py-2 space-x-2">
-              <button class="px-2 py-1 bg-blue-600 text-white rounded" (click)="edit(p)">Edit</button>
-              <button class="px-2 py-1 bg-gray-200 rounded" (click)="toggleActive(p)">{{ p.active ? 'Deactivate' : 'Activate' }}</button>
-              <button class="px-2 py-1 bg-amber-500 text-white rounded" (click)="toggleFeatured(p)">{{ p.featured ? 'Unfeature' : 'Feature' }}</button>
-              <button class="px-2 py-1 bg-red-600 text-white rounded" (click)="remove(p)">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div *ngIf="loading" class="p-8 text-center text-textMuted text-sm">Loading...</div>
+
+      <div *ngIf="!loading" class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="border-b border-borderColor">
+            <tr>
+              <th class="px-5 py-3 text-left text-xs font-medium text-textMuted uppercase">Title</th>
+              <th class="px-5 py-3 text-left text-xs font-medium text-textMuted uppercase">Period</th>
+              <th class="px-5 py-3 text-left text-xs font-medium text-textMuted uppercase">Status</th>
+              <th class="px-5 py-3 text-left text-xs font-medium text-textMuted uppercase">Featured</th>
+              <th class="px-5 py-3 text-right text-xs font-medium text-textMuted uppercase">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-borderColor">
+            <tr *ngFor="let p of promotions" class="hover:bg-surface transition-colors">
+              <td class="px-5 py-3 text-sm font-medium text-textDark">{{ p.title }}</td>
+              <td class="px-5 py-3 text-xs text-textLight">{{ p.startAt | date:'short' }} — {{ p.endAt | date:'short' }}</td>
+              <td class="px-5 py-3">
+                <app-badge [variant]="p.active ? 'success' : 'neutral'" size="sm">
+                  {{ p.active ? 'Active' : 'Inactive' }}
+                </app-badge>
+              </td>
+              <td class="px-5 py-3">
+                <app-badge [variant]="p.featured ? 'warning' : 'neutral'" size="sm">
+                  {{ p.featured ? 'Yes' : 'No' }}
+                </app-badge>
+              </td>
+              <td class="px-5 py-3 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <app-button variant="ghost" size="sm" (clicked)="edit(p)">Edit</app-button>
+                  <app-button variant="ghost" size="sm" (clicked)="toggleActive(p)">
+                    {{ p.active ? 'Deactivate' : 'Activate' }}
+                  </app-button>
+                  <app-button variant="ghost" size="sm" (clicked)="toggleFeatured(p)">
+                    {{ p.featured ? 'Unfeature' : 'Feature' }}
+                  </app-button>
+                  <app-button variant="danger" size="sm" (clicked)="remove(p)">Delete</app-button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>

@@ -1,15 +1,48 @@
-<div class="p-4 max-w-4xl mx-auto">
-  <h2 class="text-2xl font-bold mb-6 text-gray-800">
-    🚚 Driver Management
-  </h2>
+<div class="px-4 pt-6 lg:px-8">
+  <div class="max-w-6xl mx-auto">
 
-  <form (ngSubmit)="addDriver()" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-    <input type="email" [(ngModel)]="newDriver.email" name="email" placeholder="Email" class="form-input" required />
-    <input type="password" [(ngModel)]="newDriver.password" name="password" placeholder="Password" class="form-input" required />
-    <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded md:col-span-2 hover:bg-green-700">
-      Add Driver
-    </button>
-  </form>
+    <!-- Header -->
+    <div class="mb-6">
+      <h1 class="font-heading text-2xl font-bold text-textDark">Driver Management</h1>
+      <p class="text-textLight text-sm mt-1">Add drivers and track their locations</p>
+    </div>
 
-  <app-admin-driver-map></app-admin-driver-map>
+    <!-- Add Driver Form -->
+    <div class="bg-white rounded-2xl shadow-card p-6 mb-6">
+      <h3 class="font-heading text-base font-semibold text-textDark mb-4">Add New Driver</h3>
+      <form (ngSubmit)="addDriver()" class="flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-1">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <i class="bi bi-envelope text-textMuted"></i>
+          </div>
+          <input type="email" [(ngModel)]="newDriver.email" name="email" required
+                 class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                 placeholder="driver@email.com" />
+        </div>
+        <div class="relative flex-1">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <i class="bi bi-lock text-textMuted"></i>
+          </div>
+          <input type="password" [(ngModel)]="newDriver.password" name="password" required
+                 class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                 placeholder="Password" />
+        </div>
+        <app-button variant="primary" size="md" type="submit" iconLeft="bi bi-plus-lg">
+          Add Driver
+        </app-button>
+      </form>
+    </div>
+
+    <!-- Driver Map -->
+    <div class="bg-white rounded-2xl shadow-card overflow-hidden">
+      <div class="px-5 py-4 border-b border-borderColor">
+        <h3 class="font-heading text-sm font-semibold text-textDark">Live Driver Locations</h3>
+      </div>
+      <div class="p-2">
+        <app-admin-driver-map></app-admin-driver-map>
+      </div>
+    </div>
+  </div>
 </div>

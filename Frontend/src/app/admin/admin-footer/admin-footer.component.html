@@ -1,31 +1,12 @@
-<footer class="fixed bottom-0 left-0 w-full bg-white shadow-md p-4 flex justify-between items-center text-gray-600 border-t">
-  <!-- Dashboard -->
-  <a routerLink="/admin/dashboard" class="flex flex-col items-center text-gray-500 hover:text-red-600 transition w-1/5">
-    <i class="bi bi-speedometer2 text-2xl"></i>
-    <span class="text-sm mt-1">Dashboard</span>
-  </a>
-
-  <!-- Orders -->
-  <a routerLink="/admin/orders" class="flex flex-col items-center text-gray-500 hover:text-red-600 transition w-1/5">
-    <i class="bi bi-receipt text-2xl"></i>
-    <span class="text-sm mt-1">Orders</span>
-  </a>
-
-  <!-- Menu -->
-  <a routerLink="/admin/menu" class="flex flex-col items-center text-gray-500 hover:text-red-600 transition w-1/5">
-    <i class="bi bi-journal-text text-2xl"></i>
-    <span class="text-sm mt-1">Menu</span>
-  </a>
-
-  <!-- Drivers -->
-  <a routerLink="/admin/drivers" class="flex flex-col items-center text-gray-500 hover:text-red-600 transition w-1/5">
-    <i class="bi bi-truck text-2xl"></i>
-    <span class="text-sm mt-1">Drivers</span>
-  </a>
-
-  <!-- Inventory -->
-  <a routerLink="/admin/inventory" class="flex flex-col items-center text-gray-500 hover:text-red-600 transition w-1/5">
-    <i class="bi bi-box-seam text-2xl"></i>
-    <span class="text-sm mt-1">Inventory</span>
-  </a>
+<footer class="fixed bottom-0 left-0 w-full bg-white border-t border-borderColor z-50 shadow-float">
+  <nav class="flex justify-around items-center py-2 max-w-lg mx-auto">
+    <a *ngFor="let item of navItems"
+       [routerLink]="item.route"
+       routerLinkActive="text-primary"
+       [routerLinkActiveOptions]="{ exact: item.exact }"
+       class="flex flex-col items-center gap-0.5 px-2 py-1 text-textMuted hover:text-primary transition-colors">
+      <i [class]="item.icon + ' text-xl'"></i>
+      <span class="text-[10px] font-medium">{{ item.label }}</span>
+    </a>
+  </nav>
 </footer>
