@@ -5,4 +5,12 @@ import { Component } from '@angular/core';
   templateUrl: './admin-footer.component.html',
   styleUrls: ['./admin-footer.component.scss']
 })
-export class AdminFooterComponent {}
+export class AdminFooterComponent {
+  navItems = [
+    { route: '/admin/dashboard', label: 'Dashboard', icon: 'bi bi-grid', exact: true },
+    { route: '/admin/orders', label: 'Orders', icon: 'bi bi-receipt', exact: false },
+    { route: '/admin/menu', label: 'Menu', icon: 'bi bi-journal-text', exact: false },
+    { route: '/admin/drivers', label: 'Drivers', icon: 'bi bi-truck', exact: false },
+    { route: '/admin/inventory', label: 'Stock', icon: 'bi bi-box-seam', exact: false },
+  ];
+}
