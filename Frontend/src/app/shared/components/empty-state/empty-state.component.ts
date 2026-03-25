@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
 
 @Component({
   selector: 'app-empty-state',
+  styles: [`:host { display: block; }`],
   template: `
     <div class="flex flex-col items-center justify-center py-16 px-6 text-center animate-fade-in">
       <div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">

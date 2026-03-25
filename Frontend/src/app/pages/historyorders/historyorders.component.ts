@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
 import { environment } from 'src/environments/environment';
+import { BadgeVariant } from 'src/app/shared/components/badge/badge.component';
 
 interface OrderDTO {
   id: number;
@@ -22,11 +24,15 @@ export class HistoryordersComponent implements OnInit {
   loading = true;
   errorMessage = '';
   currentPage = 1;
-  itemsPerPage = 3;
+  itemsPerPage = 5;
   selectedStatus = 'All';
   allStatuses: string[] = ['All', 'Pending', 'Preparing', 'Delivered'];
 
-  constructor(private http: HttpClient, private authService: AuthService) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.fetchOrders();
@@ -35,14 +41,12 @@ export class HistoryordersComponent implements OnInit {
   fetchOrders(): void {
     const token = this.authService.getToken();
     if (!token) {
-      this.errorMessage = "User not authenticated.";
+      this.errorMessage = 'User not authenticated.';
       this.loading = false;
       return;
     }
 
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
 
     this.http.get<OrderDTO[]>(`${environment.apiUrl}/api/orders`, { headers }).subscribe({
       next: (orders) => {
@@ -59,11 +63,9 @@ export class HistoryordersComponent implements OnInit {
 
   applyFilter(): void {
     this.currentPage = 1;
-    if (this.selectedStatus === 'All') {
-      this.filteredOrders = this.orders;
-    } else {
-      this.filteredOrders = this.orders.filter(order => order.status === this.selectedStatus);
-    }
+    this.filteredOrders = this.selectedStatus === 'All'
+      ? this.orders
+      : this.orders.filter(order => order.status === this.selectedStatus);
   }
 
   get paginatedOrders(): OrderDTO[] {
@@ -81,11 +83,24 @@ export class HistoryordersComponent implements OnInit {
     }
   }
 
+  goToMenu(): void {
+    this.router.navigate(['/']);
+  }
+
+  getStatusBadgeVariant(status: string): BadgeVariant {
+    switch (status) {
+      case 'Pending': return 'warning';
+      case 'Preparing': return 'primary';
+      case 'Delivered': return 'success';
+      default: return 'neutral';
+    }
+  }
+
   getProgressBarColor(status: string): string {
     switch (status) {
-      case 'Pending': return 'bg-red-500';
-      case 'Preparing': return 'bg-orange-500';
-      case 'Delivered': return 'bg-green-500';
+      case 'Pending': return 'bg-warning';
+      case 'Preparing': return 'bg-primary';
+      case 'Delivered': return 'bg-success';
       default: return 'bg-gray-300';
     }
   }
@@ -97,5 +112,23 @@ export class HistoryordersComponent implements OnInit {
       case 'Delivered': return '100%';
       default: return '0%';
     }
+  }
+
+  getStatusChipClasses(status: string): string {
+    const base = 'flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap cursor-pointer active:scale-95';
+    return this.selectedStatus === status
+      ? `${base} bg-primary text-white shadow-sm`
+      : `${base} bg-white text-textDark hover:bg-primary-50 shadow-card`;
+  }
+
+  getPageBtnClasses(page: number): string {
+    const base = 'w-9 h-9 rounded-full text-sm font-medium flex items-center justify-center transition-all';
+    return this.currentPage === page
+      ? `${base} bg-primary text-white`
+      : `${base} text-textDark hover:bg-gray-100`;
+  }
+
+  trackById(_: number, order: OrderDTO): number {
+    return order.id;
   }
 }

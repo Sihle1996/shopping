@@ -1,54 +1,85 @@
-<div class="bg-white min-h-screen flex flex-col items-center p-6 relative">
-  
-    <!-- 🔙 Back Button -->
-    <button (click)="goBack()" class="absolute top-4 left-4 text-gray-600 flex items-center">
-      <i class="bi bi-arrow-left text-2xl"></i>
-    </button>
-  
-    <!-- ❤️ Favorite Icon -->
-    <button class="absolute top-4 right-4 text-gray-600">
-      <i class="bi bi-heart text-2xl"></i>
-    </button>
-  
-    <!-- 🍔 Product Image -->
-    <div class="w-full flex justify-center mt-10">
-      <img [src]="getImageUrl(product?.image)" class="w-full max-w-sm object-cover rounded-xl shadow-md" alt="{{ product?.name }}">
-
-    </div>
-  
-    <!-- 📝 Product Info -->
-    <h2 class="text-2xl font-bold text-gray-900 mt-4">{{ product?.name }}</h2>
-    <p class="text-gray-500 text-center px-6 mt-2">{{ product?.description }}</p>
-  
-    <!-- 📏 Size Selector -->
-    <div class="flex justify-center space-x-4 mt-4">
-      <button *ngFor="let size of ['S', 'M', 'L']" (click)="selectSize(size)"
-              [class.bg-yellow-500]="selectedSize === size"
-              class="w-12 h-12 flex items-center justify-center border border-gray-300 rounded-full text-lg font-semibold hover:bg-yellow-500 hover:text-white transition">
-        {{ size }}
-      </button>
-    </div>
-  
-    <!-- 🔢 Quantity Selector -->
-    <div class="flex justify-center items-center space-x-6 mt-6">
-      <button (click)="decreaseQuantity()" class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center hover:bg-gray-400 transition">
-        <i class="bi bi-dash text-xl text-gray-800"></i>
-      </button>
-      
-      <p class="text-xl font-semibold text-gray-900">{{ quantity }}</p>
-      
-      <button (click)="increaseQuantity()" class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center hover:bg-gray-400 transition">
-        <i class="bi bi-plus text-xl text-gray-800"></i>
-      </button>
-    </div>
-  
-    <!-- 💰 Price -->
-    <p class="text-2xl font-bold text-red-600 mt-6">${{ product?.price?.toFixed(2) }}</p>
-  
-    <!-- 🛒 Add to Cart Button -->
-    <button (click)="addToCart()"
-            class="w-full max-w-sm mt-4 px-6 py-3 bg-red-600 text-white text-lg font-semibold rounded-xl flex items-center justify-center hover:bg-red-700 transition">
-      <i class="bi bi-cart-fill text-xl mr-2"></i> Add to Cart
-    </button>
+<div class="min-h-screen bg-surface pb-20">
+  <!-- Loading state -->
+  <div *ngIf="!product" class="flex items-center justify-center min-h-screen">
+    <div class="animate-pulse text-textMuted">Loading...</div>
   </div>
-  
+
+  <div *ngIf="product" class="animate-fade-in">
+    <!-- Image Section -->
+    <div class="relative">
+      <div class="aspect-[4/3] sm:aspect-[16/9] lg:aspect-[21/9] overflow-hidden bg-gray-100">
+        <img [src]="getImageUrl(product.image)"
+             [alt]="product.name"
+             class="w-full h-full object-cover" />
+      </div>
+
+      <!-- Back button -->
+      <button (click)="goBack()"
+              class="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-sm
+                     flex items-center justify-center hover:bg-white transition-colors">
+        <i class="bi bi-arrow-left text-textDark text-lg"></i>
+      </button>
+
+      <!-- Favorite button -->
+      <button class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-sm
+                     flex items-center justify-center hover:bg-red-50 hover:text-danger transition-all">
+        <i class="bi bi-heart text-lg"></i>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="max-w-lg mx-auto px-4 -mt-6 relative z-10">
+      <div class="bg-white rounded-2xl shadow-card p-6 space-y-6">
+
+        <!-- Name & Category -->
+        <div>
+          <app-badge variant="primary" size="sm">{{ product.category }}</app-badge>
+          <h1 class="font-heading text-2xl font-bold text-textDark mt-2">{{ product.name }}</h1>
+          <p class="text-textLight text-sm mt-2 leading-relaxed">{{ product.description }}</p>
+        </div>
+
+        <!-- Size Selector -->
+        <div>
+          <p class="text-sm font-medium text-textDark mb-3">Select Size</p>
+          <div class="flex gap-3">
+            <button *ngFor="let size of ['S', 'M', 'L']"
+                    (click)="selectSize(size)"
+                    [class]="getSizeClasses(size)">
+              {{ size }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Quantity -->
+        <div class="flex items-center justify-between">
+          <p class="text-sm font-medium text-textDark">Quantity</p>
+          <app-quantity-selector
+            [quantity]="quantity"
+            (quantityChange)="quantity = $event">
+          </app-quantity-selector>
+        </div>
+
+        <!-- Divider -->
+        <div class="border-t border-borderColor"></div>
+
+        <!-- Price & Add to Cart -->
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-textMuted text-xs">Total Price</p>
+            <p class="font-numbers text-2xl font-bold text-primary">
+              R{{ (product.price * quantity).toFixed(2) }}
+            </p>
+          </div>
+          <app-button
+            variant="primary"
+            size="lg"
+            iconLeft="bi bi-cart-plus"
+            [loading]="isAddingToCart"
+            (clicked)="addToCart()">
+            Add to Cart
+          </app-button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

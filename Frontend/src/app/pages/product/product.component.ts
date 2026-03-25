@@ -1,8 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { CartService } from 'src/app/services/cart.service';
 import { MenuItem, MenuService } from 'src/app/services/menu.service';
 import { AuthService } from 'src/app/services/auth.service';
+import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -10,93 +12,73 @@ import { environment } from 'src/environments/environment';
   templateUrl: './product.component.html',
   styleUrls: ['./product.component.scss']
 })
-export class ProductComponent {
+export class ProductComponent implements OnInit {
   product: MenuItem | null = null;
-  quantity: number = 1;
-  selectedSize: string = 'M';
+  quantity = 1;
+  selectedSize = 'M';
+  isAddingToCart = false;
 
   constructor(
     private route: ActivatedRoute,
     private menuService: MenuService,
     private cartService: CartService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private location: Location,
+    private toastr: ToastrService
   ) {}
 
   ngOnInit(): void {
-    console.log("🚀 ProductComponent initialized!");
     const productId = this.route.snapshot.paramMap.get('id');
-
     if (!productId) {
-      console.error("❌ Invalid product ID");
       this.router.navigate(['/']);
       return;
     }
 
     this.menuService.getProductById(Number(productId)).subscribe({
-      next: (product) => {
-        console.log("✅ Fetched product:", product);
-        this.product = product;
-      },
-      error: (err) => {
-        console.error("❌ Error fetching product:", err);
-        this.router.navigate(['/']);
-      }
+      next: (product) => this.product = product,
+      error: () => this.router.navigate(['/'])
     });
   }
 
   addToCart(): void {
-    if (!this.product) {
-      console.error("❌ Product is null, cannot add to cart.");
-      return;
-    }
+    if (!this.product?.id) return;
 
     if (!this.authService.isLoggedIn()) {
-      console.error("❌ User not logged in.");
       this.router.navigate(['/login']);
       return;
     }
 
-    if (this.product.id === null) {
-      console.error("❌ Product ID is null.");
-      return;
-    }
-
+    this.isAddingToCart = true;
     this.cartService.addToCart(this.product.id, this.quantity, this.selectedSize).subscribe({
       next: () => {
-        console.log('✅ Added to cart:', this.product!.id, 'Quantity:', this.quantity, 'Size:', this.selectedSize);
+        this.toastr.success(`${this.product!.name} added to cart`);
+        this.isAddingToCart = false;
       },
-      error: (err) => {
-        console.error("❌ Error adding to cart:", err);
+      error: () => {
+        this.toastr.error('Failed to add item to cart');
+        this.isAddingToCart = false;
       }
     });
   }
 
   goBack(): void {
-    this.router.navigate(['/']);
-  }
-
-  increaseQuantity(): void {
-    this.quantity++;
-  }
-
-  decreaseQuantity(): void {
-    if (this.quantity > 1) {
-      this.quantity--;
-    }
+    this.location.back();
   }
 
   selectSize(size: string): void {
     this.selectedSize = size;
-    console.log("📏 Selected Size:", this.selectedSize);
+  }
+
+  getSizeClasses(size: string): string {
+    const base = 'w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200 active:scale-95';
+    return this.selectedSize === size
+      ? `${base} bg-primary text-white shadow-sm`
+      : `${base} border-2 border-borderColor text-textDark hover:border-primary hover:text-primary`;
   }
 
   getImageUrl(path?: string): string {
-    if (!path) return 'assets/default-image.jpg';
-    return path.startsWith('/images/')
-      ? `${environment.apiUrl}${path}`
-      : path;
+    if (!path) return 'assets/placeholder.png';
+    return path.startsWith('http') ? path : `${environment.apiUrl}${path}`;
   }
-  
-  
 }

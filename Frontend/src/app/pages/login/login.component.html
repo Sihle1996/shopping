@@ -1,36 +1,81 @@
-<div class="flex justify-center items-center h-screen bg-cover bg-center"
-     style="background-image: url('assets/istockphoto-1485677116-612x612.jpg');">
+<div class="min-h-screen bg-surface flex items-center justify-center p-4">
+  <div class="w-full max-w-md animate-fade-in">
 
-  <!-- Transparent Glass Effect Card -->
-  <div class="backdrop-blur-md bg-white/10 border border-white/30 p-8 rounded-2xl shadow-lg w-96">
-    <h2 class="text-3xl font-bold text-center mb-6 text-white">Login</h2>
-
-    <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="space-y-5">
-      <div>
-        <label class="block text-white font-medium mb-1">Email</label>
-        <input type="email" formControlName="email"
-               class="w-full p-3 rounded-lg bg-transparent text-white placeholder-blue border border-white/30 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400 transition"
-               placeholder="Enter your email" />
+    <!-- Logo / Brand -->
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
+        <i class="bi bi-fire text-white text-2xl"></i>
       </div>
+      <h1 class="font-heading text-2xl font-bold text-textDark">Welcome Back</h1>
+      <p class="text-textLight text-sm mt-1">Sign in to order your favourite food</p>
+    </div>
 
-      <div>
-        <label class="block text-white font-medium mb-1">Password</label>
-        <input type="password" formControlName="password"
-               class="w-full p-3 rounded-lg bg-transparent text-white placeholder-blue border border-white/30 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400 transition"
-               placeholder="Enter your password" />
-      </div>
+    <!-- Card -->
+    <div class="bg-white rounded-2xl shadow-card p-8">
+      <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="space-y-5">
 
-      <p class="text-red-400 text-sm" *ngIf="errorMessage">{{ errorMessage }}</p>
+        <!-- Email -->
+        <div>
+          <label class="block text-sm font-medium text-textDark mb-1.5">Email</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <i class="bi bi-envelope text-textMuted"></i>
+            </div>
+            <input type="email" formControlName="email"
+                   class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                          placeholder-textMuted text-sm
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent
+                          transition-shadow"
+                   placeholder="your@email.com" />
+          </div>
+          <p *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.hasError('email')"
+             class="text-danger text-xs mt-1">Please enter a valid email</p>
+        </div>
 
-      <button type="submit"
-              class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition">
-        Login
-      </button>
-    </form>
+        <!-- Password -->
+        <div>
+          <label class="block text-sm font-medium text-textDark mb-1.5">Password</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <i class="bi bi-lock text-textMuted"></i>
+            </div>
+            <input [type]="showPassword ? 'text' : 'password'" formControlName="password"
+                   class="w-full pl-10 pr-12 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                          placeholder-textMuted text-sm
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent
+                          transition-shadow"
+                   placeholder="Enter your password" />
+            <button type="button" (click)="showPassword = !showPassword"
+                    class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-textMuted hover:text-textDark transition-colors">
+              <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </button>
+          </div>
+        </div>
 
-    <p class="text-center text-white text-sm mt-6">
+        <!-- Error -->
+        <div *ngIf="errorMessage"
+             class="flex items-center gap-2 text-danger text-sm bg-red-50 px-4 py-2.5 rounded-xl">
+          <i class="bi bi-exclamation-circle"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <!-- Submit -->
+        <app-button
+          variant="primary"
+          size="lg"
+          type="submit"
+          [fullWidth]="true"
+          [loading]="isLoading"
+          [disabled]="loginForm.invalid">
+          Sign In
+        </app-button>
+      </form>
+    </div>
+
+    <!-- Register link -->
+    <p class="text-center text-sm text-textLight mt-6">
       Don't have an account?
-      <a routerLink="/register" class="text-orange-300 font-semibold hover:underline">Register</a>
+      <a routerLink="/register" class="text-primary font-semibold hover:underline">Create one</a>
     </p>
   </div>
 </div>
