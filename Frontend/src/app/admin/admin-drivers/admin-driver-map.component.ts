@@ -5,6 +5,7 @@ import { Stomp } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import maplibregl, { Map, GeoJSONSource, LngLatLike } from 'maplibre-gl';
 import { Feature, FeatureCollection, LineString, Point } from 'geojson';
+import { environment } from 'src/environments/environment';
 
 interface DriverLocation {
   id: number;
@@ -151,7 +152,7 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
   }
 
   private connectWebSocket(): void {
-    const socketFactory = () => new SockJS('http://localhost:8080/ws');
+    const socketFactory = () => new SockJS(`${environment.apiUrl}/ws`);
     this.stompClient = Stomp.over(socketFactory);
     this.stompClient.debug = () => {};
     const headers: { [key: string]: string } = {};

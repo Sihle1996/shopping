@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AdminService } from 'src/app/services/admin.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-admin-menu',
@@ -88,6 +89,13 @@ export class AdminMenuComponent implements OnInit {
 
   filterByCategory(category: string): void {
     this.selectedCategory = category;
+  }
+
+  getImageUrl(item: any): string {
+    if (item.image?.startsWith('/images/')) {
+      return `${environment.apiUrl}${item.image}`;
+    }
+    return item.image || 'assets/RedDot_Burger.jpg';
   }
 
   private resetForm(): void {

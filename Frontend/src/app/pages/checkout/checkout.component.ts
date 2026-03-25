@@ -11,6 +11,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { FormControl } from '@angular/forms';
+import { environment } from 'src/environments/environment';
 
 declare var paypal: any;
 
@@ -168,7 +169,7 @@ selectAddress(suggestion: any) {
                 status: details.status
               };
 
-              this.http.post('http://localhost:8080/api/orders/place', orderData, {
+              this.http.post(`${environment.apiUrl}/api/orders/place`, orderData, {
                 headers: {
                   'Content-Type': 'application/json',
                   'Authorization': `Bearer ${this.authService.getToken()}`

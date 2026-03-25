@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AnalyticsService {
   // Use full backend URL since Angular dev server doesn't proxy /api requests
-  private baseUrl = 'http://localhost:8080/api/admin/analytics';
+  private baseUrl = `${environment.apiUrl}/api/admin/analytics`;
 
   constructor(private http: HttpClient) {}
 

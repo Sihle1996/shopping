@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Promotion } from './promotion.service';
+import { environment } from 'src/environments/environment';
 
 export interface PromotionRequest {
   title: string;
@@ -21,7 +22,7 @@ export interface PromotionRequest {
 
 @Injectable({ providedIn: 'root' })
 export class AdminPromotionService {
-  private baseUrl = 'http://localhost:8080/api/admin/promotions';
+  private baseUrl = `${environment.apiUrl}/api/admin/promotions`;
 
   constructor(private http: HttpClient) {}
 

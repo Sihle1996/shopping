@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { OptimisticService } from './optimistic.service';
+import { environment } from 'src/environments/environment';
 
 /**
  * Represents a driver's current location and status as returned from the API.
@@ -21,7 +22,7 @@ export interface DriverLocation {
   providedIn: 'root'
 })
 export class AdminService {
-  private baseUrl = 'http://localhost:8080/api/admin';
+  private baseUrl = `${environment.apiUrl}/api/admin`;
 
 private ordersSubject = new BehaviorSubject<any[]>([]);
 orders$ = this.ordersSubject.asObservable();
@@ -217,7 +218,7 @@ orders$ = this.ordersSubject.asObservable();
   }
   
   uploadImage(formData: FormData): Observable<string> {
-    return this.http.post<{ imageUrl: string }>('http://localhost:8080/api/admin/menu/upload-image', formData).pipe(
+    return this.http.post<{ imageUrl: string }>(`${environment.apiUrl}/api/admin/menu/upload-image`, formData).pipe(
       map((res: { imageUrl: string }) => res.imageUrl) // ✅ FIX: Add proper type to res
     );
   }

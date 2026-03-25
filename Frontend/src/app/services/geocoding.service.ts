@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable, switchMap } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -107,7 +108,7 @@ export class GeocodingService {
    * Get route between 2 points (backend proxy)
    */
   getRoute(start: [number, number], end: [number, number]): Observable<any> {
-    return this.http.post('http://localhost:8080/api/map/route', {
+    return this.http.post(`${environment.apiUrl}/api/map/route`, {
       coordinates: [start, end]
     }, {
       headers: {

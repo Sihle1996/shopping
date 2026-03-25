@@ -7,27 +7,57 @@ import { PaginationComponent } from '../components/pagination/pagination.compone
 import { PromotionBannerComponent } from '../components/promotions/promotion-banner/promotion-banner.component';
 import { PromotionGridComponent } from '../components/promotions/promotion-grid/promotion-grid.component';
 
+// Shared reusable components
+import { ButtonComponent } from './components/button/button.component';
+import { BadgeComponent } from './components/badge/badge.component';
+import { ProductCardComponent } from './components/product-card/product-card.component';
+import { CategoryChipsComponent } from './components/category-chips/category-chips.component';
+import { SearchBarComponent } from './components/search-bar/search-bar.component';
+import { QuantitySelectorComponent } from './components/quantity-selector/quantity-selector.component';
+import { EmptyStateComponent } from './components/empty-state/empty-state.component';
+import { CartDrawerComponent } from './components/cart-drawer/cart-drawer.component';
+import { FloatingCartBarComponent } from './components/floating-cart-bar/floating-cart-bar.component';
+
 @NgModule({
-  // Declare non-standalone components here
   declarations: [
     PaginationComponent,
     PromotionBannerComponent,
     PromotionGridComponent,
+    // Shared UI components
+    ButtonComponent,
+    BadgeComponent,
+    ProductCardComponent,
+    CategoryChipsComponent,
+    SearchBarComponent,
+    QuantitySelectorComponent,
+    EmptyStateComponent,
+    CartDrawerComponent,
+    FloatingCartBarComponent,
   ],
   imports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    LoadersModule,       // NgModule stays in imports
+    LoadersModule,
   ],
   exports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    LoadersModule,       // re-export the NgModule
-    PaginationComponent, // re-export the declared component
+    LoadersModule,
+    PaginationComponent,
     PromotionBannerComponent,
     PromotionGridComponent,
+    // Shared UI components
+    ButtonComponent,
+    BadgeComponent,
+    ProductCardComponent,
+    CategoryChipsComponent,
+    SearchBarComponent,
+    QuantitySelectorComponent,
+    EmptyStateComponent,
+    CartDrawerComponent,
+    FloatingCartBarComponent,
   ],
 })
 export class SharedModule {}

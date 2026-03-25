@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { CartService, CartItem } from 'src/app/services/cart.service';
+import { Location } from '@angular/common';
 import { Router } from '@angular/router';
+import { CartService, CartItem } from 'src/app/services/cart.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-cart',
@@ -9,22 +11,20 @@ import { Router } from '@angular/router';
 })
 export class CartComponent implements OnInit {
   cartItems: CartItem[] = [];
-  totalPrice: number = 0;
+  totalPrice = 0;
 
   constructor(
     private cartService: CartService,
-    private router: Router
+    private router: Router,
+    private location: Location
   ) {}
 
   ngOnInit(): void {
     const userId = localStorage.getItem('userId');
-
     if (!userId || isNaN(Number(userId)) || Number(userId) <= 0) {
-      console.error("User not logged in. Redirecting to login...");
       this.router.navigate(['/login']);
       return;
     }
-
     this.loadCart();
   }
 
@@ -34,26 +34,20 @@ export class CartComponent implements OnInit {
         this.cartItems = items;
         this.updateTotalPrice();
       },
-      error: (err) => {
-        console.error("Error fetching cart items:", err);
-      }
+      error: () => {}
     });
   }
 
   private updateTotalPrice(): void {
-    this.totalPrice = this.cartItems.reduce((sum, item) => sum + (item.menuItemPrice * item.quantity), 0);
+    this.totalPrice = this.cartItems.reduce(
+      (sum, item) => sum + item.menuItemPrice * item.quantity, 0
+    );
   }
 
-  increaseQuantity(item: CartItem): void {
-    item.quantity++;
+  onQuantityChange(item: CartItem, quantity: number): void {
+    item.quantity = quantity;
     this.updateTotalPrice();
-  }
-
-  decreaseQuantity(item: CartItem): void {
-    if (item.quantity > 1) {
-      item.quantity--;
-      this.updateTotalPrice();
-    }
+    this.cartService.updateCartItem(item.id, quantity).subscribe();
   }
 
   removeItem(itemId: number): void {
@@ -61,8 +55,7 @@ export class CartComponent implements OnInit {
       next: () => {
         this.cartItems = this.cartItems.filter(item => item.id !== itemId);
         this.updateTotalPrice();
-      },
-      error: (err) => console.error("Error removing item:", err)
+      }
     });
   }
 
@@ -70,11 +63,20 @@ export class CartComponent implements OnInit {
     this.router.navigate(['/checkout']);
   }
 
-  getImageUrl(path: string | null | undefined): string {
-    if (!path) return 'assets/default-image.jpg';
-    return path.startsWith('/images/') ? `http://localhost:8080${path}` : path;
+  goBack(): void {
+    this.location.back();
   }
-  
-  
-  
+
+  goToMenu(): void {
+    this.router.navigate(['/']);
+  }
+
+  getImageUrl(path: string | null | undefined): string {
+    if (!path) return 'assets/placeholder.png';
+    return path.startsWith('http') ? path : `${environment.apiUrl}${path}`;
+  }
+
+  trackById(_: number, item: CartItem): number {
+    return item.id;
+  }
 }

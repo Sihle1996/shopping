@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CartService } from 'src/app/services/cart.service';
 import { MenuItem, MenuService } from 'src/app/services/menu.service';
 import { AuthService } from 'src/app/services/auth.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-product',
@@ -93,7 +94,7 @@ export class ProductComponent {
   getImageUrl(path?: string): string {
     if (!path) return 'assets/default-image.jpg';
     return path.startsWith('/images/')
-      ? `http://localhost:8080${path}`
+      ? `${environment.apiUrl}${path}`
       : path;
   }
   

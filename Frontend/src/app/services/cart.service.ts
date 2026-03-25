@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
+import { environment } from 'src/environments/environment';
 
 export interface CartItem {
   id: number;
@@ -19,14 +20,13 @@ export interface CartItem {
   providedIn: 'root'
 })
 export class CartService {
-  private apiUrlCart = "http://localhost:8080/api/cart";
+  private apiUrl = `${environment.apiUrl}/api/cart`;
   private cartItems = new BehaviorSubject<CartItem[]>([]);
   private totalPrice = new BehaviorSubject<number>(0);
   cartItemCount = new BehaviorSubject<number>(0);
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 
-  
   private getAuthHeaders(): HttpHeaders {
     const token = this.authService.getToken();
     return new HttpHeaders({
@@ -35,26 +35,22 @@ export class CartService {
     });
   }
 
-  
   getCartItems(): Observable<CartItem[]> {
     const userId = this.authService.getUserId();
     if (!userId) {
-      console.error("User not logged in. Cannot fetch cart items.");
       return new Observable(observer => observer.next([]));
     }
 
-    return this.http.get<any[]>(`${this.apiUrlCart}/${userId}`, { headers: this.getAuthHeaders() }).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/${userId}`, { headers: this.getAuthHeaders() }).pipe(
       tap(items => {
-        console.log("📦 Cart Items from API:", items);
         const mappedItems = this.mapCartItems(items);
         this.cartItems.next(mappedItems);
         this.updateTotalPrice();
-        this.cartItemCount.next(mappedItems.length); 
+        this.cartItemCount.next(mappedItems.length);
       })
     );
   }
 
- 
   private mapCartItems(items: any[]): CartItem[] {
     return items.map(item => ({
       id: item.id,
@@ -63,91 +59,73 @@ export class CartService {
       menuItemPrice: item.menuItemPrice,
       quantity: item.quantity,
       totalPrice: item.totalPrice,
-      image: item.image || 'assets/default-food.jpg',
-      size: item.size || 'M' 
+      image: item.image || 'assets/placeholder.png',
+      size: item.size || 'M'
     }));
   }
 
-  
   private updateTotalPrice(): void {
     const cartItems = this.cartItems.value;
     const total = cartItems.reduce((sum, item) => sum + (item.menuItemPrice * item.quantity), 0);
     this.totalPrice.next(total);
-    console.log("💰 Updated Total Price:", total);
   }
 
-  
   getTotalPrice(): Observable<number> {
     return this.totalPrice.asObservable();
   }
 
- 
   getCartItemCount(): Observable<number> {
     return this.cartItemCount.asObservable();
   }
 
-  
   addToCart(menuItemId: number, quantity: number, size: string): Observable<any> {
     const userId = this.authService.getUserId();
     if (!userId) {
-      console.error("User not logged in. Cannot add to cart.");
-      return new Observable(observer => observer.error("User not logged in."));
+      return new Observable(observer => observer.error('User not logged in.'));
     }
 
-    return this.http.post(`${this.apiUrlCart}/add`, 
+    return this.http.post(`${this.apiUrl}/add`,
       { userId, menuItemId, quantity, size },
       { headers: this.getAuthHeaders() }
     ).pipe(
       tap(() => this.refreshCart())
     );
-}
+  }
 
-  
   updateCartItem(cartItemId: number, quantity: number): Observable<any> {
-    return this.http.put(`${this.apiUrlCart}/update/${cartItemId}`, { quantity }, { headers: this.getAuthHeaders() }).pipe(
+    return this.http.put(`${this.apiUrl}/update/${cartItemId}`, { quantity }, { headers: this.getAuthHeaders() }).pipe(
       tap(() => this.refreshCart())
     );
   }
 
- 
   removeFromCart(cartItemId: number): Observable<any> {
-    return this.http.delete(`${this.apiUrlCart}/delete/${cartItemId}`, { headers: this.getAuthHeaders() }).pipe(
-      tap(() => this.refreshCart()) 
+    return this.http.delete(`${this.apiUrl}/delete/${cartItemId}`, { headers: this.getAuthHeaders() }).pipe(
+      tap(() => this.refreshCart())
     );
   }
 
-  
   private refreshCart(): void {
     this.getCartItems().subscribe();
   }
 
-
   saveOrder(order: any): Observable<any> {
-    return this.http.post('http://localhost:8080/api/orders', order, {
+    return this.http.post(`${environment.apiUrl}/api/orders`, order, {
       headers: this.getAuthHeaders()
     });
   }
-  
 
   clearCart(): void {
     const userId = this.authService.getUserId();
-    if (!userId) {
-      console.error("No user ID for cart clearing.");
-      return;
-    }
-  
-    this.http.delete(`http://localhost:8080/api/cart/clear/${userId}`, {
+    if (!userId) return;
+
+    this.http.delete(`${this.apiUrl}/clear/${userId}`, {
       headers: this.getAuthHeaders()
     }).subscribe({
       next: () => {
-        console.log("🧹 Backend cart cleared.");
         this.cartItems.next([]);
         this.totalPrice.next(0);
         this.cartItemCount.next(0);
-      },
-      error: err => {
-        console.error("Failed to clear backend cart:", err);
       }
     });
-  } 
+  }
 }

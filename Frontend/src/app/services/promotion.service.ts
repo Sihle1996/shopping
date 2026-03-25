@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, shareReplay } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
 export interface Promotion {
   id: number;
@@ -21,7 +22,7 @@ export interface Promotion {
 
 @Injectable({ providedIn: 'root' })
 export class PromotionService {
-  private baseUrl = 'http://localhost:8080/api/promotions';
+  private baseUrl = `${environment.apiUrl}/api/promotions`;
 
   constructor(private http: HttpClient) {}
 

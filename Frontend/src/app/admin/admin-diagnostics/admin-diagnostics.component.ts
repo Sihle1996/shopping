@@ -3,6 +3,7 @@ import { CompatClient, Stomp } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { AdminService } from 'src/app/services/admin.service';
 import { AuthService } from 'src/app/services/auth.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-admin-diagnostics',
@@ -33,7 +34,7 @@ export class AdminDiagnosticsComponent implements OnInit, OnDestroy {
   }
 
   private connect(): void {
-    const socketFactory = () => new SockJS('http://localhost:8080/ws');
+    const socketFactory = () => new SockJS(`${environment.apiUrl}/ws`);
     this.stompClient = Stomp.over(socketFactory);
     (this.stompClient as any).debug = () => {};
 
