@@ -5,6 +5,7 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
 
 @Component({
   selector: 'app-button',
+  styles: [`:host { display: block; }`],
   template: `
     <button
       [type]="type"

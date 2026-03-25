@@ -10,7 +10,9 @@ import { AuthService } from 'src/app/services/auth.service';
 })
 export class LoginComponent {
   loginForm: FormGroup;
-  errorMessage: string = '';
+  errorMessage = '';
+  isLoading = false;
+  showPassword = false;
 
   constructor(
     private fb: FormBuilder,
@@ -23,15 +25,16 @@ export class LoginComponent {
     });
   }
 
-  onLogin() {
+  onLogin(): void {
     if (this.loginForm.invalid) return;
-  
+
+    this.isLoading = true;
+    this.errorMessage = '';
+
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
-        // 🔍 Double-check decoded role
         const role = this.authService.getUserRole();
-        console.log('✅ User role:', role);
-  
+
         if (role === 'ROLE_ADMIN') {
           this.router.navigate(['/admin/dashboard'], { replaceUrl: true });
         } else if (role === 'ROLE_DRIVER') {
@@ -42,21 +45,10 @@ export class LoginComponent {
           this.router.navigate(['/'], { replaceUrl: true });
         }
       },
-      error: (err) => {
-        console.error("Login error:", err);
+      error: () => {
         this.errorMessage = 'Invalid email or password';
+        this.isLoading = false;
       }
     });
-  }
-  
-  
-
-  private getRoleFromToken(token: string): string | null {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.role || null;
-    } catch (e) {
-      return null;
-    }
   }
 }

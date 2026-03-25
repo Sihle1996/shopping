@@ -1,58 +1,110 @@
-<div class="p-4 max-w-3xl mx-auto pt-20 pb-32">
-    <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
-      <i class="bi bi-receipt text-red-600 text-2xl"></i>
-      Your Order History
-    </h2>
-  
-    <!-- Filter Dropdown -->
-    <div class="mb-4">
-      <label class="font-medium mr-2">Filter by Status:</label>
-      <select [(ngModel)]="selectedStatus" (change)="applyFilter()" class="border px-3 py-2 rounded">
-        <option *ngFor="let status of allStatuses" [value]="status">{{ status }}</option>
-      </select>
-    </div>
-  
-    <div *ngIf="loading" class="text-gray-500">Loading orders...</div>
-    <div *ngIf="errorMessage" class="text-red-500">{{ errorMessage }}</div>
-  
-    <div *ngIf="!loading && paginatedOrders.length === 0" class="text-gray-500">No orders found.</div>
-  
-    <div *ngFor="let order of paginatedOrders" class="bg-white rounded-lg shadow-md p-4 mb-4">
-      <div class="flex justify-between items-center mb-2">
-        <p class="font-semibold text-gray-700">Order #{{ order.id }}</p>
-        <span class="text-sm px-2 py-1 rounded-full bg-gray-100 border">{{ order.status }}</span>
-      </div>
-  
-      <p>Total: <strong>R{{ order.totalAmount.toFixed(2) }}</strong></p>
-      <p>Date: {{ order.orderDate }}</p>
-      <p>Delivery: {{ order.deliveryAddress }}</p>
-  
-      <!-- Progress Bar -->
-      <div class="w-full bg-gray-200 h-3 rounded mt-3">
-        <div
-          [ngClass]="getProgressBarColor(order.status)"
-          class="h-3 rounded transition-all duration-300"
-          [style.width]="getProgressPercent(order.status)">
-        </div>
-      </div>
-    </div>
-  
-    <!-- Pagination -->
-    <div *ngIf="totalPages() > 1" class="flex justify-center items-center space-x-2 mt-6">
-      <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1"
-        class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50">Previous</button>
-  
-      <ng-container *ngFor="let page of [].constructor(totalPages()); let i = index">
-        <button (click)="changePage(i + 1)" 
-                [class.bg-red-600]="currentPage === i + 1"
-                [class.text-white]="currentPage === i + 1"
-                class="px-3 py-1 rounded hover:bg-gray-300">
-          {{ i + 1 }}
-        </button>
-      </ng-container>
-  
-      <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages()"
-        class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50">Next</button>
+<div class="min-h-screen bg-surface pb-24">
+  <!-- Header -->
+  <div class="px-4 pt-6 pb-4 lg:px-8">
+    <h2 class="font-heading text-2xl font-bold text-textDark mb-1">Order History</h2>
+    <p class="text-textLight text-sm">Track your past orders</p>
+  </div>
+
+  <!-- Filter -->
+  <div class="px-4 lg:px-8 mb-6">
+    <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      <button *ngFor="let status of allStatuses"
+              (click)="selectedStatus = status; applyFilter()"
+              [class]="getStatusChipClasses(status)">
+        {{ status }}
+      </button>
     </div>
   </div>
-  
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="px-4 lg:px-8 space-y-4">
+    <div *ngFor="let _ of [1,2,3]" class="bg-white rounded-2xl p-5 shadow-card animate-pulse">
+      <div class="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
+      <div class="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
+      <div class="h-3 bg-gray-200 rounded w-2/3"></div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="errorMessage" class="px-4 lg:px-8">
+    <div class="flex items-center gap-2 text-danger text-sm bg-red-50 px-4 py-3 rounded-xl">
+      <i class="bi bi-exclamation-circle"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <app-empty-state
+    *ngIf="!loading && filteredOrders.length === 0 && !errorMessage"
+    icon="bi bi-receipt"
+    title="No orders yet"
+    message="Once you place an order, it will appear here"
+    actionLabel="Browse Menu"
+    (action)="goToMenu()">
+  </app-empty-state>
+
+  <!-- Orders list -->
+  <div class="px-4 lg:px-8 space-y-4">
+    <div *ngFor="let order of paginatedOrders; trackBy: trackById"
+         class="bg-white rounded-2xl shadow-card p-5 animate-fade-in">
+
+      <!-- Order header -->
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <p class="font-semibold text-textDark text-sm">Order #{{ order.id }}</p>
+          <p class="text-textMuted text-xs mt-0.5">{{ order.orderDate }}</p>
+        </div>
+        <app-badge [variant]="getStatusBadgeVariant(order.status)" size="sm">
+          {{ order.status }}
+        </app-badge>
+      </div>
+
+      <!-- Details -->
+      <div class="space-y-1.5 text-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-textLight">Total</span>
+          <span class="font-numbers font-bold text-textDark">R{{ order.totalAmount.toFixed(2) }}</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <i class="bi bi-geo-alt text-textMuted text-xs mt-0.5"></i>
+          <span class="text-textLight text-xs">{{ order.deliveryAddress }}</span>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="w-full bg-gray-100 h-2 rounded-full mt-4 overflow-hidden">
+        <div [class]="getProgressBarColor(order.status)"
+             class="h-2 rounded-full transition-all duration-500"
+             [style.width]="getProgressPercent(order.status)">
+        </div>
+      </div>
+
+      <!-- Progress labels -->
+      <div class="flex justify-between mt-2">
+        <span class="text-[10px] text-textMuted">Pending</span>
+        <span class="text-[10px] text-textMuted">Preparing</span>
+        <span class="text-[10px] text-textMuted">Delivered</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="totalPages() > 1" class="flex justify-center items-center gap-2 mt-8 px-4">
+    <app-button variant="ghost" size="sm" [disabled]="currentPage === 1"
+                (clicked)="changePage(currentPage - 1)">
+      <i class="bi bi-chevron-left"></i>
+    </app-button>
+
+    <ng-container *ngFor="let page of [].constructor(totalPages()); let i = index">
+      <button (click)="changePage(i + 1)"
+              [class]="getPageBtnClasses(i + 1)">
+        {{ i + 1 }}
+      </button>
+    </ng-container>
+
+    <app-button variant="ghost" size="sm" [disabled]="currentPage === totalPages()"
+                (clicked)="changePage(currentPage + 1)">
+      <i class="bi bi-chevron-right"></i>
+    </app-button>
+  </div>
+</div>

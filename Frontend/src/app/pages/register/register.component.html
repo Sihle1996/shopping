@@ -1,37 +1,102 @@
-<div class="flex justify-center items-center h-screen bg-[#FFFBF5]">
-    <div class="bg-[#FFFFFF] p-6 rounded-2xl shadow-lg w-96">
-      <h2 class="text-2xl font-bold text-center mb-4 text-[#272727]">Register</h2>
-      
-      <form [formGroup]="registerForm" (ngSubmit)="register()" class="space-y-4">
-        <div>
-          <label class="block font-medium text-[#272727]">Email</label>
-          <input type="email" formControlName="email" 
-                 class="w-full border border-[#E5E5E5] p-3 rounded-lg focus:outline-none focus:border-[#E78E3C]" />
-        </div>
-  
-        <div>
-          <label class="block font-medium text-[#272727]">Password</label>
-          <input type="password" formControlName="password" 
-                 class="w-full border border-[#E5E5E5] p-3 rounded-lg focus:outline-none focus:border-[#E78E3C]" />
-        </div>
-  
-        <div>
-          <label class="block font-medium text-[#272727]">Confirm Password</label>
-          <input type="password" formControlName="confirmPassword" 
-                 class="w-full border border-[#E5E5E5] p-3 rounded-lg focus:outline-none focus:border-[#E78E3C]" />
-        </div>
-  
-        <p class="text-red-500 text-sm" *ngIf="errorMessage">{{ errorMessage }}</p>
-  
-        <button type="submit" 
-                class="w-full bg-[#E78E3C] text-white font-semibold p-3 rounded-lg hover:bg-[#D1762E] transition">
-          Register
-        </button>
-      </form>
-  
-      <p class="text-center text-sm mt-4 text-[#272727]">
-        Already have an account? <a routerLink="/login" class="text-[#E78E3C] font-semibold">Login</a>
-      </p>
+<div class="min-h-screen bg-surface flex items-center justify-center p-4">
+  <div class="w-full max-w-md animate-fade-in">
+
+    <!-- Logo / Brand -->
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
+        <i class="bi bi-person-plus text-white text-2xl"></i>
+      </div>
+      <h1 class="font-heading text-2xl font-bold text-textDark">Create Account</h1>
+      <p class="text-textLight text-sm mt-1">Sign up to start ordering delicious food</p>
     </div>
+
+    <!-- Card -->
+    <div class="bg-white rounded-2xl shadow-card p-8">
+      <form [formGroup]="registerForm" (ngSubmit)="register()" class="space-y-5">
+
+        <!-- Email -->
+        <div>
+          <label class="block text-sm font-medium text-textDark mb-1.5">Email</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <i class="bi bi-envelope text-textMuted"></i>
+            </div>
+            <input type="email" formControlName="email"
+                   class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                          placeholder-textMuted text-sm
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow"
+                   placeholder="your@email.com" />
+          </div>
+          <p *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.hasError('email')"
+             class="text-danger text-xs mt-1">Please enter a valid email</p>
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label class="block text-sm font-medium text-textDark mb-1.5">Password</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <i class="bi bi-lock text-textMuted"></i>
+            </div>
+            <input [type]="showPassword ? 'text' : 'password'" formControlName="password"
+                   class="w-full pl-10 pr-12 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                          placeholder-textMuted text-sm
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow"
+                   placeholder="Min. 6 characters" />
+            <button type="button" (click)="showPassword = !showPassword"
+                    class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-textMuted hover:text-textDark transition-colors">
+              <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </button>
+          </div>
+          <p *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.hasError('minlength')"
+             class="text-danger text-xs mt-1">Password must be at least 6 characters</p>
+        </div>
+
+        <!-- Confirm Password -->
+        <div>
+          <label class="block text-sm font-medium text-textDark mb-1.5">Confirm Password</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <i class="bi bi-lock-fill text-textMuted"></i>
+            </div>
+            <input [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword"
+                   class="w-full pl-10 pr-12 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                          placeholder-textMuted text-sm
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow"
+                   placeholder="Re-enter your password" />
+            <button type="button" (click)="showConfirmPassword = !showConfirmPassword"
+                    class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-textMuted hover:text-textDark transition-colors">
+              <i [class]="showConfirmPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </button>
+          </div>
+          <p *ngIf="registerForm.hasError('mismatch') && registerForm.get('confirmPassword')?.touched"
+             class="text-danger text-xs mt-1">Passwords do not match</p>
+        </div>
+
+        <!-- Error -->
+        <div *ngIf="errorMessage"
+             class="flex items-center gap-2 text-danger text-sm bg-red-50 px-4 py-2.5 rounded-xl">
+          <i class="bi bi-exclamation-circle"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <!-- Submit -->
+        <app-button
+          variant="primary"
+          size="lg"
+          type="submit"
+          [fullWidth]="true"
+          [loading]="isLoading"
+          [disabled]="registerForm.invalid">
+          Create Account
+        </app-button>
+      </form>
+    </div>
+
+    <!-- Login link -->
+    <p class="text-center text-sm text-textLight mt-6">
+      Already have an account?
+      <a routerLink="/login" class="text-primary font-semibold hover:underline">Sign in</a>
+    </p>
   </div>
-  
+</div>
