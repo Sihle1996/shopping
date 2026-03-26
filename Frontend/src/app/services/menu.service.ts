@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 export interface MenuItem {
-  id: number | null;
+  id: string | null;
   name: string;
   description: string;
   price: number;
@@ -26,7 +26,7 @@ export class MenuService {
     return this.http.get<MenuItem[]>(this.apiUrl);
   }
 
-  getProductById(productId: number): Observable<MenuItem> {
+  getProductById(productId: string): Observable<MenuItem> {
     return this.http.get<MenuItem>(`${this.apiUrl}/${productId}`);
   }
 }

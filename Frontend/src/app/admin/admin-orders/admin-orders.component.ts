@@ -14,7 +14,7 @@ interface OrderItem {
   price?: number;
 }
 interface Order {
-  id: number;
+  id: string;
   totalAmount: number;
   status: Status | string;   // API tolerance
   orderDate: string;         // ISO string
@@ -43,8 +43,8 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   selectedOrder: Order | null = null;
 
   // Driver assign
-  availableDrivers: Array<{ id: number; email: string }> = [];
-  selectedDriverId: number | null = null;
+  availableDrivers: Array<{ id: string; email: string }> = [];
+  selectedDriverId: string | null = null;
   assigning = false;
 
   // Filters / search / sort / paging
@@ -165,7 +165,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   trackById = (_: number, o: Order) => o.id;
 
   // ──────────────────────────────────────────────────────────────────────────────
-  updateStatus(orderId: number, newStatus: Status): void {
+  updateStatus(orderId: string, newStatus: Status): void {
     // Optimistic UI
     this.orders = this.orders.map(o => (o.id === orderId ? { ...o, status: newStatus } : o));
     // Fire-and-forget: service returns void (handles optimistic/revert itself if needed)
@@ -176,7 +176,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     this.selectedOrder = order;
     this.selectedDriverId = null;
     this.adminSerivce.getAvailableDrivers().subscribe({
-      next: (drivers: Array<{ id: number; email: string }>) => (this.availableDrivers = drivers ?? []),
+      next: (drivers: Array<{ id: string; email: string }>) => (this.availableDrivers = drivers ?? []),
       error: (err: unknown) => console.error('Failed to load drivers', err)
     });
   }

@@ -6,8 +6,8 @@ import { AuthService } from './auth.service';
 import { environment } from 'src/environments/environment';
 
 export interface CartItem {
-  id: number;
-  menuItemId: number;
+  id: string;
+  menuItemId: string;
   menuItemName: string;
   menuItemPrice: number;
   quantity: number;
@@ -78,7 +78,7 @@ export class CartService {
     return this.cartItemCount.asObservable();
   }
 
-  addToCart(menuItemId: number, quantity: number, size: string): Observable<any> {
+  addToCart(menuItemId: string, quantity: number, size: string): Observable<any> {
     const userId = this.authService.getUserId();
     if (!userId) {
       return new Observable(observer => observer.error('User not logged in.'));
@@ -92,13 +92,13 @@ export class CartService {
     );
   }
 
-  updateCartItem(cartItemId: number, quantity: number): Observable<any> {
+  updateCartItem(cartItemId: string, quantity: number): Observable<any> {
     return this.http.put(`${this.apiUrl}/update/${cartItemId}`, { quantity }, { headers: this.getAuthHeaders() }).pipe(
       tap(() => this.refreshCart())
     );
   }
 
-  removeFromCart(cartItemId: number): Observable<any> {
+  removeFromCart(cartItemId: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/delete/${cartItemId}`, { headers: this.getAuthHeaders() }).pipe(
       tap(() => this.refreshCart())
     );

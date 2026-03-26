@@ -35,7 +35,7 @@ export class ProductComponent implements OnInit {
       return;
     }
 
-    this.menuService.getProductById(Number(productId)).subscribe({
+    this.menuService.getProductById(productId).subscribe({
       next: (product) => this.product = product,
       error: () => this.router.navigate(['/'])
     });

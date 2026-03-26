@@ -4,7 +4,7 @@ import { Observable, map, shareReplay } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 export interface Promotion {
-  id: number;
+  id: string;
   title: string;
   description?: string;
   imageUrl?: string;

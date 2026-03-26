@@ -6,7 +6,7 @@ import { environment } from 'src/environments/environment';
 import { BadgeVariant } from 'src/app/shared/components/badge/badge.component';
 
 interface OrderDTO {
-  id: number;
+  id: string;
   status: string;
   totalAmount: number;
   orderDate: string;
@@ -128,7 +128,7 @@ export class HistoryordersComponent implements OnInit {
       : `${base} text-textDark hover:bg-gray-100`;
   }
 
-  trackById(_: number, order: OrderDTO): number {
+  trackById(_: number, order: OrderDTO): string {
     return order.id;
   }
 }

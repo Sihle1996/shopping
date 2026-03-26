@@ -6,12 +6,12 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 export interface Order {
-  id: number;
+  id: string;
   totalAmount: number;
   status: string;
   orderDate: string;
   deliveryAddress: string;
-  userId: number;
+  userId: string;
   userEmail: string;
 }
 

@@ -81,7 +81,7 @@ export class AdminMenuComponent implements OnInit {
     this.isEditing = true;
   }
 
-  deleteItem(id: number): void {
+  deleteItem(id: string): void {
     if (confirm('Are you sure you want to delete this item?')) {
       this.adminService.deleteMenuItem(id);
     }

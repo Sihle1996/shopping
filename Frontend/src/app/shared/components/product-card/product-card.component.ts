@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
 import { environment } from 'src/environments/environment';
 
 export interface ProductCardItem {
-  id: number | null;
+  id: string | null;
   name: string;
   description: string;
   price: number;
