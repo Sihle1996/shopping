@@ -34,8 +34,8 @@
         </li>
       </ng-container>
 
-      <!-- Auth buttons -->
-      <li class="ml-2" *ngIf="!isLoggedIn">
+      <!-- Auth buttons — hidden on landing page (footer handles it) -->
+      <li class="ml-2" *ngIf="!isLoggedIn && !isLandingPage">
         <a routerLink="/login"
            class="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-primary-600 transition-colors">
           Sign In
@@ -89,7 +89,7 @@
 
       <div class="border-t border-borderColor my-2"></div>
 
-      <a *ngIf="!isLoggedIn" routerLink="/login" (click)="toggleMenu()"
+      <a *ngIf="!isLoggedIn && !isLandingPage" routerLink="/login" (click)="toggleMenu()"
          class="flex items-center gap-3 px-5 py-3 text-sm font-semibold text-primary hover:bg-primary-50 transition-colors">
         <i class="bi bi-box-arrow-in-right text-base"></i> Sign In
       </a>

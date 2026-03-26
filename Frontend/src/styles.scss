@@ -8,6 +8,9 @@
   --font-primary: 'Poppins', sans-serif;
   --font-heading: 'Montserrat', sans-serif;
   --font-numbers: 'Inter', sans-serif;
+  --brand-primary: #FF6F00;
+  --brand-primary-light: #FF6F001A;
+  --brand-primary-hover: #EA580C;
 }
 
 body {
@@ -49,3 +52,26 @@ html, body {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
+
+/*
+ * Dynamic brand color overrides.
+ * When a tenant sets a custom primaryColor, CSS variables are updated
+ * via StoreComponent. These classes use the variables so the UI
+ * reflects the restaurant's brand.
+ */
+.brand-bg { background-color: var(--brand-primary) !important; }
+.brand-bg-light { background-color: var(--brand-primary-light) !important; }
+.brand-text { color: var(--brand-primary) !important; }
+.brand-border { border-color: var(--brand-primary) !important; }
+.brand-bg-hover:hover { background-color: var(--brand-primary-hover) !important; }
+
+/* Override Tailwind's primary color with brand color when set */
+.bg-primary { background-color: var(--brand-primary) !important; }
+.text-primary { color: var(--brand-primary) !important; }
+.border-primary { border-color: var(--brand-primary) !important; }
+.hover\:bg-primary-600:hover { background-color: var(--brand-primary-hover) !important; }
+.bg-primary-100 { background-color: var(--brand-primary-light) !important; }
+.hover\:bg-primary-50:hover { background-color: var(--brand-primary-light) !important; }
+.text-primary-700 { color: var(--brand-primary) !important; }
+.hover\:text-primary:hover { color: var(--brand-primary) !important; }
+.focus\:ring-primary-400:focus { --tw-ring-color: var(--brand-primary) !important; }

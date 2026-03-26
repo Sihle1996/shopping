@@ -18,6 +18,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
   storeName: string | null = null;
   storeLogo: string | null = null;
   homeRoute = '/';
+  hasStoreContext = false;
+  isLandingPage = true;
 
   private destroy$ = new Subject<void>();
 
@@ -34,7 +36,24 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
       takeUntil(this.destroy$)
-    ).subscribe(() => this.refreshAuthState());
+    ).subscribe((event: any) => {
+      const url = event.urlAfterRedirects;
+      this.isLandingPage = url === '/';
+
+      // Clear store context when leaving a store (back to landing/login/register)
+      if (this.isLandingPage || url.startsWith('/login') || url.startsWith('/register')) {
+        if (!url.includes('returnUrl') && !this.authService.getTenantId()) {
+          localStorage.removeItem('tenantId');
+          localStorage.removeItem('storeName');
+          this.storeName = null;
+          this.storeLogo = null;
+          this.hasStoreContext = false;
+          this.tenantService.clearTenant();
+        }
+      }
+
+      this.refreshAuthState();
+    });
 
     // Reactive tenant updates (e.g. after saving settings)
     this.tenantService.currentTenant$
@@ -60,6 +79,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     // Load store name from localStorage as fallback
     const name = localStorage.getItem('storeName');
     if (name) this.storeName = name;
+
+    // Check if we're in a store context
+    this.hasStoreContext = !!localStorage.getItem('tenantId');
   }
 
   get isCustomer(): boolean {
@@ -97,7 +119,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.userRole = null;
     this.storeName = null;
     this.storeLogo = null;
+    this.hasStoreContext = false;
     this.menuOpen = false;
+
+    // Reset brand color to default
+    const root = document.documentElement;
+    root.style.setProperty('--brand-primary', '#FF6F00');
+    root.style.setProperty('--brand-primary-light', '#FF6F001A');
+    root.style.setProperty('--brand-primary-hover', '#EA580C');
+
     this.router.navigate(['/']);
   }
 }
