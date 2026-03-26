@@ -1,0 +1,17 @@
+<!-- Loading -->
+<div *ngIf="isLoading" class="min-h-screen bg-surface flex items-center justify-center">
+  <div class="animate-pulse text-textMuted">Loading store...</div>
+</div>
+
+<!-- Not Found -->
+<app-empty-state
+  *ngIf="notFound"
+  icon="bi bi-shop"
+  title="Store not found"
+  message="This restaurant doesn't exist or is no longer active"
+  actionLabel="Browse Restaurants"
+  (action)="router.navigate(['/'])">
+</app-empty-state>
+
+<!-- Store loaded — show home/menu -->
+<app-home *ngIf="tenant && !isLoading"></app-home>

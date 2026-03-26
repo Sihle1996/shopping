@@ -45,7 +45,7 @@ export class ProductComponent implements OnInit {
     if (!this.product?.id) return;
 
     if (!this.authService.isLoggedIn()) {
-      this.router.navigate(['/login']);
+      this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
       return;
     }
 

@@ -11,29 +11,30 @@
         <span class="font-heading text-lg font-bold text-textDark leading-tight">
           {{ storeName || 'FastFood' }}
         </span>
-        <span *ngIf="storeName" class="text-[10px] text-textMuted leading-tight">Powered by FastFood</span>
+        <span *ngIf="storeName && isAdmin" class="text-[10px] text-textMuted leading-tight">Admin Panel</span>
+        <span *ngIf="storeName && !isAdmin" class="text-[10px] text-textMuted leading-tight">Powered by FastFood</span>
       </div>
     </a>
 
     <!-- Desktop Menu -->
     <ul class="hidden md:flex items-center gap-1">
-      <!-- Customer links (USER role or not logged in) -->
-      <ng-container *ngIf="!isLoggedIn || userRole === 'ROLE_USER'">
-        <li>
+      <!-- Customer-only links -->
+      <ng-container *ngIf="isCustomer">
+        <li *ngIf="isLoggedIn">
           <a routerLink="/cart" routerLinkActive="text-primary bg-primary-50"
              class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
-            Cart
+            <i class="bi bi-cart3 mr-1"></i> Cart
           </a>
         </li>
         <li *ngIf="isLoggedIn">
           <a routerLink="/orders" routerLinkActive="text-primary bg-primary-50"
              class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
-            Orders
+            <i class="bi bi-receipt mr-1"></i> Orders
           </a>
         </li>
       </ng-container>
 
-      <!-- Sign In / Logout -->
+      <!-- Auth buttons -->
       <li class="ml-2" *ngIf="!isLoggedIn">
         <a routerLink="/login"
            class="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-primary-600 transition-colors">
@@ -74,12 +75,14 @@
 
     <!-- Drawer Links -->
     <nav class="py-2">
-      <!-- Customer links only -->
-      <ng-container *ngIf="!isLoggedIn || userRole === 'ROLE_USER'">
-        <a routerLink="/cart" (click)="toggleMenu()" class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
+      <!-- Customer-only links -->
+      <ng-container *ngIf="isCustomer">
+        <a *ngIf="isLoggedIn" routerLink="/cart" (click)="toggleMenu()"
+           class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
           <i class="bi bi-cart3 text-base"></i> Cart
         </a>
-        <a *ngIf="isLoggedIn" routerLink="/orders" (click)="toggleMenu()" class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
+        <a *ngIf="isLoggedIn" routerLink="/orders" (click)="toggleMenu()"
+           class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
           <i class="bi bi-receipt text-base"></i> Orders
         </a>
       </ng-container>

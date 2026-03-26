@@ -24,6 +24,8 @@ import { SharedModule } from './shared/shared.module';
 import { ManagerModule } from './manager/manager.module';
 import { HistoryordersComponent } from './pages/historyorders/historyorders.component';
 import { RegisterRestaurantComponent } from './pages/register-restaurant/register-restaurant.component';
+import { StoreListComponent } from './pages/store-list/store-list.component';
+import { StoreComponent } from './pages/store/store.component';
 
 @NgModule({
   declarations: [
@@ -40,6 +42,8 @@ import { RegisterRestaurantComponent } from './pages/register-restaurant/registe
     ThankYouComponent,
     HistoryordersComponent,
     RegisterRestaurantComponent,
+    StoreListComponent,
+    StoreComponent,
   ],
   imports: [
     BrowserModule,

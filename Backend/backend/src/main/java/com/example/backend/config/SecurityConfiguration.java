@@ -50,6 +50,7 @@ public class SecurityConfiguration {
                                 "/api/login",
                                 "/api/promotions/**",
                                 "/api/tenants/register",
+                                "/api/tenants/active",
                                 "/api/tenants/{slug}",
                                 "/api/map/route",
                                 "/store/**",

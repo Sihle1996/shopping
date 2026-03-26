@@ -1,5 +1,7 @@
 <app-navbar></app-navbar>
-<router-outlet></router-outlet>
-<app-footer *ngIf="!isAdminRoute"></app-footer>
+<div class="pt-14">
+  <router-outlet></router-outlet>
+</div>
+<app-footer *ngIf="!isAdminRoute && !isDriverRoute && !isAuthRoute"></app-footer>
 <app-admin-footer *ngIf="isAdminRoute"></app-admin-footer>
 <app-global-spinner></app-global-spinner>

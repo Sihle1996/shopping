@@ -184,6 +184,10 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   quickAddToCart(item: ProductCardItem): void {
     if (!item.id) return;
+    if (!this.isLoggedIn) {
+      this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
+      return;
+    }
     this.cartService.addToCart(item.id, 1, 'M').subscribe({
       next: () => this.toastr.success(`${item.name} added to cart`),
       error: () => this.toastr.error('Failed to add item to cart')

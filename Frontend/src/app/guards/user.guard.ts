@@ -1,6 +1,5 @@
-// guards/user.guard.ts
 import { Injectable } from '@angular/core';
-import { CanActivate, Router } from '@angular/router';
+import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 @Injectable({
@@ -9,7 +8,7 @@ import { AuthService } from '../services/auth.service';
 export class UserGuard implements CanActivate {
   constructor(private authService: AuthService, private router: Router) {}
 
-  canActivate(): boolean {
+  canActivate(_route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
     const role = this.authService.getUserRole();
     if (role === 'ROLE_USER') {
       return true;
@@ -20,7 +19,8 @@ export class UserGuard implements CanActivate {
     } else if (role === 'ROLE_DRIVER') {
       this.router.navigate(['/driver/dashboard']);
     } else {
-      this.router.navigate(['/login']);
+      // Not logged in — redirect to login with return URL
+      this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
     }
     return false;
   }
