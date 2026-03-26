@@ -4,7 +4,7 @@ import { debounceTime } from 'rxjs/operators';
 import { AdminService } from 'src/app/services/admin.service';
 
 /** Strict status unions */
-type Status = 'Pending' | 'In Progress' | 'Delivered';
+type Status = 'Pending' | 'Preparing' | 'Out for Delivery' | 'Delivered';
 type StatusFilter = Status | 'All';
 
 interface OrderItem {
@@ -49,11 +49,14 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
 
   // Filters / search / sort / paging
   statuses: ReadonlyArray<StatusOption> = [
-    { value: 'All',         label: 'All' },
-    { value: 'Pending',     label: 'Pending' },
-    { value: 'In Progress', label: 'In Progress' },
-    { value: 'Delivered',   label: 'Delivered' },
+    { value: 'All',              label: 'All' },
+    { value: 'Pending',          label: 'Pending' },
+    { value: 'Preparing',        label: 'Preparing' },
+    { value: 'Out for Delivery', label: 'Out for Delivery' },
+    { value: 'Delivered',        label: 'Delivered' },
   ] as const;
+
+  orderStatuses: Status[] = ['Pending', 'Preparing', 'Out for Delivery', 'Delivered'];
 
   filterStatus: StatusFilter = 'All';
 
@@ -209,17 +212,23 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   }
 
   // ──────────────────────────────────────────────────────────────────────────────
+  getStatusIndex(status: string): number {
+    return this.orderStatuses.indexOf(status as Status);
+  }
+
   statusChip(s: string) {
     return {
-      'bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300': s === 'Pending',
-      'bg-sky-100 text-sky-800 dark:bg-sky-400/15 dark:text-sky-300': s === 'In Progress',
-      'bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-300': s === 'Delivered',
+      'bg-amber-100 text-amber-800': s === 'Pending',
+      'bg-blue-100 text-blue-800': s === 'Preparing',
+      'bg-purple-100 text-purple-800': s === 'Out for Delivery',
+      'bg-emerald-100 text-emerald-800': s === 'Delivered',
     };
   }
   statusDot(s: string) {
     return {
       'bg-amber-500': s === 'Pending',
-      'bg-sky-500': s === 'In Progress',
+      'bg-blue-500': s === 'Preparing',
+      'bg-purple-500': s === 'Out for Delivery',
       'bg-emerald-500': s === 'Delivered',
     };
   }
@@ -228,8 +237,9 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   get kpi() {
     const list = this.filteredOrders();
     const pending = list.filter(o => o.status === 'Pending').length;
-    const inProgress = list.filter(o => o.status === 'In Progress').length;
+    const preparing = list.filter(o => o.status === 'Preparing').length;
+    const outForDelivery = list.filter(o => o.status === 'Out for Delivery').length;
     const revenue = list.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-    return { pending, inProgress, revenue };
+    return { pending, preparing, outForDelivery, revenue };
   }
 }

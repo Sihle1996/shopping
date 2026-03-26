@@ -26,7 +26,7 @@ export class HistoryordersComponent implements OnInit {
   currentPage = 1;
   itemsPerPage = 5;
   selectedStatus = 'All';
-  allStatuses: string[] = ['All', 'Pending', 'Preparing', 'Delivered'];
+  allStatuses: string[] = ['All', 'Pending', 'Preparing', 'Out for Delivery', 'Delivered'];
 
   constructor(
     private http: HttpClient,
@@ -91,6 +91,7 @@ export class HistoryordersComponent implements OnInit {
     switch (status) {
       case 'Pending': return 'warning';
       case 'Preparing': return 'primary';
+      case 'Out for Delivery': return 'primary';
       case 'Delivered': return 'success';
       default: return 'neutral';
     }
@@ -99,7 +100,8 @@ export class HistoryordersComponent implements OnInit {
   getProgressBarColor(status: string): string {
     switch (status) {
       case 'Pending': return 'bg-warning';
-      case 'Preparing': return 'bg-primary';
+      case 'Preparing': return 'bg-blue-500';
+      case 'Out for Delivery': return 'bg-purple-500';
       case 'Delivered': return 'bg-success';
       default: return 'bg-gray-300';
     }
@@ -107,8 +109,9 @@ export class HistoryordersComponent implements OnInit {
 
   getProgressPercent(status: string): string {
     switch (status) {
-      case 'Pending': return '33%';
-      case 'Preparing': return '66%';
+      case 'Pending': return '25%';
+      case 'Preparing': return '50%';
+      case 'Out for Delivery': return '75%';
       case 'Delivered': return '100%';
       default: return '0%';
     }

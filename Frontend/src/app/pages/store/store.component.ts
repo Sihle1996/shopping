@@ -30,6 +30,7 @@ export class StoreComponent implements OnInit, OnDestroy {
         this.tenant = tenant;
         localStorage.setItem('tenantId', tenant.id);
         localStorage.setItem('storeName', tenant.name);
+        localStorage.setItem('storeSlug', tenant.slug);
         this.tenantService.setCurrentTenant(tenant);
         this.applyBrandColor(tenant.primaryColor);
         this.isLoading = false;

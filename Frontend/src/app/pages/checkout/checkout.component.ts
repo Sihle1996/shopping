@@ -171,20 +171,30 @@ selectAddress(suggestion: any) {
                 status: details.status
               };
 
-              this.http.post(`${environment.apiUrl}/api/orders/place`, orderData, {
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${this.authService.getToken()}`
-                }
-              }).subscribe({
+              const headers: any = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.authService.getToken()}`
+              };
+              const tenantId = localStorage.getItem('tenantId');
+              if (tenantId) {
+                headers['X-Tenant-Id'] = tenantId;
+              }
+
+              this.http.post(`${environment.apiUrl}/api/orders/place`, orderData, { headers }).subscribe({
                 next: () => {
                   this.cartService.clearCart();
-                  this.router.navigate(['/thank-you']);
+                  this.toastr.success('Order placed successfully!');
+                  const slug = localStorage.getItem('storeSlug');
+                  this.router.navigate(slug ? ['/store', slug, 'thank-you'] : ['/thank-you']);
                 },
-                error: () => {}
+                error: () => {
+                  this.toastr.error('Failed to place order. Please try again.');
+                }
               });
             },
-            onError: () => {}
+            onError: () => {
+              this.toastr.error('Payment failed. Please try again.');
+            }
           }).render('#paypal-button-container');
         }
       }, 0);

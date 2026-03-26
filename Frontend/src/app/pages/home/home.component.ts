@@ -178,7 +178,8 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   goToProductDetails(item: ProductCardItem): void {
     if (item.id !== null) {
-      this.router.navigate(['/product', item.id]);
+      const slug = localStorage.getItem('storeSlug');
+      this.router.navigate(slug ? ['/store', slug, 'product', item.id] : ['/product', item.id]);
     }
   }
 
@@ -209,7 +210,8 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   goToCheckout(): void {
     this.isCartOpen = false;
-    this.router.navigate(['/checkout']);
+    const slug = localStorage.getItem('storeSlug');
+    this.router.navigate(slug ? ['/store', slug, 'checkout'] : ['/checkout']);
   }
 
   removeCartItem(itemId: string): void {
