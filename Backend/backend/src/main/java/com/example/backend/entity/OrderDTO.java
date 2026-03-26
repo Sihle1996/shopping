@@ -10,24 +10,26 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 public class OrderDTO {
-    private Long id;
+    private UUID id;
     private Double totalAmount;
     private String status;
     private String orderDate;
     private String deliveryAddress;
-    private Long userId;
+    private UUID userId;
     private String userEmail;
     private String paymentId;
     private String payerId;
     private List<OrderItemDTO> items;
     private String driverName; // ✅ NEW FIELD
+    private UUID tenantId;
 
-    public OrderDTO(Long id, Double totalAmount, String status, Instant orderDate,
-                    String deliveryAddress, Long userId, String userEmail) {
+    public OrderDTO(UUID id, Double totalAmount, String status, Instant orderDate,
+                    String deliveryAddress, UUID userId, String userEmail) {
         this.id = id;
         this.totalAmount = BigDecimal.valueOf(totalAmount).setScale(2, RoundingMode.HALF_UP).doubleValue();
         this.status = status;

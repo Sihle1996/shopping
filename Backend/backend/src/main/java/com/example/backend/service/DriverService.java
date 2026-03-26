@@ -9,6 +9,7 @@ import com.example.backend.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +26,7 @@ public class DriverService {
                 .toList();
     }
 
-    public void markOrderDelivered(User driver, Long orderId) {
+    public void markOrderDelivered(User driver, UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 

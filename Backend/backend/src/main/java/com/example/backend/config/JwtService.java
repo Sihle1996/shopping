@@ -4,6 +4,7 @@ import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 import com.example.backend.user.User;
@@ -36,12 +37,18 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
-    public Long extractUserId(String token) {
-        return extractClaim(token, claims -> claims.get("userId", Long.class));
+    public UUID extractUserId(String token) {
+        String id = extractClaim(token, claims -> claims.get("userId", String.class));
+        return id != null ? UUID.fromString(id) : null;
     }
 
     public String extractRole(String token) {
         return extractClaim(token, claims -> claims.get("role", String.class));
+    }
+
+    public UUID extractTenantId(String token) {
+        String id = extractClaim(token, claims -> claims.get("tenantId", String.class));
+        return id != null ? UUID.fromString(id) : null;
     }
 
     public String generateToken(UserDetails userDetails) {
@@ -56,12 +63,16 @@ public class JwtService {
         return buildToken(new HashMap<>(), userDetails, refreshExpiration);
     }
 
-    public String generateTokenWithId(UserDetails userDetails, Long userId) {
+    public String generateTokenWithId(UserDetails userDetails, UUID userId, UUID tenantId) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);
+        claims.put("userId", userId.toString());
+
+        if (tenantId != null) {
+            claims.put("tenantId", tenantId.toString());
+        }
 
         if (userDetails instanceof User user) {
-            claims.put("role", "ROLE_" + user.getRole().name()); 
+            claims.put("role", "ROLE_" + user.getRole().name());
         }
 
         return buildToken(claims, userDetails, jwtExpiration);
@@ -82,7 +93,6 @@ public class JwtService {
             final String username = extractUsername(token);
             return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
         } catch (Exception e) {
-            System.err.println("Token validation failed: " + e.getMessage());
             return false;
         }
     }
@@ -96,16 +106,11 @@ public class JwtService {
     }
 
     private Claims extractAllClaims(String token) {
-        try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(getSignInKey())
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-        } catch (Exception e) {
-            System.err.println("Error extracting claims: " + e.getMessage());
-            throw e;
-        }
+        return Jwts.parserBuilder()
+                .setSigningKey(getSignInKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
     private Key getSignInKey() {

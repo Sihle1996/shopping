@@ -24,6 +24,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -89,7 +90,7 @@ public class OrderService {
         return dto;
     }
 
-    public List<OrderDTO> getOrdersByUser(Long userId) {
+    public List<OrderDTO> getOrdersByUser(UUID userId) {
         return orderRepository.findByUserId(userId).stream()
                 .map(this::convertToOrderDTO)
                 .toList();
@@ -101,14 +102,14 @@ public class OrderService {
                 .toList();
     }
 
-    public OrderDTO getOrderById(Long orderId) {
+    public OrderDTO getOrderById(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
         return convertToOrderDTO(order);
     }
 
     @Transactional
-    public void deleteOrder(Long orderId) {
+    public void deleteOrder(UUID orderId) {
         if (!orderRepository.existsById(orderId)) {
             throw new RuntimeException("Order not found");
         }
@@ -138,7 +139,7 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderDTO updateOrderStatus(Long orderId, String status) {
+    public OrderDTO updateOrderStatus(UUID orderId, String status) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
         order.setStatus(status);
@@ -150,7 +151,7 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderDTO assignDriverToOrder(Long orderId, Long driverId) {
+    public OrderDTO assignDriverToOrder(UUID orderId, UUID driverId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
@@ -193,7 +194,8 @@ public class OrderService {
                 order.getPaymentId(),
                 order.getPayerId(),
                 itemDTOs,
-                null // driverName, set below
+                null, // driverName, set below
+                order.getTenant() != null ? order.getTenant().getId() : null
         );
 
         if (order.getDriver() != null) {

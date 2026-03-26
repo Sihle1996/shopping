@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/orders")
@@ -36,7 +37,7 @@ public class AdminOrderController {
     // ✅ Fetch Order by ID (Admin)
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
-    public ResponseEntity<?> getOrderById(@PathVariable Long id) {
+    public ResponseEntity<?> getOrderById(@PathVariable UUID id) {
         try {
             OrderDTO orderDTO = orderService.getOrderById(id);
             return ResponseEntity.ok(orderDTO);
@@ -110,7 +111,7 @@ public class AdminOrderController {
     // ✅ Update Order Status (Admin)
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/update/{orderId}")
-    public ResponseEntity<?> updateOrderStatus(@PathVariable Long orderId, @RequestParam String status) {
+    public ResponseEntity<?> updateOrderStatus(@PathVariable UUID orderId, @RequestParam String status) {
         try {
             OrderDTO updatedOrder = orderService.updateOrderStatus(orderId, status);
             return ResponseEntity.ok(updatedOrder);
@@ -126,7 +127,7 @@ public class AdminOrderController {
     // ✅ Delete Order (Admin)
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/delete/{orderId}")
-    public ResponseEntity<?> deleteOrder(@PathVariable Long orderId) {
+    public ResponseEntity<?> deleteOrder(@PathVariable UUID orderId) {
         try {
             orderService.deleteOrder(orderId);
             return ResponseEntity.ok("Order deleted successfully.");
@@ -148,9 +149,9 @@ public class AdminOrderController {
     @PostMapping("/{orderId}/assign-driver")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> assignDriverToOrder(
-            @PathVariable Long orderId,
-            @RequestParam(required = false) Long driverId) {
-        if (driverId == null || driverId <= 0) {
+            @PathVariable UUID orderId,
+            @RequestParam(required = false) UUID driverId) {
+        if (driverId == null) {
             return ResponseEntity.badRequest().body("Invalid driver ID");
         }
         try {

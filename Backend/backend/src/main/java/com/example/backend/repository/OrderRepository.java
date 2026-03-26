@@ -13,10 +13,11 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order, Long> {
-    List<Order> findByUserId(Long userId);
+public interface OrderRepository extends JpaRepository<Order, UUID> {
+    List<Order> findByUserId(UUID userId);
     List<Order> findByStatus(String status);
     List<Order> findByDriver(User driver);
     List<Order> findByOrderDateBetween(Instant start, Instant end);
@@ -28,5 +29,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
            "GROUP BY oi.menuItem.name ORDER BY SUM(oi.quantity) DESC")
     List<TopProductDTO> findTopProducts(@Param("start") Instant start, @Param("end") Instant end, Pageable pageable);
 
+    List<Order> findByTenant_Id(UUID tenantId);
 }
-

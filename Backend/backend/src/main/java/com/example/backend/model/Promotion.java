@@ -1,5 +1,6 @@
 package com.example.backend.model;
 
+import com.example.backend.entity.Tenant;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -17,8 +19,8 @@ import java.time.OffsetDateTime;
 @Table(name = "promotions")
 public class Promotion {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(nullable = false)
     private String title;
@@ -27,37 +29,35 @@ public class Promotion {
     private String description;
 
     private String imageUrl;
-
     private String badgeText;
 
-    // Percentage 0-100 (e.g., 15 = 15% off)
     @Column(precision = 10, scale = 2)
     private BigDecimal discountPercent;
 
-    // Scheduling
     @Column(nullable = false)
     private OffsetDateTime startAt;
 
     @Column(nullable = false)
     private OffsetDateTime endAt;
 
-    // Applicability
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private AppliesTo appliesTo; // ALL, CATEGORY, PRODUCT
+    private AppliesTo appliesTo;
 
-    private Long targetCategoryId;
-    private Long targetProductId;
+    private UUID targetCategoryId;
+    private UUID targetProductId;
 
-    // Optional promo code (for checkout) – if null, applies automatically
     private String code;
 
-    // Flags
     @Column(nullable = false)
     private boolean active;
 
     @Column(nullable = false)
     private boolean featured;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
 
     public enum AppliesTo {
         ALL,

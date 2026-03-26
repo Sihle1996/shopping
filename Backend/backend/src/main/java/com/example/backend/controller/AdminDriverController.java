@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/drivers")
@@ -32,7 +33,7 @@ public class AdminDriverController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteDriver(@PathVariable Long id) {
+    public ResponseEntity<?> deleteDriver(@PathVariable UUID id) {
         adminDriverService.deleteDriver(id);
         return ResponseEntity.ok(Map.of("message", "Driver deleted"));
     }

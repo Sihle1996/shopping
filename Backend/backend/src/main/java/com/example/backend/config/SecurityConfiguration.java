@@ -49,21 +49,26 @@ public class SecurityConfiguration {
                                 "/api/register",
                                 "/api/login",
                                 "/api/promotions/**",
+                                "/api/tenants/register",
+                                "/api/tenants/{slug}",
                                 "/api/map/route",
-                                "/images/**",         // ✅ Allow public access to static images
-                                "/uploads/**"         // ✅ Just in case direct file path is hit
+                                "/store/**",
+                                "/images/**",
+                                "/uploads/**"
                         ).permitAll()
 
-                        // ✅ Allow WebSocket (SockJS) connections
                         .requestMatchers("/ws/**").permitAll()
 
-                        // ✅ Admin-only routes
+                        // Superadmin routes
+                        .requestMatchers("/api/superadmin/**").hasRole("SUPERADMIN")
+
+                        // Admin routes
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // ✅ Driver-only routes
+                        // Driver routes
                         .requestMatchers("/api/driver/**").hasRole("DRIVER")
 
-                        // ✅ Manager-only routes
+                        // Manager routes
                         .requestMatchers("/api/manager/**").hasRole("MANAGER")
 
                         // ✅ Everything else requires authentication

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/promotions")
@@ -31,28 +32,28 @@ public class AdminPromotionController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Promotion> update(@PathVariable Long id, @Valid @RequestBody PromotionRequest req) {
+    public ResponseEntity<Promotion> update(@PathVariable UUID id, @Valid @RequestBody PromotionRequest req) {
         return promotionRepository.findById(id)
                 .map(existing -> ResponseEntity.ok(promotionRepository.save(toEntity(existing, req))))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}/activate")
-    public ResponseEntity<Promotion> activate(@PathVariable Long id, @RequestParam boolean value) {
+    public ResponseEntity<Promotion> activate(@PathVariable UUID id, @RequestParam boolean value) {
         return promotionRepository.findById(id)
                 .map(p -> { p.setActive(value); return ResponseEntity.ok(promotionRepository.save(p)); })
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}/featured")
-    public ResponseEntity<Promotion> featured(@PathVariable Long id, @RequestParam boolean value) {
+    public ResponseEntity<Promotion> featured(@PathVariable UUID id, @RequestParam boolean value) {
         return promotionRepository.findById(id)
                 .map(p -> { p.setFeatured(value); return ResponseEntity.ok(promotionRepository.save(p)); })
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
         if (!promotionRepository.existsById(id)) return ResponseEntity.notFound().build();
         promotionRepository.deleteById(id);
         return ResponseEntity.noContent().build();

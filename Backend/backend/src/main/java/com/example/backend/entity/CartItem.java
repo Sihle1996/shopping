@@ -1,18 +1,19 @@
 package com.example.backend.entity;
 
-
 import com.example.backend.user.User;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.UUID;
 
 @Data
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class CartItem {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -23,8 +24,7 @@ public class CartItem {
     private MenuItem menuItem;
 
     @Column(nullable = false)
-    private Integer quantity = 0; // Default value to avoid null
+    private Integer quantity = 0;
 
     private Double totalPrice;
 }
-

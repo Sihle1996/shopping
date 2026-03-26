@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -55,7 +56,7 @@ public class OrderController {
 
     // ✅ Get order by ID
     @GetMapping("/{id}")
-    public ResponseEntity<?> getOrderById(@PathVariable Long id) {
+    public ResponseEntity<?> getOrderById(@PathVariable UUID id) {
         try {
             OrderDTO orderDTO = orderService.getOrderById(id);
             return ResponseEntity.ok(orderDTO);

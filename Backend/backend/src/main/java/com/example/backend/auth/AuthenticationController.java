@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.UUID;
 
 
 @RestController
@@ -21,8 +22,10 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(service.register(request));
+    public ResponseEntity<AuthenticationResponse> register(
+            @RequestBody RegisterRequest request,
+            @RequestParam(required = false) UUID tenantId) {
+        return ResponseEntity.ok(service.register(request, tenantId));
     }
 
     @PostMapping("/login")
@@ -37,7 +40,7 @@ public class AuthenticationController {
     }
 
     @GetMapping("/users/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    public ResponseEntity<User> getUserById(@PathVariable UUID id) {
         User user = service.findById(id);
         return ResponseEntity.ok(user);
     }

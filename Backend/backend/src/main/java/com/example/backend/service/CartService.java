@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -21,7 +22,7 @@ public class CartService {
     private final MenuItemRepository menuItemRepository;
     private final UserRepository userRepository;
 
-    public CartItemDTO addItemToCart(Long userId, Long menuItemId, Integer quantity) {
+    public CartItemDTO addItemToCart(UUID userId, UUID menuItemId, Integer quantity) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -44,12 +45,12 @@ public class CartService {
         return convertToDTO(cartItem);
     }
 
-    public List<CartItemDTO> getUserCartItems(Long userId) {
+    public List<CartItemDTO> getUserCartItems(UUID userId) {
         List<CartItem> cartItems = cartItemRepository.findByUserId(userId);
         return cartItems.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
-    public CartItemDTO updateCartItem(Long cartItemId, Integer quantity) {
+    public CartItemDTO updateCartItem(UUID cartItemId, Integer quantity) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new RuntimeException("Cart item not found"));
 
@@ -61,7 +62,7 @@ public class CartService {
         return convertToDTO(cartItem);
     }
 
-    public void deleteCartItem(Long cartItemId) {
+    public void deleteCartItem(UUID cartItemId) {
         if (!cartItemRepository.existsById(cartItemId)) {
             throw new RuntimeException("Cart item not found");
         }
@@ -69,7 +70,7 @@ public class CartService {
     }
 
     @Transactional
-    public void clearCartByUserId(Long userId) {
+    public void clearCartByUserId(UUID userId) {
         List<CartItem> userCart = cartItemRepository.findByUserId(userId);
         cartItemRepository.deleteAll(userCart);
     }
