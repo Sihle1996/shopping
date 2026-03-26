@@ -33,7 +33,10 @@ public class OrderController {
             return ResponseEntity.ok(orderDTO);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("An error occurred while placing the order.");
+            return ResponseEntity.status(500).body(
+                Map.of("error", "Failed to place order",
+                       "message", e.getMessage() != null ? e.getMessage() : "Unknown error")
+            );
         }
     }
 

@@ -45,6 +45,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (!url.includes('returnUrl') && !this.authService.getTenantId()) {
           localStorage.removeItem('tenantId');
           localStorage.removeItem('storeName');
+          localStorage.removeItem('storeSlug');
           this.storeName = null;
           this.storeLogo = null;
           this.hasStoreContext = false;
@@ -84,6 +85,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.hasStoreContext = !!localStorage.getItem('tenantId');
   }
 
+  get cartRoute(): string {
+    const slug = localStorage.getItem('storeSlug');
+    return slug ? `/store/${slug}/cart` : '/cart';
+  }
+
+  get ordersRoute(): string {
+    const slug = localStorage.getItem('storeSlug');
+    return slug ? `/store/${slug}/orders` : '/orders';
+  }
+
   get isCustomer(): boolean {
     return !this.isLoggedIn || this.userRole === 'ROLE_USER';
   }
@@ -97,13 +108,34 @@ export class NavbarComponent implements OnInit, OnDestroy {
       case 'ROLE_ADMIN': return '/admin/dashboard';
       case 'ROLE_DRIVER': return '/driver/dashboard';
       case 'ROLE_MANAGER': return '/manager/dashboard';
-      default: return '/';
+      default:
+        // If browsing a store, go back to that store
+        const slug = localStorage.getItem('storeSlug');
+        if (slug) return `/store/${slug}`;
+        return '/';
     }
   }
 
   private resolveLogoUrl(url?: string): string | null {
     if (!url) return null;
     return url.startsWith('http') ? url : `${environment.apiUrl}${url}`;
+  }
+
+  goHome(): void {
+    if (this.userRole === 'ROLE_ADMIN') {
+      this.router.navigate(['/admin/dashboard']);
+    } else if (this.userRole === 'ROLE_DRIVER') {
+      this.router.navigate(['/driver/dashboard']);
+    } else if (this.userRole === 'ROLE_MANAGER') {
+      this.router.navigate(['/manager/dashboard']);
+    } else {
+      const slug = localStorage.getItem('storeSlug');
+      if (slug) {
+        this.router.navigate(['/store', slug]);
+      } else {
+        this.router.navigate(['/']);
+      }
+    }
   }
 
   toggleMenu() {
@@ -114,6 +146,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.authService.logout();
     localStorage.removeItem('storeName');
     localStorage.removeItem('tenantId');
+    localStorage.removeItem('storeSlug');
     this.tenantService.clearTenant();
     this.isLoggedIn = false;
     this.userRole = null;

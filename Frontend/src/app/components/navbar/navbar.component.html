@@ -2,7 +2,7 @@
   <div class="max-w-6xl mx-auto flex justify-between items-center">
 
     <!-- Logo + Store Name -->
-    <a [routerLink]="homeRoute" class="flex items-center gap-2">
+    <a (click)="goHome()" class="flex items-center gap-2 cursor-pointer">
       <img *ngIf="storeLogo" [src]="storeLogo" class="w-8 h-8 rounded-lg object-cover" />
       <div *ngIf="!storeLogo" class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
         <i class="bi bi-fire text-white text-sm"></i>
@@ -21,13 +21,13 @@
       <!-- Customer-only links -->
       <ng-container *ngIf="isCustomer">
         <li *ngIf="isLoggedIn">
-          <a routerLink="/cart" routerLinkActive="text-primary bg-primary-50"
+          <a [routerLink]="cartRoute" routerLinkActive="text-primary bg-primary-50"
              class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
             <i class="bi bi-cart3 mr-1"></i> Cart
           </a>
         </li>
         <li *ngIf="isLoggedIn">
-          <a routerLink="/orders" routerLinkActive="text-primary bg-primary-50"
+          <a [routerLink]="ordersRoute" routerLinkActive="text-primary bg-primary-50"
              class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
             <i class="bi bi-receipt mr-1"></i> Orders
           </a>
@@ -77,11 +77,11 @@
     <nav class="py-2">
       <!-- Customer-only links -->
       <ng-container *ngIf="isCustomer">
-        <a *ngIf="isLoggedIn" routerLink="/cart" (click)="toggleMenu()"
+        <a *ngIf="isLoggedIn" [routerLink]="cartRoute" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
           <i class="bi bi-cart3 text-base"></i> Cart
         </a>
-        <a *ngIf="isLoggedIn" routerLink="/orders" (click)="toggleMenu()"
+        <a *ngIf="isLoggedIn" [routerLink]="ordersRoute" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
           <i class="bi bi-receipt text-base"></i> Orders
         </a>

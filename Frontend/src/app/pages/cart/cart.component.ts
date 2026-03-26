@@ -60,7 +60,8 @@ export class CartComponent implements OnInit {
   }
 
   proceedToCheckout(): void {
-    this.router.navigate(['/checkout']);
+    const slug = localStorage.getItem('storeSlug');
+    this.router.navigate(slug ? ['/store', slug, 'checkout'] : ['/checkout']);
   }
 
   goBack(): void {
@@ -68,7 +69,8 @@ export class CartComponent implements OnInit {
   }
 
   goToMenu(): void {
-    this.router.navigate(['/']);
+    const slug = localStorage.getItem('storeSlug');
+    this.router.navigate(slug ? ['/store', slug] : ['/']);
   }
 
   getImageUrl(path: string | null | undefined): string {

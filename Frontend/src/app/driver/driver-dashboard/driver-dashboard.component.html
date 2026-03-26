@@ -1,38 +1,144 @@
-<div class="h-screen w-full flex flex-col bg-gray-50">
+<div class="min-h-screen bg-surface pb-20">
 
-  <!-- 🚀 Top bar -->
-  <div class="p-4 bg-white shadow z-10">
-    <div class="flex justify-between items-center">
-      <h2 class="text-lg font-semibold">🚚 Assigned Delivery</h2>
-      <button
-        class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded"
-        (click)="toggleAvailability()">
-        {{ availability === 'AVAILABLE' ? 'Go Offline' : 'Go Online' }}
+  <!-- Header -->
+  <div class="bg-white border-b border-borderColor px-4 py-4 sticky top-14 z-10">
+    <div class="max-w-lg mx-auto flex items-center justify-between">
+      <div>
+        <h1 class="font-heading text-lg font-bold text-textDark">Driver Dashboard</h1>
+        <p class="text-textMuted text-xs">{{ activeOrders.length }} active deliveries</p>
+      </div>
+      <!-- Availability Toggle -->
+      <button (click)="toggleAvailability()"
+              class="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all"
+              [class]="isOnline
+                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                : 'bg-gray-100 text-textMuted hover:bg-gray-200'">
+        <span class="w-2.5 h-2.5 rounded-full" [class]="isOnline ? 'bg-success' : 'bg-gray-400'"></span>
+        {{ isOnline ? 'Online' : 'Offline' }}
       </button>
     </div>
   </div>
 
-  <!-- 🧾 Delivery Info -->
-  <div *ngIf="firstUndeliveredOrder" class="p-4 bg-white border-b z-10 space-y-2 shadow-sm text-sm">
-    <div class="text-gray-700">
-      <span class="font-medium">Order:</span> #{{ firstUndeliveredOrder.id }}
-    </div>
-    <div class="text-gray-700 truncate">
-      <span class="font-medium">To:</span> {{ firstUndeliveredOrder.deliveryAddress }}
-    </div>
-    <button
-      class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-1.5 rounded w-full mt-2"
-      (click)="markDelivered(firstUndeliveredOrder.id)">
-      ✅ Mark Delivered
-    </button>
-  </div>
+  <div class="max-w-lg mx-auto px-4 pt-4">
 
-  <!-- 🗺️ Map (takes rest of screen) -->
-  <div *ngIf="firstUndeliveredOrder" class="flex-1">
-    <app-driver-map
-      [deliveryAddress]="firstUndeliveredOrder.deliveryAddress"
-      [mapId]="'main-driver-map'">
-    </app-driver-map>
-  </div>
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="space-y-3">
+      <div *ngFor="let _ of [1,2]" class="bg-white rounded-2xl p-5 shadow-card animate-pulse">
+        <div class="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
+        <div class="h-3 bg-gray-200 rounded w-2/3 mb-2"></div>
+        <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+      </div>
+    </div>
 
+    <!-- No Orders -->
+    <app-empty-state
+      *ngIf="!isLoading && orders.length === 0"
+      icon="bi bi-truck"
+      title="No deliveries yet"
+      [message]="isOnline ? 'Waiting for orders to be assigned to you' : 'Go online to receive delivery assignments'">
+    </app-empty-state>
+
+    <!-- Current Delivery (highlighted) -->
+    <div *ngIf="currentDelivery as cd" class="mb-6">
+      <p class="text-xs font-medium text-textMuted uppercase mb-2">Current Delivery</p>
+      <div class="bg-white rounded-2xl shadow-card border-2 border-primary overflow-hidden">
+        <div class="bg-primary px-4 py-2 flex items-center justify-between">
+          <span class="text-white text-sm font-semibold">Order #{{ cd.id.substring(0, 8) }}</span>
+          <app-badge variant="warning" size="sm">{{ cd.status }}</app-badge>
+        </div>
+        <div class="p-4 space-y-3">
+          <div class="flex items-start gap-2">
+            <i class="bi bi-geo-alt text-primary mt-0.5"></i>
+            <div>
+              <p class="text-sm font-medium text-textDark">{{ cd.deliveryAddress }}</p>
+              <p class="text-xs text-textMuted">{{ cd.userEmail }}</p>
+            </div>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-textMuted">Total</span>
+            <span class="font-numbers font-bold text-textDark">R{{ cd.totalAmount?.toFixed(2) }}</span>
+          </div>
+          <!-- Items -->
+          <div *ngIf="cd.items?.length" class="border-t border-borderColor pt-3">
+            <div *ngFor="let item of cd.items" class="flex justify-between text-xs text-textLight py-0.5">
+              <span>{{ item.name }} <span class="text-textMuted">({{ item.size || 'std' }})</span></span>
+              <span>x{{ item.quantity }}</span>
+            </div>
+          </div>
+          <!-- Mark Delivered -->
+          <app-button
+            variant="primary"
+            size="lg"
+            [fullWidth]="true"
+            iconLeft="bi bi-check-circle"
+            (clicked)="confirmDeliver(cd.id)">
+            Mark as Delivered
+          </app-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map for current delivery -->
+    <div *ngIf="currentDelivery" class="mb-6 bg-white rounded-2xl shadow-card overflow-hidden">
+      <div class="px-4 py-3 border-b border-borderColor">
+        <h3 class="text-sm font-semibold text-textDark">
+          <i class="bi bi-map text-primary mr-1"></i> Route
+        </h3>
+      </div>
+      <div class="h-48">
+        <app-driver-map
+          [deliveryAddress]="currentDelivery.deliveryAddress"
+          [mapId]="'main-driver-map'">
+        </app-driver-map>
+      </div>
+    </div>
+
+    <!-- Upcoming Orders -->
+    <div *ngIf="activeOrders.length > 1" class="mb-6">
+      <p class="text-xs font-medium text-textMuted uppercase mb-2">Upcoming ({{ activeOrders.length - 1 }})</p>
+      <div class="space-y-3">
+        <div *ngFor="let order of activeOrders.slice(1)"
+             class="bg-white rounded-2xl shadow-card p-4">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-semibold text-textDark">Order #{{ order.id.substring(0, 8) }}</span>
+            <app-badge variant="neutral" size="sm">{{ order.status }}</app-badge>
+          </div>
+          <div class="flex items-start gap-2 mb-2">
+            <i class="bi bi-geo-alt text-textMuted text-sm mt-0.5"></i>
+            <p class="text-xs text-textLight">{{ order.deliveryAddress }}</p>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-textMuted text-xs">{{ order.userEmail }}</span>
+            <span class="font-numbers font-semibold text-textDark">R{{ order.totalAmount?.toFixed(2) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Completed Today -->
+    <div *ngIf="completedOrders.length > 0" class="mb-6">
+      <p class="text-xs font-medium text-textMuted uppercase mb-2">Completed ({{ completedOrders.length }})</p>
+      <div class="space-y-2">
+        <div *ngFor="let order of completedOrders"
+             class="bg-white rounded-2xl shadow-card p-4 opacity-60">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-textDark">Order #{{ order.id.substring(0, 8) }}</span>
+            <app-badge variant="success" size="sm">Delivered</app-badge>
+          </div>
+          <p class="text-xs text-textMuted mt-1">{{ order.deliveryAddress }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- Deliver Confirmation Modal -->
+<app-confirm-modal
+  [isOpen]="showDeliverConfirm"
+  title="Confirm Delivery"
+  message="Mark this order as delivered? This cannot be undone."
+  confirmLabel="Delivered"
+  variant="primary"
+  (confirmed)="onDeliverConfirmed()"
+  (cancelled)="onDeliverCancelled()">
+</app-confirm-modal>

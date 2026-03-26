@@ -50,8 +50,13 @@ public class OrderService {
             item.setSize(itemDTO.getSize());
             MenuItem menuItem = menuItemRepository.findById(itemDTO.getProductId())
                     .orElseThrow(() -> new RuntimeException("Menu item not found: " + itemDTO.getProductId()));
-            menuItem.setStock(menuItem.getStock() - itemDTO.getQuantity());
-            menuItem.setReservedStock(menuItem.getReservedStock() + itemDTO.getQuantity());
+
+            // Only adjust stock if it's being tracked (stock > 0)
+            int newStock = menuItem.getStock() - itemDTO.getQuantity();
+            if (newStock >= 0) {
+                menuItem.setStock(newStock);
+                menuItem.setReservedStock(menuItem.getReservedStock() + itemDTO.getQuantity());
+            }
             menuItemRepository.save(menuItem);
 
             InventoryLog log = new InventoryLog();
@@ -59,6 +64,10 @@ public class OrderService {
             log.setStockChange(-itemDTO.getQuantity());
             log.setReservedChange(itemDTO.getQuantity());
             log.setType("ORDER_PAYMENT");
+            UUID logTenantId = TenantContext.getCurrentTenantId();
+            if (logTenantId != null) {
+                tenantRepository.findById(logTenantId).ifPresent(log::setTenant);
+            }
             inventoryLogRepository.save(log);
 
             item.setMenuItem(menuItem);
@@ -74,7 +83,7 @@ public class OrderService {
         order.setOrderItems(orderItems);
         order.setTotalAmount(totalAmount);
         order.setOrderDate(Instant.now());
-        order.setStatus(request.getStatus());
+        order.setStatus("Pending");
         order.setDeliveryAddress(request.getDeliveryAddress());
         order.setPaymentId(request.getPaymentId());
         order.setPayerId(request.getPayerId());
