@@ -42,11 +42,13 @@ public class AuthenticationService {
                     .orElseThrow(() -> new IllegalArgumentException("Tenant not found with ID: " + tenantId));
         }
 
-        // Create and save the user
+        // Create and save the user — ADMIN if registering with a tenant, USER otherwise
+        Role assignedRole = (tenant != null) ? Role.ADMIN : Role.USER;
+
         User user = User.builder()
                 .email(request.getEmail())
-                .password(hashedPassword) // Save hashed password
-                .role(Role.USER) // Default to USER role
+                .password(hashedPassword)
+                .role(assignedRole)
                 .tenant(tenant)
                 .build();
 

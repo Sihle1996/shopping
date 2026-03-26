@@ -18,6 +18,7 @@ import { AdminLayoutComponent } from '../admin-layout/admin-layout.component';
 import { SharedModule } from '../../shared/shared.module';
 import { AdminRoutingModule } from '../admin-routing.module';
 import { AdminPromotionsComponent } from '../admin-promotions/admin-promotions.component';
+import { AdminSettingsComponent } from '../admin-settings/admin-settings.component';
 
 @NgModule({
   declarations: [
@@ -34,6 +35,7 @@ import { AdminPromotionsComponent } from '../admin-promotions/admin-promotions.c
     DriverMapComponent,
     AdminLayoutComponent,
     AdminPromotionsComponent,
+    AdminSettingsComponent,
   ],
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, SharedModule, AdminRoutingModule],
   exports: [AdminDashboardComponent, AdminFooterComponent],

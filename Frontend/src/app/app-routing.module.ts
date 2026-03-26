@@ -11,9 +11,9 @@ import { HistoryordersComponent } from './pages/historyorders/historyorders.comp
 import { UserGuard } from './guards/user.guard';
 import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashboard.component';
 import { DriverGuard } from './guards/driver.guard';
+import { RegisterRestaurantComponent } from './pages/register-restaurant/register-restaurant.component';
 
 const routes: Routes = [
-  // 🌐 User Routes
   { path: '', component: HomeComponent},
   { path: 'cart', component: CartComponent, canActivate: [UserGuard] },
   { path: 'product/:id', component: ProductComponent },
@@ -23,6 +23,7 @@ const routes: Routes = [
 
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
+  { path: 'register-restaurant', component: RegisterRestaurantComponent },
 
   // 🚚 Driver Route
   {

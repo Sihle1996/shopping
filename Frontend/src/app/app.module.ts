@@ -23,8 +23,7 @@ import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
 import { SharedModule } from './shared/shared.module';
 import { ManagerModule } from './manager/manager.module';
 import { HistoryordersComponent } from './pages/historyorders/historyorders.component';
-
-
+import { RegisterRestaurantComponent } from './pages/register-restaurant/register-restaurant.component';
 
 @NgModule({
   declarations: [
@@ -40,6 +39,7 @@ import { HistoryordersComponent } from './pages/historyorders/historyorders.comp
     CheckoutComponent,
     ThankYouComponent,
     HistoryordersComponent,
+    RegisterRestaurantComponent,
   ],
   imports: [
     BrowserModule,

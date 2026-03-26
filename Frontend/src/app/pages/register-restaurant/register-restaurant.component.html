@@ -1,0 +1,141 @@
+<div class="min-h-screen bg-surface flex items-center justify-center p-4">
+  <div class="w-full max-w-lg animate-fade-in">
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
+        <i class="bi bi-shop text-white text-2xl"></i>
+      </div>
+      <h1 class="font-heading text-2xl font-bold text-textDark">Register Your Restaurant</h1>
+      <p class="text-textLight text-sm mt-1">Start selling online in minutes</p>
+    </div>
+
+    <!-- Steps indicator -->
+    <div class="flex items-center justify-center gap-2 mb-8">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">1</div>
+        <span class="text-sm font-medium text-primary">Store Details</span>
+      </div>
+      <div class="w-12 h-px bg-borderColor"></div>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-gray-200 text-textMuted flex items-center justify-center text-sm font-bold">2</div>
+        <span class="text-sm text-textMuted">Admin Account</span>
+      </div>
+      <div class="w-12 h-px bg-borderColor"></div>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-gray-200 text-textMuted flex items-center justify-center text-sm font-bold">3</div>
+        <span class="text-sm text-textMuted">Go Live</span>
+      </div>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-white rounded-2xl shadow-card p-8">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5">
+
+        <!-- Restaurant Name -->
+        <div>
+          <label class="block text-sm font-medium text-textDark mb-1.5">Restaurant Name</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <i class="bi bi-shop text-textMuted"></i>
+            </div>
+            <input type="text" formControlName="name"
+                   class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                          placeholder-textMuted text-sm
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow"
+                   placeholder="Joe's Burgers" />
+          </div>
+        </div>
+
+        <!-- Store URL / Slug -->
+        <div>
+          <label class="block text-sm font-medium text-textDark mb-1.5">Store URL</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <i class="bi bi-link-45deg text-textMuted"></i>
+            </div>
+            <input type="text" formControlName="slug"
+                   class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                          placeholder-textMuted text-sm
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow"
+                   placeholder="joes-burgers" />
+          </div>
+          <p class="text-textMuted text-xs mt-1">
+            Your store will be at: <span class="text-primary font-medium">yourdomain.co.za/store/{{ form.get('slug')?.value || 'your-store' }}</span>
+          </p>
+          <p *ngIf="form.get('slug')?.touched && form.get('slug')?.hasError('pattern')"
+             class="text-danger text-xs mt-1">Only lowercase letters, numbers, and hyphens allowed</p>
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label class="block text-sm font-medium text-textDark mb-1.5">Business Email</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <i class="bi bi-envelope text-textMuted"></i>
+            </div>
+            <input type="email" formControlName="email"
+                   class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                          placeholder-textMuted text-sm
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow"
+                   placeholder="info@joesburgers.co.za" />
+          </div>
+        </div>
+
+        <!-- Phone -->
+        <div>
+          <label class="block text-sm font-medium text-textDark mb-1.5">Phone Number <span class="text-textMuted">(optional)</span></label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <i class="bi bi-telephone text-textMuted"></i>
+            </div>
+            <input type="tel" formControlName="phone"
+                   class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                          placeholder-textMuted text-sm
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow"
+                   placeholder="071 234 5678" />
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div>
+          <label class="block text-sm font-medium text-textDark mb-1.5">Restaurant Address <span class="text-textMuted">(optional)</span></label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <i class="bi bi-geo-alt text-textMuted"></i>
+            </div>
+            <input type="text" formControlName="address"
+                   class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                          placeholder-textMuted text-sm
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow"
+                   placeholder="123 Main Rd, Sandton" />
+          </div>
+        </div>
+
+        <!-- Error -->
+        <div *ngIf="errorMessage"
+             class="flex items-center gap-2 text-danger text-sm bg-red-50 px-4 py-2.5 rounded-xl">
+          <i class="bi bi-exclamation-circle"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <!-- Submit -->
+        <app-button
+          variant="primary"
+          size="lg"
+          type="submit"
+          [fullWidth]="true"
+          [loading]="isLoading"
+          [disabled]="form.invalid">
+          Create My Store
+        </app-button>
+      </form>
+    </div>
+
+    <!-- Login link -->
+    <p class="text-center text-sm text-textLight mt-6">
+      Already have a store?
+      <a routerLink="/login" class="text-primary font-semibold hover:underline">Sign in</a>
+    </p>
+  </div>
+</div>
