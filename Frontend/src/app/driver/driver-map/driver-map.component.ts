@@ -6,22 +6,21 @@ import {
   OnDestroy,
   Output
 } from '@angular/core';
-import * as L from 'leaflet';
-import 'leaflet.awesome-markers';
-import * as mapboxPolyline from '@mapbox/polyline';
-import { GeocodingService } from 'src/app/services/geocoding.service';
+import mapboxgl from 'mapbox-gl';
 import { environment } from 'src/environments/environment';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-driver-map',
   template: `
-    <div class="relative h-full w-full rounded shadow">
-      <div [id]="mapId" class="h-full w-full rounded"></div>
+    <div class="relative h-full w-full rounded-xl overflow-hidden">
+      <div [id]="mapId" class="h-full w-full"></div>
       <button
-        class="absolute top-3 right-3 z-50 bg-white text-black px-3 py-2 rounded-full shadow-lg hover:bg-gray-100 transition"
+        class="absolute top-3 right-3 z-10 w-10 h-10 bg-white rounded-full shadow-card
+               flex items-center justify-center hover:bg-gray-50 transition-colors"
         (click)="recenterMap()"
         title="Recenter on you">
-        📍
+        <i class="bi bi-crosshair text-primary"></i>
       </button>
     </div>
   `,
@@ -29,20 +28,20 @@ import { environment } from 'src/environments/environment';
 })
 export class DriverMapComponent implements AfterViewInit, OnDestroy {
   @Input() deliveryAddress!: string;
-  @Input() mapId: string = 'map';
+  @Input() mapId = 'map';
   @Output() mapLoaded = new EventEmitter<void>();
 
-  private map: any | null = null;
-  private driverMarker: any | null = null;
-  private routeLine: any | null = null;
+  private map: mapboxgl.Map | null = null;
+  private driverMarker: mapboxgl.Marker | null = null;
+  private destinationMarker: mapboxgl.Marker | null = null;
   private watchId: number | null = null;
-  private destinationCoords: [number, number] | null = null;
-  private driverCoords: [number, number] | null = null;
+  private driverCoords: [number, number] | null = null; // [lng, lat]
+  private destinationCoords: [number, number] | null = null; // [lng, lat]
 
-  constructor(private geocodingService: GeocodingService) {}
+  constructor(private http: HttpClient) {}
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.initMap(), 0);
+    setTimeout(() => this.initMap(), 100);
   }
 
   ngOnDestroy(): void {
@@ -54,173 +53,144 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy {
   }
 
   private initMap(): void {
-    const mapContainer = L.DomUtil.get(this.mapId) as HTMLElement;
-    if ((mapContainer as any)._leaflet_id != null) {
-      (mapContainer as any)._leaflet_id = null;
-    }
+    (mapboxgl as any).accessToken = environment.mapboxToken;
 
-    const johannesburgBounds = L.latLngBounds(
-      [-26.7, 27.5], // SW
-      [-25.9, 28.3]  // NE
-    );
+    this.map = new mapboxgl.Map({
+      container: this.mapId,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [28.0473, -26.2041], // Johannesburg
+      zoom: 12,
+    });
 
-    this.map = L.map(this.mapId, {
-      maxBounds: johannesburgBounds,
-      maxBoundsViscosity: 0.5,
-      zoomControl: true,
-      dragging: true
-    }).setView([-26.2041, 28.0473], 12);
+    this.map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(this.map);
-
-    this.geocodeDeliveryAddress(this.deliveryAddress);
-
-    this.watchId = navigator.geolocation.watchPosition(
-      pos => {
-        this.driverCoords = [pos.coords.latitude, pos.coords.longitude];
-        if (this.driverMarker) {
-          this.driverMarker.setLatLng(this.driverCoords);
-        } else {
-          this.driverMarker = L.marker(this.driverCoords, { icon: this.driverIcon() })
-            .addTo(this.map!)
-            .bindPopup('You are here')
-            .openPopup();
-        }
-
-        this.tryFitBounds();
-
-        if (this.destinationCoords) {
-          this.drawRoute(
-            [this.driverCoords[1], this.driverCoords[0]],
-            [this.destinationCoords[1], this.destinationCoords[0]]
-          );
-        }
-      },
-      err => {
-        console.error('❌ GPS Error:', err);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0
-      }
-    );
+    this.map.on('load', () => {
+      this.geocodeAndSetDestination();
+      this.startTracking();
+    });
   }
 
-  private geocodeDeliveryAddress(address: string) {
-    const cleaned = this.cleanAddress(address);
-    this.geocodingService.geocodeAddress(cleaned).subscribe({
-      next: coords => {
-        this.setDestination(coords.lat, coords.lon);
-      },
-      error: () => {
-        // fallback: try reducing to street + city
-        const fallback = this.getFallbackAddress(cleaned);
-        this.geocodingService.geocodeAddress(fallback).subscribe({
-          next: coords => this.setDestination(coords.lat, coords.lon),
-          error: err => {
-            console.error(`❌ Final geocoding attempt failed for: "${address}"`, err);
-          }
-        });
+  private geocodeAndSetDestination(): void {
+    if (!this.deliveryAddress) return;
+
+    const query = encodeURIComponent(this.deliveryAddress);
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${query}.json?access_token=${environment.mapboxToken}&country=za&limit=1`;
+
+    this.http.get<any>(url).subscribe({
+      next: (res) => {
+        if (res.features?.length > 0) {
+          const [lng, lat] = res.features[0].center;
+          this.destinationCoords = [lng, lat];
+
+          // Destination marker (red)
+          const el = document.createElement('div');
+          el.className = 'w-8 h-8 bg-danger rounded-full border-2 border-white shadow-md flex items-center justify-center';
+          el.innerHTML = '<i class="bi bi-geo-alt-fill text-white text-sm"></i>';
+
+          this.destinationMarker = new mapboxgl.Marker(el)
+            .setLngLat([lng, lat])
+            .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Delivery Destination'))
+            .addTo(this.map!);
+
+          this.fitBounds();
+          this.mapLoaded.emit();
+        }
       }
     });
   }
 
-  private setDestination(lat: number, lon: number) {
-    this.destinationCoords = [lat, lon];
-    L.marker(this.destinationCoords, { icon: this.destinationIcon() })
-      .addTo(this.map!)
-      .bindPopup('Delivery Destination')
-      .openPopup();
+  private startTracking(): void {
+    this.watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const lng = pos.coords.longitude;
+        const lat = pos.coords.latitude;
+        this.driverCoords = [lng, lat];
 
-    this.tryFitBounds();
-    this.mapLoaded.emit();
+        if (this.driverMarker) {
+          this.driverMarker.setLngLat([lng, lat]);
+        } else {
+          // Driver marker (blue pulse)
+          const el = document.createElement('div');
+          el.className = 'driver-marker';
+          el.innerHTML = `
+            <div class="w-10 h-10 relative flex items-center justify-center">
+              <div class="absolute w-10 h-10 bg-blue-500 rounded-full opacity-30 animate-ping"></div>
+              <div class="w-6 h-6 bg-blue-600 rounded-full border-2 border-white shadow-md z-10"></div>
+            </div>
+          `;
+
+          this.driverMarker = new mapboxgl.Marker(el)
+            .setLngLat([lng, lat])
+            .addTo(this.map!);
+        }
+
+        this.fitBounds();
+
+        if (this.destinationCoords) {
+          this.drawRoute();
+        }
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+    );
   }
 
-  private tryFitBounds(): void {
-    if (this.driverCoords && this.destinationCoords && this.map) {
-      setTimeout(() => {
-        const bounds = L.latLngBounds([
-          this.driverCoords!,
-          this.destinationCoords!
-        ]);
-        this.map!.fitBounds(bounds, { padding: [40, 40] });
-      }, 200);
-    }
-  }
+  private drawRoute(): void {
+    if (!this.driverCoords || !this.destinationCoords || !this.map) return;
 
-  private drawRoute(start: [number, number], end: [number, number]): void {
-    const request = new XMLHttpRequest();
-    request.open('POST', `${environment.apiUrl}/api/map/route`);
-    request.setRequestHeader('Accept', 'application/json');
-    request.setRequestHeader('Content-Type', 'application/json');
+    const start = `${this.driverCoords[0]},${this.driverCoords[1]}`;
+    const end = `${this.destinationCoords[0]},${this.destinationCoords[1]}`;
+    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${start};${end}?geometries=geojson&overview=full&access_token=${environment.mapboxToken}`;
 
-    request.onreadystatechange = () => {
-      if (request.readyState === 4) {
-        try {
-          const response = JSON.parse(request.responseText);
-          if (!response.routes?.length) throw new Error('No route data found');
-          const path = mapboxPolyline.decode(response.routes[0].geometry);
+    this.http.get<any>(url).subscribe({
+      next: (res) => {
+        if (!res.routes?.length) return;
 
-          setTimeout(() => {
-            if (this.routeLine) this.map!.removeLayer(this.routeLine);
-            this.routeLine = L.polyline(path as [number, number][], {
-              color: 'blue',
-              weight: 4
-            }).addTo(this.map!);
+        const route = res.routes[0].geometry;
 
-            const bounds = L.latLngBounds(path.map((p: [number, number]) => L.latLng(p[0], p[1])));
-            this.map!.fitBounds(bounds, { padding: [30, 30] });
-          }, 100);
-        } catch (err) {
-          console.error('❌ Failed to parse routing response:', err, request.responseText);
+        if (this.map!.getSource('route')) {
+          (this.map!.getSource('route') as mapboxgl.GeoJSONSource).setData(route);
+        } else {
+          this.map!.addSource('route', {
+            type: 'geojson',
+            data: route
+          });
+
+          this.map!.addLayer({
+            id: 'route',
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#3B82F6',
+              'line-width': 5,
+              'line-opacity': 0.8
+            }
+          });
         }
       }
-    };
+    });
+  }
 
-    request.send(JSON.stringify({ coordinates: [start, end] }));
+  private fitBounds(): void {
+    if (!this.map) return;
+
+    if (this.driverCoords && this.destinationCoords) {
+      const bounds = new mapboxgl.LngLatBounds()
+        .extend(this.driverCoords)
+        .extend(this.destinationCoords);
+      this.map.fitBounds(bounds, { padding: 60, maxZoom: 15 });
+    } else if (this.driverCoords) {
+      this.map.flyTo({ center: this.driverCoords, zoom: 14 });
+    }
   }
 
   recenterMap(): void {
     if (this.map && this.driverCoords) {
-      this.map.flyTo(this.driverCoords, 16, {
-        animate: true,
-        duration: 1.2
-      });
+      this.map.flyTo({ center: this.driverCoords, zoom: 16, duration: 1200 });
     }
-  }
-
-  private cleanAddress(address: string): string {
-    return address
-      .split(',')
-      .map(p => p.trim())
-      .filter((val, idx, arr) => val && arr.indexOf(val) === idx)
-      .join(', ');
-  }
-
-  private getFallbackAddress(cleaned: string): string {
-    const parts = cleaned.split(',').map(p => p.trim());
-    return parts.slice(0, 2).join(', ');
-  }
-
-  private driverIcon(): any {
-    return (L as any).AwesomeMarkers.icon({
-      icon: 'location-arrow',
-      prefix: 'fa',
-      markerColor: 'blue',
-      iconColor: 'white',
-      extraClasses: 'blinking-marker'
-    });
-  }
-
-  private destinationIcon(): any {
-    return (L as any).AwesomeMarkers.icon({
-      icon: 'box',
-      prefix: 'fa',
-      markerColor: 'red',
-      iconColor: 'white'
-    });
   }
 }
