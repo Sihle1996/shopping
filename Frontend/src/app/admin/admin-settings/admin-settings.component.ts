@@ -73,10 +73,12 @@ export class AdminSettingsComponent implements OnInit {
 
   saveSettings(): void {
     this.isSaving = true;
-    this.http.put(`${environment.apiUrl}/api/admin/settings`, this.settings, {
+    this.http.put<TenantSettings>(`${environment.apiUrl}/api/admin/settings`, this.settings, {
       headers: this.getHeaders()
     }).subscribe({
-      next: () => {
+      next: (updated) => {
+        this.settings = updated;
+        localStorage.setItem('storeName', updated.name);
         this.toastr.success('Settings saved successfully');
         this.isSaving = false;
       },
