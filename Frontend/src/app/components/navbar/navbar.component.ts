@@ -18,6 +18,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   storeName: string | null = null;
   storeLogo: string | null = null;
   homeRoute = '/';
+  hasStoreContext = false;
 
   private destroy$ = new Subject<void>();
 
@@ -60,6 +61,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     // Load store name from localStorage as fallback
     const name = localStorage.getItem('storeName');
     if (name) this.storeName = name;
+
+    // Check if we're in a store context
+    this.hasStoreContext = !!localStorage.getItem('tenantId');
   }
 
   get isCustomer(): boolean {

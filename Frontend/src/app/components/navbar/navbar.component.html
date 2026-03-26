@@ -35,10 +35,16 @@
       </ng-container>
 
       <!-- Auth buttons -->
-      <li class="ml-2" *ngIf="!isLoggedIn">
+      <li class="ml-2" *ngIf="!isLoggedIn && hasStoreContext">
         <a routerLink="/login"
            class="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-primary-600 transition-colors">
           Sign In
+        </a>
+      </li>
+      <li class="ml-2" *ngIf="!isLoggedIn && !hasStoreContext">
+        <a routerLink="/login"
+           class="px-4 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
+          Restaurant Login
         </a>
       </li>
       <li class="ml-2" *ngIf="isLoggedIn">
@@ -89,9 +95,13 @@
 
       <div class="border-t border-borderColor my-2"></div>
 
-      <a *ngIf="!isLoggedIn" routerLink="/login" (click)="toggleMenu()"
+      <a *ngIf="!isLoggedIn && hasStoreContext" routerLink="/login" (click)="toggleMenu()"
          class="flex items-center gap-3 px-5 py-3 text-sm font-semibold text-primary hover:bg-primary-50 transition-colors">
         <i class="bi bi-box-arrow-in-right text-base"></i> Sign In
+      </a>
+      <a *ngIf="!isLoggedIn && !hasStoreContext" routerLink="/login" (click)="toggleMenu()"
+         class="flex items-center gap-3 px-5 py-3 text-sm text-textLight hover:bg-primary-50 hover:text-primary transition-colors">
+        <i class="bi bi-shop text-base"></i> Restaurant Login
       </a>
       <button *ngIf="isLoggedIn" (click)="logout()"
               class="w-full flex items-center gap-3 px-5 py-3 text-sm text-danger hover:bg-red-50 transition-colors text-left">
