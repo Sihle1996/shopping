@@ -95,7 +95,7 @@ export class CartDrawerComponent {
   @Output() close = new EventEmitter<void>();
   @Output() checkout = new EventEmitter<void>();
   @Output() browseMenu = new EventEmitter<void>();
-  @Output() removeItem = new EventEmitter<number>();
+  @Output() removeItem = new EventEmitter<string>();
   @Output() updateQuantity = new EventEmitter<{ item: CartItem; quantity: number }>();
 
   getImageUrl(path: string | null | undefined): string {
@@ -107,7 +107,7 @@ export class CartDrawerComponent {
     this.updateQuantity.emit({ item, quantity });
   }
 
-  trackById(_: number, item: CartItem): number {
+  trackById(_: number, item: CartItem): string {
     return item.id;
   }
 }

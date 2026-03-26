@@ -11,7 +11,7 @@ import { Promotion } from 'src/app/services/promotion.service';
 export class AdminPromotionsComponent implements OnInit {
   promotions: Promotion[] = [];
   form!: FormGroup;
-  editingId: number | null = null;
+  editingId: string | null = null;
   loading = false;
 
   appliesToOptions = [

@@ -23,7 +23,7 @@ export class DriverDashboardComponent implements OnInit {
     });
   }
 
-  markDelivered(id: number) {
+  markDelivered(id: string) {
     this.driverService.markAsDelivered(id).subscribe(() => this.loadOrders());
   }
 

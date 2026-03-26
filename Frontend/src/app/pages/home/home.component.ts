@@ -208,7 +208,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.router.navigate(['/checkout']);
   }
 
-  removeCartItem(itemId: number): void {
+  removeCartItem(itemId: string): void {
     this.cartService.removeFromCart(itemId).subscribe();
   }
 
@@ -216,7 +216,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.cartService.updateCartItem(event.item.id, event.quantity).subscribe();
   }
 
-  trackById(_: number, item: MenuItem): number | null {
+  trackById(_: number, item: MenuItem): string | null {
     return item.id;
   }
 }

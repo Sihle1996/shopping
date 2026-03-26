@@ -15,7 +15,7 @@ export class DriverService {
     return this.http.get<any[]>(`${this.baseUrl}/orders`);
   }
 
-  markAsDelivered(orderId: number): Observable<any> {
+  markAsDelivered(orderId: string): Observable<any> {
     return this.http.put(`${this.baseUrl}/orders/${orderId}/delivered`, {});
   }
 

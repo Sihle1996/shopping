@@ -34,19 +34,19 @@ export class AdminPromotionService {
     return this.http.post<Promotion>(this.baseUrl, req);
   }
 
-  update(id: number, req: PromotionRequest): Observable<Promotion> {
+  update(id: string, req: PromotionRequest): Observable<Promotion> {
     return this.http.put<Promotion>(`${this.baseUrl}/${id}`, req);
   }
 
-  delete(id: number) {
+  delete(id: string) {
     return this.http.delete(`${this.baseUrl}/${id}`);
   }
 
-  setActive(id: number, value: boolean): Observable<Promotion> {
+  setActive(id: string, value: boolean): Observable<Promotion> {
     return this.http.patch<Promotion>(`${this.baseUrl}/${id}/activate`, null, { params: { value } as any });
   }
 
-  setFeatured(id: number, value: boolean): Observable<Promotion> {
+  setFeatured(id: string, value: boolean): Observable<Promotion> {
     return this.http.patch<Promotion>(`${this.baseUrl}/${id}/featured`, null, { params: { value } as any });
   }
 }

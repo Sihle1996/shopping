@@ -9,7 +9,7 @@ import { environment } from 'src/environments/environment';
  * Represents a driver's current location and status as returned from the API.
  */
 export interface DriverLocation {
-  id: number;
+  id: string;
   email: string;
   driverStatus: string;
   latitude: number;
@@ -111,7 +111,7 @@ orders$ = this.ordersSubject.asObservable();
   }
 
   
-  public updateMenuItem(id: number, item: any): void {
+  public updateMenuItem(id: string, item: any): void {
     const current = this.menuItemsSubject.getValue();
     const index = current.findIndex((i: any) => i.id === id);
     const previous = { ...current[index] };
@@ -135,7 +135,7 @@ orders$ = this.ordersSubject.asObservable();
     );
   }
 
-  public deleteMenuItem(id: number): void {
+  public deleteMenuItem(id: string): void {
     const current = this.menuItemsSubject.getValue();
     const updated = current.filter((i: any) => i.id !== id);
 
@@ -152,7 +152,7 @@ orders$ = this.ordersSubject.asObservable();
     );
   }
 
-  updateOrderStatus(orderId: number, status: string): void {
+  updateOrderStatus(orderId: string, status: string): void {
     const current = this.ordersSubject.getValue();
     const updated = current.map(o => (o.id === orderId ? { ...o, status } : o));
     const request$ = this.http.put(
@@ -170,7 +170,7 @@ orders$ = this.ordersSubject.asObservable();
     );
   }
 
-  deleteOrder(orderId: number): Observable<any> {
+  deleteOrder(orderId: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/orders/delete/${orderId}`, {
       headers: this.getAuthHeaders()
     });
@@ -188,7 +188,7 @@ orders$ = this.ordersSubject.asObservable();
     });
   }
 
-  public deleteDriver(id: number): Observable<any> {
+  public deleteDriver(id: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/drivers/${id}`, {
       headers: this.getAuthHeaders()
     });
@@ -203,7 +203,7 @@ orders$ = this.ordersSubject.asObservable();
     });
   }
 
-  assignDriver(orderId: number, driverId: number): Observable<any> {
+  assignDriver(orderId: string, driverId: string): Observable<any> {
   return this.http.post(
     `${this.baseUrl}/orders/${orderId}/assign-driver?driverId=${driverId}`,
     null,

@@ -8,7 +8,7 @@ import { Feature, FeatureCollection, LineString, Point } from 'geojson';
 import { environment } from 'src/environments/environment';
 
 interface DriverLocation {
-  id: number;
+  id: string;
   email: string;
   driverStatus: string;
   latitude: number;
@@ -25,7 +25,7 @@ interface DriverLocation {
 export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
   private map!: Map;
   private stompClient: any;
-  private drivers: Record<number, any> = {};
+  private drivers: Record<string, any> = {};
   private replayLength = 5;
   selectedStatuses = new Set<string>(['AVAILABLE', 'UNAVAILABLE']);
 
@@ -197,7 +197,7 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private updateRoute(id: number): void {
+  private updateRoute(id: string): void {
     const driver = this.drivers[id];
     if (!driver || driver.history.length < 2) return;
     const routeId = `route-${id}`;

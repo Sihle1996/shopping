@@ -21,7 +21,7 @@ export class CartComponent implements OnInit {
 
   ngOnInit(): void {
     const userId = localStorage.getItem('userId');
-    if (!userId || isNaN(Number(userId)) || Number(userId) <= 0) {
+    if (!userId) {
       this.router.navigate(['/login']);
       return;
     }
@@ -50,7 +50,7 @@ export class CartComponent implements OnInit {
     this.cartService.updateCartItem(item.id, quantity).subscribe();
   }
 
-  removeItem(itemId: number): void {
+  removeItem(itemId: string): void {
     this.cartService.removeFromCart(itemId).subscribe({
       next: () => {
         this.cartItems = this.cartItems.filter(item => item.id !== itemId);
@@ -76,7 +76,7 @@ export class CartComponent implements OnInit {
     return path.startsWith('http') ? path : `${environment.apiUrl}${path}`;
   }
 
-  trackById(_: number, item: CartItem): number {
+  trackById(_: number, item: CartItem): string {
     return item.id;
   }
 }
