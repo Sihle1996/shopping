@@ -115,8 +115,12 @@ export class AdminSettingsComponent implements OnInit {
       next: (updated) => {
         this.settings = updated;
         localStorage.setItem('storeName', updated.name);
-        // Update the tenant service so navbar picks it up immediately
         this.tenantService.setCurrentTenant(updated as any);
+        // Apply brand color immediately
+        if (updated.primaryColor) {
+          document.documentElement.style.setProperty('--brand-primary', updated.primaryColor);
+          document.documentElement.style.setProperty('--brand-primary-light', updated.primaryColor + '1A');
+        }
         this.toastr.success('Settings saved successfully');
         this.isSaving = false;
       },

@@ -35,6 +35,7 @@ export class StoreListComponent implements OnInit {
   }
 
   goToStore(slug: string): void {
+    if (!slug) return;
     this.router.navigate(['/store', slug]);
   }
 
