@@ -34,11 +34,11 @@
       <div class="bg-white rounded-2xl shadow-card p-4">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center">
-            <i class="bi bi-arrow-repeat text-blue-600"></i>
+            <i class="bi bi-fire text-blue-600"></i>
           </div>
           <div>
-            <p class="text-textMuted text-xs">In Progress</p>
-            <p class="font-numbers text-xl font-bold text-blue-600">{{ kpi.inProgress }}</p>
+            <p class="text-textMuted text-xs">Preparing</p>
+            <p class="font-numbers text-xl font-bold text-blue-600">{{ kpi.preparing }}</p>
           </div>
         </div>
       </div>
@@ -238,6 +238,33 @@
           <div class="flex justify-end mt-3 gap-4 text-sm">
             <span class="text-textMuted">Total</span>
             <span class="font-numbers font-bold text-textDark">R{{ so.totalAmount | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <!-- Update Status -->
+        <div class="mb-6">
+          <h4 class="text-sm font-semibold text-textDark mb-3">Update Status</h4>
+          <div class="flex flex-wrap gap-2">
+            <button *ngFor="let s of orderStatuses"
+                    (click)="updateStatus(so.id, s)"
+                    [disabled]="so.status === s"
+                    class="px-3 py-2 rounded-xl text-xs font-semibold transition-all border"
+                    [ngClass]="so.status === s
+                      ? 'border-primary bg-primary-100 text-primary cursor-default'
+                      : 'border-borderColor bg-white text-textDark hover:border-primary hover:text-primary'">
+              {{ s }}
+            </button>
+          </div>
+          <!-- Progress bar -->
+          <div class="mt-3 flex items-center gap-1">
+            <div *ngFor="let s of orderStatuses; let i = index"
+                 class="h-1.5 flex-1 rounded-full transition-colors"
+                 [class.bg-primary]="getStatusIndex(so.status) >= i"
+                 [class.bg-gray-200]="getStatusIndex(so.status) < i">
+            </div>
+          </div>
+          <div class="flex justify-between mt-1">
+            <span *ngFor="let s of orderStatuses" class="text-[9px] text-textMuted">{{ s }}</span>
           </div>
         </div>
 
