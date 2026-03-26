@@ -107,7 +107,7 @@
             <app-button variant="outline" size="sm" iconLeft="bi bi-pencil" (clicked)="editItem(item)">
               Edit
             </app-button>
-            <app-button variant="danger" size="sm" iconLeft="bi bi-trash" (clicked)="deleteItem(item.id)">
+            <app-button variant="danger" size="sm" iconLeft="bi bi-trash" (clicked)="confirmDelete(item.id)">
               Delete
             </app-button>
           </div>
@@ -124,3 +124,14 @@
     </app-empty-state>
   </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<app-confirm-modal
+  [isOpen]="showDeleteConfirm"
+  title="Delete Menu Item"
+  message="This item will be permanently removed from your menu."
+  confirmLabel="Delete"
+  variant="danger"
+  (confirmed)="onDeleteConfirmed()"
+  (cancelled)="onDeleteCancelled()">
+</app-confirm-modal>

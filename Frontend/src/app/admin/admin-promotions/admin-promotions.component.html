@@ -161,7 +161,7 @@
                   <app-button variant="ghost" size="sm" (clicked)="toggleFeatured(p)">
                     {{ p.featured ? 'Unfeature' : 'Feature' }}
                   </app-button>
-                  <app-button variant="danger" size="sm" (clicked)="remove(p)">Delete</app-button>
+                  <app-button variant="danger" size="sm" (clicked)="confirmDelete(p)">Delete</app-button>
                 </div>
               </td>
             </tr>
@@ -171,3 +171,14 @@
     </div>
   </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<app-confirm-modal
+  [isOpen]="showDeleteConfirm"
+  title="Delete Promotion"
+  [message]="'Are you sure you want to delete &quot;' + (deleteTarget?.title || '') + '&quot;?'"
+  confirmLabel="Delete"
+  variant="danger"
+  (confirmed)="onDeleteConfirmed()"
+  (cancelled)="onDeleteCancelled()">
+</app-confirm-modal>

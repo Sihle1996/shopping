@@ -97,8 +97,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
           this.currentPage = page;
           this.loading = false;
         },
-        error: (err: unknown) => {
-          console.error(err);
+        error: () => {
           this.errorMessage = 'Failed to load orders.';
           this.loading = false;
         }
@@ -177,7 +176,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     this.selectedDriverId = null;
     this.adminSerivce.getAvailableDrivers().subscribe({
       next: (drivers: Array<{ id: string; email: string }>) => (this.availableDrivers = drivers ?? []),
-      error: (err: unknown) => console.error('Failed to load drivers', err)
+      error: () => {}
     });
   }
 
@@ -203,8 +202,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
         }
         this.assigning = false;
       },
-      error: (err: unknown) => {
-        console.error('Failed to assign driver', err);
+      error: () => {
         this.assigning = false;
       }
     });

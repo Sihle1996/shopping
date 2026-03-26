@@ -16,7 +16,6 @@ export class AdminGuard implements CanActivate {
     }
 
     const role = this.authService.getUserRole();
-    console.log("🛡️ AdminGuard checked role:", role); // should show ROLE_ADMIN
     if (role === 'ROLE_ADMIN') {
       return true;
     } else if (role === 'ROLE_MANAGER') {

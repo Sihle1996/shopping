@@ -19,7 +19,7 @@ export class DriverDashboardComponent implements OnInit {
   loadOrders() {
     this.driverService.getAssignedOrders().subscribe({
       next: (res) => this.orders = res,
-      error: (err) => console.error('Error fetching orders', err)
+      error: () => {}
     });
   }
 

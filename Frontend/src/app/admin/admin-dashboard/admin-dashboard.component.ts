@@ -41,10 +41,6 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     // Defer to next microtask to ensure canvases are attached to DOM
     Promise.resolve().then(() => {
-      console.log('[AdminDashboard] View initialized. Canvas refs:', {
-        salesCanvas: !!this.salesChartCanvas?.nativeElement,
-        productsCanvas: !!this.productsChartCanvas?.nativeElement,
-      });
       this.loadAnalytics();
     });
   }
@@ -58,7 +54,6 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
       next: (data) => {
         const labels = data.map(d => d.date);
         const values = data.map(d => d.total);
-        console.log('[AdminDashboard] Sales trends data:', { count: data.length, labels, values });
         this.salesEmpty = data.length === 0;
         if (this.salesEmpty) {
           if (this.salesChart) { this.salesChart.destroy(); this.salesChart = undefined; }
@@ -66,7 +61,7 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
         }
         if (this.salesChart) this.salesChart.destroy();
         const ctx = this.salesChartCanvas?.nativeElement?.getContext('2d');
-        if (!ctx) { console.warn('[AdminDashboard] Missing 2D context for sales chart'); return; }
+        if (!ctx) { return; }
         this.salesChart = new Chart(ctx, {
           type: 'line',
           data: { labels, datasets: [{ label: 'Sales', data: values, borderColor: '#4f46e5' }] },
@@ -77,11 +72,8 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
             scales: { x: { ticks: { autoSkip: true } }, y: { beginAtZero: true } }
           }
         });
-        console.log('[AdminDashboard] Sales chart created');
       },
-      error: (err) => {
-        console.error('[AdminDashboard] Sales trends fetch error:', err);
-      }
+      error: () => {}
     });
 
     this.analyticsService.getTopProducts(start, end).subscribe({
@@ -89,7 +81,6 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
         this.topProducts = data;
         const labels = data.map(d => d.name);
         const values = data.map(d => d.quantity);
-        console.log('[AdminDashboard] Top products data:', { count: data.length, labels, values });
         this.productsEmpty = data.length === 0;
         if (this.productsEmpty) {
           if (this.productsChart) { this.productsChart.destroy(); this.productsChart = undefined; }
@@ -97,7 +88,7 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
         }
         if (this.productsChart) this.productsChart.destroy();
         const ctx = this.productsChartCanvas?.nativeElement?.getContext('2d');
-        if (!ctx) { console.warn('[AdminDashboard] Missing 2D context for products chart'); return; }
+        if (!ctx) { return; }
         this.productsChart = new Chart(ctx, {
           type: 'bar',
           data: { labels, datasets: [{ label: 'Top Products', data: values, backgroundColor: '#10b981' }] },
@@ -108,11 +99,8 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
             scales: { x: { ticks: { autoSkip: true } }, y: { beginAtZero: true } }
           }
         });
-        console.log('[AdminDashboard] Products chart created');
       },
-      error: (err) => {
-        console.error('[AdminDashboard] Top products fetch error:', err);
-      }
+      error: () => {}
     });
 
     this.analyticsService.getAverageOrderValue(start, end).subscribe(v => (this.aov = v));

@@ -25,7 +25,7 @@ export class InventoryManagementComponent implements OnInit {
     // errors flagged by the TypeScript compiler.
     this.adminService.loadMenuItems().subscribe({
       next: (data: any[]) => (this.inventory = data),
-      error: (err: unknown) => console.error('Failed to fetch inventory', err)
+      error: () => {}
     });
   }
 
@@ -47,7 +47,7 @@ export class InventoryManagementComponent implements OnInit {
     const adjustment = [{ menuItemId: item.id, stockChange: item.adjustStock || 0, reservedChange: 0 }];
     this.adminService.adjustInventory(adjustment).subscribe({
       next: () => this.fetchInventory(),
-      error: (err: unknown) => console.error('Failed to adjust inventory', err)
+      error: () => {}
     });
   }
 
@@ -61,7 +61,7 @@ export class InventoryManagementComponent implements OnInit {
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: (err: unknown) => console.error('Failed to export CSV', err)
+      error: () => {}
     });
   }
 
@@ -75,7 +75,7 @@ export class InventoryManagementComponent implements OnInit {
   loadAudit(): void {
     this.adminService.getInventoryAuditLogs().subscribe({
       next: (data: any[]) => (this.auditLog = data),
-      error: (err: unknown) => console.error('Failed to load audit log', err)
+      error: () => {}
     });
   }
 

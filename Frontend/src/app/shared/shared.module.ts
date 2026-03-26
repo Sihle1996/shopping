@@ -17,6 +17,7 @@ import { QuantitySelectorComponent } from './components/quantity-selector/quanti
 import { EmptyStateComponent } from './components/empty-state/empty-state.component';
 import { CartDrawerComponent } from './components/cart-drawer/cart-drawer.component';
 import { FloatingCartBarComponent } from './components/floating-cart-bar/floating-cart-bar.component';
+import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.component';
 
 @NgModule({
   declarations: [
@@ -33,6 +34,7 @@ import { FloatingCartBarComponent } from './components/floating-cart-bar/floatin
     EmptyStateComponent,
     CartDrawerComponent,
     FloatingCartBarComponent,
+    ConfirmModalComponent,
   ],
   imports: [
     CommonModule,
@@ -58,6 +60,7 @@ import { FloatingCartBarComponent } from './components/floating-cart-bar/floatin
     EmptyStateComponent,
     CartDrawerComponent,
     FloatingCartBarComponent,
+    ConfirmModalComponent,
   ],
 })
 export class SharedModule {}

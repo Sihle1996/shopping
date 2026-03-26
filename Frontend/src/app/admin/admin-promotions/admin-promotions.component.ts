@@ -14,6 +14,9 @@ export class AdminPromotionsComponent implements OnInit {
   editingId: string | null = null;
   loading = false;
 
+  showDeleteConfirm = false;
+  deleteTarget: Promotion | null = null;
+
   appliesToOptions = [
     { value: 'ALL', label: 'All Products' },
     { value: 'CATEGORY', label: 'Category' },
@@ -86,9 +89,21 @@ export class AdminPromotionsComponent implements OnInit {
     this.form.reset({ appliesTo: 'ALL', active: true, featured: false });
   }
 
-  remove(p: Promotion): void {
-    if (!confirm(`Delete promotion "${p.title}"?`)) return;
-    this.api.delete(p.id).subscribe({ next: () => this.refresh() });
+  confirmDelete(p: Promotion): void {
+    this.deleteTarget = p;
+    this.showDeleteConfirm = true;
+  }
+
+  onDeleteConfirmed(): void {
+    if (this.deleteTarget) {
+      this.api.delete(this.deleteTarget.id).subscribe({ next: () => this.refresh() });
+    }
+    this.onDeleteCancelled();
+  }
+
+  onDeleteCancelled(): void {
+    this.showDeleteConfirm = false;
+    this.deleteTarget = null;
   }
 
   toggleActive(p: Promotion): void {
