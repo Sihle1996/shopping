@@ -16,6 +16,7 @@ export class RegisterComponent implements OnInit {
   showConfirmPassword = false;
   tenantId: string | null = null;
   storeName: string | null = null;
+  returnUrl: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -27,6 +28,7 @@ export class RegisterComponent implements OnInit {
   ngOnInit(): void {
     this.tenantId = this.route.snapshot.queryParamMap.get('tenantId');
     this.storeName = this.route.snapshot.queryParamMap.get('store');
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
 
     this.registerForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -53,7 +55,9 @@ export class RegisterComponent implements OnInit {
 
     this.authService.register(this.registerForm.value, this.tenantId || undefined).subscribe({
       next: () => {
-        this.router.navigate(['/login']);
+        const queryParams: any = {};
+        if (this.returnUrl) queryParams.returnUrl = this.returnUrl;
+        this.router.navigate(['/login'], { queryParams });
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Registration failed. Please try again.';

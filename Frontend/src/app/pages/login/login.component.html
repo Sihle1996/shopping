@@ -75,7 +75,8 @@
     <!-- Register link -->
     <p class="text-center text-sm text-textLight mt-6">
       Don't have an account?
-      <a routerLink="/register" class="text-primary font-semibold hover:underline">Create one</a>
+      <a [routerLink]="['/register']" [queryParams]="returnUrl ? { returnUrl: returnUrl } : {}"
+         class="text-primary font-semibold hover:underline">Create one</a>
     </p>
   </div>
 </div>

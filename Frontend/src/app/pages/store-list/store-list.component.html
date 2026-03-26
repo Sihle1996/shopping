@@ -1,75 +1,199 @@
 <div class="min-h-screen bg-surface">
-  <div class="max-w-4xl mx-auto px-4 pt-8 pb-20">
 
-    <!-- Header -->
-    <div class="text-center mb-10">
-      <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
-        <i class="bi bi-fire text-white text-2xl"></i>
+  <!-- Hero Section -->
+  <section class="relative overflow-hidden bg-white">
+    <div class="max-w-5xl mx-auto px-4 py-16 sm:py-24 text-center">
+      <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-md">
+        <i class="bi bi-fire text-white text-3xl"></i>
       </div>
-      <h1 class="font-heading text-3xl font-bold text-textDark">FastFood</h1>
-      <p class="text-textLight text-sm mt-2">Choose a restaurant to start ordering</p>
-    </div>
-
-    <!-- Loading -->
-    <div *ngIf="isLoading" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div *ngFor="let _ of [1,2,3,4]" class="bg-white rounded-2xl p-6 shadow-card animate-pulse">
-        <div class="h-12 w-12 bg-gray-200 rounded-xl mb-4"></div>
-        <div class="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-        <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+      <h1 class="font-heading text-4xl sm:text-5xl font-bold text-textDark leading-tight mb-4">
+        Your Favourite Food,<br />
+        <span class="text-primary">Delivered Fast</span>
+      </h1>
+      <p class="text-textLight text-lg max-w-xl mx-auto mb-8">
+        Order from the best local restaurants. Fresh meals delivered to your door in minutes.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <a href="#restaurants" class="px-6 py-3 rounded-xl text-base font-semibold bg-primary text-white hover:bg-primary-600 transition-colors shadow-sm">
+          <i class="bi bi-shop mr-2"></i>Browse Restaurants
+        </a>
+        <a routerLink="/register-restaurant" class="px-6 py-3 rounded-xl text-base font-semibold border-2 border-primary text-primary hover:bg-primary-50 transition-colors">
+          <i class="bi bi-plus-circle mr-2"></i>List Your Restaurant
+        </a>
+      </div>
+      <div class="flex items-center justify-center gap-6 mt-10 text-sm text-textMuted">
+        <span><i class="bi bi-clock mr-1"></i>Fast Delivery</span>
+        <span><i class="bi bi-shield-check mr-1"></i>Secure Payments</span>
+        <span><i class="bi bi-geo-alt mr-1"></i>Live Tracking</span>
       </div>
     </div>
+  </section>
 
-    <!-- Empty -->
-    <app-empty-state
-      *ngIf="!isLoading && stores.length === 0"
-      icon="bi bi-shop"
-      title="No restaurants yet"
-      message="Be the first to register your restaurant"
-      actionLabel="Register Restaurant"
-      (action)="goToStore('register-restaurant')">
-    </app-empty-state>
-
-    <!-- Store Grid -->
-    <div *ngIf="!isLoading && stores.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div *ngFor="let store of stores"
-           (click)="goToStore(store.slug)"
-           class="bg-white rounded-2xl shadow-card p-6 cursor-pointer
-                  hover:shadow-card-hover transition-all duration-200 group animate-fade-in">
-        <div class="flex items-center gap-4">
-          <!-- Logo -->
-          <img *ngIf="store.logoUrl" [src]="getLogoUrl(store)"
-               class="w-14 h-14 rounded-xl object-cover" />
-          <div *ngIf="!store.logoUrl"
-               class="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold"
-               [style.backgroundColor]="store.primaryColor || '#FF6F00'">
-            {{ store.name.charAt(0) }}
+  <!-- How It Works -->
+  <section class="bg-surface py-16">
+    <div class="max-w-5xl mx-auto px-4">
+      <h2 class="font-heading text-2xl font-bold text-textDark text-center mb-10">How It Works</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div class="text-center">
+          <div class="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i class="bi bi-search text-primary text-2xl"></i>
           </div>
-          <!-- Info -->
-          <div class="flex-1 min-w-0">
-            <h3 class="font-heading font-bold text-textDark group-hover:text-primary transition-colors truncate">
-              {{ store.name }}
-            </h3>
-            <p *ngIf="store.address" class="text-textMuted text-xs mt-0.5 truncate">
-              <i class="bi bi-geo-alt mr-1"></i>{{ store.address }}
-            </p>
-            <p *ngIf="store.phone" class="text-textMuted text-xs mt-0.5">
-              <i class="bi bi-telephone mr-1"></i>{{ store.phone }}
-            </p>
+          <h3 class="font-heading font-semibold text-textDark mb-1">1. Choose a Restaurant</h3>
+          <p class="text-textLight text-sm">Browse local restaurants and find your craving</p>
+        </div>
+        <div class="text-center">
+          <div class="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i class="bi bi-cart-plus text-primary text-2xl"></i>
           </div>
-          <!-- Arrow -->
-          <i class="bi bi-chevron-right text-textMuted group-hover:text-primary transition-colors"></i>
+          <h3 class="font-heading font-semibold text-textDark mb-1">2. Place Your Order</h3>
+          <p class="text-textLight text-sm">Add items to cart and checkout with PayPal</p>
+        </div>
+        <div class="text-center">
+          <div class="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i class="bi bi-truck text-primary text-2xl"></i>
+          </div>
+          <h3 class="font-heading font-semibold text-textDark mb-1">3. Track & Enjoy</h3>
+          <p class="text-textLight text-sm">Track your delivery in real-time and enjoy</p>
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- Register CTA -->
-    <div class="text-center mt-10">
-      <p class="text-textLight text-sm mb-3">Own a restaurant?</p>
-      <a routerLink="/register-restaurant"
-         class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold
-                border-2 border-primary text-primary hover:bg-primary-50 transition-colors">
-        <i class="bi bi-shop"></i> Register Your Restaurant
-      </a>
+  <!-- Restaurants -->
+  <section id="restaurants" class="py-16 bg-white">
+    <div class="max-w-5xl mx-auto px-4">
+      <h2 class="font-heading text-2xl font-bold text-textDark text-center mb-2">Restaurants Near You</h2>
+      <p class="text-textLight text-sm text-center mb-8">Pick your favourite and start ordering</p>
+
+      <!-- Loading -->
+      <div *ngIf="isLoading" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div *ngFor="let _ of [1,2,3,4]" class="bg-surface rounded-2xl p-6 animate-pulse">
+          <div class="h-12 w-12 bg-gray-200 rounded-xl mb-4"></div>
+          <div class="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
+          <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      </div>
+
+      <!-- Empty -->
+      <div *ngIf="!isLoading && stores.length === 0" class="text-center py-12">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="bi bi-shop text-textMuted text-2xl"></i>
+        </div>
+        <h3 class="font-heading font-semibold text-textDark mb-1">No restaurants yet</h3>
+        <p class="text-textLight text-sm mb-4">Be the first to register your restaurant</p>
+        <a routerLink="/register-restaurant"
+           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-primary-600 transition-colors">
+          Register Now
+        </a>
+      </div>
+
+      <!-- Store Grid -->
+      <div *ngIf="!isLoading && stores.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div *ngFor="let store of stores"
+             (click)="goToStore(store.slug)"
+             class="bg-surface rounded-2xl p-6 cursor-pointer border border-borderColor
+                    hover:border-primary hover:shadow-card-hover transition-all duration-200 group">
+          <div class="flex items-center gap-4">
+            <img *ngIf="store.logoUrl" [src]="getLogoUrl(store)"
+                 class="w-14 h-14 rounded-xl object-cover" />
+            <div *ngIf="!store.logoUrl"
+                 class="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold"
+                 [style.backgroundColor]="store.primaryColor || '#FF6F00'">
+              {{ store.name.charAt(0) }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="font-heading font-bold text-textDark group-hover:text-primary transition-colors truncate">
+                {{ store.name }}
+              </h3>
+              <p *ngIf="store.address" class="text-textMuted text-xs mt-0.5 truncate">
+                <i class="bi bi-geo-alt mr-1"></i>{{ store.address }}
+              </p>
+            </div>
+            <i class="bi bi-arrow-right text-textMuted group-hover:text-primary transition-colors"></i>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+  </section>
+
+  <!-- For Restaurant Owners -->
+  <section class="py-16 bg-surface">
+    <div class="max-w-5xl mx-auto px-4">
+      <h2 class="font-heading text-2xl font-bold text-textDark text-center mb-2">Grow Your Restaurant</h2>
+      <p class="text-textLight text-sm text-center mb-10">Everything you need to sell food online</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+        <div class="bg-white rounded-2xl p-5 shadow-card">
+          <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center mb-3">
+            <i class="bi bi-phone text-primary"></i>
+          </div>
+          <h3 class="font-semibold text-textDark text-sm mb-1">Online Ordering</h3>
+          <p class="text-textMuted text-xs">Your own branded ordering page — no commissions to third parties</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-card">
+          <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center mb-3">
+            <i class="bi bi-graph-up text-primary"></i>
+          </div>
+          <h3 class="font-semibold text-textDark text-sm mb-1">Analytics Dashboard</h3>
+          <p class="text-textMuted text-xs">Track sales, top products, and revenue in real-time</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-card">
+          <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center mb-3">
+            <i class="bi bi-truck text-primary"></i>
+          </div>
+          <h3 class="font-semibold text-textDark text-sm mb-1">Driver Management</h3>
+          <p class="text-textMuted text-xs">Manage your delivery team with live GPS tracking</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-card">
+          <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center mb-3">
+            <i class="bi bi-box-seam text-primary"></i>
+          </div>
+          <h3 class="font-semibold text-textDark text-sm mb-1">Inventory Control</h3>
+          <p class="text-textMuted text-xs">Track stock levels, get low-stock alerts, export reports</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-card">
+          <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center mb-3">
+            <i class="bi bi-tag text-primary"></i>
+          </div>
+          <h3 class="font-semibold text-textDark text-sm mb-1">Promotions</h3>
+          <p class="text-textMuted text-xs">Create discount codes, featured deals, and campaigns</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-card">
+          <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center mb-3">
+            <i class="bi bi-credit-card text-primary"></i>
+          </div>
+          <h3 class="font-semibold text-textDark text-sm mb-1">Secure Payments</h3>
+          <p class="text-textMuted text-xs">Accept payments via PayPal — money goes directly to you</p>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <a routerLink="/register-restaurant"
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-base font-semibold bg-primary text-white hover:bg-primary-600 transition-colors shadow-sm">
+          <i class="bi bi-rocket-takeoff"></i> Get Started Free
+        </a>
+        <p class="text-textMuted text-xs mt-3">No credit card required. Start with a free trial.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-borderColor py-8">
+    <div class="max-w-5xl mx-auto px-4">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <i class="bi bi-fire text-white text-sm"></i>
+          </div>
+          <span class="font-heading font-bold text-textDark">FastFood</span>
+        </div>
+        <div class="flex items-center gap-6 text-sm">
+          <a routerLink="/login" class="text-textLight hover:text-primary transition-colors">Sign In</a>
+          <a routerLink="/register" class="text-textLight hover:text-primary transition-colors">Sign Up</a>
+          <a routerLink="/register-restaurant" class="text-textLight hover:text-primary transition-colors">For Restaurants</a>
+        </div>
+        <p class="text-textMuted text-xs">Built in South Africa</p>
+      </div>
+    </div>
+  </footer>
 </div>

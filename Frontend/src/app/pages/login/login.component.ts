@@ -13,7 +13,7 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   isLoading = false;
   showPassword = false;
-  private returnUrl: string | null = null;
+  returnUrl: string | null = null;
 
   constructor(
     private fb: FormBuilder,

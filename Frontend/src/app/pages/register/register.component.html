@@ -100,7 +100,8 @@
     <!-- Login link -->
     <p class="text-center text-sm text-textLight mt-6">
       Already have an account?
-      <a routerLink="/login" class="text-primary font-semibold hover:underline">Sign in</a>
+      <a [routerLink]="['/login']" [queryParams]="returnUrl ? { returnUrl: returnUrl } : {}"
+         class="text-primary font-semibold hover:underline">Sign in</a>
     </p>
   </div>
 </div>
