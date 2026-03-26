@@ -3,8 +3,10 @@ package com.example.backend.service;
 import com.example.backend.entity.*;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.OrderRepository;
+import com.example.backend.repository.TenantRepository;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.repository.InventoryLogRepository;
+import com.example.backend.tenant.TenantContext;
 import com.example.backend.user.DriverStatus;
 import com.example.backend.user.Role;
 import com.example.backend.user.User;
@@ -33,6 +35,7 @@ public class OrderService {
     private final UserRepository userRepository;
     private final MenuItemRepository menuItemRepository;
     private final InventoryLogRepository inventoryLogRepository;
+    private final TenantRepository tenantRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
@@ -76,6 +79,12 @@ public class OrderService {
         order.setPaymentId(request.getPaymentId());
         order.setPayerId(request.getPayerId());
 
+        // Set tenant from context
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId != null) {
+            tenantRepository.findById(tenantId).ifPresent(order::setTenant);
+        }
+
         for (OrderItem item : orderItems) {
             item.setOrder(order);
         }
@@ -97,9 +106,14 @@ public class OrderService {
     }
 
     public List<OrderDTO> getAllOrders() {
-        return orderRepository.findAll().stream()
-                .map(this::convertToOrderDTO)
-                .toList();
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        List<Order> orders;
+        if (tenantId != null) {
+            orders = orderRepository.findByTenant_Id(tenantId);
+        } else {
+            orders = orderRepository.findAll();
+        }
+        return orders.stream().map(this::convertToOrderDTO).toList();
     }
 
     public OrderDTO getOrderById(UUID orderId) {
@@ -147,6 +161,10 @@ public class OrderService {
     }
 
     public List<User> getAvailableDrivers() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId != null) {
+            return userRepository.findByRoleAndDriverStatusAndTenant_Id(Role.DRIVER, DriverStatus.AVAILABLE, tenantId);
+        }
         return userRepository.findByRoleAndDriverStatus(Role.DRIVER, DriverStatus.AVAILABLE);
     }
 
@@ -206,17 +224,27 @@ public class OrderService {
     }
 
     public long getTotalOrders() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId != null) {
+            return orderRepository.findByTenant_Id(tenantId).size();
+        }
         return orderRepository.count();
     }
 
     public double getTotalRevenue() {
-        return orderRepository.findAll()
-                .stream()
-                .mapToDouble(Order::getTotalAmount)
-                .sum();
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        List<Order> orders;
+        if (tenantId != null) {
+            orders = orderRepository.findByTenant_Id(tenantId);
+        } else {
+            orders = orderRepository.findAll();
+        }
+        return orders.stream().mapToDouble(Order::getTotalAmount).sum();
     }
 
     public long getPendingOrdersCount() {
-        return orderRepository.findByStatus("Pending").size();
+        return getAllOrders().stream()
+                .filter(o -> "Pending".equals(o.getStatus()))
+                .count();
     }
 }

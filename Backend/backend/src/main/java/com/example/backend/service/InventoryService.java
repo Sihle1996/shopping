@@ -4,8 +4,11 @@ import com.example.backend.entity.InventoryAdjustmentDTO;
 import com.example.backend.entity.InventoryLog;
 import com.example.backend.entity.InventoryLogDTO;
 import com.example.backend.entity.MenuItem;
+import com.example.backend.entity.Tenant;
 import com.example.backend.repository.InventoryLogRepository;
 import com.example.backend.repository.MenuItemRepository;
+import com.example.backend.repository.TenantRepository;
+import com.example.backend.tenant.TenantContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
@@ -17,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ import java.util.stream.Collectors;
 public class InventoryService {
     private final MenuItemRepository menuItemRepository;
     private final InventoryLogRepository inventoryLogRepository;
+    private final TenantRepository tenantRepository;
 
     @Transactional
     public List<MenuItem> adjustInventory(List<InventoryAdjustmentDTO> adjustments) {
@@ -40,13 +45,19 @@ public class InventoryService {
             log.setStockChange(adj.getStockChange());
             log.setReservedChange(adj.getReservedChange());
             log.setType("ADJUSTMENT");
+
+            UUID tenantId = TenantContext.getCurrentTenantId();
+            if (tenantId != null) {
+                tenantRepository.findById(tenantId).ifPresent(log::setTenant);
+            }
+
             inventoryLogRepository.save(log);
         }
         return updated;
     }
 
     public ResponseEntity<ByteArrayResource> exportInventoryCsv() {
-        List<MenuItem> items = menuItemRepository.findAll();
+        List<MenuItem> items = getTenantMenuItems();
         StringBuilder sb = new StringBuilder("id,name,stock,reservedStock,lowStockThreshold\n");
         for (MenuItem item : items) {
             sb.append(item.getId()).append(',')
@@ -63,7 +74,14 @@ public class InventoryService {
     }
 
     public List<InventoryLogDTO> getAuditLogs() {
-        return inventoryLogRepository.findAll().stream().map(log ->
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        List<InventoryLog> logs;
+        if (tenantId != null) {
+            logs = inventoryLogRepository.findByTenant_Id(tenantId);
+        } else {
+            logs = inventoryLogRepository.findAll();
+        }
+        return logs.stream().map(log ->
                 new InventoryLogDTO(
                         log.getId(),
                         log.getMenuItem().getId(),
@@ -74,5 +92,13 @@ public class InventoryService {
                         log.getTimestamp()
                 )
         ).collect(Collectors.toList());
+    }
+
+    private List<MenuItem> getTenantMenuItems() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId != null) {
+            return menuItemRepository.findByTenant_Id(tenantId);
+        }
+        return menuItemRepository.findAll();
     }
 }
