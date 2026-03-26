@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -19,7 +20,7 @@ public class MenuService {
         return menuItemRepository.save(menuItem);
     }
 
-    public MenuItem updateMenuItem(Long id, MenuItem updatedMenuItem) {
+    public MenuItem updateMenuItem(UUID id, MenuItem updatedMenuItem) {
         MenuItem menuItem = menuItemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Menu item not found"));
 
@@ -39,7 +40,7 @@ public class MenuService {
     }
 
 
-    public void deleteMenuItem(Long id) {
+    public void deleteMenuItem(UUID id) {
         if (!menuItemRepository.existsById(id)) {
             throw new RuntimeException("Menu item not found");
         }
@@ -47,7 +48,7 @@ public class MenuService {
     }
 
 
-    public MenuItem getMenuItemById(Long id) {
+    public MenuItem getMenuItemById(UUID id) {
         return menuItemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Menu item not found"));
     }

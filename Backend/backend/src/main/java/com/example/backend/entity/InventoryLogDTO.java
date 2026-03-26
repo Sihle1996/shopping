@@ -5,13 +5,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class InventoryLogDTO {
-    private Long id;
-    private Long menuItemId;
+    private UUID id;
+    private UUID menuItemId;
     private String menuItemName;
     private int stockChange;
     private int reservedChange;

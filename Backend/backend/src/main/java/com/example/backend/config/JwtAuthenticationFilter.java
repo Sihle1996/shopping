@@ -1,5 +1,6 @@
 package com.example.backend.config;
 
+import com.example.backend.tenant.TenantContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -39,7 +41,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String userEmail;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.debug("Missing or invalid Authorization header");
             filterChain.doFilter(request, response);
             return;
         }
@@ -47,29 +48,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         jwt = authHeader.substring(7);
         try {
             userEmail = jwtService.extractUsername(jwt);
-            Long userId = jwtService.extractUserId(jwt);
-            String role = jwtService.extractRole(jwt); // 🔥 NEW
+            UUID userId = jwtService.extractUserId(jwt);
+            String role = jwtService.extractRole(jwt);
+            UUID tenantId = jwtService.extractTenantId(jwt);
+
             request.setAttribute("userId", userId);
 
-            log.debug("Extracted userId: {} and role: {}", userId, role);
+            // Set tenant context from JWT if not already set by TenantFilter
+            if (tenantId != null && TenantContext.getCurrentTenantId() == null) {
+                TenantContext.setCurrentTenantId(tenantId);
+            }
 
             if (userEmail != null && StringUtils.hasText(role) && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
                 if (jwtService.isTokenValid(jwt, userDetails)) {
-                    List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role)); // 🔥 NEW
+                    List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
 
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails, null, authorities
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
-
-                    log.debug("User authenticated with role: {}", role);
-                } else {
-                    log.debug("Invalid token for user: {}", userEmail);
                 }
-            } else if (!StringUtils.hasText(role)) {
-                log.warn("JWT token for {} is missing role information", userEmail);
             }
         } catch (Exception ex) {
             log.error("Authentication error: {}", ex.getMessage());

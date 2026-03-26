@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/menu")
@@ -37,13 +38,13 @@ public class AdminMenuController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public MenuItem updateMenuItem(@PathVariable Long id, @RequestBody MenuItem menuItem) {
+    public MenuItem updateMenuItem(@PathVariable UUID id, @RequestBody MenuItem menuItem) {
         return menuService.updateMenuItem(id, menuItem);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public void deleteMenuItem(@PathVariable Long id) {
+    public void deleteMenuItem(@PathVariable UUID id) {
         menuService.deleteMenuItem(id);
     }
 

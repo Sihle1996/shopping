@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,7 +46,7 @@ public class AdminDriverService {
                 .toList();
     }
 
-  public void deleteDriver(Long id) {
+  public void deleteDriver(UUID id) {
       if (!userRepository.existsById(id)) {
           throw new RuntimeException("Driver not found");
       }

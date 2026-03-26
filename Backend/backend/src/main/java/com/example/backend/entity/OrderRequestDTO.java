@@ -3,6 +3,7 @@ package com.example.backend.entity;
 import lombok.Data;
 
 import java.util.List;
+import java.util.UUID;
 
 
 @Data
@@ -13,4 +14,5 @@ public class OrderRequestDTO {
     private String payerId;
     private String status;
     private String deliveryAddress;
+    private UUID tenantId;
 }

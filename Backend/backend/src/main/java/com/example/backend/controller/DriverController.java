@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/driver")
@@ -30,7 +31,7 @@ public class DriverController {
     }
 
     @PutMapping("/orders/{orderId}/delivered")
-    public ResponseEntity<?> markOrderAsDelivered(@PathVariable Long orderId, Authentication authentication) {
+    public ResponseEntity<?> markOrderAsDelivered(@PathVariable UUID orderId, Authentication authentication) {
         User driver = authUtil.getCurrentUser(authentication);
         driverService.markOrderDelivered(driver, orderId);
         return ResponseEntity.ok(Map.of("message", "Order marked as delivered."));

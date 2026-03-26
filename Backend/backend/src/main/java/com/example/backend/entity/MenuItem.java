@@ -15,6 +15,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -23,8 +24,8 @@ import java.util.List;
 @Table(name = "menu_items")
 public class MenuItem {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @NotBlank
     @Column(name = "name", nullable = false)
@@ -33,7 +34,6 @@ public class MenuItem {
     @Column(name = "description")
     private String description;
 
-    // Consider BigDecimal for money in production.
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be > 0")
     @Column(name = "price")
     private Double price;
@@ -57,14 +57,19 @@ public class MenuItem {
 
     @Min(0)
     @Column(name = "low_stock_threshold", nullable = false)
-    private int lowStockThreshold = 5; // match DB default you added
+    private int lowStockThreshold = 5;
 
     @Transient
-    private int quantity = 1; // frontend only
+    private int quantity = 1;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id")
+    @JsonIgnore
+    private Tenant tenant;
 
     @OneToMany(mappedBy = "menuItem", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    @ToString.Exclude // avoid recursion in logs
+    @ToString.Exclude
     private List<CartItem> cartItems = new ArrayList<>();
 
     @CreationTimestamp

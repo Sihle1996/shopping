@@ -6,12 +6,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class DriverLocationDTO {
-    private Long id;
+    private UUID id;
     private String email;
     private DriverStatus driverStatus;
     private Double latitude;

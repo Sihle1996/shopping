@@ -1,6 +1,8 @@
 package com.example.backend.auth;
 
 import com.example.backend.config.JwtService;
+import com.example.backend.entity.Tenant;
+import com.example.backend.repository.TenantRepository;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.user.Role;
 import com.example.backend.user.User;
@@ -11,17 +13,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
 
     private final UserRepository repository;
+    private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-    public AuthenticationResponse register(RegisterRequest request) {
+    public AuthenticationResponse register(RegisterRequest request, UUID tenantId) {
         // Check if the user already exists
         repository.findByEmail(request.getEmail())
                 .ifPresent(user -> {
@@ -31,17 +35,26 @@ public class AuthenticationService {
         // Hash the password only once during registration
         String hashedPassword = passwordEncoder.encode(request.getPassword());
 
+        // Resolve tenant if provided
+        Tenant tenant = null;
+        if (tenantId != null) {
+            tenant = tenantRepository.findById(tenantId)
+                    .orElseThrow(() -> new IllegalArgumentException("Tenant not found with ID: " + tenantId));
+        }
+
         // Create and save the user
         User user = User.builder()
                 .email(request.getEmail())
                 .password(hashedPassword) // Save hashed password
                 .role(Role.USER) // Default to USER role
+                .tenant(tenant)
                 .build();
 
         user = repository.save(user);
 
-        // Generate JWT token
-        String jwtToken = jwtService.generateTokenWithId(user, user.getId());
+        // Generate JWT token with tenantId
+        UUID userTenantId = tenant != null ? tenant.getId() : null;
+        String jwtToken = jwtService.generateTokenWithId(user, user.getId(), userTenantId);
 
         // Return the token in the response
         return AuthenticationResponse.builder()
@@ -50,7 +63,6 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        // Authenticate the user
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -58,12 +70,11 @@ public class AuthenticationService {
                 )
         );
 
-        // Retrieve the user after successful authentication
         User user = repository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
 
-        // Generate JWT token
-        String jwtToken = jwtService.generateTokenWithId(user, user.getId());
+        UUID tenantId = user.getTenant() != null ? user.getTenant().getId() : null;
+        String jwtToken = jwtService.generateTokenWithId(user, user.getId(), tenantId);
 
         // Return the token in the response
         return AuthenticationResponse.builder()
@@ -71,7 +82,7 @@ public class AuthenticationService {
                 .build();
     }
 
-    public User findById(Long id) {
+    public User findById(UUID id) {
         // Retrieve a user by ID
         return repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + id));

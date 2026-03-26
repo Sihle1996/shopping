@@ -2,9 +2,11 @@ package com.example.backend.entity;
 
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class OrderItemDTO {
-    private Long productId;
+    private UUID productId;
     private String name;
     private double price;
     private int quantity;

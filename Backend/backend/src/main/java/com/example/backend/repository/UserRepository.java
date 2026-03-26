@@ -9,10 +9,14 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
     List<User> findByRoleAndDriverStatus(Role role, DriverStatus driverStatus);
     List<User> findByRole(Role role);
+    Optional<User> findByEmailAndTenant_Id(String email, UUID tenantId);
+    List<User> findByRoleAndDriverStatusAndTenant_Id(Role role, DriverStatus driverStatus, UUID tenantId);
+    List<User> findByRoleAndTenant_Id(Role role, UUID tenantId);
 }

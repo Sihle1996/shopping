@@ -11,12 +11,13 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 
 @Repository
-public interface CartItemRepository extends JpaRepository<CartItem, Long> {
+public interface CartItemRepository extends JpaRepository<CartItem, UUID> {
     Optional<CartItem> findByUserAndMenuItem(User user, MenuItem menuItem);
 
     @Query("SELECT c FROM CartItem c WHERE c.user.id = :userId")
-    List<CartItem> findByUserId(@Param("userId") Long userId);
+    List<CartItem> findByUserId(@Param("userId") UUID userId);
 }
