@@ -1,62 +1,100 @@
-<nav class="bg-white shadow-md py-3 px-6 fixed w-full z-50 top-0">
-    <div class="container mx-auto flex justify-between items-center">
-      <!-- Logo -->
-      <a routerLink="/" class="text-red-600 text-2xl font-bold">FastFood</a>
-  
-      <!-- Desktop Menu -->
-      <ul class="hidden md:flex space-x-6 text-gray-700 font-medium">
-        <li><a routerLink="/" class="hover:text-red-500 transition">Home</a></li>
-        <li><a routerLink="/menu" class="hover:text-red-500 transition">Menu</a></li>
-        <li><a routerLink="/cart" class="hover:text-red-500 transition">Cart</a></li>
-        <li><a routerLink="/orders" class="hover:text-red-500 transition">Orders</a></li>
-        <li *ngIf="isLoggedIn && userRole === 'ROLE_MANAGER'"><a routerLink="/manager/dashboard" class="hover:text-red-500 transition">Manager</a></li>
-        <li *ngIf="isLoggedIn && userRole === 'ROLE_ADMIN'"><a routerLink="/admin/dashboard" class="hover:text-red-500 transition">Admin</a></li>
-        <li *ngIf="isLoggedIn && userRole === 'ROLE_DRIVER'"><a routerLink="/driver/dashboard" class="hover:text-red-500 transition">Driver</a></li>
-        <li *ngIf="!isLoggedIn">
-          <a routerLink="/login" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">Login</a>
+<nav class="bg-white border-b border-borderColor py-3 px-4 lg:px-8 fixed w-full z-50 top-0">
+  <div class="max-w-6xl mx-auto flex justify-between items-center">
+
+    <!-- Logo + Store Name (acts as Home link) -->
+    <a routerLink="/" class="flex items-center gap-2">
+      <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+        <i class="bi bi-fire text-white text-sm"></i>
+      </div>
+      <div class="flex flex-col">
+        <span class="font-heading text-lg font-bold text-textDark leading-tight">
+          {{ storeName || 'FastFood' }}
+        </span>
+        <span *ngIf="storeName" class="text-[10px] text-textMuted leading-tight">Powered by FastFood</span>
+      </div>
+    </a>
+
+    <!-- Desktop Menu -->
+    <ul class="hidden md:flex items-center gap-1">
+      <!-- Customer links (USER role or not logged in) -->
+      <ng-container *ngIf="!isLoggedIn || userRole === 'ROLE_USER'">
+        <li>
+          <a routerLink="/cart" routerLinkActive="text-primary bg-primary-50"
+             class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
+            Cart
+          </a>
         </li>
         <li *ngIf="isLoggedIn">
-          <button (click)="logout()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
-            Logout
-          </button>
+          <a routerLink="/orders" routerLinkActive="text-primary bg-primary-50"
+             class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
+            Orders
+          </a>
         </li>
-      </ul>
-  
-      <!-- Mobile Menu Button -->
-      <button (click)="toggleMenu()" class="md:hidden text-gray-700 z-50">
-        <svg *ngIf="!menuOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-        </svg>
-        <svg *ngIf="menuOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-  
-    <!-- Mobile Menu - Left Side Drawer -->
-    <div [ngClass]="{'translate-x-0': menuOpen, '-translate-x-full': !menuOpen}"
-         class="fixed top-0 left-0 h-full w-64 bg-gray-900 text-white shadow-lg transform transition-transform duration-300 z-40 md:hidden">
-  
-      <!-- Close Button -->
-      <button (click)="toggleMenu()" class="absolute top-4 right-4 text-white text-xl">✖</button>
-  
-      <!-- Menu Items -->
-      <nav class="mt-10">
-        <a routerLink="/" (click)="toggleMenu()" class="block py-3 px-5 hover:bg-gray-800">Home</a>
-        <a routerLink="/menu" (click)="toggleMenu()" class="block py-3 px-5 hover:bg-gray-800">Menu</a>
-        <a routerLink="/cart" (click)="toggleMenu()" class="block py-3 px-5 hover:bg-gray-800">Cart</a>
-        <a routerLink="/orders" (click)="toggleMenu()" class="block py-3 px-5 hover:bg-gray-800">Orders</a>
-        <a *ngIf="isLoggedIn && userRole === 'ROLE_MANAGER'" routerLink="/manager/dashboard" (click)="toggleMenu()" class="block py-3 px-5 hover:bg-gray-800">Manager</a>
-        <a *ngIf="isLoggedIn && userRole === 'ROLE_ADMIN'" routerLink="/admin/dashboard" (click)="toggleMenu()" class="block py-3 px-5 hover:bg-gray-800">Admin</a>
-        <a *ngIf="isLoggedIn && userRole === 'ROLE_DRIVER'" routerLink="/driver/dashboard" (click)="toggleMenu()" class="block py-3 px-5 hover:bg-gray-800">Driver</a>
-        <a routerLink="/login" *ngIf="!isLoggedIn" (click)="toggleMenu()" class="block py-3 px-5 bg-red-600 rounded-lg hover:bg-red-700 transition">Login</a>
-        <button *ngIf="isLoggedIn" (click)="logout()" class="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+      </ng-container>
+
+      <!-- Sign In / Logout -->
+      <li class="ml-2" *ngIf="!isLoggedIn">
+        <a routerLink="/login"
+           class="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-primary-600 transition-colors">
+          Sign In
+        </a>
+      </li>
+      <li class="ml-2" *ngIf="isLoggedIn">
+        <button (click)="logout()"
+                class="px-4 py-2 rounded-lg text-sm font-medium text-textLight hover:text-danger hover:bg-red-50 transition-colors">
           Logout
         </button>
-      </nav>
+      </li>
+    </ul>
+
+    <!-- Mobile Menu Button -->
+    <button (click)="toggleMenu()" class="md:hidden w-9 h-9 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
+      <i [class]="menuOpen ? 'bi bi-x-lg text-textDark' : 'bi bi-list text-textDark text-xl'"></i>
+    </button>
+  </div>
+
+  <!-- Mobile Drawer -->
+  <div [class.translate-x-0]="menuOpen" [class.-translate-x-full]="!menuOpen"
+       class="fixed top-0 left-0 h-full w-72 bg-white shadow-float transform transition-transform duration-300 z-40 md:hidden">
+
+    <!-- Drawer Header -->
+    <div class="flex items-center justify-between px-5 py-4 border-b border-borderColor">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+          <i class="bi bi-fire text-white text-sm"></i>
+        </div>
+        <span class="font-heading font-bold text-textDark">{{ storeName || 'FastFood' }}</span>
+      </div>
+      <button (click)="toggleMenu()" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
+        <i class="bi bi-x-lg text-textDark text-sm"></i>
+      </button>
     </div>
-  
-    <!-- Overlay when menu is open -->
-    <div *ngIf="menuOpen" (click)="toggleMenu()" class="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"></div>
-  </nav>
-  
+
+    <!-- Drawer Links -->
+    <nav class="py-2">
+      <!-- Customer links only -->
+      <ng-container *ngIf="!isLoggedIn || userRole === 'ROLE_USER'">
+        <a routerLink="/cart" (click)="toggleMenu()" class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
+          <i class="bi bi-cart3 text-base"></i> Cart
+        </a>
+        <a *ngIf="isLoggedIn" routerLink="/orders" (click)="toggleMenu()" class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
+          <i class="bi bi-receipt text-base"></i> Orders
+        </a>
+      </ng-container>
+
+      <div class="border-t border-borderColor my-2"></div>
+
+      <a *ngIf="!isLoggedIn" routerLink="/login" (click)="toggleMenu()"
+         class="flex items-center gap-3 px-5 py-3 text-sm font-semibold text-primary hover:bg-primary-50 transition-colors">
+        <i class="bi bi-box-arrow-in-right text-base"></i> Sign In
+      </a>
+      <button *ngIf="isLoggedIn" (click)="logout()"
+              class="w-full flex items-center gap-3 px-5 py-3 text-sm text-danger hover:bg-red-50 transition-colors text-left">
+        <i class="bi bi-box-arrow-left text-base"></i> Logout
+      </button>
+    </nav>
+  </div>
+
+  <!-- Overlay -->
+  <div *ngIf="menuOpen" (click)="toggleMenu()" class="fixed inset-0 bg-black/40 z-30 md:hidden"></div>
+</nav>

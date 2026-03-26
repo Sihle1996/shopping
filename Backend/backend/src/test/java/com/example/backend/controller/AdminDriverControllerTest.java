@@ -1,7 +1,9 @@
 package com.example.backend.controller;
 
 import com.example.backend.auth.RegisterRequest;
+import com.example.backend.config.JwtService;
 import com.example.backend.entity.DriverDTO;
+import com.example.backend.repository.TenantRepository;
 import com.example.backend.service.AdminDriverService;
 import com.example.backend.user.DriverStatus;
 import org.junit.jupiter.api.Test;
@@ -10,10 +12,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -31,10 +35,21 @@ class AdminDriverControllerTest {
     @MockBean
     private AdminDriverService adminDriverService;
 
+    @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
+
+    @MockBean
+    private TenantRepository tenantRepository;
+
+    private static final UUID TEST_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+
     @Test
     @WithMockUser(roles = "ADMIN")
     void createDriverReturnsCreatedDriver() throws Exception {
-        DriverDTO driver = new DriverDTO(1L, "driver@example.com", DriverStatus.AVAILABLE);
+        DriverDTO driver = new DriverDTO(TEST_ID, "driver@example.com", DriverStatus.AVAILABLE);
         when(adminDriverService.createDriver(any(RegisterRequest.class))).thenReturn(driver);
 
         mockMvc.perform(post("/api/admin/drivers")
@@ -47,7 +62,7 @@ class AdminDriverControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void getAllDriversReturnsList() throws Exception {
-        List<DriverDTO> drivers = List.of(new DriverDTO(1L, "a@b.com", DriverStatus.AVAILABLE));
+        List<DriverDTO> drivers = List.of(new DriverDTO(TEST_ID, "a@b.com", DriverStatus.AVAILABLE));
         when(adminDriverService.getAllDrivers()).thenReturn(drivers);
 
         mockMvc.perform(get("/api/admin/drivers"))
@@ -58,10 +73,9 @@ class AdminDriverControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void deleteDriverCallsService() throws Exception {
-        mockMvc.perform(delete("/api/admin/drivers/1"))
+        mockMvc.perform(delete("/api/admin/drivers/" + TEST_ID))
                 .andExpect(status().isOk());
 
-        verify(adminDriverService).deleteDriver(1L);
+        verify(adminDriverService).deleteDriver(TEST_ID);
     }
 }
-

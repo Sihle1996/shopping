@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -31,6 +32,8 @@ class AdminDriverServiceTest {
     @InjectMocks
     private AdminDriverService adminDriverService;
 
+    private static final UUID TEST_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+
     @Test
     void createDriverStoresEncodedPasswordAndRole() {
         RegisterRequest request = mock(RegisterRequest.class);
@@ -40,7 +43,7 @@ class AdminDriverServiceTest {
         when(passwordEncoder.encode("secret")).thenReturn("encoded");
 
         User saved = User.builder()
-                .id(1L)
+                .id(TEST_ID)
                 .email("driver@example.com")
                 .password("encoded")
                 .role(Role.DRIVER)
@@ -73,7 +76,7 @@ class AdminDriverServiceTest {
 
     @Test
     void getAllDriversReturnsList() {
-        List<User> drivers = List.of(User.builder().id(1L).email("a@b.com").driverStatus(DriverStatus.AVAILABLE).build());
+        List<User> drivers = List.of(User.builder().id(TEST_ID).email("a@b.com").driverStatus(DriverStatus.AVAILABLE).build());
         when(userRepository.findByRole(Role.DRIVER)).thenReturn(drivers);
 
         List<DriverDTO> result = adminDriverService.getAllDrivers();
@@ -85,18 +88,17 @@ class AdminDriverServiceTest {
 
     @Test
     void deleteDriverRemovesExistingDriver() {
-        when(userRepository.existsById(1L)).thenReturn(true);
+        when(userRepository.existsById(TEST_ID)).thenReturn(true);
 
-        adminDriverService.deleteDriver(1L);
+        adminDriverService.deleteDriver(TEST_ID);
 
-        verify(userRepository).deleteById(1L);
+        verify(userRepository).deleteById(TEST_ID);
     }
 
     @Test
     void deleteDriverThrowsWhenNotFound() {
-        when(userRepository.existsById(1L)).thenReturn(false);
+        when(userRepository.existsById(TEST_ID)).thenReturn(false);
 
-        assertThrows(RuntimeException.class, () -> adminDriverService.deleteDriver(1L));
+        assertThrows(RuntimeException.class, () -> adminDriverService.deleteDriver(TEST_ID));
     }
 }
-
