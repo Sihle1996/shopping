@@ -11,6 +11,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { FormControl } from '@angular/forms';
+import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 
 declare var paypal: any;
@@ -50,7 +51,8 @@ export class CheckoutComponent implements AfterViewInit {
     private authService: AuthService,
     private geocodingService: GeocodingService,
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private toastr: ToastrService
   ) {}
 
   ngAfterViewInit(): void {
@@ -86,7 +88,7 @@ selectAddress(suggestion: any) {
         .some(area => region.includes(area)) || province.includes('gauteng');
 
       if (!isAllowed) {
-        alert('🚫 We currently only deliver within Johannesburg (Gauteng region).');
+        this.toastr.error('We currently only deliver within Johannesburg (Gauteng region)');
         this.deliveryDetails.city = '';
         this.deliveryDetails.zip = '';
         return;
@@ -95,7 +97,7 @@ selectAddress(suggestion: any) {
       this.deliveryDetails.city = address.city || address.town || address.suburb || this.deliveryDetails.city;
       this.deliveryDetails.zip = address.postcode || this.deliveryDetails.zip;
     },
-    error: () => alert('❌ Address validation failed.')
+    error: () => this.toastr.error('Address validation failed')
   });
 }
 
@@ -130,7 +132,7 @@ selectAddress(suggestion: any) {
   onSubmit(): void {
     const d = this.deliveryDetails;
     if (!d.fullName || !d.address || !d.city || !d.zip || !d.phone) {
-      alert("Please fill in all delivery fields.");
+      this.toastr.warning('Please fill in all delivery fields');
       return;
     }
 
@@ -179,10 +181,10 @@ selectAddress(suggestion: any) {
                   this.cartService.clearCart();
                   this.router.navigate(['/thank-you']);
                 },
-                error: err => console.error('❌ Order saving failed', err)
+                error: () => {}
               });
             },
-            onError: (err: any) => console.error('❌ Payment error', err)
+            onError: () => {}
           }).render('#paypal-button-container');
         }
       }, 0);

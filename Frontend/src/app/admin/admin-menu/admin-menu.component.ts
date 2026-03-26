@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AdminService } from 'src/app/services/admin.service';
+import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -16,6 +17,9 @@ export class AdminMenuComponent implements OnInit {
   selectedCategory = 'All';
   categories: string[] = [];
 
+  showDeleteConfirm = false;
+  deleteTargetId: string | null = null;
+
   formData = {
     id: null,
     name: '',
@@ -26,7 +30,7 @@ export class AdminMenuComponent implements OnInit {
     isAvailable: true
   };
 
-  constructor(private adminService: AdminService) {}
+  constructor(private adminService: AdminService, private toastr: ToastrService) {}
 
   ngOnInit(): void {
     this.adminService.menuItems$.subscribe((data: any[]) => {
@@ -38,7 +42,7 @@ export class AdminMenuComponent implements OnInit {
 
   fetchMenuItems(): void {
     this.adminService.loadMenuItems().subscribe({
-      error: (err: unknown) => console.error('Failed to fetch menu items:', err)
+      error: () => {}
     });
   }
 
@@ -63,7 +67,7 @@ export class AdminMenuComponent implements OnInit {
 
   submitForm(): void {
     if (!this.formData.name || !this.formData.price || !this.formData.category) {
-      alert('Name, price and category are required!');
+      this.toastr.warning('Name, price and category are required');
       return;
     }
 
@@ -81,10 +85,21 @@ export class AdminMenuComponent implements OnInit {
     this.isEditing = true;
   }
 
-  deleteItem(id: string): void {
-    if (confirm('Are you sure you want to delete this item?')) {
-      this.adminService.deleteMenuItem(id);
+  confirmDelete(id: string): void {
+    this.deleteTargetId = id;
+    this.showDeleteConfirm = true;
+  }
+
+  onDeleteConfirmed(): void {
+    if (this.deleteTargetId) {
+      this.adminService.deleteMenuItem(this.deleteTargetId);
     }
+    this.onDeleteCancelled();
+  }
+
+  onDeleteCancelled(): void {
+    this.showDeleteConfirm = false;
+    this.deleteTargetId = null;
   }
 
   filterByCategory(category: string): void {
@@ -121,7 +136,7 @@ export class AdminMenuComponent implements OnInit {
         next: (url: string) => {
           this.formData.image = url;
         },
-        error: (err: unknown) => console.error('Image upload failed', err)
+        error: () => {}
       });
     }
   }
