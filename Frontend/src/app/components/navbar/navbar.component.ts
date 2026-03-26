@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, filter } from 'rxjs/operators';
 import { AuthService } from 'src/app/services/auth.service';
 import { TenantService } from 'src/app/services/tenant.service';
 import { environment } from 'src/environments/environment';
@@ -28,11 +28,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.isLoggedIn = this.authService.isLoggedIn();
-    this.userRole = this.authService.getUserRole();
-    this.homeRoute = this.getHomeRoute();
+    this.refreshAuthState();
 
-    // Reactive — updates navbar immediately when tenant changes
+    // Re-check auth state on every navigation (handles login/logout transitions)
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.refreshAuthState());
+
+    // Reactive tenant updates (e.g. after saving settings)
     this.tenantService.currentTenant$
       .pipe(takeUntil(this.destroy$))
       .subscribe(tenant => {
@@ -41,15 +45,29 @@ export class NavbarComponent implements OnInit, OnDestroy {
           this.storeLogo = this.resolveLogoUrl(tenant.logoUrl);
         }
       });
-
-    // Fallback from localStorage
-    const name = localStorage.getItem('storeName');
-    if (name && !this.storeName) this.storeName = name;
   }
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private refreshAuthState(): void {
+    this.isLoggedIn = this.authService.isLoggedIn();
+    this.userRole = this.authService.getUserRole();
+    this.homeRoute = this.getHomeRoute();
+
+    // Load store name from localStorage as fallback
+    const name = localStorage.getItem('storeName');
+    if (name) this.storeName = name;
+  }
+
+  get isCustomer(): boolean {
+    return !this.isLoggedIn || this.userRole === 'ROLE_USER';
+  }
+
+  get isAdmin(): boolean {
+    return this.userRole === 'ROLE_ADMIN';
   }
 
   private getHomeRoute(): string {
@@ -61,23 +79,25 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleMenu() {
-    this.menuOpen = !this.menuOpen;
-  }
-
   private resolveLogoUrl(url?: string): string | null {
     if (!url) return null;
     return url.startsWith('http') ? url : `${environment.apiUrl}${url}`;
   }
 
+  toggleMenu() {
+    this.menuOpen = !this.menuOpen;
+  }
+
   logout() {
     this.authService.logout();
     localStorage.removeItem('storeName');
+    localStorage.removeItem('tenantId');
     this.tenantService.clearTenant();
     this.isLoggedIn = false;
+    this.userRole = null;
     this.storeName = null;
     this.storeLogo = null;
     this.menuOpen = false;
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
   }
 }

@@ -26,6 +26,12 @@ public class TenantController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Public - list active tenants (for customer store selection)
+    @GetMapping("/api/tenants/active")
+    public ResponseEntity<List<Tenant>> getActiveTenants() {
+        return ResponseEntity.ok(tenantRepository.findByActiveTrue());
+    }
+
     // Public - register new tenant
     @PostMapping("/api/tenants/register")
     public ResponseEntity<Tenant> registerTenant(@Valid @RequestBody Tenant tenant) {

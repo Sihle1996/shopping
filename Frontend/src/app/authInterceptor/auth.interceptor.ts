@@ -13,20 +13,26 @@ export class AuthInterceptor implements HttpInterceptor {
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const token = localStorage.getItem('token');
+    const tenantId = localStorage.getItem('tenantId');
 
-    // 🌐 Skip adding token for external APIs (e.g., OpenRouteService)
     const isExternal = request.url.includes('openrouteservice.org');
+    if (isExternal) return next.handle(request);
 
-    if (token && !isExternal) {
-      const cloned = request.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+    let headers: { [key: string]: string } = {};
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    if (tenantId) {
+      headers['X-Tenant-Id'] = tenantId;
+    }
+
+    if (Object.keys(headers).length > 0) {
+      const cloned = request.clone({ setHeaders: headers });
       return next.handle(cloned);
     }
 
-    // No token or it's a public/external request — pass through
     return next.handle(request);
   }
 }

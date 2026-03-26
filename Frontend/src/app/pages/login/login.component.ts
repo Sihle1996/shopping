@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
@@ -8,21 +8,27 @@ import { AuthService } from 'src/app/services/auth.service';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   errorMessage = '';
   isLoading = false;
   showPassword = false;
+  private returnUrl: string | null = null;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+  }
+
+  ngOnInit(): void {
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
   }
 
   onLogin(): void {
@@ -33,8 +39,13 @@ export class LoginComponent {
 
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
-        const role = this.authService.getUserRole();
+        // If there's a return URL (e.g. from store browse), go back there
+        if (this.returnUrl) {
+          this.router.navigateByUrl(this.returnUrl, { replaceUrl: true });
+          return;
+        }
 
+        const role = this.authService.getUserRole();
         if (role === 'ROLE_ADMIN') {
           this.router.navigate(['/admin/dashboard'], { replaceUrl: true });
         } else if (role === 'ROLE_DRIVER') {
