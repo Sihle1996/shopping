@@ -23,6 +23,7 @@ export class DriverDashboardComponent implements OnInit {
   isLoading = true;
   showDeliverConfirm = false;
   deliverTargetId: string | null = null;
+  mapFullscreen = false;
 
   constructor(
     private driverService: DriverService,
@@ -31,6 +32,9 @@ export class DriverDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadOrders();
+    // Set driver as available when dashboard opens
+    this.driverService.updateAvailability('AVAILABLE').subscribe();
+    this.availability = 'AVAILABLE';
   }
 
   loadOrders(): void {

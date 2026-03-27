@@ -80,10 +80,14 @@
 
     <!-- Map for current delivery -->
     <div *ngIf="currentDelivery" class="mb-6 bg-white rounded-2xl shadow-card overflow-hidden">
-      <div class="px-4 py-3 border-b border-borderColor">
+      <div class="px-4 py-3 border-b border-borderColor flex items-center justify-between">
         <h3 class="text-sm font-semibold text-textDark">
           <i class="bi bi-map text-primary mr-1"></i> Route
         </h3>
+        <button (click)="mapFullscreen = true"
+                class="text-xs text-primary font-medium hover:underline">
+          <i class="bi bi-arrows-fullscreen mr-1"></i>Fullscreen
+        </button>
       </div>
       <div class="h-48">
         <app-driver-map
@@ -128,6 +132,45 @@
           <p class="text-xs text-textMuted mt-1">{{ order.deliveryAddress }}</p>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Fullscreen Map Overlay -->
+<div *ngIf="mapFullscreen && currentDelivery"
+     class="fixed inset-0 z-[9999] bg-black flex flex-col">
+
+  <!-- Top bar -->
+  <div class="bg-black/70 backdrop-blur-sm px-4 py-3 z-10 flex-shrink-0">
+    <div class="flex items-center justify-between text-white max-w-lg mx-auto">
+      <div class="min-w-0 flex-1 mr-4">
+        <p class="text-xs opacity-70">Delivering to</p>
+        <p class="text-sm font-semibold truncate">{{ currentDelivery.deliveryAddress }}</p>
+      </div>
+      <button (click)="mapFullscreen = false"
+              class="w-10 h-10 rounded-full bg-white/20 flex-shrink-0 flex items-center justify-center hover:bg-white/30 transition-colors">
+        <i class="bi bi-x-lg text-white"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Map fills remaining space -->
+  <div class="flex-1 relative">
+    <app-driver-map
+      class="block h-full w-full"
+      [deliveryAddress]="currentDelivery.deliveryAddress"
+      [mapId]="'fullscreen-driver-map'">
+    </app-driver-map>
+  </div>
+
+  <!-- Bottom action -->
+  <div class="bg-black/70 backdrop-blur-sm px-4 py-4 z-10 flex-shrink-0">
+    <div class="max-w-lg mx-auto">
+      <button (click)="confirmDeliver(currentDelivery.id); mapFullscreen = false"
+              class="w-full py-4 rounded-2xl bg-primary text-white font-semibold text-base shadow-float
+                     hover:bg-primary-600 active:scale-[0.98] transition-all">
+        <i class="bi bi-check-circle mr-2"></i>Mark as Delivered
+      </button>
     </div>
   </div>
 </div>
