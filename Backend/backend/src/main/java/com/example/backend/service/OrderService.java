@@ -172,9 +172,9 @@ public class OrderService {
     public List<User> getAvailableDrivers() {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null) {
-            return userRepository.findByRoleAndDriverStatusAndTenant_Id(Role.DRIVER, DriverStatus.AVAILABLE, tenantId);
+            return userRepository.findByRoleAndTenant_Id(Role.DRIVER, tenantId);
         }
-        return userRepository.findByRoleAndDriverStatus(Role.DRIVER, DriverStatus.AVAILABLE);
+        return userRepository.findByRole(Role.DRIVER);
     }
 
     @Transactional
@@ -185,14 +185,13 @@ public class OrderService {
         User driver = userRepository.findById(driverId)
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
 
-        if (driver.getRole() != Role.DRIVER || driver.getDriverStatus() != DriverStatus.AVAILABLE) {
-            throw new RuntimeException("Driver is not available");
+        if (driver.getRole() != Role.DRIVER) {
+            throw new RuntimeException("User is not a driver");
         }
 
         order.setDriver(driver);
-        driver.setDriverStatus(DriverStatus.UNAVAILABLE);
+        order.setStatus("Out for Delivery");
 
-        userRepository.save(driver);
         Order updated = orderRepository.save(order);
         return convertToOrderDTO(updated);
     }
