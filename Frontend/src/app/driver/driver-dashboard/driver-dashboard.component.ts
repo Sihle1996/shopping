@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { DriverService } from 'src/app/services/driver.service';
 import { ToastrService } from 'ngx-toastr';
+import { DeliveryStop } from '../driver-map/driver-map.component';
 
 interface DriverOrder {
   id: string;
@@ -58,6 +59,14 @@ export class DriverDashboardComponent implements OnInit {
 
   get currentDelivery(): DriverOrder | null {
     return this.activeOrders[0] || null;
+  }
+
+  get allDeliveryStops(): DeliveryStop[] {
+    return this.activeOrders.map(o => ({
+      id: o.id,
+      address: o.deliveryAddress,
+      label: `Order #${o.id.substring(0, 8)}`
+    }));
   }
 
   confirmDeliver(id: string): void {
