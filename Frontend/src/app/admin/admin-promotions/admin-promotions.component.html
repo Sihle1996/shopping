@@ -1,113 +1,151 @@
-<div class="px-4 pt-6 lg:px-8">
+<div class="px-4 pt-6 lg:px-8 pb-24">
   <div class="max-w-6xl mx-auto">
 
     <!-- Header -->
     <div class="mb-6">
       <h1 class="font-heading text-2xl font-bold text-textDark">Promotions</h1>
-      <p class="text-textLight text-sm mt-1">Create and manage promotional campaigns</p>
+      <p class="text-textLight text-sm mt-1">Create time-limited discounts for your store</p>
     </div>
 
-    <!-- Form -->
+    <!-- Create / Edit Form -->
     <div class="bg-white rounded-2xl shadow-card p-6 mb-8">
-      <h3 class="font-heading text-base font-semibold text-textDark mb-4">
+      <h3 class="font-heading text-base font-semibold text-textDark mb-5 flex items-center gap-2">
+        <i class="bi bi-tag text-primary"></i>
         {{ editingId ? 'Edit Promotion' : 'New Promotion' }}
       </h3>
-      <form [formGroup]="form" (ngSubmit)="submit()" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-xs font-medium text-textDark mb-1">Title</label>
-          <input type="text" formControlName="title"
-                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+
+        <!-- Section: Basics -->
+        <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-3">Promotion Details</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+
+          <div class="md:col-span-2">
+            <label class="block text-xs font-medium text-textDark mb-1">Title <span class="text-danger">*</span></label>
+            <input type="text" formControlName="title" placeholder="e.g. Weekend Special, Happy Hour"
+                   class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-xs font-medium text-textDark mb-1">Description</label>
+            <textarea formControlName="description" rows="2"
+                      placeholder="Tell customers what this promotion is about..."
+                      class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark resize-none
+                             focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-textDark mb-1">Badge Text</label>
+            <input type="text" formControlName="badgeText" placeholder="e.g. 🔥 Hot Deal"
+                   class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-textDark mb-1">Banner Image</label>
+            <!-- Preview -->
+            <div *ngIf="imagePreviewUrl" class="mb-2 rounded-xl overflow-hidden h-24 bg-surface border border-borderColor">
+              <img [src]="imagePreviewUrl" alt="Banner preview" class="w-full h-full object-cover" />
+            </div>
+            <input type="file" accept="image/*" (change)="onImageSelected($event)"
+                   [disabled]="imageUploading"
+                   class="w-full text-sm text-textDark file:mr-3 file:rounded-lg file:border-0
+                          file:bg-primary-100 file:px-3 file:py-1.5 file:text-xs file:font-medium
+                          file:text-primary-700 hover:file:bg-primary-200 file:cursor-pointer
+                          disabled:opacity-50" />
+            <p *ngIf="imageUploading" class="text-xs text-textMuted mt-1 flex items-center gap-1">
+              <i class="bi bi-arrow-repeat animate-spin"></i>Uploading...
+            </p>
+          </div>
         </div>
 
-        <div class="md:col-span-2">
-          <label class="block text-xs font-medium text-textDark mb-1">Description</label>
-          <textarea formControlName="description" rows="2"
-                    class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark resize-none
-                           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"></textarea>
+        <!-- Section: Discount -->
+        <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-3">Discount</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+          <div>
+            <label class="block text-xs font-medium text-textDark mb-1">Discount % <span class="text-danger">*</span></label>
+            <div class="relative">
+              <input type="number" min="1" max="100" formControlName="discountPercent" placeholder="e.g. 20"
+                     class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                            focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+              <span class="absolute inset-y-0 right-3 flex items-center text-textMuted text-sm font-medium">%</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-textDark mb-1">Applies To <span class="text-danger">*</span></label>
+            <select formControlName="appliesTo"
+                    class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent">
+              <option *ngFor="let opt of appliesToOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-textDark mb-1">Promo Code</label>
+            <input type="text" formControlName="code" placeholder="Leave blank to auto-apply"
+                   class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark uppercase
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+            <p class="text-[10px] text-textMuted mt-1">If blank, discount applies automatically at checkout</p>
+          </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-medium text-textDark mb-1">Image URL</label>
-          <input type="text" formControlName="imageUrl"
-                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+        <!-- Section: Schedule -->
+        <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-3">Schedule</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div>
+            <label class="block text-xs font-medium text-textDark mb-1">Start Date & Time <span class="text-danger">*</span></label>
+            <input type="datetime-local" formControlName="startAt"
+                   class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-textDark mb-1">End Date & Time <span class="text-danger">*</span></label>
+            <input type="datetime-local" formControlName="endAt"
+                   class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+          </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-medium text-textDark mb-1">Badge Text</label>
-          <input type="text" formControlName="badgeText"
-                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+        <!-- Section: Visibility -->
+        <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-3">Visibility</p>
+        <div class="flex items-center gap-6 mb-6">
+
+          <!-- Active toggle -->
+          <div class="flex items-center gap-2.5">
+            <button type="button"
+                    (click)="form.get('active')!.setValue(!form.get('active')!.value)"
+                    class="relative w-10 h-6 rounded-full transition-colors duration-200 focus:outline-none"
+                    [class.bg-primary]="form.get('active')!.value"
+                    [class.bg-gray-200]="!form.get('active')!.value">
+              <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
+                    [class.translate-x-4]="form.get('active')!.value"></span>
+            </button>
+            <span class="text-sm font-medium text-textDark">Active</span>
+          </div>
+
+          <!-- Featured toggle -->
+          <div class="flex items-center gap-2.5">
+            <button type="button"
+                    (click)="form.get('featured')!.setValue(!form.get('featured')!.value)"
+                    class="relative w-10 h-6 rounded-full transition-colors duration-200 focus:outline-none"
+                    [class.bg-amber-400]="form.get('featured')!.value"
+                    [class.bg-gray-200]="!form.get('featured')!.value">
+              <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
+                    [class.translate-x-4]="form.get('featured')!.value"></span>
+            </button>
+            <span class="text-sm font-medium text-textDark">Featured</span>
+            <span class="text-[10px] text-textMuted">(shows as banner on store page)</span>
+          </div>
+
         </div>
 
-        <div>
-          <label class="block text-xs font-medium text-textDark mb-1">Discount (%)</label>
-          <input type="number" min="0" max="100" formControlName="discountPercent"
-                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-textDark mb-1">Applies To</label>
-          <select formControlName="appliesTo"
-                  class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                         focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent">
-            <option *ngFor="let opt of appliesToOptions" [value]="opt.value">{{ opt.label }}</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-textDark mb-1">Start</label>
-          <input type="datetime-local" formControlName="startAt"
-                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-textDark mb-1">End</label>
-          <input type="datetime-local" formControlName="endAt"
-                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
-        </div>
-
-        <div *ngIf="form.value.appliesTo === 'CATEGORY'">
-          <label class="block text-xs font-medium text-textDark mb-1">Target Category ID</label>
-          <input type="number" formControlName="targetCategoryId"
-                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
-        </div>
-
-        <div *ngIf="form.value.appliesTo === 'PRODUCT'">
-          <label class="block text-xs font-medium text-textDark mb-1">Target Product ID</label>
-          <input type="number" formControlName="targetProductId"
-                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-textDark mb-1">Promo Code</label>
-          <input type="text" formControlName="code"
-                 class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
-        </div>
-
-        <div class="flex items-center gap-6 md:col-span-2">
-          <label class="inline-flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" formControlName="active"
-                   class="rounded border-borderColor text-primary focus:ring-primary-400" />
-            <span class="text-sm text-textDark">Active</span>
-          </label>
-          <label class="inline-flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" formControlName="featured"
-                   class="rounded border-borderColor text-primary focus:ring-primary-400" />
-            <span class="text-sm text-textDark">Featured</span>
-          </label>
-        </div>
-
-        <div class="md:col-span-2 flex gap-3">
+        <!-- Actions -->
+        <div class="flex gap-3">
           <app-button variant="primary" size="md" type="submit" [disabled]="form.invalid">
-            {{ editingId ? 'Update' : 'Create' }}
+            {{ editingId ? 'Update Promotion' : 'Create Promotion' }}
           </app-button>
           <app-button *ngIf="editingId" variant="ghost" size="md" (clicked)="resetForm()">
             Cancel
@@ -116,7 +154,7 @@
       </form>
     </div>
 
-    <!-- List -->
+    <!-- Promotions List -->
     <div class="bg-white rounded-2xl shadow-card overflow-hidden">
       <div class="flex items-center justify-between px-5 py-4 border-b border-borderColor">
         <h3 class="font-heading text-sm font-semibold text-textDark">All Promotions</h3>
@@ -125,50 +163,118 @@
         </app-button>
       </div>
 
-      <div *ngIf="loading" class="p-8 text-center text-textMuted text-sm">Loading...</div>
+      <!-- Loading -->
+      <div *ngIf="loading" class="p-12 flex items-center justify-center">
+        <div class="flex flex-col items-center gap-3 text-textMuted">
+          <i class="bi bi-arrow-repeat text-2xl animate-spin"></i>
+          <span class="text-sm">Loading promotions...</span>
+        </div>
+      </div>
 
-      <div *ngIf="!loading" class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="border-b border-borderColor">
-            <tr>
-              <th class="px-5 py-3 text-left text-xs font-medium text-textMuted uppercase">Title</th>
-              <th class="px-5 py-3 text-left text-xs font-medium text-textMuted uppercase">Period</th>
-              <th class="px-5 py-3 text-left text-xs font-medium text-textMuted uppercase">Status</th>
-              <th class="px-5 py-3 text-left text-xs font-medium text-textMuted uppercase">Featured</th>
-              <th class="px-5 py-3 text-right text-xs font-medium text-textMuted uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-borderColor">
-            <tr *ngFor="let p of promotions" class="hover:bg-surface transition-colors">
-              <td class="px-5 py-3 text-sm font-medium text-textDark">{{ p.title }}</td>
-              <td class="px-5 py-3 text-xs text-textLight">{{ p.startAt | date:'short' }} — {{ p.endAt | date:'short' }}</td>
-              <td class="px-5 py-3">
-                <app-badge [variant]="p.active ? 'success' : 'neutral'" size="sm">
-                  {{ p.active ? 'Active' : 'Inactive' }}
-                </app-badge>
-              </td>
-              <td class="px-5 py-3">
-                <app-badge [variant]="p.featured ? 'warning' : 'neutral'" size="sm">
-                  {{ p.featured ? 'Yes' : 'No' }}
-                </app-badge>
-              </td>
-              <td class="px-5 py-3 text-right">
-                <div class="flex items-center justify-end gap-2">
-                  <app-button variant="ghost" size="sm" (clicked)="edit(p)">Edit</app-button>
-                  <app-button variant="ghost" size="sm" (clicked)="toggleActive(p)">
-                    {{ p.active ? 'Deactivate' : 'Activate' }}
-                  </app-button>
-                  <app-button variant="ghost" size="sm" (clicked)="toggleFeatured(p)">
-                    {{ p.featured ? 'Unfeature' : 'Feature' }}
-                  </app-button>
-                  <app-button variant="danger" size="sm" (clicked)="confirmDelete(p)">Delete</app-button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Empty -->
+      <div *ngIf="!loading && promotions.length === 0"
+           class="p-12 flex flex-col items-center gap-3 text-textMuted">
+        <i class="bi bi-tag text-4xl"></i>
+        <p class="text-sm font-medium">No promotions yet</p>
+        <p class="text-xs text-center">Create your first promotion above to start offering discounts</p>
+      </div>
+
+      <!-- Cards grid -->
+      <div *ngIf="!loading && promotions.length > 0" class="p-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div *ngFor="let p of promotions"
+             class="border border-borderColor rounded-2xl overflow-hidden hover:shadow-card transition-shadow">
+
+          <!-- Banner image -->
+          <div *ngIf="p.imageUrl" class="h-28 bg-surface overflow-hidden">
+            <img [src]="resolveImageUrl(p.imageUrl)" [alt]="p.title" class="w-full h-full object-cover"
+                 (error)="$any($event.target).style.display='none'" />
+          </div>
+          <div *ngIf="!p.imageUrl" class="h-28 bg-gradient-to-br from-primary-100 to-primary-50
+                                          flex items-center justify-center">
+            <i class="bi bi-tag text-4xl text-primary opacity-40"></i>
+          </div>
+
+          <div class="p-4">
+            <!-- Title row -->
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-bold text-textDark truncate">{{ p.title }}</h4>
+                <p *ngIf="p.badgeText" class="text-xs text-textMuted mt-0.5">{{ p.badgeText }}</p>
+              </div>
+              <!-- Status badge -->
+              <app-badge [variant]="getStatusVariant(p)" size="sm">
+                {{ getStatus(p) }}
+              </app-badge>
+            </div>
+
+            <!-- Description -->
+            <p *ngIf="p.description" class="text-xs text-textLight mb-3 line-clamp-2">{{ p.description }}</p>
+
+            <!-- Stats row -->
+            <div class="flex items-center gap-3 mb-3 flex-wrap">
+              <!-- Discount -->
+              <span class="inline-flex items-center gap-1 bg-green-50 text-green-700 text-xs font-bold px-2 py-1 rounded-lg">
+                <i class="bi bi-percent"></i>{{ p.discountPercent ?? 0 }}% off
+              </span>
+              <!-- Scope -->
+              <span class="inline-flex items-center gap-1 bg-surface text-textMuted text-xs px-2 py-1 rounded-lg">
+                <i class="bi bi-bullseye"></i>
+                {{ p.appliesTo === 'ALL' ? 'All items' : p.appliesTo === 'PRODUCT' ? 'Product' : 'Category' }}
+              </span>
+              <!-- Code -->
+              <span *ngIf="p.code" class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-xs font-mono font-bold px-2 py-1 rounded-lg">
+                <i class="bi bi-upc"></i>{{ p.code }}
+              </span>
+              <span *ngIf="!p.code" class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 text-xs px-2 py-1 rounded-lg">
+                <i class="bi bi-lightning-fill"></i>Auto-applied
+              </span>
+            </div>
+
+            <!-- Schedule -->
+            <p class="text-[11px] text-textMuted mb-3 flex items-center gap-1">
+              <i class="bi bi-calendar3"></i>
+              {{ p.startAt | date:'dd MMM yyyy, HH:mm' }} — {{ p.endAt | date:'dd MMM yyyy, HH:mm' }}
+            </p>
+
+            <!-- Featured badge -->
+            <p *ngIf="p.featured" class="text-[11px] text-amber-600 mb-3 flex items-center gap-1 font-medium">
+              <i class="bi bi-star-fill"></i>Featured on store banner
+            </p>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-2 pt-3 border-t border-borderColor">
+              <button (click)="edit(p)"
+                      class="flex-1 text-xs font-medium text-primary hover:bg-primary-50 py-1.5 rounded-lg transition-colors">
+                <i class="bi bi-pencil mr-1"></i>Edit
+              </button>
+              <button (click)="toggleActive(p)"
+                      class="flex-1 text-xs font-medium transition-colors py-1.5 rounded-lg"
+                      [class.text-textMuted]="p.active"
+                      [class.hover:bg-surface]="p.active"
+                      [class.text-success]="!p.active"
+                      [class.hover:bg-green-50]="!p.active">
+                <i class="bi mr-1" [class.bi-pause-circle]="p.active" [class.bi-play-circle]="!p.active"></i>
+                {{ p.active ? 'Pause' : 'Activate' }}
+              </button>
+              <button (click)="toggleFeatured(p)"
+                      class="flex-1 text-xs font-medium transition-colors py-1.5 rounded-lg"
+                      [class.text-amber-500]="!p.featured"
+                      [class.hover:bg-amber-50]="!p.featured"
+                      [class.text-textMuted]="p.featured"
+                      [class.hover:bg-surface]="p.featured">
+                <i class="bi mr-1" [class.bi-star]="!p.featured" [class.bi-star-fill]="p.featured"></i>
+                {{ p.featured ? 'Unfeature' : 'Feature' }}
+              </button>
+              <button (click)="confirmDelete(p)"
+                      class="text-danger hover:bg-red-50 p-1.5 rounded-lg transition-colors">
+                <i class="bi bi-trash3"></i>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -176,7 +282,7 @@
 <app-confirm-modal
   [isOpen]="showDeleteConfirm"
   title="Delete Promotion"
-  [message]="'Are you sure you want to delete &quot;' + (deleteTarget?.title || '') + '&quot;?'"
+  [message]="'Are you sure you want to delete &quot;' + (deleteTarget?.title || '') + '&quot;? This cannot be undone.'"
   confirmLabel="Delete"
   variant="danger"
   (confirmed)="onDeleteConfirmed()"

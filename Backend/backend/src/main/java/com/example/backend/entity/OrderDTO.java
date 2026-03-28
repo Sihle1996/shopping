@@ -25,8 +25,10 @@ public class OrderDTO {
     private String paymentId;
     private String payerId;
     private List<OrderItemDTO> items;
-    private String driverName; // ✅ NEW FIELD
+    private String driverName;
     private UUID tenantId;
+    private Double discountAmount;
+    private String promoCode;
 
     public OrderDTO(UUID id, Double totalAmount, String status, Instant orderDate,
                     String deliveryAddress, UUID userId, String userEmail) {

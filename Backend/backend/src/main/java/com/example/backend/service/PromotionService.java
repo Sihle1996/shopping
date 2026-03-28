@@ -41,4 +41,12 @@ public class PromotionService {
         }
         return promotionRepository.findByCodeAndActiveTrue(code.trim());
     }
+
+    public Optional<Promotion> findAutoAppliedAllPromo() {
+        return getActivePromotions().stream()
+                .filter(p -> p.getCode() == null || p.getCode().isBlank())
+                .filter(p -> p.getAppliesTo() == Promotion.AppliesTo.ALL)
+                .filter(p -> p.getDiscountPercent() != null)
+                .findFirst();
+    }
 }

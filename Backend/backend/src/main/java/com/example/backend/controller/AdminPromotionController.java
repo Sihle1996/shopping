@@ -1,11 +1,12 @@
 package com.example.backend.controller;
 
+import com.example.backend.dto.PromotionDTO;
 import com.example.backend.dto.PromotionRequest;
-import com.example.backend.entity.Tenant;
 import com.example.backend.model.Promotion;
 import com.example.backend.repository.PromotionRepository;
 import com.example.backend.repository.TenantRepository;
 import com.example.backend.tenant.TenantContext;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,47 +25,54 @@ public class AdminPromotionController {
     private final TenantRepository tenantRepository;
 
     @GetMapping
-    public List<Promotion> list() {
+    @Transactional
+    public List<PromotionDTO> list() {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        if (tenantId != null) {
-            return promotionRepository.findByTenant_Id(tenantId);
-        }
-        return promotionRepository.findAll();
+        List<Promotion> promotions = (tenantId != null)
+                ? promotionRepository.findByTenant_Id(tenantId)
+                : promotionRepository.findAll();
+        return promotions.stream().map(PromotionDTO::from).toList();
     }
 
     @PostMapping
-    public ResponseEntity<Promotion> create(@Valid @RequestBody PromotionRequest req) {
+    @Transactional
+    public ResponseEntity<PromotionDTO> create(@Valid @RequestBody PromotionRequest req) {
         Promotion p = toEntity(new Promotion(), req);
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null) {
             tenantRepository.findById(tenantId).ifPresent(p::setTenant);
         }
         Promotion saved = promotionRepository.save(p);
-        return ResponseEntity.created(URI.create("/api/admin/promotions/" + saved.getId())).body(saved);
+        return ResponseEntity.created(URI.create("/api/admin/promotions/" + saved.getId()))
+                .body(PromotionDTO.from(saved));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Promotion> update(@PathVariable UUID id, @Valid @RequestBody PromotionRequest req) {
+    @Transactional
+    public ResponseEntity<PromotionDTO> update(@PathVariable UUID id, @Valid @RequestBody PromotionRequest req) {
         return promotionRepository.findById(id)
-                .map(existing -> ResponseEntity.ok(promotionRepository.save(toEntity(existing, req))))
+                .map(existing -> ResponseEntity.ok(PromotionDTO.from(promotionRepository.save(toEntity(existing, req)))))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}/activate")
-    public ResponseEntity<Promotion> activate(@PathVariable UUID id, @RequestParam boolean value) {
+    @Transactional
+    public ResponseEntity<PromotionDTO> activate(@PathVariable UUID id, @RequestParam boolean value) {
         return promotionRepository.findById(id)
-                .map(p -> { p.setActive(value); return ResponseEntity.ok(promotionRepository.save(p)); })
+                .map(p -> { p.setActive(value); return ResponseEntity.ok(PromotionDTO.from(promotionRepository.save(p))); })
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}/featured")
-    public ResponseEntity<Promotion> featured(@PathVariable UUID id, @RequestParam boolean value) {
+    @Transactional
+    public ResponseEntity<PromotionDTO> featured(@PathVariable UUID id, @RequestParam boolean value) {
         return promotionRepository.findById(id)
-                .map(p -> { p.setFeatured(value); return ResponseEntity.ok(promotionRepository.save(p)); })
+                .map(p -> { p.setFeatured(value); return ResponseEntity.ok(PromotionDTO.from(promotionRepository.save(p))); })
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         if (!promotionRepository.existsById(id)) return ResponseEntity.notFound().build();
         promotionRepository.deleteById(id);
@@ -82,7 +90,7 @@ public class AdminPromotionController {
         target.setAppliesTo(req.getAppliesTo());
         target.setTargetCategoryId(req.getTargetCategoryId());
         target.setTargetProductId(req.getTargetProductId());
-        target.setCode(req.getCode());
+        target.setCode(req.getCode() != null ? req.getCode().trim().toUpperCase() : null);
         target.setActive(req.isActive());
         target.setFeatured(req.isFeatured());
         return target;

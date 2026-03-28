@@ -15,4 +15,5 @@ public class OrderRequestDTO {
     private String status;
     private String deliveryAddress;
     private UUID tenantId;
+    private String promoCode;
 }

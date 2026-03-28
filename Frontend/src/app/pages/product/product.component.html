@@ -66,8 +66,14 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-textMuted text-xs">Total Price</p>
-            <p class="font-numbers text-2xl font-bold text-primary">
+            <p *ngIf="autoDiscountPercent" class="font-numbers text-sm text-textLight line-through leading-none">
               R{{ (product.price * quantity).toFixed(2) }}
+            </p>
+            <p class="font-numbers text-2xl font-bold text-primary leading-tight">
+              R{{ discountedPrice.toFixed(2) }}
+            </p>
+            <p *ngIf="autoDiscountPercent" class="text-xs font-medium mt-0.5" style="color: var(--brand-primary)">
+              {{ autoDiscountPercent }}% off applied
             </p>
           </div>
           <app-button

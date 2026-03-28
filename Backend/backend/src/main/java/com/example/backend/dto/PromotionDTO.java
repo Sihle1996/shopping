@@ -1,0 +1,44 @@
+package com.example.backend.dto;
+
+import com.example.backend.model.Promotion;
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+@Data
+public class PromotionDTO {
+    private UUID id;
+    private String title;
+    private String description;
+    private String imageUrl;
+    private String badgeText;
+    private BigDecimal discountPercent;
+    private String startAt;   // ISO string — avoids OffsetDateTime serialization issues
+    private String endAt;
+    private String appliesTo;
+    private UUID targetCategoryId;
+    private UUID targetProductId;
+    private String code;
+    private boolean active;
+    private boolean featured;
+
+    public static PromotionDTO from(Promotion p) {
+        PromotionDTO dto = new PromotionDTO();
+        dto.setId(p.getId());
+        dto.setTitle(p.getTitle());
+        dto.setDescription(p.getDescription());
+        dto.setImageUrl(p.getImageUrl());
+        dto.setBadgeText(p.getBadgeText());
+        dto.setDiscountPercent(p.getDiscountPercent());
+        dto.setStartAt(p.getStartAt() != null ? p.getStartAt().toString() : null);
+        dto.setEndAt(p.getEndAt() != null ? p.getEndAt().toString() : null);
+        dto.setAppliesTo(p.getAppliesTo() != null ? p.getAppliesTo().name() : null);
+        dto.setTargetCategoryId(p.getTargetCategoryId());
+        dto.setTargetProductId(p.getTargetProductId());
+        dto.setCode(p.getCode());
+        dto.setActive(p.isActive());
+        dto.setFeatured(p.isFeatured());
+        return dto;
+    }
+}

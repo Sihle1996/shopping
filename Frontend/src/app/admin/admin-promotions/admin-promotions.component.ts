@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AdminPromotionService, PromotionRequest } from 'src/app/services/admin-promotion.service';
-import { Promotion } from 'src/app/services/promotion.service';
+import { AdminService } from 'src/app/services/admin.service';
+import { Promotion, getPromoStatus, PromoStatus } from 'src/app/services/promotion.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-admin-promotions',
@@ -16,6 +18,8 @@ export class AdminPromotionsComponent implements OnInit {
 
   showDeleteConfirm = false;
   deleteTarget: Promotion | null = null;
+  imageUploading = false;
+  imagePreviewUrl: string = '';
 
   appliesToOptions = [
     { value: 'ALL', label: 'All Products' },
@@ -23,7 +27,11 @@ export class AdminPromotionsComponent implements OnInit {
     { value: 'PRODUCT', label: 'Product' },
   ];
 
-  constructor(private fb: FormBuilder, private api: AdminPromotionService) {}
+  constructor(
+    private fb: FormBuilder,
+    private api: AdminPromotionService,
+    private adminService: AdminService
+  ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -54,7 +62,24 @@ export class AdminPromotionsComponent implements OnInit {
 
   submit(): void {
     if (this.form.invalid) return;
-    const payload: PromotionRequest = this.form.value;
+    const raw = this.form.value;
+
+    // datetime-local gives local time "2026-03-28T19:58" — append local UTC offset
+    const toIso = (dt: string): string => {
+      if (!dt || dt.length !== 16) return dt;
+      const d = new Date(dt);
+      const off = -d.getTimezoneOffset(); // minutes ahead of UTC
+      const sign = off >= 0 ? '+' : '-';
+      const hh = String(Math.floor(Math.abs(off) / 60)).padStart(2, '0');
+      const mm = String(Math.abs(off) % 60).padStart(2, '0');
+      return `${dt}:00${sign}${hh}:${mm}`;
+    };
+
+    const payload: PromotionRequest = {
+      ...raw,
+      startAt: toIso(raw.startAt),
+      endAt: toIso(raw.endAt),
+    };
 
     const op = this.editingId
       ? this.api.update(this.editingId, payload)
@@ -67,6 +92,7 @@ export class AdminPromotionsComponent implements OnInit {
 
   edit(p: Promotion): void {
     this.editingId = p.id;
+    this.imagePreviewUrl = p.imageUrl || '';
     this.form.patchValue({
       title: p.title,
       description: p.description,
@@ -86,6 +112,7 @@ export class AdminPromotionsComponent implements OnInit {
 
   resetForm(): void {
     this.editingId = null;
+    this.imagePreviewUrl = '';
     this.form.reset({ appliesTo: 'ALL', active: true, featured: false });
   }
 
@@ -112,5 +139,45 @@ export class AdminPromotionsComponent implements OnInit {
 
   toggleFeatured(p: Promotion): void {
     this.api.setFeatured(p.id, !p.featured).subscribe({ next: () => this.refresh() });
+  }
+
+  getStatus(p: Promotion): PromoStatus {
+    return getPromoStatus(p);
+  }
+
+  onImageSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    // Show local preview immediately
+    const reader = new FileReader();
+    reader.onload = (e) => { this.imagePreviewUrl = e.target?.result as string; };
+    reader.readAsDataURL(file);
+
+    this.imageUploading = true;
+    const formData = new FormData();
+    formData.append('file', file);
+    this.adminService.uploadImage(formData).subscribe({
+      next: (url: string) => {
+        this.form.patchValue({ imageUrl: url });
+        // Keep the local base64 preview — don't replace with server URL
+        // which may require auth or be a relative path
+        this.imageUploading = false;
+      },
+      error: () => { this.imageUploading = false; }
+    });
+  }
+
+  resolveImageUrl(url: string | undefined): string {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return `${environment.apiUrl}${url}`;
+  }
+
+  getStatusVariant(p: Promotion): 'success' | 'warning' | 'neutral' {
+    const s = getPromoStatus(p);
+    if (s === 'Active') return 'success';
+    if (s === 'Scheduled') return 'warning';
+    return 'neutral';
   }
 }

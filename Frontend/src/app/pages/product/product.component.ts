@@ -4,6 +4,7 @@ import { Location } from '@angular/common';
 import { CartService } from 'src/app/services/cart.service';
 import { MenuItem, MenuService } from 'src/app/services/menu.service';
 import { AuthService } from 'src/app/services/auth.service';
+import { PromotionService } from 'src/app/services/promotion.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 
@@ -17,12 +18,14 @@ export class ProductComponent implements OnInit {
   quantity = 1;
   selectedSize = 'M';
   isAddingToCart = false;
+  autoDiscountPercent = 0;
 
   constructor(
     private route: ActivatedRoute,
     private menuService: MenuService,
     private cartService: CartService,
     private authService: AuthService,
+    private promotionService: PromotionService,
     private router: Router,
     private location: Location,
     private toastr: ToastrService
@@ -39,6 +42,21 @@ export class ProductComponent implements OnInit {
       next: (product) => this.product = product,
       error: () => this.router.navigate(['/'])
     });
+
+    this.promotionService.getActivePromotions().subscribe({
+      next: (list) => {
+        const auto = list.find(p => !p.code && p.appliesTo === 'ALL' && p.discountPercent);
+        this.autoDiscountPercent = auto?.discountPercent ?? 0;
+      },
+      error: () => {}
+    });
+  }
+
+  get discountedPrice(): number {
+    if (!this.product) return 0;
+    const base = this.product.price * this.quantity;
+    if (!this.autoDiscountPercent) return base;
+    return base * (1 - this.autoDiscountPercent / 100);
   }
 
   addToCart(): void {
