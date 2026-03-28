@@ -1,61 +1,34 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TenantService, Tenant } from 'src/app/services/tenant.service';
+import { Tenant } from 'src/app/services/tenant.service';
 
 @Component({
   selector: 'app-store',
   templateUrl: './store.component.html',
   styleUrls: ['./store.component.scss']
 })
-export class StoreComponent implements OnInit, OnDestroy {
+export class StoreComponent implements OnInit {
   tenant: Tenant | null = null;
-  isLoading = true;
+  isLoading = false;
   notFound = false;
 
-  constructor(
-    private route: ActivatedRoute,
-    public router: Router,
-    private tenantService: TenantService
-  ) {}
+  constructor(private route: ActivatedRoute, public router: Router) {}
 
   ngOnInit(): void {
-    const slug = this.route.snapshot.paramMap.get('slug');
-    if (!slug) {
-      this.router.navigate(['/']);
+    const tenant: Tenant | null = this.route.snapshot.data['tenant'];
+    if (!tenant) {
+      this.notFound = true;
       return;
     }
-
-    // Apply stored color immediately so child pages don't flash orange
-    const stored = localStorage.getItem('brandPrimary');
-    if (stored) this.applyBrandColor(stored);
-
-    this.tenantService.getTenantBySlug(slug).subscribe({
-      next: (tenant) => {
-        this.tenant = tenant;
-        localStorage.setItem('tenantId', tenant.id);
-        localStorage.setItem('storeName', tenant.name);
-        localStorage.setItem('storeSlug', tenant.slug);
-        this.tenantService.setCurrentTenant(tenant);
-        this.applyBrandColor(tenant.primaryColor);
-        this.isLoading = false;
-      },
-      error: () => {
-        this.notFound = true;
-        this.isLoading = false;
-      }
-    });
-  }
-
-  ngOnDestroy(): void {
-    // Do not reset brand color — persisted so floating cart bar stays themed
-    // after navigating away from the store route.
+    this.tenant = tenant;
+    this.applyBrandColor(tenant.primaryColor);
   }
 
   private applyBrandColor(color?: string): void {
     if (!color) return;
     const root = document.documentElement;
     root.style.setProperty('--brand-primary', color);
-    root.style.setProperty('--brand-primary-light', color + '1A'); // 10% opacity
+    root.style.setProperty('--brand-primary-light', color + '1A');
     root.style.setProperty('--brand-primary-hover', this.darkenColor(color, 15));
     localStorage.setItem('brandPrimary', color);
   }

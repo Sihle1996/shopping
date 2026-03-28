@@ -14,6 +14,7 @@ import { RegisterRestaurantComponent } from './pages/register-restaurant/registe
 import { StoreListComponent } from './pages/store-list/store-list.component';
 import { StoreComponent } from './pages/store/store.component';
 import { HomeComponent } from './pages/home/home.component';
+import { TenantResolver } from './resolvers/tenant.resolver';
 
 const routes: Routes = [
   // Landing — store listing
@@ -24,6 +25,7 @@ const routes: Routes = [
   {
     path: 'store/:slug',
     component: StoreComponent,
+    resolve: { tenant: TenantResolver },
     children: [
       { path: '', component: HomeComponent },
       { path: 'product/:id', component: ProductComponent },
