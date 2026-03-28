@@ -18,13 +18,15 @@ export class AuthInterceptor implements HttpInterceptor {
     const isExternal = request.url.includes('openrouteservice.org');
     if (isExternal) return next.handle(request);
 
+    const isSuperadmin = request.url.includes('/api/superadmin');
+
     let headers: { [key: string]: string } = {};
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    if (tenantId) {
+    if (tenantId && !isSuperadmin) {
       headers['X-Tenant-Id'] = tenantId;
     }
 

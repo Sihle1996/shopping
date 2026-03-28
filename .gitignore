@@ -1,0 +1,29 @@
+# Environment / secrets — never commit these
+.env
+.env.*
+*.env
+
+# Local Angular environment (contains Mapbox token)
+Frontend/src/environments/environment.ts
+
+# Angular build output
+Frontend/dist/
+Frontend/node_modules/
+Frontend/.angular/
+
+# Spring Boot build output
+Backend/backend/target/
+Backend/backend/*.jar
+
+# Uploads (user-generated content — use cloud storage in prod)
+Backend/backend/uploads/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Logs
+*.log
+logs/

@@ -1,6 +1,7 @@
 package com.example.backend.controller;
 
 import com.example.backend.entity.Tenant;
+import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.TenantRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class TenantController {
 
     private final TenantRepository tenantRepository;
+    private final OrderRepository orderRepository;
 
     // Public - list active tenants (for customer store selection)
     // Must be defined BEFORE {slug} to avoid path conflict
@@ -69,4 +71,44 @@ public class TenantController {
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    // SUPERADMIN only - delete tenant
+    @DeleteMapping("/api/superadmin/tenants/{id}")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    public ResponseEntity<Void> deleteTenant(@PathVariable UUID id) {
+        if (!tenantRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        tenantRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // SUPERADMIN only - toggle tenant active status
+    @PatchMapping("/api/superadmin/tenants/{id}/toggle-active")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    public ResponseEntity<Tenant> toggleTenantActive(@PathVariable UUID id) {
+        return tenantRepository.findById(id)
+                .map(tenant -> {
+                    tenant.setActive(!tenant.isActive());
+                    return ResponseEntity.ok(tenantRepository.save(tenant));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // SUPERADMIN only - platform stats
+    @GetMapping("/api/superadmin/stats")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    public ResponseEntity<PlatformStats> getPlatformStats() {
+        List<Tenant> allTenants = tenantRepository.findAll();
+        long totalTenants = allTenants.size();
+        long activeTenants = allTenants.stream().filter(Tenant::isActive).count();
+        long totalOrders = orderRepository.count();
+        double totalRevenue = orderRepository.findAll().stream()
+                .filter(o -> o.getTotalAmount() != null)
+                .mapToDouble(o -> o.getTotalAmount())
+                .sum();
+        return ResponseEntity.ok(new PlatformStats(totalTenants, activeTenants, totalOrders, totalRevenue));
+    }
+
+    public record PlatformStats(long totalTenants, long activeTenants, long totalOrders, double totalRevenue) {}
 }

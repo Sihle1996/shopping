@@ -10,6 +10,7 @@ import { HistoryordersComponent } from './pages/historyorders/historyorders.comp
 import { UserGuard } from './guards/user.guard';
 import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashboard.component';
 import { DriverGuard } from './guards/driver.guard';
+import { SuperadminGuard } from './guards/superadmin.guard';
 import { RegisterRestaurantComponent } from './pages/register-restaurant/register-restaurant.component';
 import { StoreListComponent } from './pages/store-list/store-list.component';
 import { StoreComponent } from './pages/store/store.component';
@@ -46,6 +47,12 @@ const routes: Routes = [
   { path: 'register-restaurant', component: RegisterRestaurantComponent },
 
   { path: 'driver/dashboard', component: DriverDashboardComponent, canActivate: [DriverGuard] },
+
+  {
+    path: 'superadmin',
+    loadChildren: () => import('./superadmin/superadmin.module').then(m => m.SuperadminModule),
+    canActivate: [SuperadminGuard]
+  },
 
   { path: '**', redirectTo: '' },
 ];
