@@ -9,6 +9,8 @@ interface OrderDTO {
   id: string;
   status: string;
   totalAmount: number;
+  discountAmount?: number;
+  promoCode?: string;
   orderDate: string;
   deliveryAddress: string;
 }

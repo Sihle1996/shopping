@@ -54,9 +54,19 @@
   <!-- Sticky Checkout Bar -->
   <div *ngIf="cartItems.length > 0"
        class="bg-white border-t border-borderColor fixed bottom-16 lg:bottom-0 left-0 w-full z-40 px-4 lg:px-8 py-4 shadow-float">
+    <div class="flex justify-between items-center" [class.mb-1]="discount > 0" [class.mb-3]="!discount">
+      <span class="text-textLight text-sm">Subtotal</span>
+      <span class="font-numbers text-sm text-textLight" [class.line-through]="discount > 0">R{{ subtotal.toFixed(2) }}</span>
+    </div>
+    <div *ngIf="discount > 0" class="flex justify-between items-center mb-1">
+      <span class="text-sm flex items-center gap-1" style="color: var(--brand-primary)">
+        <i class="bi bi-tag-fill text-xs"></i>{{ autoDiscountPercent }}% off
+      </span>
+      <span class="font-numbers text-sm font-semibold" style="color: var(--brand-primary)">-R{{ discount.toFixed(2) }}</span>
+    </div>
     <div class="flex justify-between items-center mb-3">
-      <span class="text-textLight text-sm">Total</span>
-      <span class="font-numbers font-bold text-2xl text-textDark">R{{ totalPrice.toFixed(2) }}</span>
+      <span class="text-textDark font-semibold text-sm">Total</span>
+      <span class="font-numbers font-bold text-2xl text-primary">R{{ totalPrice.toFixed(2) }}</span>
     </div>
     <app-button
       variant="primary"

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { CartService, CartItem } from 'src/app/services/cart.service';
+import { PromotionService } from 'src/app/services/promotion.service';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -11,10 +12,15 @@ import { environment } from 'src/environments/environment';
 })
 export class CartComponent implements OnInit {
   cartItems: CartItem[] = [];
-  totalPrice = 0;
+  subtotal = 0;
+  discount = 0;
+  autoDiscountPercent = 0;
+
+  get totalPrice(): number { return Math.max(0, this.subtotal - this.discount); }
 
   constructor(
     private cartService: CartService,
+    private promotionService: PromotionService,
     private router: Router,
     private location: Location
   ) {}
@@ -29,24 +35,31 @@ export class CartComponent implements OnInit {
   }
 
   loadCart(): void {
+    this.promotionService.getActivePromotions().subscribe({
+      next: (promos) => {
+        const auto = promos.find(p => !p.code && p.appliesTo === 'ALL' && p.discountPercent);
+        this.autoDiscountPercent = auto?.discountPercent ?? 0;
+      },
+      error: () => {}
+    });
+
     this.cartService.getCartItems().subscribe({
       next: (items) => {
         this.cartItems = items;
-        this.updateTotalPrice();
+        this.updateTotals();
       },
       error: () => {}
     });
   }
 
-  private updateTotalPrice(): void {
-    this.totalPrice = this.cartItems.reduce(
-      (sum, item) => sum + item.menuItemPrice * item.quantity, 0
-    );
+  private updateTotals(): void {
+    this.subtotal = this.cartItems.reduce((sum, item) => sum + item.menuItemPrice * item.quantity, 0);
+    this.discount = this.autoDiscountPercent ? Math.round(this.subtotal * this.autoDiscountPercent) / 100 : 0;
   }
 
   onQuantityChange(item: CartItem, quantity: number): void {
     item.quantity = quantity;
-    this.updateTotalPrice();
+    this.updateTotals();
     this.cartService.updateCartItem(item.id, quantity).subscribe();
   }
 
@@ -54,7 +67,7 @@ export class CartComponent implements OnInit {
     this.cartService.removeFromCart(itemId).subscribe({
       next: () => {
         this.cartItems = this.cartItems.filter(item => item.id !== itemId);
-        this.updateTotalPrice();
+        this.updateTotals();
       }
     });
   }

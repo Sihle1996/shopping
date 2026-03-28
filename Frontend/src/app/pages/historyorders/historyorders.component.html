@@ -65,6 +65,16 @@
           <span class="text-textLight">Total</span>
           <span class="font-numbers font-bold text-textDark">R{{ order.totalAmount.toFixed(2) }}</span>
         </div>
+        <div *ngIf="order.discountAmount && order.discountAmount > 0"
+             class="flex items-center justify-between">
+          <span class="text-xs flex items-center gap-1" style="color: var(--brand-primary)">
+            <i class="bi bi-tag-fill text-xs"></i>
+            {{ order.promoCode || 'Auto-applied' }} discount
+          </span>
+          <span class="font-numbers text-xs font-semibold" style="color: var(--brand-primary)">
+            -R{{ order.discountAmount.toFixed(2) }}
+          </span>
+        </div>
         <div class="flex items-start gap-2">
           <i class="bi bi-geo-alt text-textMuted text-xs mt-0.5"></i>
           <span class="text-textLight text-xs">{{ order.deliveryAddress }}</span>
