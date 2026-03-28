@@ -13,9 +13,8 @@ export class AnalyticsService {
   constructor(private http: HttpClient) {}
 
   private buildRange(startDate: string, endDate: string): HttpParams {
-    // Many backends parse LocalDateTime, not LocalDate. Provide full timestamps.
-    const start = `${startDate}T00:00:00`;
-    const end = `${endDate}T23:59:59`;
+    const start = `${startDate}T00:00:00Z`;
+    const end = `${endDate}T23:59:59Z`;
     return new HttpParams().set('startDate', start).set('endDate', end);
   }
 

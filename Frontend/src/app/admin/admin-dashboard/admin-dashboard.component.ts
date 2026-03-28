@@ -20,6 +20,8 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
   @ViewChild('productsChartCanvas') productsChartCanvas!: ElementRef<HTMLCanvasElement>;
   salesEmpty = false;
   productsEmpty = false;
+  salesError = false;
+  productsError = false;
   topProducts: any[] = [];
   aov = 0;
   onTime = 0;
@@ -50,57 +52,61 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
     const start = this.startDate; // format yyyy-MM-dd
     const end = this.endDate;     // format yyyy-MM-dd
 
+    this.salesError = false;
     this.analyticsService.getSalesTrends(start, end).subscribe({
       next: (data) => {
+        this.salesEmpty = data.length === 0;
         const labels = data.map(d => d.date);
         const values = data.map(d => d.total);
-        this.salesEmpty = data.length === 0;
-        if (this.salesEmpty) {
-          if (this.salesChart) { this.salesChart.destroy(); this.salesChart = undefined; }
-          return;
+        if (this.salesChart) {
+          this.salesChart.data.labels = labels;
+          this.salesChart.data.datasets[0].data = values;
+          this.salesChart.update();
+        } else {
+          const ctx = this.salesChartCanvas?.nativeElement?.getContext('2d');
+          if (!ctx) return;
+          this.salesChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets: [{ label: 'Sales', data: values, borderColor: '#4f46e5', tension: 0.3, fill: false }] },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: true } },
+              scales: { x: { ticks: { autoSkip: true } }, y: { beginAtZero: true } }
+            }
+          });
         }
-        if (this.salesChart) this.salesChart.destroy();
-        const ctx = this.salesChartCanvas?.nativeElement?.getContext('2d');
-        if (!ctx) { return; }
-        this.salesChart = new Chart(ctx, {
-          type: 'line',
-          data: { labels, datasets: [{ label: 'Sales', data: values, borderColor: '#4f46e5' }] },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: true } },
-            scales: { x: { ticks: { autoSkip: true } }, y: { beginAtZero: true } }
-          }
-        });
       },
-      error: () => {}
+      error: () => { this.salesError = true; this.salesEmpty = true; }
     });
 
+    this.productsError = false;
     this.analyticsService.getTopProducts(start, end).subscribe({
       next: (data) => {
         this.topProducts = data;
+        this.productsEmpty = data.length === 0;
         const labels = data.map(d => d.name);
         const values = data.map(d => d.quantity);
-        this.productsEmpty = data.length === 0;
-        if (this.productsEmpty) {
-          if (this.productsChart) { this.productsChart.destroy(); this.productsChart = undefined; }
-          return;
+        if (this.productsChart) {
+          this.productsChart.data.labels = labels;
+          this.productsChart.data.datasets[0].data = values;
+          this.productsChart.update();
+        } else {
+          const ctx = this.productsChartCanvas?.nativeElement?.getContext('2d');
+          if (!ctx) return;
+          this.productsChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Top Products', data: values, backgroundColor: '#10b981' }] },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: true } },
+              scales: { x: { ticks: { autoSkip: true } }, y: { beginAtZero: true } }
+            }
+          });
         }
-        if (this.productsChart) this.productsChart.destroy();
-        const ctx = this.productsChartCanvas?.nativeElement?.getContext('2d');
-        if (!ctx) { return; }
-        this.productsChart = new Chart(ctx, {
-          type: 'bar',
-          data: { labels, datasets: [{ label: 'Top Products', data: values, backgroundColor: '#10b981' }] },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: true } },
-            scales: { x: { ticks: { autoSkip: true } }, y: { beginAtZero: true } }
-          }
-        });
       },
-      error: () => {}
+      error: () => { this.productsError = true; this.productsEmpty = true; }
     });
 
     this.analyticsService.getAverageOrderValue(start, end).subscribe(v => (this.aov = v));

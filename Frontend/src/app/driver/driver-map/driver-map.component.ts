@@ -11,6 +11,8 @@ import {
 import mapboxgl from 'mapbox-gl';
 import { environment } from 'src/environments/environment';
 import { HttpClient } from '@angular/common/http';
+import { Subject, Subscription } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 export interface DeliveryStop {
   id: string;
@@ -113,6 +115,11 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
   private routeSteps: any[] = [];
   private lastSpokenStep = -1;
   private arrivedStops = new Set<number>();
+  private destroy$ = new Subject<void>();
+  private routeSub: Subscription | null = null;
+  private lastEaseTo = 0;
+  private mapReady = false;
+  private geocodingInProgress = false;
 
   optimizedStops: (DeliveryStop & { coords: [number, number] })[] = [];
   eta: string | null = null;
@@ -125,13 +132,23 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
   constructor(private http: HttpClient) {}
 
-  ngAfterViewInit(): void { setTimeout(() => this.initMap(), 100); }
+  ngAfterViewInit(): void {
+    setTimeout(() => this.initMap(), 100);
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if ((changes['deliveryStops'] || changes['deliveryAddress']) && this.map) this.buildStops();
+    if (changes['deliveryStops'] || changes['deliveryAddress']) {
+      // Reset so the next buildStops call re-geocodes fresh data
+      this.eta = null;
+      this.optimizedStops = [];
+      this.buildStops();
+    }
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    if (this.routeSub) { this.routeSub.unsubscribe(); this.routeSub = null; }
     if (this.watchId !== null) navigator.geolocation.clearWatch(this.watchId);
     if (this.map) { this.map.remove(); this.map = null; }
     speechSynthesis.cancel();
@@ -149,15 +166,33 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
     this.map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
     this.map.on('dragstart', () => { this.isFollowing = false; });
     this.startTracking();
-    this.map.on('load', () => { this.add3DBuildings(); this.buildStops(); });
+    this.map.on('load', () => {
+      this.mapReady = true;
+      this.add3DBuildings();
+      if (this.optimizedStops.length > 0) {
+        // Geocoding already finished while map was loading — render now
+        this.clearStopMarkers();
+        this.addStopMarkers();
+        if (this.driverCoords && !this.eta) {
+          this.optimizedStops.length > 1 ? this.fetchOptimizedRoute() : this.fetchSingleRoute();
+        }
+        this.fitAllBounds();
+      } else if (!this.geocodingInProgress) {
+        // Not yet started (ngOnChanges hasn't fired or had no data yet)
+        this.buildStops();
+      }
+      // If geocodingInProgress, geocodeAllStops will render when it completes
+    });
   }
 
   private buildStops(): void {
+    if (this.geocodingInProgress) return;
     let stops: DeliveryStop[] = [];
     if (this.deliveryStops?.length > 0) stops = this.deliveryStops;
     else if (this.deliveryAddress) stops = [{ id: 'single', address: this.deliveryAddress, label: 'Delivery' }];
     if (stops.length === 0) return;
     this.totalStops = stops.length;
+    this.geocodingInProgress = true;
     this.geocodeAllStops(stops);
   }
 
@@ -169,13 +204,18 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
     });
 
     Promise.all(promises).then(results => {
+      this.geocodingInProgress = false;
       this.optimizedStops = results.filter(Boolean) as any[];
-      this.clearStopMarkers();
-      this.addStopMarkers();
-      if (this.driverCoords && this.optimizedStops.length > 0) {
-        this.optimizedStops.length > 1 ? this.fetchOptimizedRoute() : this.fetchSingleRoute();
+      if (this.mapReady && this.optimizedStops.length > 0) {
+        // Map already loaded — render immediately
+        this.clearStopMarkers();
+        this.addStopMarkers();
+        if (this.driverCoords && !this.eta) {
+          this.optimizedStops.length > 1 ? this.fetchOptimizedRoute() : this.fetchSingleRoute();
+        }
+        this.fitAllBounds();
       }
-      this.fitAllBounds();
+      // If map not ready yet, the map 'load' handler will pick up optimizedStops
       this.mapLoaded.emit();
     });
   }
@@ -199,10 +239,11 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
   private fetchOptimizedRoute(): void {
     if (!this.driverCoords || !this.optimizedStops.length) return;
+    if (this.routeSub) { this.routeSub.unsubscribe(); this.routeSub = null; }
     const coords = [`${this.driverCoords[0]},${this.driverCoords[1]}`, ...this.optimizedStops.map(s => `${s.coords[0]},${s.coords[1]}`)].join(';');
     const url = `https://api.mapbox.com/optimized-trips/v1/mapbox/driving/${coords}?source=first&roundtrip=false&geometries=geojson&overview=full&steps=true&access_token=${environment.mapboxToken}`;
 
-    this.http.get<any>(url).subscribe({
+    this.routeSub = this.http.get<any>(url).pipe(takeUntil(this.destroy$)).subscribe({
       next: (res) => {
         if (!res.trips?.length) return;
         const trip = res.trips[0];
@@ -246,9 +287,10 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
   private fetchSingleRoute(): void {
     if (!this.driverCoords || !this.optimizedStops.length) return;
+    if (this.routeSub) { this.routeSub.unsubscribe(); this.routeSub = null; }
     const start = `${this.driverCoords[0]},${this.driverCoords[1]}`;
     const end = `${this.optimizedStops[0].coords[0]},${this.optimizedStops[0].coords[1]}`;
-    this.http.get<any>(`https://api.mapbox.com/directions/v5/mapbox/driving/${start};${end}?geometries=geojson&overview=full&steps=true&access_token=${environment.mapboxToken}`).subscribe({
+    this.routeSub = this.http.get<any>(`https://api.mapbox.com/directions/v5/mapbox/driving/${start};${end}?geometries=geojson&overview=full&steps=true&access_token=${environment.mapboxToken}`).pipe(takeUntil(this.destroy$)).subscribe({
       next: (res) => {
         if (!res.routes?.length) return;
         const route = res.routes[0];
@@ -273,7 +315,13 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
       let bearing: number | null = null;
       if (this.prevCoords) bearing = this.calcBearing(this.prevCoords, newCoords);
       this.prevCoords = [...newCoords];
+      const firstFix = !this.driverCoords;
       this.driverCoords = newCoords;
+
+      // Geocoding may have finished before GPS — trigger route fetch now that coords are available
+      if (firstFix && this.optimizedStops.length > 0 && !this.eta) {
+        this.optimizedStops.length > 1 ? this.fetchOptimizedRoute() : this.fetchSingleRoute();
+      }
 
       if (this.driverMarker) { this.driverMarker.setLngLat(newCoords); }
       else {
@@ -288,14 +336,16 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
       }
 
       if (!this.initialFitDone) { this.fitAllBounds(); this.initialFitDone = true; }
-      if (this.isFollowing && this.map) {
+      const now = Date.now();
+      if (this.isFollowing && this.map && (now - this.lastEaseTo) > 1000) {
+        this.lastEaseTo = now;
         const opts: any = { center: newCoords, zoom: 17.5, pitch: 65, duration: 1000, essential: true };
         if (bearing !== null) opts.bearing = bearing;
         this.map.easeTo(opts);
       }
       this.checkArrivals(newCoords);
       this.updateVoiceNavigation();
-    }, () => {}, { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 });
+    }, () => {}, { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 });
   }
 
   private checkArrivals(coords: [number, number]): void {

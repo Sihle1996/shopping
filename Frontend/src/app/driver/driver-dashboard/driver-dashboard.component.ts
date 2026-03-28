@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DriverService } from 'src/app/services/driver.service';
 import { ToastrService } from 'ngx-toastr';
 import { DeliveryStop } from '../driver-map/driver-map.component';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 interface DriverOrder {
   id: string;
@@ -18,13 +20,15 @@ interface DriverOrder {
   templateUrl: './driver-dashboard.component.html',
   styleUrls: ['./driver-dashboard.component.scss']
 })
-export class DriverDashboardComponent implements OnInit {
+export class DriverDashboardComponent implements OnInit, OnDestroy {
   orders: DriverOrder[] = [];
   availability: 'AVAILABLE' | 'UNAVAILABLE' = 'AVAILABLE';
   isLoading = true;
   showDeliverConfirm = false;
   deliverTargetId: string | null = null;
   mapFullscreen = false;
+  deliveryStops: DeliveryStop[] = [];
+  private destroy$ = new Subject<void>();
 
   constructor(
     private driverService: DriverService,
@@ -34,15 +38,25 @@ export class DriverDashboardComponent implements OnInit {
   ngOnInit(): void {
     this.loadOrders();
     // Set driver as available when dashboard opens
-    this.driverService.updateAvailability('AVAILABLE').subscribe();
+    this.driverService.updateAvailability('AVAILABLE').pipe(takeUntil(this.destroy$)).subscribe();
     this.availability = 'AVAILABLE';
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadOrders(): void {
     this.isLoading = true;
-    this.driverService.getAssignedOrders().subscribe({
+    this.driverService.getAssignedOrders().pipe(takeUntil(this.destroy$)).subscribe({
       next: (res) => {
         this.orders = res;
+        this.deliveryStops = this.activeOrders.map(o => ({
+          id: o.id,
+          address: o.deliveryAddress,
+          label: `Order #${o.id.substring(0, 8)}`
+        }));
         this.isLoading = false;
       },
       error: () => this.isLoading = false
@@ -61,14 +75,6 @@ export class DriverDashboardComponent implements OnInit {
     return this.activeOrders[0] || null;
   }
 
-  get allDeliveryStops(): DeliveryStop[] {
-    return this.activeOrders.map(o => ({
-      id: o.id,
-      address: o.deliveryAddress,
-      label: `Order #${o.id.substring(0, 8)}`
-    }));
-  }
-
   confirmDeliver(id: string): void {
     this.deliverTargetId = id;
     this.showDeliverConfirm = true;
@@ -76,7 +82,7 @@ export class DriverDashboardComponent implements OnInit {
 
   onDeliverConfirmed(): void {
     if (!this.deliverTargetId) return;
-    this.driverService.markAsDelivered(this.deliverTargetId).subscribe({
+    this.driverService.markAsDelivered(this.deliverTargetId).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.toastr.success('Order marked as delivered');
         this.loadOrders();
@@ -94,7 +100,7 @@ export class DriverDashboardComponent implements OnInit {
 
   toggleAvailability(): void {
     const newStatus = this.availability === 'AVAILABLE' ? 'UNAVAILABLE' : 'AVAILABLE';
-    this.driverService.updateAvailability(newStatus).subscribe({
+    this.driverService.updateAvailability(newStatus).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.availability = newStatus;
         this.toastr.success(newStatus === 'AVAILABLE' ? 'You are now online' : 'You are now offline');
