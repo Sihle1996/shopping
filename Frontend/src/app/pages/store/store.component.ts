@@ -25,6 +25,10 @@ export class StoreComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Apply stored color immediately so child pages don't flash orange
+    const stored = localStorage.getItem('brandPrimary');
+    if (stored) this.applyBrandColor(stored);
+
     this.tenantService.getTenantBySlug(slug).subscribe({
       next: (tenant) => {
         this.tenant = tenant;

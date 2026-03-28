@@ -23,6 +23,7 @@ export class AppComponent {
       this.isDriverRoute = url.startsWith('/driver');
       this.isAuthRoute = url.startsWith('/login') || url.startsWith('/register');
       this.isStoreRoute = url.startsWith('/store/');
+
     });
   }
 }

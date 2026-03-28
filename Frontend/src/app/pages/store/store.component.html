@@ -13,5 +13,6 @@
   (action)="router.navigate(['/'])">
 </app-empty-state>
 
-<!-- Store loaded — show home/menu -->
-<app-home *ngIf="tenant && !isLoading"></app-home>
+<!-- Child route outlet — always present so Angular can activate child routes.
+     Each child component handles its own loading state. -->
+<router-outlet *ngIf="!notFound"></router-outlet>
