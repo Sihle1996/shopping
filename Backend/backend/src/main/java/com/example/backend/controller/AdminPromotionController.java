@@ -1,8 +1,11 @@
 package com.example.backend.controller;
 
 import com.example.backend.dto.PromotionRequest;
+import com.example.backend.entity.Tenant;
 import com.example.backend.model.Promotion;
 import com.example.backend.repository.PromotionRepository;
+import com.example.backend.repository.TenantRepository;
+import com.example.backend.tenant.TenantContext;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,15 +21,24 @@ import java.util.UUID;
 public class AdminPromotionController {
 
     private final PromotionRepository promotionRepository;
+    private final TenantRepository tenantRepository;
 
     @GetMapping
     public List<Promotion> list() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId != null) {
+            return promotionRepository.findByTenant_Id(tenantId);
+        }
         return promotionRepository.findAll();
     }
 
     @PostMapping
     public ResponseEntity<Promotion> create(@Valid @RequestBody PromotionRequest req) {
         Promotion p = toEntity(new Promotion(), req);
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId != null) {
+            tenantRepository.findById(tenantId).ifPresent(p::setTenant);
+        }
         Promotion saved = promotionRepository.save(p);
         return ResponseEntity.created(URI.create("/api/admin/promotions/" + saved.getId())).body(saved);
     }

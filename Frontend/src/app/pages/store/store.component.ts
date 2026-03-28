@@ -43,7 +43,8 @@ export class StoreComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.resetBrandColor();
+    // Do not reset brand color — persisted so floating cart bar stays themed
+    // after navigating away from the store route.
   }
 
   private applyBrandColor(color?: string): void {
@@ -52,13 +53,7 @@ export class StoreComponent implements OnInit, OnDestroy {
     root.style.setProperty('--brand-primary', color);
     root.style.setProperty('--brand-primary-light', color + '1A'); // 10% opacity
     root.style.setProperty('--brand-primary-hover', this.darkenColor(color, 15));
-  }
-
-  private resetBrandColor(): void {
-    const root = document.documentElement;
-    root.style.removeProperty('--brand-primary');
-    root.style.removeProperty('--brand-primary-light');
-    root.style.removeProperty('--brand-primary-hover');
+    localStorage.setItem('brandPrimary', color);
   }
 
   private darkenColor(hex: string, percent: number): string {

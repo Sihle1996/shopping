@@ -20,4 +20,7 @@ public interface CartItemRepository extends JpaRepository<CartItem, UUID> {
 
     @Query("SELECT c FROM CartItem c WHERE c.user.id = :userId")
     List<CartItem> findByUserId(@Param("userId") UUID userId);
+
+    @Query("SELECT c FROM CartItem c WHERE c.user.id = :userId AND c.menuItem.tenant.id = :tenantId")
+    List<CartItem> findByUserIdAndTenantId(@Param("userId") UUID userId, @Param("tenantId") UUID tenantId);
 }

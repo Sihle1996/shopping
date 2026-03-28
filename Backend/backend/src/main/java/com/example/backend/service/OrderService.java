@@ -109,9 +109,11 @@ public class OrderService {
     }
 
     public List<OrderDTO> getOrdersByUser(UUID userId) {
-        return orderRepository.findByUserId(userId).stream()
-                .map(this::convertToOrderDTO)
-                .toList();
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        List<Order> orders = (tenantId != null)
+                ? orderRepository.findByUserIdAndTenant_Id(userId, tenantId)
+                : orderRepository.findByUserId(userId);
+        return orders.stream().map(this::convertToOrderDTO).toList();
     }
 
     public List<OrderDTO> getAllOrders() {
@@ -140,23 +142,34 @@ public class OrderService {
     }
 
     public List<OrderDTO> getOrdersByStatus(String status) {
-        return orderRepository.findByStatus(status).stream()
-                .map(this::convertToOrderDTO)
-                .toList();
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        List<Order> orders = (tenantId != null)
+                ? orderRepository.findByStatusAndTenant_Id(status, tenantId)
+                : orderRepository.findByStatus(status);
+        return orders.stream().map(this::convertToOrderDTO).toList();
     }
 
     public Page<OrderDTO> getPaginatedOrders(int page, int size, String sortBy) {
-        return orderRepository.findAll(PageRequest.of(page, size, Sort.by(sortBy)))
-                .map(this::convertToOrderDTO);
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        Page<Order> orders = (tenantId != null)
+                ? orderRepository.findByTenant_Id(tenantId, pageable)
+                : orderRepository.findAll(pageable);
+        return orders.map(this::convertToOrderDTO);
     }
 
     public Page<OrderDTO> searchOrders(String query, int page, int size) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
         PageRequest pageable = PageRequest.of(page, size, Sort.by("orderDate"));
         Page<Order> orders;
-        if (query == null || query.isBlank()) {
-            orders = orderRepository.findAll(pageable);
+        if (tenantId != null) {
+            orders = (query == null || query.isBlank())
+                    ? orderRepository.findByTenant_Id(tenantId, pageable)
+                    : orderRepository.findByUserEmailContainingIgnoreCaseAndTenant_Id(query, tenantId, pageable);
         } else {
-            orders = orderRepository.findByUserEmailContainingIgnoreCase(query, pageable);
+            orders = (query == null || query.isBlank())
+                    ? orderRepository.findAll(pageable)
+                    : orderRepository.findByUserEmailContainingIgnoreCase(query, pageable);
         }
         return orders.map(this::convertToOrderDTO);
     }

@@ -4,6 +4,7 @@ import com.example.backend.config.JwtService;
 import com.example.backend.entity.Tenant;
 import com.example.backend.repository.TenantRepository;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.tenant.TenantContext;
 import com.example.backend.user.Role;
 import com.example.backend.user.User;
 import lombok.RequiredArgsConstructor;
@@ -26,11 +27,18 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     public AuthenticationResponse register(RegisterRequest request, UUID tenantId) {
-        // Check if the user already exists
-        repository.findByEmail(request.getEmail())
-                .ifPresent(user -> {
-                    throw new IllegalArgumentException("User with email " + request.getEmail() + " already exists");
-                });
+        // Check if the user already exists within this tenant (or globally if no tenant)
+        if (tenantId != null) {
+            repository.findByEmailAndTenant_Id(request.getEmail(), tenantId)
+                    .ifPresent(user -> {
+                        throw new IllegalArgumentException("User with email " + request.getEmail() + " already exists in this store");
+                    });
+        } else {
+            repository.findByEmail(request.getEmail())
+                    .ifPresent(user -> {
+                        throw new IllegalArgumentException("User with email " + request.getEmail() + " already exists");
+                    });
+        }
 
         // Hash the password only once during registration
         String hashedPassword = passwordEncoder.encode(request.getPassword());
@@ -72,13 +80,17 @@ public class AuthenticationService {
                 )
         );
 
-        User user = repository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        User user = (tenantId != null)
+                ? repository.findByEmailAndTenant_Id(request.getEmail(), tenantId)
+                        .or(() -> repository.findByEmailAndTenantIsNull(request.getEmail()))
+                        .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"))
+                : repository.findByEmail(request.getEmail())
+                        .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
 
-        UUID tenantId = user.getTenant() != null ? user.getTenant().getId() : null;
-        String jwtToken = jwtService.generateTokenWithId(user, user.getId(), tenantId);
+        UUID userTenantId = user.getTenant() != null ? user.getTenant().getId() : null;
+        String jwtToken = jwtService.generateTokenWithId(user, user.getId(), userTenantId);
 
-        // Return the token in the response
         return AuthenticationResponse.builder()
                 .token(jwtToken)
                 .build();

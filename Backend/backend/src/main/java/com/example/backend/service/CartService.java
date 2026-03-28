@@ -6,6 +6,7 @@ import com.example.backend.entity.MenuItem;
 import com.example.backend.repository.CartItemRepository;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.tenant.TenantContext;
 import com.example.backend.user.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +47,10 @@ public class CartService {
     }
 
     public List<CartItemDTO> getUserCartItems(UUID userId) {
-        List<CartItem> cartItems = cartItemRepository.findByUserId(userId);
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        List<CartItem> cartItems = (tenantId != null)
+                ? cartItemRepository.findByUserIdAndTenantId(userId, tenantId)
+                : cartItemRepository.findByUserId(userId);
         return cartItems.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
@@ -71,7 +75,10 @@ public class CartService {
 
     @Transactional
     public void clearCartByUserId(UUID userId) {
-        List<CartItem> userCart = cartItemRepository.findByUserId(userId);
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        List<CartItem> userCart = (tenantId != null)
+                ? cartItemRepository.findByUserIdAndTenantId(userId, tenantId)
+                : cartItemRepository.findByUserId(userId);
         cartItemRepository.deleteAll(userCart);
     }
 

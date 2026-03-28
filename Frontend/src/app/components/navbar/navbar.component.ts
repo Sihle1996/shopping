@@ -40,17 +40,18 @@ export class NavbarComponent implements OnInit, OnDestroy {
       const url = event.urlAfterRedirects;
       this.isLandingPage = url === '/';
 
-      // Clear store context when leaving a store (back to landing/login/register)
-      if (this.isLandingPage || url.startsWith('/login') || url.startsWith('/register')) {
-        if (!url.includes('returnUrl') && !this.authService.getTenantId()) {
-          localStorage.removeItem('tenantId');
-          localStorage.removeItem('storeName');
-          localStorage.removeItem('storeSlug');
-          this.storeName = null;
-          this.storeLogo = null;
-          this.hasStoreContext = false;
-          this.tenantService.clearTenant();
-        }
+      // Clear store context only when going back to the landing page.
+      // Do NOT clear on navigation to /login or /register — the tenant context
+      // must survive to the login request so X-Tenant-Id is sent and the backend
+      // can enforce per-store login isolation.
+      if (this.isLandingPage && !this.authService.getTenantId()) {
+        localStorage.removeItem('tenantId');
+        localStorage.removeItem('storeName');
+        localStorage.removeItem('storeSlug');
+        this.storeName = null;
+        this.storeLogo = null;
+        this.hasStoreContext = false;
+        this.tenantService.clearTenant();
       }
 
       this.refreshAuthState();

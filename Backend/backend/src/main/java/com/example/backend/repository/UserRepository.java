@@ -17,6 +17,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findByRoleAndDriverStatus(Role role, DriverStatus driverStatus);
     List<User> findByRole(Role role);
     Optional<User> findByEmailAndTenant_Id(String email, UUID tenantId);
+    Optional<User> findByEmailAndTenantIsNull(String email);
     List<User> findByRoleAndDriverStatusAndTenant_Id(Role role, DriverStatus driverStatus, UUID tenantId);
     List<User> findByRoleAndTenant_Id(Role role, UUID tenantId);
 }

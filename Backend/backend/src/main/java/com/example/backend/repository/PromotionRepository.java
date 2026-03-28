@@ -20,6 +20,9 @@ public interface PromotionRepository extends JpaRepository<Promotion, UUID> {
 
     Optional<Promotion> findFirstByFeaturedTrueAndActiveTrueAndStartAtBeforeAndEndAtAfter(OffsetDateTime now1, OffsetDateTime now2);
 
+    @Query("SELECT p FROM Promotion p WHERE p.featured = true AND p.active = true AND p.startAt <= :now AND p.endAt > :now AND p.tenant.id = :tenantId ORDER BY p.startAt DESC")
+    Optional<Promotion> findFeaturedByTenantId(@Param("now") OffsetDateTime now, @Param("tenantId") UUID tenantId);
+
     Optional<Promotion> findByCodeAndActiveTrue(String code);
 
     List<Promotion> findByTenant_Id(UUID tenantId);

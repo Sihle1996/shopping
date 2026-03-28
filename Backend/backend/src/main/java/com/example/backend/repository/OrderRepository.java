@@ -19,9 +19,13 @@ import java.util.UUID;
 public interface OrderRepository extends JpaRepository<Order, UUID> {
     List<Order> findByUserId(UUID userId);
     List<Order> findByStatus(String status);
+    List<Order> findByStatusAndTenant_Id(String status, UUID tenantId);
     List<Order> findByDriver(User driver);
     List<Order> findByOrderDateBetween(Instant start, Instant end);
     Page<Order> findByUserEmailContainingIgnoreCase(String email, Pageable pageable);
+    Page<Order> findByTenant_Id(UUID tenantId, Pageable pageable);
+    Page<Order> findByUserEmailContainingIgnoreCaseAndTenant_Id(String email, UUID tenantId, Pageable pageable);
+    List<Order> findByUserIdAndTenant_Id(UUID userId, UUID tenantId);
 
     @Query("SELECT new com.example.backend.entity.TopProductDTO(oi.menuItem.name, SUM(oi.quantity)) " +
            "FROM Order o JOIN o.orderItems oi " +

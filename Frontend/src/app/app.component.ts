@@ -12,6 +12,7 @@ export class AppComponent {
   isAdminRoute = false;
   isDriverRoute = false;
   isAuthRoute = false;
+  isStoreRoute = false;
 
   constructor(private router: Router) {
     this.router.events.pipe(
@@ -21,6 +22,7 @@ export class AppComponent {
       this.isAdminRoute = url.startsWith('/admin');
       this.isDriverRoute = url.startsWith('/driver');
       this.isAuthRoute = url.startsWith('/login') || url.startsWith('/register');
+      this.isStoreRoute = url.startsWith('/store/');
     });
   }
 }

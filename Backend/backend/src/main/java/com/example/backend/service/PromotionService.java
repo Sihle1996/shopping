@@ -26,6 +26,10 @@ public class PromotionService {
 
     public Optional<Promotion> getFeaturedPromotion() {
         OffsetDateTime now = OffsetDateTime.now();
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId != null) {
+            return promotionRepository.findFeaturedByTenantId(now, tenantId);
+        }
         return promotionRepository.findFirstByFeaturedTrueAndActiveTrueAndStartAtBeforeAndEndAtAfter(now, now);
     }
 
