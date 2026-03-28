@@ -1,15 +1,54 @@
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-  <div *ngFor="let promo of promotions" class="bg-white rounded-xl shadow overflow-hidden">
-    <div class="relative h-32 bg-gray-100">
-      <img *ngIf="promo.imageUrl" [src]="promo.imageUrl" alt="{{ promo.title }}" class="absolute inset-0 w-full h-full object-cover" />
+<div class="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+  <div *ngFor="let promo of promotions"
+       class="flex-shrink-0 w-60 rounded-2xl overflow-hidden shadow-card"
+       [style.border]="'1.5px solid var(--brand-primary)'"
+       [style.background]="'var(--brand-primary-light)'">
+
+    <!-- Image / placeholder -->
+    <div class="relative h-28 overflow-hidden"
+         [style.background]="'var(--brand-primary-light)'">
+      <img *ngIf="promo.imageUrl" [src]="resolveImageUrl(promo.imageUrl)" [alt]="promo.title"
+           class="w-full h-full object-cover" />
+      <div *ngIf="!promo.imageUrl"
+           class="absolute inset-0 flex items-center justify-center">
+        <i class="bi bi-tag text-4xl" style="color: var(--brand-primary); opacity: 0.35"></i>
+      </div>
+
+      <!-- Discount badge -->
+      <div *ngIf="promo.discountPercent"
+           class="absolute top-2 right-2 text-white text-xs font-bold
+                  px-2 py-0.5 rounded-full shadow"
+           [style.background]="'var(--brand-primary)'">
+        -{{ promo.discountPercent }}%
+      </div>
     </div>
-    <div class="p-4">
-      <div class="text-sm text-gray-500 uppercase tracking-wide mb-1">Promotion</div>
-      <h3 class="text-lg font-semibold text-gray-800">{{ promo.title }}</h3>
-      <p class="text-gray-600 mt-1" *ngIf="promo.description">{{ promo.description }}</p>
-      <div class="mt-3 flex items-center gap-2">
-        <span *ngIf="promo.badgeText" class="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-800">{{ promo.badgeText }}</span>
-        <span *ngIf="promo.discountPercent" class="px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700">-{{ promo.discountPercent }}%</span>
+
+    <!-- Body -->
+    <div class="p-3">
+      <h4 class="font-heading text-sm font-bold truncate" [style.color]="'var(--brand-primary-hover)'">{{ promo.title }}</h4>
+      <p *ngIf="promo.description"
+         class="text-xs mt-0.5 line-clamp-2 leading-relaxed"
+         [style.color]="'var(--brand-primary)'">
+        {{ promo.description }}
+      </p>
+
+      <!-- Code or auto-apply -->
+      <div class="mt-2">
+        <span *ngIf="promo.code"
+              class="inline-flex items-center gap-1 text-[10px] font-mono font-bold
+                     px-2 py-0.5 rounded-lg tracking-wider border"
+              [style.color]="'var(--brand-primary)'"
+              [style.borderColor]="'var(--brand-primary)'"
+              [style.background]="'rgba(255,255,255,0.6)'">
+          <i class="bi bi-upc text-xs"></i>{{ promo.code }}
+        </span>
+        <span *ngIf="!promo.code"
+              class="inline-flex items-center gap-1 text-[10px] font-medium
+                     px-2 py-0.5 rounded-lg"
+              [style.color]="'var(--brand-primary)'"
+              [style.background]="'rgba(255,255,255,0.6)'">
+          <i class="bi bi-lightning-fill text-xs"></i>Auto-applied
+        </span>
       </div>
     </div>
   </div>

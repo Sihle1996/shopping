@@ -1,9 +1,24 @@
-<div class="min-h-screen flex flex-col items-center justify-center bg-white text-center p-6">
-    <i class="bi bi-check-circle-fill text-green-500 text-6xl mb-4"></i>
-    <h2 class="text-2xl font-bold text-gray-800 mb-2">Thank You for Your Order!</h2>
-    <p class="text-gray-600 mb-6">We've received your payment. Your food is being prepared and will be on the way soon.</p>
-    <a routerLink="/" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
-      Continue Shopping
-    </a>
+<div class="min-h-screen flex flex-col items-center justify-center bg-surface text-center p-6">
+
+  <!-- Success icon -->
+  <div class="w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-lg"
+       style="background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)">
+    <i class="bi bi-check-lg text-white text-5xl"></i>
   </div>
-  
+
+  <h1 class="font-heading text-3xl font-extrabold text-textDark mb-2">
+    Thank You for Shopping With Us!
+  </h1>
+  <p class="text-textLight text-sm max-w-xs mb-1">
+    Your payment was successful. Your order is being prepared and will be on its way shortly.
+  </p>
+  <p class="text-xs text-textMuted mb-8">Redirecting you back to the menu in 5 seconds...</p>
+
+  <button (click)="goToMenu()"
+          class="px-8 py-3 rounded-2xl text-white font-semibold text-sm shadow-md
+                 transition-all duration-200 active:scale-95"
+          style="background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)">
+    <i class="bi bi-shop mr-2"></i>Back to Menu
+  </button>
+
+</div>

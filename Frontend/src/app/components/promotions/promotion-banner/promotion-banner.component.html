@@ -1,12 +1,66 @@
-<div *ngIf="promotion" class="relative rounded-xl overflow-hidden shadow bg-gradient-to-r from-yellow-400 to-red-400">
-  <img *ngIf="promotion.imageUrl" [src]="promotion.imageUrl" alt="{{ promotion.title }}" class="absolute inset-0 w-full h-full object-cover opacity-25" />
-  <div class="relative p-6 md:p-8">
-    <div class="text-sm uppercase tracking-wider text-white/90">Limited Offer</div>
-    <h2 class="text-2xl md:text-3xl font-extrabold text-white drop-shadow mt-1">{{ promotion.title }}</h2>
-    <p class="text-white/90 mt-2" *ngIf="promotion.description">{{ promotion.description }}</p>
-    <div class="mt-3 inline-flex items-center gap-2 bg-white/90 text-gray-900 px-3 py-1 rounded-full" *ngIf="promotion.badgeText || promotion.discountPercent">
-      <span *ngIf="promotion.badgeText">{{ promotion.badgeText }}</span>
-      <span *ngIf="promotion.discountPercent">-{{ promotion.discountPercent }}%</span>
+<div *ngIf="promotion"
+     class="relative rounded-2xl overflow-hidden shadow-card min-h-[140px] flex items-center"
+     style="background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)">
+
+  <!-- Background image with overlay -->
+  <div *ngIf="promotion.imageUrl"
+       class="absolute inset-0 bg-cover bg-center"
+       [style.backgroundImage]="'url(' + resolveImageUrl(promotion.imageUrl) + ')'">
+  </div>
+  <div *ngIf="promotion.imageUrl" class="absolute inset-0 bg-black/50"></div>
+
+  <!-- Gradient overlay for text readability -->
+  <div class="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent"></div>
+
+  <!-- Content -->
+  <div class="relative z-10 flex items-center justify-between w-full px-5 py-5 gap-4">
+
+    <div class="flex-1 min-w-0">
+      <!-- Badge pill -->
+      <div class="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm
+                  text-white text-[10px] font-bold uppercase tracking-widest
+                  px-2.5 py-1 rounded-full mb-2">
+        <i class="bi bi-lightning-fill text-yellow-300"></i>
+        {{ promotion.badgeText || 'Limited Offer' }}
+      </div>
+
+      <!-- Title -->
+      <h2 class="font-heading text-xl font-extrabold text-white leading-tight drop-shadow-sm">
+        {{ promotion.title }}
+      </h2>
+
+      <!-- Description -->
+      <p *ngIf="promotion.description"
+         class="text-white/80 text-xs mt-1 line-clamp-2 leading-relaxed">
+        {{ promotion.description }}
+      </p>
+
+      <!-- Code or auto-apply -->
+      <div *ngIf="promotion.code" class="mt-2 flex items-center gap-1.5">
+        <span class="text-[10px] text-white/70">Use code</span>
+        <span class="font-mono font-bold text-xs bg-white/25 backdrop-blur-sm text-white
+                     px-2 py-0.5 rounded-md tracking-wider border border-white/30">
+          {{ promotion.code }}
+        </span>
+        <span class="text-[10px] text-white/70">at checkout</span>
+      </div>
+      <div *ngIf="!promotion.code" class="mt-2">
+        <span class="text-[10px] text-white/80 flex items-center gap-1">
+          <i class="bi bi-check-circle-fill text-xs" style="color: rgba(255,255,255,0.9)"></i>
+          Auto-applied at checkout
+        </span>
+      </div>
     </div>
+
+    <!-- Discount bubble -->
+    <div *ngIf="promotion.discountPercent"
+         class="flex-shrink-0 w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm
+                border-2 border-white/40 flex flex-col items-center justify-center shadow-lg">
+      <span class="font-numbers font-black text-white text-2xl leading-none">
+        {{ promotion.discountPercent }}%
+      </span>
+      <span class="text-white/80 text-[9px] font-bold uppercase tracking-wide">OFF</span>
+    </div>
+
   </div>
 </div>

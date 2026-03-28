@@ -21,6 +21,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   filteredMenuItems: MenuItem[] = [];
   featuredPromotion: Promotion | null = null;
   promotions: Promotion[] = [];
+  autoDiscount = 0;
   isLoading = false;
 
   categories = [
@@ -96,7 +97,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.promotionService.getActivePromotions()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (list) => this.promotions = list,
+        next: (list) => {
+          this.promotions = list;
+          const autoAll = list.find(p => !p.code && p.appliesTo === 'ALL' && p.discountPercent);
+          this.autoDiscount = autoAll?.discountPercent ?? 0;
+        },
         error: () => {}
       });
   }

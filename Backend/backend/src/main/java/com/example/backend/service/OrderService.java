@@ -1,6 +1,7 @@
 package com.example.backend.service;
 
 import com.example.backend.entity.*;
+import com.example.backend.model.Promotion;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.TenantRepository;
@@ -37,6 +38,7 @@ public class OrderService {
     private final InventoryLogRepository inventoryLogRepository;
     private final TenantRepository tenantRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final PromotionService promotionService;
 
     @Transactional
     public OrderDTO placeOrderFromPayment(OrderRequestDTO request, User user) {
@@ -74,7 +76,40 @@ public class OrderService {
             orderItems.add(item);
         }
 
-        double totalAmount = BigDecimal.valueOf(request.getTotal())
+        double subtotal = BigDecimal.valueOf(request.getTotal())
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
+
+        // Apply promotion discount server-side
+        double discountAmount = 0.0;
+        String appliedPromoCode = null;
+
+        java.util.Optional<Promotion> promoOpt = (request.getPromoCode() != null && !request.getPromoCode().isBlank())
+                ? promotionService.validateCode(request.getPromoCode())
+                : promotionService.findAutoAppliedAllPromo();
+
+        if (promoOpt.isPresent()) {
+            Promotion promo = promoOpt.get();
+            if (promo.getDiscountPercent() != null) {
+                double pct = promo.getDiscountPercent().doubleValue() / 100.0;
+                if (promo.getAppliesTo() == Promotion.AppliesTo.ALL) {
+                    discountAmount = subtotal * pct;
+                } else if (promo.getAppliesTo() == Promotion.AppliesTo.PRODUCT
+                        && promo.getTargetProductId() != null) {
+                    for (OrderItemDTO item : request.getItems()) {
+                        if (promo.getTargetProductId().equals(item.getProductId())) {
+                            discountAmount += item.getPrice() * item.getQuantity() * pct;
+                        }
+                    }
+                } else if (promo.getAppliesTo() == Promotion.AppliesTo.CATEGORY) {
+                    discountAmount = subtotal * pct;
+                }
+                discountAmount = BigDecimal.valueOf(discountAmount).setScale(2, RoundingMode.HALF_UP).doubleValue();
+                appliedPromoCode = promo.getCode() != null ? promo.getCode().trim() : promo.getTitle();
+            }
+        }
+
+        double totalAmount = BigDecimal.valueOf(Math.max(0, subtotal - discountAmount))
                 .setScale(2, RoundingMode.HALF_UP)
                 .doubleValue();
 
@@ -82,6 +117,8 @@ public class OrderService {
         order.setUser(user);
         order.setOrderItems(orderItems);
         order.setTotalAmount(totalAmount);
+        order.setDiscountAmount(discountAmount);
+        order.setPromoCode(appliedPromoCode);
         order.setOrderDate(Instant.now());
         order.setStatus("Pending");
         order.setDeliveryAddress(request.getDeliveryAddress());
@@ -234,11 +271,13 @@ public class OrderService {
                 order.getPayerId(),
                 itemDTOs,
                 null, // driverName, set below
-                order.getTenant() != null ? order.getTenant().getId() : null
+                order.getTenant() != null ? order.getTenant().getId() : null,
+                order.getDiscountAmount() != null ? order.getDiscountAmount() : 0.0,
+                order.getPromoCode()
         );
 
         if (order.getDriver() != null) {
-            dto.setDriverName(order.getDriver().getEmail()); // or .getFullName() if you have it
+            dto.setDriverName(order.getDriver().getEmail());
         }
 
         return dto;

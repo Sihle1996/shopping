@@ -49,9 +49,14 @@ export interface ProductCardItem {
         <h4 class="font-semibold text-textDark text-base truncate mb-1">{{ item.name }}</h4>
         <p class="text-textLight text-sm line-clamp-2 mb-3 leading-relaxed">{{ item.description }}</p>
         <div class="flex items-center justify-between">
-          <span class="font-numbers font-bold text-lg text-primary">
-            R{{ item.price.toFixed(2) }}
-          </span>
+          <div class="flex flex-col">
+            <span *ngIf="discountPercent" class="font-numbers text-xs text-textLight line-through leading-none">
+              R{{ item.price.toFixed(2) }}
+            </span>
+            <span class="font-numbers font-bold text-lg text-primary leading-tight">
+              R{{ discountedPrice.toFixed(2) }}
+            </span>
+          </div>
           <button
             *ngIf="showAddToCart && item.isAvailable"
             (click)="onAddToCart($event)"
@@ -77,6 +82,13 @@ export class ProductCardComponent {
   @Input() item!: ProductCardItem;
   @Input() showFavorite = false;
   @Input() showAddToCart = true;
+  @Input() discountPercent = 0;
+
+  get discountedPrice(): number {
+    if (!this.item) return 0;
+    if (!this.discountPercent) return this.item.price;
+    return this.item.price * (1 - this.discountPercent / 100);
+  }
   @Output() cardClick = new EventEmitter<ProductCardItem>();
   @Output() addToCart = new EventEmitter<ProductCardItem>();
   @Output() favorite = new EventEmitter<ProductCardItem>();
