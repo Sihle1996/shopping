@@ -59,7 +59,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.isAdmin = this.authService.getUserRole() === 'ROLE_ADMIN';
     this.isLoggedIn = this.authService.isLoggedIn();
-    this.applyStoredBrandColor();
     this.fetchMenu();
     this.loadPromotions();
     this.subscribeToCart();
@@ -221,19 +220,6 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   updateCartItemQuantity(event: { item: CartItem; quantity: number }): void {
     this.cartService.updateCartItem(event.item.id, event.quantity).subscribe();
-  }
-
-  private applyStoredBrandColor(): void {
-    const color = localStorage.getItem('brandPrimary');
-    if (!color) return;
-    const root = document.documentElement;
-    root.style.setProperty('--brand-primary', color);
-    root.style.setProperty('--brand-primary-light', color + '1A');
-    const num = parseInt(color.replace('#', ''), 16);
-    const r = Math.max(0, (num >> 16) - Math.round(2.55 * 15));
-    const g = Math.max(0, ((num >> 8) & 0x00FF) - Math.round(2.55 * 15));
-    const b = Math.max(0, (num & 0x0000FF) - Math.round(2.55 * 15));
-    root.style.setProperty('--brand-primary-hover', `#${(r << 16 | g << 8 | b).toString(16).padStart(6, '0')}`);
   }
 
   trackById(_: number, item: MenuItem): string | null {
