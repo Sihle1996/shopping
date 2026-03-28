@@ -1,0 +1,107 @@
+<div class="px-4 pt-6 lg:px-8">
+  <div class="max-w-5xl mx-auto">
+
+    <!-- Header -->
+    <div class="mb-8">
+      <h2 class="font-heading text-2xl font-bold text-textDark">Platform Dashboard</h2>
+      <p class="text-textLight text-sm mt-1">High-level overview of all stores and activity</p>
+    </div>
+
+    <!-- Loading state -->
+    <div *ngIf="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div *ngFor="let i of [1,2,3,4]"
+           class="bg-white rounded-2xl shadow-card p-5 animate-pulse h-24">
+      </div>
+    </div>
+
+    <!-- Error state -->
+    <div *ngIf="error && !loading"
+         class="bg-white rounded-2xl shadow-card p-6 flex flex-col items-center text-center mb-8">
+      <i class="bi bi-exclamation-triangle text-3xl text-danger mb-2"></i>
+      <p class="text-textDark font-medium mb-1">Failed to load stats</p>
+      <p class="text-textMuted text-sm mb-4">Could not reach the platform stats endpoint.</p>
+      <button (click)="loadStats()"
+              class="px-4 py-2 rounded-xl text-sm font-medium text-white"
+              style="background: var(--brand-primary, #4f46e5);">
+        Retry
+      </button>
+    </div>
+
+    <!-- Stat Cards -->
+    <div *ngIf="!loading && !error"
+         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
+      <!-- Total Stores -->
+      <div class="bg-white rounded-2xl shadow-card p-5">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-textMuted text-xs uppercase tracking-wide mb-1">Total Stores</p>
+            <p class="font-numbers text-3xl font-bold text-textDark">{{ stats.totalTenants }}</p>
+          </div>
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+               style="background: var(--brand-primary-light, #eef2ff);">
+            <i class="bi bi-shop text-xl" style="color: var(--brand-primary, #4f46e5);"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Stores -->
+      <div class="bg-white rounded-2xl shadow-card p-5">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-textMuted text-xs uppercase tracking-wide mb-1">Active Stores</p>
+            <p class="font-numbers text-3xl font-bold text-success">{{ stats.activeTenants }}</p>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-check-circle text-xl text-success"></i>
+          </div>
+        </div>
+        <p class="text-xs text-textMuted mt-2">
+          {{ stats.totalTenants - stats.activeTenants }} inactive
+        </p>
+      </div>
+
+      <!-- Total Orders -->
+      <div class="bg-white rounded-2xl shadow-card p-5">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-textMuted text-xs uppercase tracking-wide mb-1">Total Orders</p>
+            <p class="font-numbers text-3xl font-bold text-textDark">{{ stats.totalOrders }}</p>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-receipt text-xl text-blue-600"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Revenue -->
+      <div class="bg-white rounded-2xl shadow-card p-5">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-textMuted text-xs uppercase tracking-wide mb-1">Total Revenue</p>
+            <p class="font-numbers text-3xl font-bold text-success">
+              R{{ stats.totalRevenue | number:'1.2-2' }}
+            </p>
+          </div>
+          <div class="w-11 h-11 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-currency-dollar text-xl text-success"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick links -->
+    <div *ngIf="!loading && !error" class="bg-white rounded-2xl shadow-card p-6">
+      <h3 class="font-heading text-sm font-semibold text-textDark mb-4">Quick Actions</h3>
+      <div class="flex flex-wrap gap-3">
+        <a routerLink="/superadmin/stores"
+           class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-opacity hover:opacity-90"
+           style="background: var(--brand-primary, #4f46e5);">
+          <i class="bi bi-shop"></i>
+          Manage Stores
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
