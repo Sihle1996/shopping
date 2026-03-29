@@ -62,6 +62,13 @@ export class CartComponent implements OnInit {
           .filter(i => i.menuItemId === this.bestPromo!.targetProductId)
           .reduce((sum, i) => sum + i.menuItemPrice * i.quantity * pct, 0) * 100
       ) / 100;
+    } else if (this.bestPromo.appliesTo === 'CATEGORY' && this.bestPromo.targetCategoryName) {
+      const catName = this.bestPromo.targetCategoryName.toLowerCase();
+      this.discount = Math.round(
+        this.cartItems
+          .filter(i => (i.menuItemCategory ?? '').toLowerCase() === catName)
+          .reduce((sum, i) => sum + i.menuItemPrice * i.quantity * pct, 0) * 100
+      ) / 100;
     } else {
       this.discount = 0;
     }
@@ -70,11 +77,12 @@ export class CartComponent implements OnInit {
   private pickBestPromo(): Promotion | null {
     const auto = this.activePromotions.filter(p => !p.code && p.discountPercent);
     if (!auto.length) return null;
-    // Prefer promo with highest effective discount for this cart
     const allPromo = auto.find(p => p.appliesTo === 'ALL');
     const productPromos = auto.filter(p => p.appliesTo === 'PRODUCT' &&
       this.cartItems.some(i => i.menuItemId === p.targetProductId));
-    const candidates = [...(allPromo ? [allPromo] : []), ...productPromos];
+    const categoryPromos = auto.filter(p => p.appliesTo === 'CATEGORY' && p.targetCategoryName &&
+      this.cartItems.some(i => (i.menuItemCategory ?? '').toLowerCase() === p.targetCategoryName!.toLowerCase()));
+    const candidates = [...(allPromo ? [allPromo] : []), ...productPromos, ...categoryPromos];
     if (!candidates.length) return null;
     return candidates.reduce((best, p) =>
       (p.discountPercent ?? 0) > (best.discountPercent ?? 0) ? p : best

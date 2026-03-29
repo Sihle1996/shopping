@@ -58,7 +58,7 @@ export class ProductComponent implements OnInit {
         best = Math.max(best, p.discountPercent);
       } else if (p.appliesTo === 'PRODUCT' && p.targetProductId === this.product.id) {
         best = Math.max(best, p.discountPercent);
-      } else if (p.appliesTo === 'CATEGORY' && p.targetCategoryName && this.product.category === p.targetCategoryName) {
+      } else if (p.appliesTo === 'CATEGORY' && p.targetCategoryName && (this.product.category ?? '').toLowerCase() === p.targetCategoryName.toLowerCase()) {
         best = Math.max(best, p.discountPercent);
       }
     }

@@ -18,7 +18,9 @@ public class PromotionDTO {
     private String endAt;
     private String appliesTo;
     private UUID targetCategoryId;
+    private String targetCategoryName;
     private UUID targetProductId;
+    private String targetProductName;
     private String code;
     private boolean active;
     private boolean featured;
@@ -35,7 +37,9 @@ public class PromotionDTO {
         dto.setEndAt(p.getEndAt() != null ? p.getEndAt().toString() : null);
         dto.setAppliesTo(p.getAppliesTo() != null ? p.getAppliesTo().name() : null);
         dto.setTargetCategoryId(p.getTargetCategoryId());
+        dto.setTargetCategoryName(p.getTargetCategoryName());
         dto.setTargetProductId(p.getTargetProductId());
+        dto.setTargetProductName(p.getTargetProductName());
         dto.setCode(p.getCode());
         dto.setActive(p.isActive());
         dto.setFeatured(p.isFeatured());

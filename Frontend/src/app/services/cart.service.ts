@@ -9,6 +9,7 @@ export interface CartItem {
   id: string;
   menuItemId: string;
   menuItemName: string;
+  menuItemCategory?: string;
   menuItemPrice: number;
   quantity: number;
   totalPrice: number;
@@ -56,6 +57,7 @@ export class CartService {
       id: item.id,
       menuItemId: item.menuItemId,
       menuItemName: item.menuItemName,
+      menuItemCategory: item.menuItemCategory,
       menuItemPrice: item.menuItemPrice,
       quantity: item.quantity,
       totalPrice: item.totalPrice,

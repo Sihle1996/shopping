@@ -111,7 +111,8 @@ public class CartService {
         dto.setMenuItemPrice(cartItem.getMenuItem().getPrice());
         dto.setQuantity(cartItem.getQuantity());
         dto.setTotalPrice(cartItem.getTotalPrice());
-        dto.setImage(cartItem.getMenuItem().getImage()); // ✅ Set the correct image
+        dto.setImage(cartItem.getMenuItem().getImage());
+        dto.setMenuItemCategory(cartItem.getMenuItem().getCategory());
         return dto;
     }
 }

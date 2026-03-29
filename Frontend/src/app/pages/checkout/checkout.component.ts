@@ -135,9 +135,9 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
         .filter(i => i.menuItemId === this.appliedPromo!.targetProductId)
         .reduce((sum, i) => sum + i.menuItemPrice * i.quantity * pct, 0);
     } else if (this.appliedPromo.appliesTo === 'CATEGORY' && this.appliedPromo.targetCategoryName) {
-      // Apply discount only to items whose category matches
+      const catName = this.appliedPromo.targetCategoryName.toLowerCase();
       this.discount = this.cartItems
-        .filter((i: any) => i.menuItemCategory === this.appliedPromo!.targetCategoryName)
+        .filter((i: any) => (i.menuItemCategory ?? '').toLowerCase() === catName)
         .reduce((sum: number, i: any) => sum + i.menuItemPrice * i.quantity * pct, 0);
     } else {
       this.discount = 0; // can't apply — unknown scope

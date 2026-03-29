@@ -9,10 +9,11 @@ public class CartItemDTO {
     private UUID id;
     private UUID menuItemId;
     private String menuItemName;
+    private String menuItemCategory;
     private Double menuItemPrice;
     private Integer quantity;
     private Double totalPrice;
-    private String image; // ✅ this field
+    private String image;
 
 
 }

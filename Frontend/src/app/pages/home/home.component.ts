@@ -116,7 +116,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         best = Math.max(best, p.discountPercent);
       } else if (p.appliesTo === 'PRODUCT' && p.targetProductId === item.id) {
         best = Math.max(best, p.discountPercent);
-      } else if (p.appliesTo === 'CATEGORY' && p.targetCategoryName && item.category === p.targetCategoryName) {
+      } else if (p.appliesTo === 'CATEGORY' && p.targetCategoryName && (item.category ?? '').toLowerCase() === p.targetCategoryName.toLowerCase()) {
         best = Math.max(best, p.discountPercent);
       }
     }
