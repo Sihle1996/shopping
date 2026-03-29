@@ -13,5 +13,6 @@ export class AdminFooterComponent {
     { route: '/admin/inventory', label: 'Inventory', icon: 'bi bi-box-seam', exact: false },
     { route: '/admin/promotions', label: 'Promos', icon: 'bi bi-tag', exact: false },
     { route: '/admin/drivers', label: 'Drivers', icon: 'bi bi-truck', exact: false },
+    { route: '/admin/settings', label: 'Settings', icon: 'bi bi-gear', exact: false },
   ];
 }
