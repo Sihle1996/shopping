@@ -1,21 +1,17 @@
 package com.example.backend.controller;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.example.backend.entity.MenuItem;
+import com.example.backend.service.CloudinaryService;
 import com.example.backend.service.MenuService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,9 +22,7 @@ import java.util.UUID;
 public class AdminMenuController {
 
     private final MenuService menuService;
-
-    @Value("${menu.images.directory:uploads/images}")
-    private String imageDirectory;
+    private final CloudinaryService cloudinaryService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
@@ -71,16 +65,7 @@ public class AdminMenuController {
     @PostMapping("/upload-image")
     public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
-            String filename = System.currentTimeMillis() + "_" + StringUtils.cleanPath(file.getOriginalFilename());
-            Path uploadPath = Paths.get(imageDirectory);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            Path filePath = uploadPath.resolve(filename);
-            file.transferTo(filePath);
-
-            String imageUrl = "/images/" + filename;
+            String imageUrl = cloudinaryService.upload(file);
             return ResponseEntity.ok().body(java.util.Collections.singletonMap("imageUrl", imageUrl));
         } catch (IOException e) {
             log.error("Image upload failed for file {}", file.getOriginalFilename(), e);
