@@ -34,6 +34,21 @@ export class AdminPromotionsComponent implements OnInit {
     return this.form?.get('appliesTo')?.value;
   }
 
+  /** Only available (in-stock) products shown in PRODUCT promo dropdown */
+  get availableMenuItems(): any[] {
+    return this.menuItems.filter(i => i.isAvailable !== false);
+  }
+
+  /** Only categories that have at least one in-stock item */
+  get availableCategories(): any[] {
+    return this.categories.filter(cat => {
+      const catItems = this.menuItems.filter(i =>
+        (i.category ?? '').toLowerCase() === (cat.name ?? '').toLowerCase()
+      );
+      return catItems.some(i => i.isAvailable !== false);
+    });
+  }
+
   constructor(
     private fb: FormBuilder,
     private api: AdminPromotionService,

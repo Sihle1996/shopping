@@ -62,6 +62,16 @@
         <!-- Divider -->
         <div class="border-t border-borderColor"></div>
 
+        <!-- Out of Stock Banner -->
+        <div *ngIf="!product.isAvailable"
+             class="flex items-center gap-3 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
+          <i class="bi bi-x-circle-fill text-danger text-lg flex-shrink-0"></i>
+          <div>
+            <p class="text-sm font-semibold text-danger">Out of Stock</p>
+            <p class="text-xs text-red-500 mt-0.5">This item is currently unavailable</p>
+          </div>
+        </div>
+
         <!-- Price & Add to Cart -->
         <div class="flex items-center justify-between">
           <div>
@@ -69,10 +79,12 @@
             <p *ngIf="autoDiscountPercent" class="font-numbers text-sm text-textLight line-through leading-none">
               R{{ (product.price * quantity).toFixed(2) }}
             </p>
-            <p class="font-numbers text-2xl font-bold text-primary leading-tight">
+            <p class="font-numbers text-2xl font-bold leading-tight"
+               [class.text-primary]="product.isAvailable"
+               [class.text-textMuted]="!product.isAvailable">
               R{{ discountedPrice.toFixed(2) }}
             </p>
-            <p *ngIf="autoDiscountPercent" class="text-xs font-medium mt-0.5" style="color: var(--brand-primary)">
+            <p *ngIf="autoDiscountPercent && product.isAvailable" class="text-xs font-medium mt-0.5" style="color: var(--brand-primary)">
               {{ autoDiscountPercent }}% off applied
             </p>
           </div>
@@ -81,11 +93,24 @@
             size="lg"
             iconLeft="bi bi-cart-plus"
             [loading]="isAddingToCart"
+            [disabled]="!product.isAvailable"
             (clicked)="addToCart()">
-            Add to Cart
+            {{ product.isAvailable ? 'Add to Cart' : 'Unavailable' }}
           </app-button>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Out of Stock Modal -->
+<app-confirm-modal
+  [isOpen]="showOutOfStockModal"
+  title="Item Unavailable"
+  [message]="product?.name + ' is currently out of stock and cannot be added to your cart.'"
+  confirmLabel="Got it"
+  variant="warning"
+  [showCancel]="false"
+  (confirmed)="showOutOfStockModal = false"
+  (cancelled)="showOutOfStockModal = false">
+</app-confirm-modal>

@@ -21,7 +21,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
         <p class="text-textLight text-sm text-center mb-6">{{ message }}</p>
         <!-- Actions -->
         <div class="flex gap-3">
-          <app-button variant="ghost" size="md" [fullWidth]="true" (clicked)="onCancel()">
+          <app-button *ngIf="showCancel" variant="ghost" size="md" [fullWidth]="true" (clicked)="onCancel()">
             {{ cancelLabel }}
           </app-button>
           <app-button [variant]="confirmVariant" size="md" [fullWidth]="true" (clicked)="onConfirm()">
@@ -40,6 +40,7 @@ export class ConfirmModalComponent {
   @Input() confirmLabel = 'Confirm';
   @Input() cancelLabel = 'Cancel';
   @Input() variant: 'danger' | 'warning' | 'primary' = 'danger';
+  @Input() showCancel = true;
 
   @Output() confirmed = new EventEmitter<void>();
   @Output() cancelled = new EventEmitter<void>();

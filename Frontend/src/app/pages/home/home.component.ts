@@ -23,6 +23,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   promotions: Promotion[] = [];
   autoDiscount = 0;  // kept for ALL promotions (used as default pass-through)
   isLoading = false;
+  showOutOfStockModal = false;
+  outOfStockItemName = '';
 
   categories = [
     { name: 'All', icon: 'assets/istockphoto-1419247070-612x612.jpg' },
@@ -104,6 +106,29 @@ export class HomeComponent implements OnInit, OnDestroy {
         },
         error: () => {}
       });
+  }
+
+  /** Returns promotions that are relevant to currently in-stock items */
+  get visiblePromotions(): Promotion[] {
+    return this.promotions.filter(p => this.isPromoRelevant(p));
+  }
+
+  private isPromoRelevant(p: Promotion): boolean {
+    if (p.appliesTo === 'PRODUCT' && p.targetProductId) {
+      const item = this.menuItems.find(i => i.id === p.targetProductId);
+      return item ? item.isAvailable !== false : false;
+    }
+    if (p.appliesTo === 'CATEGORY' && p.targetCategoryName) {
+      const catName = p.targetCategoryName.toLowerCase();
+      const catItems = this.menuItems.filter(i => (i.category ?? '').toLowerCase() === catName);
+      if (!catItems.length) return false;
+      return catItems.some(i => i.isAvailable !== false);
+    }
+    return true; // ALL promotions always show
+  }
+
+  get isFeaturedPromoValid(): boolean {
+    return this.featuredPromotion ? this.isPromoRelevant(this.featuredPromotion) : false;
   }
 
   getDiscountForItem(item: MenuItem): number {
@@ -209,6 +234,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (!item.id) return;
     if (!this.isLoggedIn) {
       this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
+      return;
+    }
+    if (!item.isAvailable) {
+      this.outOfStockItemName = item.name;
+      this.showOutOfStockModal = true;
       return;
     }
     this.cartService.addToCart(item.id, 1, 'M').subscribe({
