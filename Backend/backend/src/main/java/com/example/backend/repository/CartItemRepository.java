@@ -17,6 +17,7 @@ import java.util.UUID;
 @Repository
 public interface CartItemRepository extends JpaRepository<CartItem, UUID> {
     Optional<CartItem> findByUserAndMenuItem(User user, MenuItem menuItem);
+    void deleteByMenuItem(MenuItem menuItem);
 
     @Query("SELECT c FROM CartItem c WHERE c.user.id = :userId")
     List<CartItem> findByUserId(@Param("userId") UUID userId);
