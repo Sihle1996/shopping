@@ -2,11 +2,13 @@ package com.example.backend.service;
 
 import com.example.backend.entity.MenuItem;
 import com.example.backend.entity.Tenant;
+import com.example.backend.repository.CartItemRepository;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.TenantRepository;
 import com.example.backend.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,6 +19,7 @@ public class MenuService {
 
     private final MenuItemRepository menuItemRepository;
     private final TenantRepository tenantRepository;
+    private final CartItemRepository cartItemRepository;
 
     public MenuItem saveMenuItem(MenuItem menuItem) {
         setTenantOnEntity(menuItem);
@@ -40,11 +43,12 @@ public class MenuService {
         return menuItemRepository.save(menuItem);
     }
 
+    @Transactional
     public void deleteMenuItem(UUID id) {
-        if (!menuItemRepository.existsById(id)) {
-            throw new RuntimeException("Menu item not found");
-        }
-        menuItemRepository.deleteById(id);
+        MenuItem menuItem = menuItemRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Menu item not found"));
+        cartItemRepository.deleteByMenuItem(menuItem);
+        menuItemRepository.delete(menuItem);
     }
 
     public MenuItem getMenuItemById(UUID id) {

@@ -107,10 +107,9 @@ export class AdminMenuComponent implements OnInit {
   }
 
   getImageUrl(item: any): string {
-    if (item.image?.startsWith('/images/')) {
-      return `${environment.apiUrl}${item.image}`;
-    }
-    return item.image || 'assets/RedDot_Burger.jpg';
+    if (!item.image) return 'assets/RedDot_Burger.jpg';
+    if (item.image.startsWith('http')) return item.image;
+    return `${environment.apiUrl}${item.image}`;
   }
 
   private resetForm(): void {
