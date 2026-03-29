@@ -1,6 +1,10 @@
 package com.example.backend.service;
 
+import com.example.backend.entity.Category;
+import com.example.backend.entity.MenuItem;
 import com.example.backend.model.Promotion;
+import com.example.backend.repository.CategoryRepository;
+import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.PromotionRepository;
 import com.example.backend.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
@@ -15,22 +19,42 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PromotionService {
     private final PromotionRepository promotionRepository;
+    private final CategoryRepository categoryRepository;
+    private final MenuItemRepository menuItemRepository;
+
+    private void enrichPromotions(List<Promotion> promotions) {
+        for (Promotion p : promotions) {
+            if (p.getAppliesTo() == Promotion.AppliesTo.CATEGORY && p.getTargetCategoryId() != null) {
+                categoryRepository.findById(p.getTargetCategoryId())
+                        .ifPresent(c -> p.setTargetCategoryName(c.getName()));
+            }
+            if (p.getAppliesTo() == Promotion.AppliesTo.PRODUCT && p.getTargetProductId() != null) {
+                menuItemRepository.findById(p.getTargetProductId())
+                        .ifPresent(m -> p.setTargetProductName(m.getName()));
+            }
+        }
+    }
 
     public List<Promotion> getActivePromotions() {
         UUID tenantId = TenantContext.getCurrentTenantId();
+        List<Promotion> list;
         if (tenantId != null) {
-            return promotionRepository.findActiveByTenantId(OffsetDateTime.now(), tenantId);
+            list = promotionRepository.findActiveByTenantId(OffsetDateTime.now(), tenantId);
+        } else {
+            list = promotionRepository.findActive(OffsetDateTime.now());
         }
-        return promotionRepository.findActive(OffsetDateTime.now());
+        enrichPromotions(list);
+        return list;
     }
 
     public Optional<Promotion> getFeaturedPromotion() {
         OffsetDateTime now = OffsetDateTime.now();
         UUID tenantId = TenantContext.getCurrentTenantId();
-        if (tenantId != null) {
-            return promotionRepository.findFeaturedByTenantId(now, tenantId);
-        }
-        return promotionRepository.findFirstByFeaturedTrueAndActiveTrueAndStartAtBeforeAndEndAtAfter(now, now);
+        Optional<Promotion> opt = (tenantId != null)
+                ? promotionRepository.findFeaturedByTenantId(now, tenantId)
+                : promotionRepository.findFirstByFeaturedTrueAndActiveTrueAndStartAtBeforeAndEndAtAfter(now, now);
+        opt.ifPresent(p -> enrichPromotions(List.of(p)));
+        return opt;
     }
 
     public Optional<Promotion> validateCode(String code) {

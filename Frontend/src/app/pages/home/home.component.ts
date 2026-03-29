@@ -21,7 +21,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   filteredMenuItems: MenuItem[] = [];
   featuredPromotion: Promotion | null = null;
   promotions: Promotion[] = [];
-  autoDiscount = 0;
+  autoDiscount = 0;  // kept for ALL promotions (used as default pass-through)
   isLoading = false;
 
   categories = [
@@ -104,6 +104,23 @@ export class HomeComponent implements OnInit, OnDestroy {
         },
         error: () => {}
       });
+  }
+
+  getDiscountForItem(item: MenuItem): number {
+    if (!this.promotions.length) return 0;
+    // Find the best auto-applied (no code) discount for this specific item
+    let best = 0;
+    for (const p of this.promotions) {
+      if (p.code || !p.discountPercent) continue; // skip code-based promos
+      if (p.appliesTo === 'ALL') {
+        best = Math.max(best, p.discountPercent);
+      } else if (p.appliesTo === 'PRODUCT' && p.targetProductId === item.id) {
+        best = Math.max(best, p.discountPercent);
+      } else if (p.appliesTo === 'CATEGORY' && p.targetCategoryName && item.category === p.targetCategoryName) {
+        best = Math.max(best, p.discountPercent);
+      }
+    }
+    return best;
   }
 
   fetchMenu(): void {

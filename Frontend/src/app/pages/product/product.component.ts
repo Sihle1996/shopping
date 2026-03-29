@@ -18,7 +18,7 @@ export class ProductComponent implements OnInit {
   quantity = 1;
   selectedSize = 'M';
   isAddingToCart = false;
-  autoDiscountPercent = 0;
+  activePromotions: any[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -44,12 +44,25 @@ export class ProductComponent implements OnInit {
     });
 
     this.promotionService.getActivePromotions().subscribe({
-      next: (list) => {
-        const auto = list.find(p => !p.code && p.appliesTo === 'ALL' && p.discountPercent);
-        this.autoDiscountPercent = auto?.discountPercent ?? 0;
-      },
+      next: (list) => { this.activePromotions = list; },
       error: () => {}
     });
+  }
+
+  get autoDiscountPercent(): number {
+    if (!this.product || !this.activePromotions.length) return 0;
+    let best = 0;
+    for (const p of this.activePromotions) {
+      if (p.code || !p.discountPercent) continue;
+      if (p.appliesTo === 'ALL') {
+        best = Math.max(best, p.discountPercent);
+      } else if (p.appliesTo === 'PRODUCT' && p.targetProductId === this.product.id) {
+        best = Math.max(best, p.discountPercent);
+      } else if (p.appliesTo === 'CATEGORY' && p.targetCategoryName && this.product.category === p.targetCategoryName) {
+        best = Math.max(best, p.discountPercent);
+      }
+    }
+    return best;
   }
 
   get discountedPrice(): number {

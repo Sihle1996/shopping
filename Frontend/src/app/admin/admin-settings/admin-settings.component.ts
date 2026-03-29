@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from 'src/app/services/auth.service';
 import { TenantService } from 'src/app/services/tenant.service';
+import { AdminService } from 'src/app/services/admin.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 
@@ -40,15 +41,21 @@ export class AdminSettingsComponent implements OnInit {
   isSaving = false;
   isUploadingLogo = false;
 
+  categories: any[] = [];
+  newCategoryName = '';
+  savingCategory = false;
+
   constructor(
     private http: HttpClient,
     private authService: AuthService,
     private tenantService: TenantService,
+    private adminService: AdminService,
     private toastr: ToastrService
   ) {}
 
   ngOnInit(): void {
     this.loadSettings();
+    this.loadCategories();
   }
 
   private getHeaders(): HttpHeaders {
@@ -105,6 +112,46 @@ export class AdminSettingsComponent implements OnInit {
     return this.settings.logoUrl.startsWith('http')
       ? this.settings.logoUrl
       : `${environment.apiUrl}${this.settings.logoUrl}`;
+  }
+
+  categoryLoadError = false;
+
+  loadCategories(): void {
+    this.categoryLoadError = false;
+    this.adminService.getCategories().subscribe({
+      next: (cats) => this.categories = cats,
+      error: () => {
+        this.categoryLoadError = true;
+        this.toastr.error('Could not load categories — make sure the backend is running');
+      }
+    });
+  }
+
+  addCategory(): void {
+    if (!this.newCategoryName.trim()) return;
+    this.savingCategory = true;
+    this.adminService.createCategory(this.newCategoryName.trim()).subscribe({
+      next: (cat) => {
+        this.categories.push(cat);
+        this.newCategoryName = '';
+        this.savingCategory = false;
+        this.toastr.success('Category added');
+      },
+      error: (err) => {
+        this.savingCategory = false;
+        this.toastr.error(err.error || 'Failed to add category');
+      }
+    });
+  }
+
+  removeCategory(id: string): void {
+    this.adminService.deleteCategory(id).subscribe({
+      next: () => {
+        this.categories = this.categories.filter(c => c.id !== id);
+        this.toastr.success('Category removed');
+      },
+      error: () => this.toastr.error('Failed to remove category')
+    });
   }
 
   saveSettings(): void {

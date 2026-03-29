@@ -93,8 +93,16 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     this.promotionService.getActivePromotions().pipe(
       switchMap(promos => {
         if (!this.appliedPromo) {
-          const auto = promos.find(p => !p.code && p.appliesTo === 'ALL' && p.discountPercent);
-          if (auto) this.appliedPromo = auto;
+          // Auto-apply best no-code promo: ALL first, then PRODUCT if item is in cart
+          const autoAll = promos.find(p => !p.code && p.appliesTo === 'ALL' && p.discountPercent);
+          if (autoAll) {
+            this.appliedPromo = autoAll;
+          } else {
+            // PRODUCT and CATEGORY promos — will be re-evaluated after cart loads
+            const autoOther = promos.filter(p => !p.code && p.discountPercent &&
+              (p.appliesTo === 'PRODUCT' || p.appliesTo === 'CATEGORY'));
+            if (autoOther.length) this.appliedPromo = autoOther[0];
+          }
         }
         return this.cartService.getCartItems();
       })
@@ -126,8 +134,13 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       this.discount = this.cartItems
         .filter(i => i.menuItemId === this.appliedPromo!.targetProductId)
         .reduce((sum, i) => sum + i.menuItemPrice * i.quantity * pct, 0);
+    } else if (this.appliedPromo.appliesTo === 'CATEGORY' && this.appliedPromo.targetCategoryName) {
+      // Apply discount only to items whose category matches
+      this.discount = this.cartItems
+        .filter((i: any) => i.menuItemCategory === this.appliedPromo!.targetCategoryName)
+        .reduce((sum: number, i: any) => sum + i.menuItemPrice * i.quantity * pct, 0);
     } else {
-      this.discount = this.subtotal * pct;
+      this.discount = 0; // can't apply — unknown scope
     }
     this.discount = Math.round(this.discount * 100) / 100;
   }

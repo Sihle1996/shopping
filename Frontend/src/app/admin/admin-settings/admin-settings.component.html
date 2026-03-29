@@ -125,6 +125,50 @@
         </div>
       </div>
 
+      <!-- Categories Card -->
+      <div class="bg-white rounded-2xl shadow-card p-6">
+        <h3 class="font-heading text-base font-semibold text-textDark mb-1">
+          <i class="bi bi-tags text-primary mr-2"></i>Menu Categories
+        </h3>
+        <p class="text-textMuted text-xs mb-4">
+          Add your categories here first — they appear as dropdowns when creating menu items and promotions.
+        </p>
+
+        <!-- Backend error -->
+        <div *ngIf="categoryLoadError" class="mb-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-danger flex items-center gap-2">
+          <i class="bi bi-exclamation-triangle"></i>
+          Could not reach the backend. Restart the server and refresh this page.
+        </div>
+
+        <!-- Add new category -->
+        <div class="flex gap-2 mb-4">
+          <input type="text"
+                 [(ngModel)]="newCategoryName"
+                 placeholder="e.g. Burgers, Drinks, Desserts"
+                 (keyup.enter)="addCategory()"
+                 class="flex-1 px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+          <app-button variant="primary" size="md" [loading]="savingCategory" (clicked)="addCategory()">
+            Add
+          </app-button>
+        </div>
+
+        <!-- Category list -->
+        <div *ngIf="categories.length === 0 && !categoryLoadError" class="text-sm text-textMuted py-2">
+          No categories yet. Type a name above and click <strong>Add</strong>.
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <div *ngFor="let cat of categories"
+               class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface border border-borderColor text-sm text-textDark">
+            <span>{{ cat.name }}</span>
+            <button (click)="removeCategory(cat.id)"
+                    class="w-4 h-4 flex items-center justify-center rounded-full hover:bg-red-100 hover:text-danger transition-colors">
+              <i class="bi bi-x text-xs"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Save -->
       <div class="flex justify-end">
         <app-button

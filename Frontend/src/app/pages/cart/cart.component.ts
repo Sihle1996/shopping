@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
+import { switchMap } from 'rxjs/operators';
 import { CartService, CartItem } from 'src/app/services/cart.service';
-import { PromotionService } from 'src/app/services/promotion.service';
+import { PromotionService, Promotion } from 'src/app/services/promotion.service';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -14,8 +15,10 @@ export class CartComponent implements OnInit {
   cartItems: CartItem[] = [];
   subtotal = 0;
   discount = 0;
-  autoDiscountPercent = 0;
+  activePromotions: Promotion[] = [];
+  bestPromo: Promotion | null = null;
 
+  get autoDiscountPercent(): number { return this.bestPromo?.discountPercent ?? 0; }
   get totalPrice(): number { return Math.max(0, this.subtotal - this.discount); }
 
   constructor(
@@ -35,26 +38,47 @@ export class CartComponent implements OnInit {
   }
 
   loadCart(): void {
-    this.promotionService.getActivePromotions().subscribe({
-      next: (promos) => {
-        const auto = promos.find(p => !p.code && p.appliesTo === 'ALL' && p.discountPercent);
-        this.autoDiscountPercent = auto?.discountPercent ?? 0;
-      },
-      error: () => {}
-    });
-
-    this.cartService.getCartItems().subscribe({
-      next: (items) => {
-        this.cartItems = items;
-        this.updateTotals();
-      },
-      error: () => {}
+    this.promotionService.getActivePromotions().pipe(
+      switchMap(promos => {
+        this.activePromotions = promos;
+        return this.cartService.getCartItems();
+      })
+    ).subscribe({
+      next: (items) => { this.cartItems = items; this.updateTotals(); },
+      error: () => { this.cartService.getCartItems().subscribe(items => { this.cartItems = items; this.updateTotals(); }); }
     });
   }
 
   private updateTotals(): void {
     this.subtotal = this.cartItems.reduce((sum, item) => sum + item.menuItemPrice * item.quantity, 0);
-    this.discount = this.autoDiscountPercent ? Math.round(this.subtotal * this.autoDiscountPercent) / 100 : 0;
+    this.bestPromo = this.pickBestPromo();
+    if (!this.bestPromo || !this.bestPromo.discountPercent) { this.discount = 0; return; }
+    const pct = this.bestPromo.discountPercent / 100;
+    if (this.bestPromo.appliesTo === 'ALL') {
+      this.discount = Math.round(this.subtotal * pct * 100) / 100;
+    } else if (this.bestPromo.appliesTo === 'PRODUCT' && this.bestPromo.targetProductId) {
+      this.discount = Math.round(
+        this.cartItems
+          .filter(i => i.menuItemId === this.bestPromo!.targetProductId)
+          .reduce((sum, i) => sum + i.menuItemPrice * i.quantity * pct, 0) * 100
+      ) / 100;
+    } else {
+      this.discount = 0;
+    }
+  }
+
+  private pickBestPromo(): Promotion | null {
+    const auto = this.activePromotions.filter(p => !p.code && p.discountPercent);
+    if (!auto.length) return null;
+    // Prefer promo with highest effective discount for this cart
+    const allPromo = auto.find(p => p.appliesTo === 'ALL');
+    const productPromos = auto.filter(p => p.appliesTo === 'PRODUCT' &&
+      this.cartItems.some(i => i.menuItemId === p.targetProductId));
+    const candidates = [...(allPromo ? [allPromo] : []), ...productPromos];
+    if (!candidates.length) return null;
+    return candidates.reduce((best, p) =>
+      (p.discountPercent ?? 0) > (best.discountPercent ?? 0) ? p : best
+    );
   }
 
   onQuantityChange(item: CartItem, quantity: number): void {
