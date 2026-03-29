@@ -27,6 +27,13 @@ export class AdminPromotionsComponent implements OnInit {
     { value: 'PRODUCT', label: 'Product' },
   ];
 
+  categories: any[] = [];
+  menuItems: any[] = [];
+
+  get selectedAppliesTo(): string {
+    return this.form?.get('appliesTo')?.value;
+  }
+
   constructor(
     private fb: FormBuilder,
     private api: AdminPromotionService,
@@ -50,6 +57,8 @@ export class AdminPromotionsComponent implements OnInit {
       featured: [false],
     });
     this.refresh();
+    this.adminService.getCategories().subscribe({ next: (cats) => this.categories = cats, error: () => {} });
+    this.adminService.loadMenuItems().subscribe({ next: (items) => this.menuItems = items, error: () => {} });
   }
 
   refresh(): void {

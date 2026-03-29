@@ -15,7 +15,8 @@ export class AdminMenuComponent implements OnInit {
   searchQuery = '';
   selectedSort = 'default';
   selectedCategory = 'All';
-  categories: string[] = [];
+  categories: any[] = [];       // objects: { id, name }
+  filterCategories: string[] = ['All']; // names for the filter bar
 
   showDeleteConfirm = false;
   deleteTargetId: string | null = null;
@@ -35,9 +36,15 @@ export class AdminMenuComponent implements OnInit {
   ngOnInit(): void {
     this.adminService.menuItems$.subscribe((data: any[]) => {
       this.menuItems = data;
-      this.categories = ['All', ...Array.from(new Set<string>(data.map((item: any) => item.category)))];
     });
     this.fetchMenuItems();
+    this.adminService.getCategories().subscribe({
+      next: (cats) => {
+        this.categories = cats;
+        this.filterCategories = ['All', ...cats.map((c: any) => c.name)];
+      },
+      error: () => {}
+    });
   }
 
   fetchMenuItems(): void {
@@ -49,7 +56,7 @@ export class AdminMenuComponent implements OnInit {
   get filteredMenu(): any[] {
     return this.menuItems
       .filter(item => {
-        const matchesCategory = this.selectedCategory === 'All' || item.category === this.selectedCategory;
+        const matchesCategory = this.selectedCategory === 'All' || item.category === this.selectedCategory || item.categoryName === this.selectedCategory;
         const matchesSearch = item.name.toLowerCase().includes(this.searchQuery.toLowerCase());
         return matchesCategory && matchesSearch;
       })

@@ -248,4 +248,22 @@ orders$ = this.ordersSubject.asObservable();
     });
   }
 
+  getCategories(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/categories`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  createCategory(name: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/categories`, { name }, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  deleteCategory(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/categories/${id}`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
 }

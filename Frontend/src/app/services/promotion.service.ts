@@ -14,7 +14,9 @@ export interface Promotion {
   endAt: string;            // ISO string
   appliesTo: 'ALL' | 'CATEGORY' | 'PRODUCT';
   targetCategoryId?: string;
+  targetCategoryName?: string;
   targetProductId?: string;
+  targetProductName?: string;
   code?: string | null;
   active: boolean;
   featured: boolean;

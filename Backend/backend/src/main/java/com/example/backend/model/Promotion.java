@@ -50,6 +50,13 @@ public class Promotion {
 
     private String code;
 
+    /** Populated at query time — not stored in DB */
+    @Transient
+    private String targetCategoryName;
+
+    @Transient
+    private String targetProductName;
+
     @Column(nullable = false)
     private boolean active;
 

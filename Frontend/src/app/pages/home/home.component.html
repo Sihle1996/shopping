@@ -79,7 +79,7 @@
         [item]="item"
         [showFavorite]="isLoggedIn"
         [showAddToCart]="isLoggedIn"
-        [discountPercent]="autoDiscount"
+        [discountPercent]="getDiscountForItem(item)"
         (cardClick)="goToProductDetails($event)"
         (addToCart)="quickAddToCart($event)"
         (favorite)="toggleFavorite($event)">
