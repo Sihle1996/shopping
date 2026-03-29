@@ -60,6 +60,24 @@ export class InventoryManagementComponent implements OnInit {
     });
   }
 
+  syncing = false;
+
+  syncAvailability(): void {
+    this.syncing = true;
+    this.adminService.syncAvailability().subscribe({
+      next: (count) => { this.syncing = false; this.fetchInventory(); },
+      error: () => { this.syncing = false; }
+    });
+  }
+
+  toggleAvailability(item: any): void {
+    const next = !item.isAvailable;
+    this.adminService.setItemAvailability(item.id, next).subscribe({
+      next: () => { item.isAvailable = next; },
+      error: () => {}
+    });
+  }
+
   exportCsv(): void {
     this.adminService.exportInventoryCsv().subscribe({
       next: (blob: Blob) => {

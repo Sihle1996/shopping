@@ -103,6 +103,29 @@ public class InventoryService {
         ).collect(Collectors.toList());
     }
 
+    @Transactional
+    public int syncAvailability() {
+        List<MenuItem> items = getTenantMenuItems();
+        int count = 0;
+        for (MenuItem item : items) {
+            boolean shouldBeAvailable = item.getStock() > 0;
+            if (item.getIsAvailable() != shouldBeAvailable) {
+                item.setIsAvailable(shouldBeAvailable);
+                menuItemRepository.save(item);
+                count++;
+            }
+        }
+        return count;
+    }
+
+    @Transactional
+    public MenuItem setAvailability(java.util.UUID id, Boolean available) {
+        MenuItem item = menuItemRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Item not found"));
+        item.setIsAvailable(available != null ? available : item.getIsAvailable());
+        return menuItemRepository.save(item);
+    }
+
     private List<MenuItem> getTenantMenuItems() {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null) {

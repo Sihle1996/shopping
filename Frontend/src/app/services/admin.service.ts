@@ -248,6 +248,18 @@ orders$ = this.ordersSubject.asObservable();
     });
   }
 
+  syncAvailability(): Observable<number> {
+    return this.http.post<number>(`${this.baseUrl}/inventory/sync-availability`, null, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  setItemAvailability(id: string, isAvailable: boolean): Observable<any> {
+    return this.http.patch(`${this.baseUrl}/inventory/${id}/availability`, { isAvailable }, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
   getCategories(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/categories`, {
       headers: this.getAuthHeaders()
