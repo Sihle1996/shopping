@@ -20,6 +20,8 @@ export class ProductComponent implements OnInit {
   isAddingToCart = false;
   activePromotions: any[] = [];
   showOutOfStockModal = false;
+  showAddedBanner = false;
+  private addedBannerTimer: any;
 
   constructor(
     private route: ActivatedRoute,
@@ -89,14 +91,21 @@ export class ProductComponent implements OnInit {
     this.isAddingToCart = true;
     this.cartService.addToCart(this.product.id, this.quantity, this.selectedSize).subscribe({
       next: () => {
-        this.toastr.success(`${this.product!.name} added to cart`);
         this.isAddingToCart = false;
+        clearTimeout(this.addedBannerTimer);
+        this.showAddedBanner = true;
+        this.addedBannerTimer = setTimeout(() => this.showAddedBanner = false, 3000);
       },
       error: (err) => {
         this.toastr.error(err?.error || 'Failed to add item to cart');
         this.isAddingToCart = false;
       }
     });
+  }
+
+  get cartRoute(): string {
+    const slug = localStorage.getItem('storeSlug');
+    return slug ? `/store/${slug}/cart` : '/cart';
   }
 
   goBack(): void {
