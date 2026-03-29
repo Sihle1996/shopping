@@ -30,8 +30,10 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     @Query("SELECT new com.example.backend.entity.TopProductDTO(oi.menuItem.name, SUM(oi.quantity)) " +
            "FROM Order o JOIN o.orderItems oi " +
            "WHERE o.status = 'Delivered' AND o.orderDate BETWEEN :start AND :end " +
+           "AND (:tenantId IS NULL OR o.tenant.id = :tenantId) " +
            "GROUP BY oi.menuItem.name ORDER BY SUM(oi.quantity) DESC")
-    List<TopProductDTO> findTopProducts(@Param("start") Instant start, @Param("end") Instant end, Pageable pageable);
+    List<TopProductDTO> findTopProducts(@Param("start") Instant start, @Param("end") Instant end,
+                                        @Param("tenantId") UUID tenantId, Pageable pageable);
 
     List<Order> findByTenant_Id(UUID tenantId);
 }

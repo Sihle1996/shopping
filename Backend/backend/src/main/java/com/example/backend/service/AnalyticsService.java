@@ -48,8 +48,8 @@ public class AnalyticsService {
 
     public List<TopProductDTO> getTopProducts(Instant start, Instant end) {
         Pageable limit = PageRequest.of(0, 5);
-        // TODO: scope by tenant in JPQL query for better performance
-        return orderRepository.findTopProducts(start, end, limit);
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        return orderRepository.findTopProducts(start, end, tenantId, limit);
     }
 
     public double getAverageOrderValue(Instant start, Instant end) {
