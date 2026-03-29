@@ -19,6 +19,7 @@ export class ProductComponent implements OnInit {
   selectedSize = 'M';
   isAddingToCart = false;
   activePromotions: any[] = [];
+  showOutOfStockModal = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -77,6 +78,11 @@ export class ProductComponent implements OnInit {
 
     if (!this.authService.isLoggedIn()) {
       this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
+      return;
+    }
+
+    if (!this.product.isAvailable) {
+      this.showOutOfStockModal = true;
       return;
     }
 

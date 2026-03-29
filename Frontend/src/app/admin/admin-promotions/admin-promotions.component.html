@@ -90,9 +90,9 @@
                     class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
                            focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent">
               <option [ngValue]="null">Select a category</option>
-              <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+              <option *ngFor="let cat of availableCategories" [value]="cat.id">{{ cat.name }}</option>
             </select>
-            <p class="text-[10px] text-textMuted mt-1">Discount applies to all products in this category</p>
+            <p class="text-[10px] text-textMuted mt-1">Only categories with at least one in-stock item are listed</p>
           </div>
 
           <!-- Product dropdown — shown when PRODUCT selected -->
@@ -102,9 +102,9 @@
                     class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
                            focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent">
               <option [ngValue]="null">Select a product</option>
-              <option *ngFor="let item of menuItems" [value]="item.id">{{ item.name }}</option>
+              <option *ngFor="let item of availableMenuItems" [value]="item.id">{{ item.name }}</option>
             </select>
-            <p class="text-[10px] text-textMuted mt-1">Discount applies to this product only</p>
+            <p class="text-[10px] text-textMuted mt-1">Only in-stock products are listed. Out-of-stock items cannot be promoted.</p>
           </div>
 
           <div>

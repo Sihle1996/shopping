@@ -12,7 +12,7 @@
     </div>
 
     <!-- Featured Promotion Banner -->
-    <div class="mb-6" *ngIf="featuredPromotion as fp">
+    <div class="mb-6" *ngIf="isFeaturedPromoValid && featuredPromotion as fp">
       <app-promotion-banner [promotion]="fp"></app-promotion-banner>
     </div>
 
@@ -53,11 +53,11 @@
   </div>
 
   <!-- Promotions Grid -->
-  <div class="px-4 lg:px-8 mb-6" *ngIf="promotions?.length && selectedCategory === 'All' && !searchQuery">
+  <div class="px-4 lg:px-8 mb-6" *ngIf="visiblePromotions.length && selectedCategory === 'All' && !searchQuery">
     <h3 class="font-heading text-lg font-semibold text-textDark mb-3">
       <i class="bi bi-tag text-primary mr-1"></i> Promotions
     </h3>
-    <app-promotion-grid [promotions]="promotions"></app-promotion-grid>
+    <app-promotion-grid [promotions]="visiblePromotions"></app-promotion-grid>
   </div>
 
   <!-- Product Grid -->
@@ -93,6 +93,18 @@
     [totalPrice]="cartTotal"
     (openCart)="openCartDrawer()">
   </app-floating-cart-bar>
+
+  <!-- Out of Stock Modal -->
+  <app-confirm-modal
+    [isOpen]="showOutOfStockModal"
+    title="Item Unavailable"
+    [message]="outOfStockItemName + ' is currently out of stock and cannot be added to your cart.'"
+    confirmLabel="Got it"
+    variant="warning"
+    [showCancel]="false"
+    (confirmed)="showOutOfStockModal = false"
+    (cancelled)="showOutOfStockModal = false">
+  </app-confirm-modal>
 
   <!-- Cart Drawer -->
   <app-cart-drawer
