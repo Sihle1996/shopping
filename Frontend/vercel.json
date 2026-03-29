@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run build:prod",
-  "outputDirectory": "dist/frontend",
+  "outputDirectory": "dist/temp-frontend",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
