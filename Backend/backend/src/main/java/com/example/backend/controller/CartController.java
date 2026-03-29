@@ -20,13 +20,15 @@ public class CartController {
 
     // Add item to cart
     @PostMapping("/add")
-    public ResponseEntity<CartItemDTO> addToCart(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> addToCart(@RequestBody Map<String, Object> payload) {
         UUID userId = UUID.fromString(payload.get("userId").toString());
         UUID menuItemId = UUID.fromString(payload.get("menuItemId").toString());
         Integer quantity = Integer.valueOf(payload.get("quantity").toString());
-
-        CartItemDTO cartItemDTO = cartService.addItemToCart(userId, menuItemId, quantity);
-        return ResponseEntity.ok(cartItemDTO);
+        try {
+            return ResponseEntity.ok(cartService.addItemToCart(userId, menuItemId, quantity));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     // Get user's cart by user ID
@@ -39,11 +41,14 @@ public class CartController {
 
     // Update cart item quantity
     @PutMapping("/update/{cartItemId}")
-    public ResponseEntity<CartItemDTO> updateCartItem(@PathVariable UUID cartItemId,
-                                                      @RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> updateCartItem(@PathVariable UUID cartItemId,
+                                            @RequestBody Map<String, Object> payload) {
         Integer quantity = Integer.valueOf(payload.get("quantity").toString());
-        CartItemDTO updatedCartItemDTO = cartService.updateCartItem(cartItemId, quantity);
-        return ResponseEntity.ok(updatedCartItemDTO);
+        try {
+            return ResponseEntity.ok(cartService.updateCartItem(cartItemId, quantity));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     // Delete cart item

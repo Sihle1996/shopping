@@ -213,7 +213,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
     this.cartService.addToCart(item.id, 1, 'M').subscribe({
       next: () => this.toastr.success(`${item.name} added to cart`),
-      error: () => this.toastr.error('Failed to add item to cart')
+      error: (err) => this.toastr.error(err?.error || 'Failed to add item to cart')
     });
   }
 

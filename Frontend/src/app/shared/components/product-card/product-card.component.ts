@@ -9,6 +9,8 @@ export interface ProductCardItem {
   image: string;
   category: string;
   isAvailable: boolean;
+  stock?: number;
+  lowStockThreshold?: number;
 }
 
 @Component({
@@ -28,6 +30,11 @@ export interface ProductCardItem {
         <!-- Category Badge -->
         <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/90 text-textDark backdrop-blur-sm">
           {{ item.category }}
+        </span>
+        <!-- Low stock badge -->
+        <span *ngIf="isLowStock"
+              class="absolute top-3 right-3 px-2 py-0.5 rounded-full text-xs font-semibold bg-warning/90 text-white">
+          Only {{ item.stock }} left
         </span>
         <!-- Unavailable overlay -->
         <div *ngIf="!item.isAvailable"
@@ -83,6 +90,12 @@ export class ProductCardComponent {
   @Input() showFavorite = false;
   @Input() showAddToCart = true;
   @Input() discountPercent = 0;
+
+  get isLowStock(): boolean {
+    const s = this.item?.stock;
+    const t = this.item?.lowStockThreshold ?? 5;
+    return s != null && s > 0 && s <= t;
+  }
 
   get discountedPrice(): number {
     if (!this.item) return 0;

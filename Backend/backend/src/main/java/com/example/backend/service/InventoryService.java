@@ -38,6 +38,15 @@ public class InventoryService {
                     .orElseThrow(() -> new RuntimeException("Menu item not found: " + adj.getMenuItemId()));
             item.setStock(item.getStock() + adj.getStockChange());
             item.setReservedStock(item.getReservedStock() + adj.getReservedChange());
+            if (adj.getLowStockThreshold() != null) {
+                item.setLowStockThreshold(adj.getLowStockThreshold());
+            }
+            // Auto-mark unavailable when stock hits zero and was being tracked
+            if (item.getStock() == 0 && adj.getStockChange() < 0) {
+                item.setIsAvailable(false);
+            } else if (item.getStock() > 0) {
+                item.setIsAvailable(true);
+            }
             updated.add(menuItemRepository.save(item));
 
             InventoryLog log = new InventoryLog();

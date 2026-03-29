@@ -30,6 +30,10 @@ public class CartService {
         MenuItem menuItem = menuItemRepository.findById(menuItemId)
                 .orElseThrow(() -> new RuntimeException("Menu item not found"));
 
+        if (!Boolean.TRUE.equals(menuItem.getIsAvailable())) {
+            throw new IllegalArgumentException("This item is currently unavailable");
+        }
+
         CartItem cartItem = cartItemRepository.findByUserAndMenuItem(user, menuItem)
                 .orElseGet(() -> {
                     CartItem newCartItem = new CartItem();
@@ -38,7 +42,19 @@ public class CartService {
                     return newCartItem;
                 });
 
-        cartItem.setQuantity((cartItem.getQuantity() == null ? 0 : cartItem.getQuantity()) + quantity);
+        int existingQty = cartItem.getQuantity() == null ? 0 : cartItem.getQuantity();
+        int newTotalQty = existingQty + quantity;
+
+        // Only validate stock if the item has stock tracking enabled (stock > 0)
+        if (menuItem.getStock() > 0 && newTotalQty > menuItem.getStock()) {
+            int remaining = menuItem.getStock() - existingQty;
+            if (remaining <= 0) {
+                throw new IllegalArgumentException("No more stock available for this item");
+            }
+            throw new IllegalArgumentException("Only " + remaining + " left in stock");
+        }
+
+        cartItem.setQuantity(newTotalQty);
         cartItem.setTotalPrice(menuItem.getPrice() * cartItem.getQuantity());
 
         cartItem = cartItemRepository.save(cartItem);
@@ -57,6 +73,11 @@ public class CartService {
     public CartItemDTO updateCartItem(UUID cartItemId, Integer quantity) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new RuntimeException("Cart item not found"));
+
+        MenuItem menuItem = cartItem.getMenuItem();
+        if (menuItem.getStock() > 0 && quantity > menuItem.getStock()) {
+            throw new IllegalArgumentException("Only " + menuItem.getStock() + " left in stock");
+        }
 
         cartItem.setQuantity(quantity);
         cartItem.setTotalPrice(cartItem.getMenuItem().getPrice() * quantity);

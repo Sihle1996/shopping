@@ -91,64 +91,109 @@
     <!-- Desktop table -->
     <div class="hidden md:block bg-white rounded-2xl shadow-card overflow-hidden">
       <table class="min-w-full">
-        <thead class="border-b border-borderColor">
+        <thead class="border-b border-borderColor bg-surface">
           <tr>
-            <th class="px-5 py-3.5 text-left text-xs font-medium text-textMuted uppercase">Item</th>
-            <th class="px-5 py-3.5 text-left text-xs font-medium text-textMuted uppercase">Available</th>
-            <th class="px-5 py-3.5 text-left text-xs font-medium text-textMuted uppercase">Reserved</th>
-            <th class="px-5 py-3.5 text-left text-xs font-medium text-textMuted uppercase">Adjust</th>
+            <th class="px-5 py-3.5 text-left text-xs font-medium text-textMuted uppercase tracking-wide">Item</th>
+            <th class="px-5 py-3.5 text-left text-xs font-medium text-textMuted uppercase tracking-wide">Available</th>
+            <th class="px-5 py-3.5 text-left text-xs font-medium text-textMuted uppercase tracking-wide">Reserved</th>
+            <th class="px-5 py-3.5 text-left text-xs font-medium text-textMuted uppercase tracking-wide">Low Stock Alert</th>
+            <th class="px-5 py-3.5 text-left text-xs font-medium text-textMuted uppercase tracking-wide">Add / Remove Stock</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-borderColor">
-          <tr *ngFor="let item of filteredInventory; trackBy: trackById" class="hover:bg-surface transition-colors">
-            <td class="px-5 py-3.5">
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-medium text-textDark">{{ item.name }}</span>
-                <app-badge *ngIf="isLowStock(item)" variant="warning" size="sm">Low</app-badge>
+          <tr *ngFor="let item of filteredInventory; trackBy: trackById"
+              class="hover:bg-surface/50 transition-colors"
+              [class.bg-yellow-50]="isLowStock(item)">
+            <td class="px-5 py-4">
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="text-sm font-semibold text-textDark">{{ item.name }}</span>
+                <span *ngIf="isLowStock(item)"
+                      class="px-2 py-0.5 rounded-full text-xs font-semibold bg-warning/15 text-warning">
+                  Low Stock
+                </span>
+                <span *ngIf="item.stock === 0"
+                      class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-danger">
+                  Out of Stock
+                </span>
               </div>
-              <div class="mt-2 h-1.5 w-48 overflow-hidden rounded-full bg-gray-100">
-                <div class="h-full rounded-full bg-primary" [style.width.%]="stockPercent(item)"></div>
+              <div class="h-1.5 w-44 overflow-hidden rounded-full bg-gray-100">
+                <div class="h-full rounded-full transition-all"
+                     [class.bg-success]="!isLowStock(item) && item.stock > 0"
+                     [class.bg-warning]="isLowStock(item)"
+                     [class.bg-danger]="item.stock === 0"
+                     [style.width.%]="stockPercent(item)"></div>
               </div>
             </td>
-            <td class="px-5 py-3.5 font-numbers text-sm text-textDark">{{ item.stock }}</td>
-            <td class="px-5 py-3.5 font-numbers text-sm text-textDark">{{ item.reservedStock }}</td>
-            <td class="px-5 py-3.5">
-              <div class="inline-flex items-center rounded-xl border border-borderColor overflow-hidden">
-                <button type="button" (click)="step(item, -1)"
-                        class="px-3 py-2 text-textDark hover:bg-surface transition-colors">-</button>
-                <input type="number" [(ngModel)]="item.adjustStock"
-                       class="w-16 border-x border-borderColor bg-white px-2 py-2 text-center text-sm text-textDark outline-none" />
-                <button type="button" (click)="step(item, 1)"
-                        class="px-3 py-2 text-textDark hover:bg-surface transition-colors">+</button>
+            <td class="px-5 py-4 font-numbers text-sm font-semibold text-textDark">{{ item.stock }}</td>
+            <td class="px-5 py-4 font-numbers text-sm text-textMuted">{{ item.reservedStock }}</td>
+            <td class="px-5 py-4">
+              <div class="flex items-center gap-1.5">
+                <input type="number" [(ngModel)]="item.lowStockThreshold" min="0"
+                       class="w-16 px-2 py-1.5 rounded-lg border border-borderColor text-center text-sm text-textDark outline-none
+                              focus:ring-2 focus:ring-primary-400" />
+                <span class="text-xs text-textMuted">units</span>
               </div>
-              <app-button variant="primary" size="sm" class="ml-2" (clicked)="adjust(item)">Save</app-button>
+            </td>
+            <td class="px-5 py-4">
+              <div class="flex items-center gap-2">
+                <div class="inline-flex items-center rounded-xl border border-borderColor overflow-hidden">
+                  <button type="button" (click)="step(item, -1)"
+                          class="px-3 py-2 text-textDark hover:bg-surface transition-colors font-bold">−</button>
+                  <input type="number" [(ngModel)]="item.adjustStock"
+                         class="w-16 border-x border-borderColor bg-white px-2 py-2 text-center text-sm text-textDark outline-none" />
+                  <button type="button" (click)="step(item, 1)"
+                          class="px-3 py-2 text-textDark hover:bg-surface transition-colors font-bold">+</button>
+                </div>
+                <app-button variant="primary" size="sm" (clicked)="adjust(item)">Save</app-button>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
+      <div *ngIf="filteredInventory.length === 0" class="py-12 text-center text-textMuted text-sm">
+        No items found
+      </div>
     </div>
 
     <!-- Mobile cards -->
     <div class="md:hidden grid grid-cols-1 gap-3">
       <div *ngFor="let item of filteredInventory; trackBy: trackById"
-           class="bg-white rounded-2xl shadow-card p-4 animate-fade-in">
+           class="bg-white rounded-2xl shadow-card p-4 animate-fade-in"
+           [class.border-l-4]="isLowStock(item)"
+           [class.border-warning]="isLowStock(item)">
         <div class="flex items-start justify-between mb-2">
-          <h4 class="font-semibold text-sm text-textDark">{{ item.name }}</h4>
-          <app-badge *ngIf="isLowStock(item)" variant="warning" size="sm">Low</app-badge>
+          <div>
+            <h4 class="font-semibold text-sm text-textDark">{{ item.name }}</h4>
+            <p class="text-xs text-textMuted mt-0.5">{{ item.category }}</p>
+          </div>
+          <span *ngIf="isLowStock(item)"
+                class="px-2 py-0.5 rounded-full text-xs font-semibold bg-warning/15 text-warning">Low</span>
+          <span *ngIf="item.stock === 0"
+                class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-danger">Out</span>
+        </div>
+        <div class="h-1.5 overflow-hidden rounded-full bg-gray-100 mb-3">
+          <div class="h-full rounded-full"
+               [class.bg-success]="!isLowStock(item) && item.stock > 0"
+               [class.bg-warning]="isLowStock(item)"
+               [class.bg-danger]="item.stock === 0"
+               [style.width.%]="stockPercent(item)"></div>
         </div>
         <div class="grid grid-cols-2 gap-2 text-sm text-textLight mb-3">
-          <div>Available: <strong class="text-textDark">{{ item.stock }}</strong></div>
-          <div>Reserved: <strong class="text-textDark">{{ item.reservedStock }}</strong></div>
-          <div class="col-span-2 h-1.5 overflow-hidden rounded-full bg-gray-100">
-            <div class="h-full rounded-full bg-primary" [style.width.%]="stockPercent(item)"></div>
+          <div>Available: <strong class="text-textDark font-numbers">{{ item.stock }}</strong></div>
+          <div>Reserved: <strong class="text-textDark font-numbers">{{ item.reservedStock }}</strong></div>
+          <div class="col-span-2 flex items-center gap-2">
+            <span class="text-xs">Alert at:</span>
+            <input type="number" [(ngModel)]="item.lowStockThreshold" min="0"
+                   class="w-16 px-2 py-1 rounded-lg border border-borderColor text-center text-sm outline-none" />
+            <span class="text-xs text-textMuted">units</span>
           </div>
         </div>
         <div class="flex items-center gap-2">
           <div class="inline-flex items-center rounded-xl border border-borderColor overflow-hidden">
-            <button type="button" (click)="step(item, -1)" class="px-3 py-2 hover:bg-surface">-</button>
+            <button type="button" (click)="step(item, -1)" class="px-3 py-2 hover:bg-surface font-bold">−</button>
             <input type="number" [(ngModel)]="item.adjustStock"
                    class="w-16 border-x border-borderColor bg-white px-2 py-2 text-center text-sm outline-none" />
-            <button type="button" (click)="step(item, 1)" class="px-3 py-2 hover:bg-surface">+</button>
+            <button type="button" (click)="step(item, 1)" class="px-3 py-2 hover:bg-surface font-bold">+</button>
           </div>
           <app-button variant="primary" size="sm" (clicked)="adjust(item)">Save</app-button>
         </div>
@@ -156,20 +201,42 @@
     </div>
 
     <!-- Audit Log -->
-    <div class="mt-8 bg-white rounded-2xl shadow-card overflow-hidden">
-      <button (click)="toggleAudit()" class="flex w-full items-center justify-between px-5 py-4 text-left">
-        <span class="font-heading text-sm font-semibold text-textDark">Audit Log</span>
-        <i class="bi bi-chevron-down text-textMuted transition-transform" [class.rotate-180]="showAudit"></i>
+    <div class="mt-6 bg-white rounded-2xl shadow-card overflow-hidden">
+      <button (click)="toggleAudit()" class="flex w-full items-center justify-between px-5 py-4 text-left hover:bg-surface/50 transition-colors">
+        <span class="font-heading text-sm font-semibold text-textDark flex items-center gap-2">
+          <i class="bi bi-clock-history text-primary"></i> Audit Log
+        </span>
+        <i class="bi bi-chevron-down text-textMuted transition-transform duration-200" [class.rotate-180]="showAudit"></i>
       </button>
 
       <div *ngIf="showAudit" class="px-5 pb-5 animate-fade-in">
-        <div class="space-y-3">
-          <div *ngFor="let log of auditLog" class="relative pl-6">
-            <span class="absolute left-0 top-2.5 h-2.5 w-2.5 rounded-full bg-primary"></span>
-            <div class="rounded-xl bg-surface px-4 py-3 text-sm">
-              <p class="font-medium text-textDark">{{ log.menuItemName }}</p>
-              <p class="text-xs text-textMuted mt-0.5">{{ log.timestamp }}</p>
-              <p class="text-textLight mt-1">Stock {{ log.stockChange }}, Reserved {{ log.reservedChange }}</p>
+        <div *ngIf="auditLog.length === 0" class="py-6 text-center text-sm text-textMuted">No audit entries yet</div>
+        <div class="space-y-2">
+          <div *ngFor="let log of auditLog" class="flex items-start gap-3 py-2.5 border-b border-borderColor last:border-0">
+            <div class="mt-0.5 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                 [class.bg-blue-100]="log.type === 'ADJUSTMENT'"
+                 [class.bg-green-100]="log.type === 'ORDER_PAYMENT'"
+                 [class.bg-red-100]="log.type === 'ORDER_CANCELLED'">
+              <i class="text-xs"
+                 [class.bi-pencil]="log.type === 'ADJUSTMENT'"
+                 [class.bi-cart-check]="log.type === 'ORDER_PAYMENT'"
+                 [class.bi-arrow-counterclockwise]="log.type === 'ORDER_CANCELLED'"
+                 [class.text-blue-600]="log.type === 'ADJUSTMENT'"
+                 [class.text-success]="log.type === 'ORDER_PAYMENT'"
+                 [class.text-danger]="log.type === 'ORDER_CANCELLED'"
+                 class="bi"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-textDark">{{ log.menuItemName }}</p>
+              <p class="text-xs text-textMuted">{{ log.timestamp | date:'dd MMM yyyy, HH:mm' }}</p>
+            </div>
+            <div class="text-right text-sm">
+              <span [class.text-success]="log.stockChange > 0"
+                    [class.text-danger]="log.stockChange < 0"
+                    class="font-numbers font-semibold">
+                {{ log.stockChange > 0 ? '+' : '' }}{{ log.stockChange }}
+              </span>
+              <p class="text-xs text-textMuted capitalize">{{ log.type?.toLowerCase()?.replace('_', ' ') }}</p>
             </div>
           </div>
         </div>
