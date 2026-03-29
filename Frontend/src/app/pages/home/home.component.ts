@@ -25,6 +25,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   isLoading = false;
   showOutOfStockModal = false;
   outOfStockItemName = '';
+  cartAddedName = '';
+  private cartAddedTimer: any;
 
   categories = [
     { name: 'All', icon: 'assets/istockphoto-1419247070-612x612.jpg' },
@@ -70,6 +72,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    clearTimeout(this.cartAddedTimer);
   }
 
   private subscribeToCart(): void {
@@ -114,14 +117,18 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private isPromoRelevant(p: Promotion): boolean {
+    // If menu hasn't loaded yet, show everything — re-evaluated once items arrive
+    if (!this.menuItems.length) return true;
+
     if (p.appliesTo === 'PRODUCT' && p.targetProductId) {
       const item = this.menuItems.find(i => i.id === p.targetProductId);
-      return item ? item.isAvailable !== false : false;
+      if (!item) return true; // item not in current tenant's menu — leave visible
+      return item.isAvailable !== false;
     }
     if (p.appliesTo === 'CATEGORY' && p.targetCategoryName) {
       const catName = p.targetCategoryName.toLowerCase();
       const catItems = this.menuItems.filter(i => (i.category ?? '').toLowerCase() === catName);
-      if (!catItems.length) return false;
+      if (!catItems.length) return true; // category has no items here — leave visible
       return catItems.some(i => i.isAvailable !== false);
     }
     return true; // ALL promotions always show
@@ -230,6 +237,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
   }
 
+  get cartRoute(): string {
+    const slug = localStorage.getItem('storeSlug');
+    return slug ? `/store/${slug}/cart` : '/cart';
+  }
+
   quickAddToCart(item: ProductCardItem): void {
     if (!item.id) return;
     if (!this.isLoggedIn) {
@@ -242,7 +254,11 @@ export class HomeComponent implements OnInit, OnDestroy {
       return;
     }
     this.cartService.addToCart(item.id, 1, 'M').subscribe({
-      next: () => this.toastr.success(`${item.name} added to cart`),
+      next: () => {
+        clearTimeout(this.cartAddedTimer);
+        this.cartAddedName = item.name;
+        this.cartAddedTimer = setTimeout(() => this.cartAddedName = '', 3000);
+      },
       error: (err) => this.toastr.error(err?.error || 'Failed to add item to cart')
     });
   }

@@ -87,14 +87,24 @@
     </div>
   </div>
 
-  <!-- Floating Cart Bar (mobile) -->
-  <app-floating-cart-bar
-    [itemCount]="cartItemCount"
-    [totalPrice]="cartTotal"
-    (openCart)="openCartDrawer()">
-  </app-floating-cart-bar>
 
-  <!-- Out of Stock Modal -->
+<!-- Add to Cart confirmation (mobile) -->
+  <div *ngIf="cartAddedName"
+       class="fixed bottom-16 left-4 right-4 z-50 md:hidden animate-fade-in">
+    <div class="bg-gray-900 text-white rounded-2xl px-4 py-3 flex items-center justify-between shadow-lg">
+      <div class="flex items-center gap-2">
+        <i class="bi bi-check-circle-fill text-success text-base"></i>
+        <span class="text-sm font-medium">{{ cartAddedName }} added</span>
+      </div>
+      <a [routerLink]="cartRoute"
+         class="text-sm font-semibold whitespace-nowrap ml-4"
+         style="color: var(--brand-primary)">
+        View Cart →
+      </a>
+    </div>
+  </div>
+
+<!-- Out of Stock Modal -->
   <app-confirm-modal
     [isOpen]="showOutOfStockModal"
     title="Item Unavailable"

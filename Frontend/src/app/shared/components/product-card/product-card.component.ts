@@ -41,15 +41,6 @@ export interface ProductCardItem {
              class="absolute inset-0 bg-black/40 flex items-center justify-center">
           <span class="text-white font-semibold text-sm bg-black/60 px-3 py-1 rounded-full">Out of Stock</span>
         </div>
-        <!-- Favorite button -->
-        <button
-          *ngIf="showFavorite"
-          (click)="onFavorite($event)"
-          class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm
-                 flex items-center justify-center shadow-sm
-                 hover:bg-red-50 hover:text-danger transition-all duration-200 active:scale-90">
-          <i class="bi bi-heart text-base"></i>
-        </button>
       </div>
       <!-- Content -->
       <div class="p-4">
