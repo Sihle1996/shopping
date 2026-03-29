@@ -34,19 +34,46 @@ export class InventoryManagementComponent implements OnInit {
   }
 
   get filteredInventory(): any[] {
-    return this.inventory.filter((item) => {
-      const matchesName = item.name
-        .toLowerCase()
-        .includes(this.searchTerm.toLowerCase());
-      const matchesLowStock = !this.lowStockOnly || this.isLowStock(item);
-      return matchesName && matchesLowStock;
-    });
+    return this.inventory
+      .filter(item => {
+        const matchesName = item.name.toLowerCase().includes(this.searchTerm.toLowerCase());
+        const matchesLowStock = !this.lowStockOnly || this.isLowStock(item);
+        return matchesName && matchesLowStock;
+      })
+      .sort((a, b) => {
+        if (this.sortBy === 'stock') return b.stock - a.stock;
+        if (this.sortBy === 'reserved') return b.reservedStock - a.reservedStock;
+        return a.name.localeCompare(b.name);
+      });
   }
 
   adjust(item: any): void {
-    const adjustment = [{ menuItemId: item.id, stockChange: item.adjustStock || 0, reservedChange: 0 }];
+    const adjustment = [{
+      menuItemId: item.id,
+      stockChange: item.adjustStock || 0,
+      reservedChange: 0,
+      lowStockThreshold: item.lowStockThreshold ?? 5
+    }];
     this.adminService.adjustInventory(adjustment).subscribe({
-      next: () => this.fetchInventory(),
+      next: () => { item.adjustStock = 0; this.fetchInventory(); },
+      error: () => {}
+    });
+  }
+
+  syncing = false;
+
+  syncAvailability(): void {
+    this.syncing = true;
+    this.adminService.syncAvailability().subscribe({
+      next: (count) => { this.syncing = false; this.fetchInventory(); },
+      error: () => { this.syncing = false; }
+    });
+  }
+
+  toggleAvailability(item: any): void {
+    const next = !item.isAvailable;
+    this.adminService.setItemAvailability(item.id, next).subscribe({
+      next: () => { item.isAvailable = next; },
       error: () => {}
     });
   }

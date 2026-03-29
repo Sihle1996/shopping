@@ -215,6 +215,35 @@ public class OrderService {
     public OrderDTO updateOrderStatus(UUID orderId, String status) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        boolean isCancelling = ("Cancelled".equals(status) || "Rejected".equals(status))
+                && !"Cancelled".equals(order.getStatus())
+                && !"Rejected".equals(order.getStatus());
+
+        if (isCancelling) {
+            UUID tenantId = TenantContext.getCurrentTenantId();
+            for (OrderItem oi : order.getOrderItems()) {
+                MenuItem menuItem = oi.getMenuItem();
+                if (menuItem == null) continue;
+                // Only restore stock if it was being tracked
+                if (menuItem.getStock() >= 0) {
+                    menuItem.setStock(menuItem.getStock() + oi.getQuantity());
+                    menuItem.setReservedStock(Math.max(0, menuItem.getReservedStock() - oi.getQuantity()));
+                    menuItemRepository.save(menuItem);
+
+                    InventoryLog log = new InventoryLog();
+                    log.setMenuItem(menuItem);
+                    log.setStockChange(oi.getQuantity());
+                    log.setReservedChange(-oi.getQuantity());
+                    log.setType("ORDER_CANCELLED");
+                    if (tenantId != null) {
+                        tenantRepository.findById(tenantId).ifPresent(log::setTenant);
+                    }
+                    inventoryLogRepository.save(log);
+                }
+            }
+        }
+
         order.setStatus(status);
         return convertToOrderDTO(orderRepository.save(order));
     }

@@ -86,8 +86,8 @@ export class ProductComponent implements OnInit {
         this.toastr.success(`${this.product!.name} added to cart`);
         this.isAddingToCart = false;
       },
-      error: () => {
-        this.toastr.error('Failed to add item to cart');
+      error: (err) => {
+        this.toastr.error(err?.error || 'Failed to add item to cart');
         this.isAddingToCart = false;
       }
     });

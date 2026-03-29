@@ -11,6 +11,8 @@ export interface MenuItem {
   image: string;
   category: string;
   isAvailable: boolean;
+  stock?: number;
+  lowStockThreshold?: number;
   quantity?: number;
 }
 

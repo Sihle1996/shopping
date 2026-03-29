@@ -38,6 +38,15 @@ public class InventoryService {
                     .orElseThrow(() -> new RuntimeException("Menu item not found: " + adj.getMenuItemId()));
             item.setStock(item.getStock() + adj.getStockChange());
             item.setReservedStock(item.getReservedStock() + adj.getReservedChange());
+            if (adj.getLowStockThreshold() != null) {
+                item.setLowStockThreshold(adj.getLowStockThreshold());
+            }
+            // Auto-mark unavailable when stock hits zero and was being tracked
+            if (item.getStock() == 0 && adj.getStockChange() < 0) {
+                item.setIsAvailable(false);
+            } else if (item.getStock() > 0) {
+                item.setIsAvailable(true);
+            }
             updated.add(menuItemRepository.save(item));
 
             InventoryLog log = new InventoryLog();
@@ -92,6 +101,29 @@ public class InventoryService {
                         log.getTimestamp()
                 )
         ).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public int syncAvailability() {
+        List<MenuItem> items = getTenantMenuItems();
+        int count = 0;
+        for (MenuItem item : items) {
+            boolean shouldBeAvailable = item.getStock() > 0;
+            if (item.getIsAvailable() != shouldBeAvailable) {
+                item.setIsAvailable(shouldBeAvailable);
+                menuItemRepository.save(item);
+                count++;
+            }
+        }
+        return count;
+    }
+
+    @Transactional
+    public MenuItem setAvailability(java.util.UUID id, Boolean available) {
+        MenuItem item = menuItemRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Item not found"));
+        item.setIsAvailable(available != null ? available : item.getIsAvailable());
+        return menuItemRepository.save(item);
     }
 
     private List<MenuItem> getTenantMenuItems() {

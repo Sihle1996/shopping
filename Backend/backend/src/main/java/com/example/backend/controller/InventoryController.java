@@ -36,4 +36,18 @@ public class InventoryController {
     public List<InventoryLogDTO> getAuditLogs() {
         return inventoryService.getAuditLogs();
     }
+
+    /** Marks all items with stock == 0 as unavailable, and stock > 0 as available */
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PostMapping("/sync-availability")
+    public int syncAvailability() {
+        return inventoryService.syncAvailability();
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PatchMapping("/{id}/availability")
+    public ResponseEntity<MenuItem> setAvailability(@PathVariable java.util.UUID id,
+                                                     @RequestBody java.util.Map<String, Boolean> body) {
+        return ResponseEntity.ok(inventoryService.setAvailability(id, body.get("isAvailable")));
+    }
 }
