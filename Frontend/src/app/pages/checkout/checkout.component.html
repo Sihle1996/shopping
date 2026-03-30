@@ -35,7 +35,17 @@
 
         <!-- Street Address with Autocomplete -->
         <div class="relative">
-          <label class="block text-xs font-medium text-textDark mb-1.5">Street Address</label>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-medium text-textDark">Street Address</label>
+            <button type="button" (click)="useMyLocation()"
+                    [disabled]="locating"
+                    class="flex items-center gap-1 text-xs font-medium transition-colors"
+                    style="color: var(--brand-primary)">
+              <i class="bi" [class.bi-geo-alt-fill]="!locating" [class.bi-arrow-repeat]="locating"
+                 [class.animate-spin]="locating"></i>
+              {{ locating ? 'Locating...' : 'Use my location' }}
+            </button>
+          </div>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
               <i class="bi bi-geo-alt text-textMuted text-sm"></i>

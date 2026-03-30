@@ -8,8 +8,20 @@ import { environment } from 'src/environments/environment';
 })
 export class GeocodingService {
   private orsApiKey = '5b3ce3597851110001cf62486eb46190526c4d34b70f6499f1ba52c2';
+  private userLat: number | null = null;
+  private userLon: number | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          this.userLat = pos.coords.latitude;
+          this.userLon = pos.coords.longitude;
+        },
+        () => {}
+      );
+    }
+  }
 
   /**
    * Geocode address (with fallback on failure)
@@ -79,7 +91,10 @@ export class GeocodingService {
     lat: number;
     lon: number;
   }[]> {
-    const url = `https://api.openrouteservice.org/geocode/autocomplete?api_key=${this.orsApiKey}&text=${encodeURIComponent(query)}&boundary.country=ZA`;
+    const focusParams = this.userLat && this.userLon
+      ? `&focus.point.lat=${this.userLat}&focus.point.lon=${this.userLon}`
+      : '';
+    const url = `https://api.openrouteservice.org/geocode/autocomplete?api_key=${this.orsApiKey}&text=${encodeURIComponent(query)}&boundary.country=ZA${focusParams}`;
 
     return this.http.get<any>(url).pipe(
       map(response =>
