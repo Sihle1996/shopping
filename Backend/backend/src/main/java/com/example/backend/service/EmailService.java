@@ -25,8 +25,8 @@ public class EmailService {
 
     private final RestTemplate restTemplate;
 
-    @Async
     public void sendOrderConfirmation(String toEmail, OrderDTO order, String storeName) {
+        log.info("Sending order confirmation to {} (apiKey set={})", toEmail, apiKey != null && !apiKey.isBlank());
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("RESEND_API_KEY not configured — skipping order confirmation email");
             return;
@@ -36,7 +36,6 @@ public class EmailService {
         send(toEmail, subject, html);
     }
 
-    @Async
     public void sendOrderDelivered(String toEmail, OrderDTO order, String storeName) {
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("RESEND_API_KEY not configured — skipping order delivered email");
