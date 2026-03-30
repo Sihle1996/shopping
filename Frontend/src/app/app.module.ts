@@ -26,6 +26,7 @@ import { HistoryordersComponent } from './pages/historyorders/historyorders.comp
 import { RegisterRestaurantComponent } from './pages/register-restaurant/register-restaurant.component';
 import { StoreListComponent } from './pages/store-list/store-list.component';
 import { StoreComponent } from './pages/store/store.component';
+import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 
 @NgModule({
   declarations: [
@@ -44,6 +45,7 @@ import { StoreComponent } from './pages/store/store.component';
     RegisterRestaurantComponent,
     StoreListComponent,
     StoreComponent,
+    ForgotPasswordComponent,
   ],
   imports: [
     BrowserModule,

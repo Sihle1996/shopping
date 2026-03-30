@@ -48,6 +48,8 @@ public class SecurityConfiguration {
                                 "/api/menu/**",
                                 "/api/register",
                                 "/api/login",
+                                "/api/forgot-password",
+                                "/api/reset-password",
                                 "/api/promotions/**",
                                 "/api/tenants/register",
                                 "/api/tenants/active",
@@ -61,10 +63,10 @@ public class SecurityConfiguration {
                         .requestMatchers("/ws/**").permitAll()
 
                         // Superadmin routes
-                        .requestMatchers("/api/superadmin/**").hasRole("SUPERADMIN")
+                        .requestMatchers("/api/superadmin/**").hasAnyRole("SUPERADMIN")
 
-                        // Admin routes
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // Admin routes — also allow SUPERADMIN to access admin endpoints
+                        .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "SUPERADMIN")
 
                         // Driver routes
                         .requestMatchers("/api/driver/**").hasRole("DRIVER")

@@ -3,6 +3,7 @@ package com.example.backend.controller;
 import com.example.backend.entity.SalesTrendDTO;
 import com.example.backend.entity.TopProductDTO;
 import com.example.backend.service.AnalyticsService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -10,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/analytics")
+@PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
 public class AnalyticsController {
     private final AnalyticsService analyticsService;
 
