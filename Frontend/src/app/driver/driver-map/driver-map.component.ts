@@ -18,6 +18,8 @@ export interface DeliveryStop {
   id: string;
   address: string;
   label: string;
+  lat?: number | null;
+  lon?: number | null;
 }
 
 const ROUTE_COLORS = ['#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981'];
@@ -198,6 +200,11 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
   private geocodeAllStops(stops: DeliveryStop[]): void {
     const promises = stops.map(stop => {
+      // Use saved coordinates from checkout — accurate to where customer actually selected
+      if (stop.lat != null && stop.lon != null) {
+        return Promise.resolve({ ...stop, coords: [stop.lon, stop.lat] as [number, number] });
+      }
+      // Fallback: geocode the address text (older orders without coordinates)
       const q = encodeURIComponent(stop.address);
       return this.http.get<any>(`https://api.mapbox.com/geocoding/v5/mapbox.places/${q}.json?access_token=${environment.mapboxToken}&country=za&limit=1`)
         .toPromise().then(res => res?.features?.length ? { ...stop, coords: res.features[0].center as [number, number] } : null);

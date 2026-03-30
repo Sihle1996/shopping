@@ -14,6 +14,8 @@ public class OrderRequestDTO {
     private String payerId;
     private String status;
     private String deliveryAddress;
+    private Double deliveryLat;
+    private Double deliveryLon;
     private UUID tenantId;
     private String promoCode;
 }

@@ -50,6 +50,8 @@ public class Order {
     private Double platformFee;
     private Double discountAmount;
     private String promoCode;
+    private Double deliveryLat;
+    private Double deliveryLon;
 
     public Order(User user, Tenant tenant, List<OrderItem> orderItems, Double totalAmount, Instant orderDate, String status, String deliveryAddress) {
         this.user = user;

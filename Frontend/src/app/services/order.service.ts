@@ -13,6 +13,8 @@ export interface Order {
   deliveryAddress: string;
   userId: string;
   userEmail: string;
+  deliveryLat?: number;
+  deliveryLon?: number;
 }
 
 @Injectable({
