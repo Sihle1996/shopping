@@ -39,6 +39,7 @@ public class OrderService {
     private final TenantRepository tenantRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final PromotionService promotionService;
+    private final EmailService emailService;
 
     @Transactional
     public OrderDTO placeOrderFromPayment(OrderRequestDTO request, User user) {
@@ -137,11 +138,16 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         OrderDTO dto = convertToOrderDTO(saved);
+
         messagingTemplate.convertAndSendToUser(
                 String.valueOf(user.getId()),
                 "/queue/orders",
                 dto
         );
+
+        String storeName = saved.getTenant() != null ? saved.getTenant().getName() : "Our Store";
+        emailService.sendOrderConfirmation(user.getEmail(), dto, storeName);
+
         return dto;
     }
 
@@ -245,7 +251,15 @@ public class OrderService {
         }
 
         order.setStatus(status);
-        return convertToOrderDTO(orderRepository.save(order));
+        Order updated = orderRepository.save(order);
+        OrderDTO dto = convertToOrderDTO(updated);
+
+        if ("Delivered".equals(status)) {
+            String storeName = updated.getTenant() != null ? updated.getTenant().getName() : "Our Store";
+            emailService.sendOrderDelivered(updated.getUser().getEmail(), dto, storeName);
+        }
+
+        return dto;
     }
 
     public List<User> getAvailableDrivers() {
