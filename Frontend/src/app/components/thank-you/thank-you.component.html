@@ -14,11 +14,18 @@
   </p>
   <p class="text-xs text-textMuted mb-8">Redirecting you back to the menu in 5 seconds...</p>
 
-  <button (click)="goToMenu()"
-          class="px-8 py-3 rounded-2xl text-white font-semibold text-sm shadow-md
-                 transition-all duration-200 active:scale-95"
-          style="background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)">
-    <i class="bi bi-shop mr-2"></i>Back to Menu
-  </button>
+  <div class="flex flex-col sm:flex-row gap-3">
+    <button (click)="goToMenu()"
+            class="px-8 py-3 rounded-2xl text-white font-semibold text-sm shadow-md
+                   transition-all duration-200 active:scale-95"
+            style="background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)">
+      <i class="bi bi-shop mr-2"></i>Back to Menu
+    </button>
+    <button (click)="goToOrders()"
+            class="px-8 py-3 rounded-2xl font-semibold text-sm border-2 border-primary text-primary
+                   bg-white hover:bg-surface transition-all duration-200 active:scale-95">
+      <i class="bi bi-receipt mr-2"></i>View My Orders
+    </button>
+  </div>
 
 </div>

@@ -16,6 +16,7 @@ import { StoreListComponent } from './pages/store-list/store-list.component';
 import { StoreComponent } from './pages/store/store.component';
 import { HomeComponent } from './pages/home/home.component';
 import { TenantResolver } from './resolvers/tenant.resolver';
+import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 
 const routes: Routes = [
   // Landing — store listing
@@ -43,6 +44,7 @@ const routes: Routes = [
   { path: 'thank-you', component: ThankYouComponent, canActivate: [UserGuard] },
 
   { path: 'login', component: LoginComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'register-restaurant', component: RegisterRestaurantComponent },
 

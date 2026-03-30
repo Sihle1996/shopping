@@ -4,6 +4,7 @@ import com.example.backend.config.JwtService;
 import com.example.backend.entity.Tenant;
 import com.example.backend.repository.TenantRepository;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.service.EmailService;
 import com.example.backend.tenant.TenantContext;
 import com.example.backend.user.Role;
 import com.example.backend.user.User;
@@ -14,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 @Service
@@ -25,6 +27,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final EmailService emailService;
 
     public AuthenticationResponse register(RegisterRequest request, UUID tenantId) {
         // Check if the user already exists within this tenant (or globally if no tenant)
@@ -103,11 +106,41 @@ public class AuthenticationService {
     }
 
     public List<User> getAllUsers() {
-        // Retrieve all users
         try {
             return repository.findAll();
         } catch (Exception e) {
             throw new IllegalStateException("Failed to fetch users", e);
         }
+    }
+
+    public void sendPasswordResetOtp(String email) {
+        User user = repository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("No account found with that email"));
+
+        String otp = String.format("%06d", new Random().nextInt(999999));
+        user.setResetOtp(otp);
+        repository.save(user);
+
+        String html = "<div style='font-family:sans-serif;padding:32px;max-width:480px;margin:0 auto;background:#fff;border-radius:12px;'>"
+                + "<h2 style='color:#111;'>Password Reset</h2>"
+                + "<p style='color:#555;'>Your one-time password reset code is:</p>"
+                + "<div style='font-size:36px;font-weight:bold;letter-spacing:8px;color:#111;padding:16px 0;'>" + otp + "</div>"
+                + "<p style='color:#999;font-size:12px;'>This code expires in 15 minutes. If you didn't request this, ignore this email.</p>"
+                + "</div>";
+
+        emailService.sendRaw(user.getEmail(), "Your password reset code", html);
+    }
+
+    public void resetPassword(String email, String otp, String newPassword) {
+        User user = repository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("No account found with that email"));
+
+        if (user.getResetOtp() == null || !user.getResetOtp().equals(otp)) {
+            throw new IllegalArgumentException("Invalid or expired OTP");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setResetOtp(null);
+        repository.save(user);
     }
 }

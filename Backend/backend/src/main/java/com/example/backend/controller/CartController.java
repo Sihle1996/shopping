@@ -3,8 +3,10 @@ package com.example.backend.controller;
 
 import com.example.backend.entity.CartItemDTO;
 import com.example.backend.service.CartService;
+import com.example.backend.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,10 +20,10 @@ public class CartController {
 
     private final CartService cartService;
 
-    // Add item to cart
     @PostMapping("/add")
-    public ResponseEntity<?> addToCart(@RequestBody Map<String, Object> payload) {
-        UUID userId = UUID.fromString(payload.get("userId").toString());
+    public ResponseEntity<?> addToCart(@RequestBody Map<String, Object> payload,
+                                       @AuthenticationPrincipal User principal) {
+        UUID userId = principal.getId(); // always use authenticated user's ID
         UUID menuItemId = UUID.fromString(payload.get("menuItemId").toString());
         Integer quantity = Integer.valueOf(payload.get("quantity").toString());
         try {
@@ -31,18 +33,15 @@ public class CartController {
         }
     }
 
-    // Get user's cart by user ID
-    @GetMapping("/{userId}")
-    public ResponseEntity<List<CartItemDTO>> getUserCart(@PathVariable UUID userId) {
-        List<CartItemDTO> cartItems = cartService.getUserCartItems(userId);
-        return ResponseEntity.ok(cartItems);
+    @GetMapping
+    public ResponseEntity<List<CartItemDTO>> getUserCart(@AuthenticationPrincipal User principal) {
+        return ResponseEntity.ok(cartService.getUserCartItems(principal.getId()));
     }
 
-
-    // Update cart item quantity
     @PutMapping("/update/{cartItemId}")
     public ResponseEntity<?> updateCartItem(@PathVariable UUID cartItemId,
-                                            @RequestBody Map<String, Object> payload) {
+                                            @RequestBody Map<String, Object> payload,
+                                            @AuthenticationPrincipal User principal) {
         Integer quantity = Integer.valueOf(payload.get("quantity").toString());
         try {
             return ResponseEntity.ok(cartService.updateCartItem(cartItemId, quantity));
@@ -51,17 +50,16 @@ public class CartController {
         }
     }
 
-    // Delete cart item
     @DeleteMapping("/delete/{cartItemId}")
-    public ResponseEntity<Void> deleteCartItem(@PathVariable UUID cartItemId) {
+    public ResponseEntity<Void> deleteCartItem(@PathVariable UUID cartItemId,
+                                               @AuthenticationPrincipal User principal) {
         cartService.deleteCartItem(cartItemId);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/clear/{userId}")
-    public ResponseEntity<Void> clearCart(@PathVariable UUID userId) {
-        cartService.clearCartByUserId(userId);
+    @DeleteMapping("/clear")
+    public ResponseEntity<Void> clearCart(@AuthenticationPrincipal User principal) {
+        cartService.clearCartByUserId(principal.getId());
         return ResponseEntity.noContent().build();
     }
-
 }

@@ -37,12 +37,11 @@ export class CartService {
   }
 
   getCartItems(): Observable<CartItem[]> {
-    const userId = this.authService.getUserId();
-    if (!userId) {
+    if (!this.authService.isLoggedIn()) {
       return new Observable(observer => observer.next([]));
     }
 
-    return this.http.get<any[]>(`${this.apiUrl}/${userId}`, { headers: this.getAuthHeaders() }).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}`, { headers: this.getAuthHeaders() }).pipe(
       tap(items => {
         const mappedItems = this.mapCartItems(items);
         this.cartItems.next(mappedItems);
@@ -81,13 +80,12 @@ export class CartService {
   }
 
   addToCart(menuItemId: string, quantity: number, size: string): Observable<any> {
-    const userId = this.authService.getUserId();
-    if (!userId) {
+    if (!this.authService.isLoggedIn()) {
       return new Observable(observer => observer.error('User not logged in.'));
     }
 
     return this.http.post(`${this.apiUrl}/add`,
-      { userId, menuItemId, quantity, size },
+      { menuItemId, quantity, size },
       { headers: this.getAuthHeaders() }
     ).pipe(
       tap(() => this.refreshCart())
@@ -117,10 +115,9 @@ export class CartService {
   }
 
   clearCart(): void {
-    const userId = this.authService.getUserId();
-    if (!userId) return;
+    if (!this.authService.isLoggedIn()) return;
 
-    this.http.delete(`${this.apiUrl}/clear/${userId}`, {
+    this.http.delete(`${this.apiUrl}/clear`, {
       headers: this.getAuthHeaders()
     }).subscribe({
       next: () => {
