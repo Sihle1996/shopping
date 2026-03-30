@@ -190,54 +190,81 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       return;
     }
     this.locating = true;
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        this.selectedLat = pos.coords.latitude;
-        this.selectedLon = pos.coords.longitude;
-        this.geocodingService.reverseGeocode(pos.coords.latitude, pos.coords.longitude).subscribe({
-          next: (result) => {
-            const a = result.address;
-            const road = a.road || a.pedestrian || a.footway || '';
-            const suburb = a.suburb || a.neighbourhood || a.quarter || '';
-            const city = a.city || a.town || a.village || a.county || '';
-            const postcode = a.postcode || '';
-            const displayName = [road, suburb, city].filter(Boolean).join(', ');
-            this.deliveryDetails.address = displayName;
-            this.deliveryDetails.city = city;
-            this.addressControl.setValue(displayName, { emitEvent: false });
-            this.addressSuggestions = [];
 
-            if (postcode) {
-              this.deliveryDetails.zip = postcode;
-              this.locating = false;
-              this.cdr.detectChanges();
-            } else {
-              // Nominatim has no postcode for this area — try Mapbox reverse geocode
-              this.geocodingService.reverseGeocodeMapbox(pos.coords.latitude, pos.coords.longitude).subscribe({
-                next: (zip) => {
-                  this.deliveryDetails.zip = zip;
-                  this.locating = false;
-                  this.cdr.detectChanges();
-                },
-                error: () => {
-                  this.locating = false;
-                  this.cdr.detectChanges();
-                }
-              });
-            }
-          },
-          error: () => {
-            this.locating = false;
-            this.toastr.error('Could not determine your address');
-          }
-        });
+    // Use watchPosition to wait for a high-accuracy fix (accuracy < 50m)
+    // then stop watching and reverse geocode
+    let watchId: number;
+    const done = (pos: GeolocationPosition) => {
+      navigator.geolocation.clearWatch(watchId);
+      this.resolveLocation(pos);
+    };
+    watchId = navigator.geolocation.watchPosition(
+      pos => {
+        if (pos.coords.accuracy <= 50) {
+          done(pos); // accurate enough
+        }
+        // else keep watching for a better fix
       },
       () => {
+        navigator.geolocation.clearWatch(watchId);
         this.locating = false;
         this.toastr.warning('Location access denied. Please type your address manually.');
       },
-      { timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
+
+    // Safety timeout — use whatever we have after 8 seconds
+    setTimeout(() => {
+      navigator.geolocation.clearWatch(watchId);
+      if (this.locating) {
+        navigator.geolocation.getCurrentPosition(
+          pos => this.resolveLocation(pos),
+          () => { this.locating = false; },
+          { enableHighAccuracy: true, maximumAge: 0 }
+        );
+      }
+    }, 8000);
+  }
+
+  private resolveLocation(pos: GeolocationPosition): void {
+    this.selectedLat = pos.coords.latitude;
+    this.selectedLon = pos.coords.longitude;
+    this.geocodingService.reverseGeocode(pos.coords.latitude, pos.coords.longitude).subscribe({
+      next: (result) => {
+        const a = result.address;
+        const road = a.road || a.pedestrian || a.footway || '';
+        const suburb = a.suburb || a.neighbourhood || a.quarter || '';
+        const city = a.city || a.town || a.village || a.county || '';
+        const postcode = a.postcode || '';
+        const displayName = [road, suburb, city].filter(Boolean).join(', ');
+        this.deliveryDetails.address = displayName;
+        this.deliveryDetails.city = city;
+        this.addressControl.setValue(displayName, { emitEvent: false });
+        this.addressSuggestions = [];
+
+        if (postcode) {
+          this.deliveryDetails.zip = postcode;
+          this.locating = false;
+          this.cdr.detectChanges();
+        } else {
+          this.geocodingService.reverseGeocodeMapbox(pos.coords.latitude, pos.coords.longitude).subscribe({
+            next: (zip) => {
+              this.deliveryDetails.zip = zip;
+              this.locating = false;
+              this.cdr.detectChanges();
+            },
+            error: () => {
+              this.locating = false;
+              this.cdr.detectChanges();
+            }
+          });
+        }
+      },
+      error: () => {
+        this.locating = false;
+        this.toastr.error('Could not determine your address');
+      }
+    });
   }
 
   selectAddress(suggestion: any) {
