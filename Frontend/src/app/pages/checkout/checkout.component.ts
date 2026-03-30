@@ -38,6 +38,8 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   appliedPromo: Promotion | null = null;
   promoError: string = '';
 
+  locating = false;
+
   addressSuggestions: {
     label: string;
     street?: string;
@@ -178,6 +180,44 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     this.promoCode = '';
     this.promoError = '';
     this.discount = 0;
+  }
+
+  useMyLocation(): void {
+    if (!navigator.geolocation) {
+      this.toastr.warning('Geolocation is not supported by your browser');
+      return;
+    }
+    this.locating = true;
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        this.geocodingService.reverseGeocode(pos.coords.latitude, pos.coords.longitude).subscribe({
+          next: (result) => {
+            const a = result.address;
+            const road = a.road || a.pedestrian || a.footway || '';
+            const suburb = a.suburb || a.neighbourhood || a.quarter || '';
+            const city = a.city || a.town || a.village || a.county || '';
+            const postcode = a.postcode || '';
+            const displayName = [road, suburb, city].filter(Boolean).join(', ');
+            this.deliveryDetails.address = displayName;
+            this.deliveryDetails.city = city;
+            this.deliveryDetails.zip = postcode;
+            this.addressControl.setValue(displayName, { emitEvent: false });
+            this.addressSuggestions = [];
+            this.locating = false;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.locating = false;
+            this.toastr.error('Could not determine your address');
+          }
+        });
+      },
+      () => {
+        this.locating = false;
+        this.toastr.warning('Location access denied. Please type your address manually.');
+      },
+      { timeout: 10000 }
+    );
   }
 
   selectAddress(suggestion: any) {
