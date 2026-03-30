@@ -204,11 +204,27 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
             const displayName = [road, suburb, city].filter(Boolean).join(', ');
             this.deliveryDetails.address = displayName;
             this.deliveryDetails.city = city;
-            this.deliveryDetails.zip = postcode;
             this.addressControl.setValue(displayName, { emitEvent: false });
             this.addressSuggestions = [];
-            this.locating = false;
-            this.cdr.detectChanges();
+
+            if (postcode) {
+              this.deliveryDetails.zip = postcode;
+              this.locating = false;
+              this.cdr.detectChanges();
+            } else {
+              // Nominatim has no postcode for this area — try Mapbox reverse geocode
+              this.geocodingService.reverseGeocodeMapbox(pos.coords.latitude, pos.coords.longitude).subscribe({
+                next: (zip) => {
+                  this.deliveryDetails.zip = zip;
+                  this.locating = false;
+                  this.cdr.detectChanges();
+                },
+                error: () => {
+                  this.locating = false;
+                  this.cdr.detectChanges();
+                }
+              });
+            }
           },
           error: () => {
             this.locating = false;

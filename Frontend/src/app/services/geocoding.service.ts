@@ -112,11 +112,21 @@ export class GeocodingService {
   }
 
   /**
-   * Reverse geocode
+   * Reverse geocode (Nominatim)
    */
   reverseGeocode(lat: number, lon: number): Observable<any> {
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
     return this.http.get<any>(url);
+  }
+
+  /**
+   * Reverse geocode via Mapbox — better postcode coverage for SA townships
+   */
+  reverseGeocodeMapbox(lat: number, lon: number): Observable<string> {
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lon},${lat}.json?types=postcode&access_token=${environment.mapboxToken}&country=za`;
+    return this.http.get<any>(url).pipe(
+      map(res => res?.features?.[0]?.text || '')
+    );
   }
 
   /**
