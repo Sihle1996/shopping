@@ -13,6 +13,8 @@ interface DriverOrder {
   deliveryAddress: string;
   userEmail: string;
   items: Array<{ name: string; quantity: number; size?: string }>;
+  deliveryLat?: number;
+  deliveryLon?: number;
 }
 
 @Component({
@@ -55,7 +57,9 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
         this.deliveryStops = this.activeOrders.map(o => ({
           id: o.id,
           address: o.deliveryAddress,
-          label: `Order #${o.id.substring(0, 8)}`
+          label: `Order #${o.id.substring(0, 8)}`,
+          lat: o.deliveryLat,
+          lon: o.deliveryLon
         }));
         this.isLoading = false;
       },

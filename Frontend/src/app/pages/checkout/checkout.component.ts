@@ -39,6 +39,8 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   promoError: string = '';
 
   locating = false;
+  private selectedLat: number | null = null;
+  private selectedLon: number | null = null;
 
   addressSuggestions: {
     label: string;
@@ -190,6 +192,8 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     this.locating = true;
     navigator.geolocation.getCurrentPosition(
       pos => {
+        this.selectedLat = pos.coords.latitude;
+        this.selectedLon = pos.coords.longitude;
         this.geocodingService.reverseGeocode(pos.coords.latitude, pos.coords.longitude).subscribe({
           next: (result) => {
             const a = result.address;
@@ -221,33 +225,15 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   }
 
   selectAddress(suggestion: any) {
+    // Store exact coordinates from the autocomplete result — no re-geocoding needed
+    this.selectedLat = suggestion.lat;
+    this.selectedLon = suggestion.lon;
+
     this.deliveryDetails.address = suggestion.label;
     this.deliveryDetails.city = suggestion.city || '';
     this.deliveryDetails.zip = suggestion.zip || '';
-    this.addressControl.setValue(suggestion.label);
+    this.addressControl.setValue(suggestion.label, { emitEvent: false });
     this.addressSuggestions = [];
-
-    this.geocodingService.reverseGeocode(suggestion.lat, suggestion.lon).subscribe({
-      next: reverse => {
-        const address = reverse.address;
-        const region = (address.city || address.town || address.suburb || '').toLowerCase();
-        const province = (address.state || '').toLowerCase();
-
-        const isAllowed = ['johannesburg', 'sandton', 'fourways', 'randburg', 'bryanston']
-          .some(area => region.includes(area)) || province.includes('gauteng');
-
-        if (!isAllowed) {
-          this.toastr.error('We currently only deliver within Johannesburg (Gauteng region)');
-          this.deliveryDetails.city = '';
-          this.deliveryDetails.zip = '';
-          return;
-        }
-
-        this.deliveryDetails.city = address.city || address.town || address.suburb || this.deliveryDetails.city;
-        this.deliveryDetails.zip = address.postcode || this.deliveryDetails.zip;
-      },
-      error: () => this.toastr.error('Address validation failed')
-    });
   }
 
   cleanAddressLabel(label: string): string {
@@ -303,6 +289,8 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
             const orderData: any = {
               userId: this.authService.getUserId(),
               deliveryAddress: `${d.address}, ${d.city}, ${d.zip}, South Africa`,
+              deliveryLat: this.selectedLat,
+              deliveryLon: this.selectedLon,
               items: this.cartItems.map(item => ({
                 productId: item.menuItemId,
                 name: item.menuItemName,

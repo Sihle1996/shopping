@@ -123,6 +123,8 @@ public class OrderService {
         order.setOrderDate(Instant.now());
         order.setStatus("Pending");
         order.setDeliveryAddress(request.getDeliveryAddress());
+        order.setDeliveryLat(request.getDeliveryLat());
+        order.setDeliveryLon(request.getDeliveryLon());
         order.setPaymentId(request.getPaymentId());
         order.setPayerId(request.getPayerId());
 
@@ -316,7 +318,9 @@ public class OrderService {
                 null, // driverName, set below
                 order.getTenant() != null ? order.getTenant().getId() : null,
                 order.getDiscountAmount() != null ? order.getDiscountAmount() : 0.0,
-                order.getPromoCode()
+                order.getPromoCode(),
+                order.getDeliveryLat(),
+                order.getDeliveryLon()
         );
 
         if (order.getDriver() != null) {

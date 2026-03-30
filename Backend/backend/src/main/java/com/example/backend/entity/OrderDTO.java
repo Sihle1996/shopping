@@ -29,6 +29,8 @@ public class OrderDTO {
     private UUID tenantId;
     private Double discountAmount;
     private String promoCode;
+    private Double deliveryLat;
+    private Double deliveryLon;
 
     public OrderDTO(UUID id, Double totalAmount, String status, Instant orderDate,
                     String deliveryAddress, UUID userId, String userEmail) {
