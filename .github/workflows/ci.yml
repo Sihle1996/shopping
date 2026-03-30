@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Frontend Build ──────────────────────────────────────────────────────────
+  frontend:
+    name: Frontend — Angular Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: Frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: Frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (production)
+        run: npm run build:prod
+        env:
+          NODE_OPTIONS: --max_old_space_size=4096
+
+  # ── Backend Build ───────────────────────────────────────────────────────────
+  backend:
+    name: Backend — Spring Boot Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: Backend/backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build (skip tests)
+        run: ./mvnw clean package -DskipTests
