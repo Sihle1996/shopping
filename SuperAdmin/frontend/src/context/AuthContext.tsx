@@ -8,6 +8,7 @@ interface AuthUser {
 
 interface AuthContextType {
   user: AuthUser | null
+  loading: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => void
   isAuthenticated: boolean
@@ -17,16 +18,14 @@ const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [loading, setLoading] = useState(true)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function scheduleAutoLogout() {
     const expiresAt = localStorage.getItem('expiresAt')
     if (!expiresAt) return
     const ms = new Date(expiresAt).getTime() - Date.now()
-    if (ms <= 0) {
-      doLogout()
-      return
-    }
+    if (ms <= 0) { doLogout(); return }
     timerRef.current = setTimeout(() => doLogout(), ms)
   }
 
@@ -43,9 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser({ email, role })
       scheduleAutoLogout()
     }
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
+    setLoading(false)
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [])
 
   const login = async (email: string, password: string) => {
@@ -57,9 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => doLogout()
 
   return (
-    <AuthContext.Provider
-      value={{ user, login, logout, isAuthenticated: !!user }}
-    >
+    <AuthContext.Provider value={{ user, loading, login, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   )

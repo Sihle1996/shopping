@@ -11,6 +11,9 @@ namespace SuperAdmin.API.Controllers;
 [Authorize(Roles = "SUPERADMIN")]
 public class StoresController(AppDbContext db) : ControllerBase
 {
+    private static readonly HashSet<string> ValidPlans = ["BASIC", "PRO", "ENTERPRISE"];
+    private static readonly HashSet<string> ValidSubStatuses = ["TRIAL", "ACTIVE", "SUSPENDED"];
+
     [HttpGet]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? search,
@@ -18,6 +21,9 @@ public class StoresController(AppDbContext db) : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         var query = db.Tenants.AsQueryable();
 
         if (!string.IsNullOrEmpty(search))
@@ -72,14 +78,44 @@ public class StoresController(AppDbContext db) : ControllerBase
         var tenant = await db.Tenants.FindAsync(id);
         if (tenant == null) return NotFound();
 
-        if (request.Name != null) tenant.Name = request.Name;
-        if (request.SubscriptionStatus != null) tenant.SubscriptionStatus = request.SubscriptionStatus;
-        if (request.SubscriptionPlan != null) tenant.SubscriptionPlan = request.SubscriptionPlan;
-        if (request.Active.HasValue) tenant.Active = request.Active.Value;
-        if (request.PlatformCommissionPercent.HasValue) tenant.PlatformCommissionPercent = request.PlatformCommissionPercent.Value;
-        if (request.DeliveryRadiusKm.HasValue) tenant.DeliveryRadiusKm = request.DeliveryRadiusKm.Value;
-        tenant.UpdatedAt = DateTime.UtcNow;
+        if (request.Name != null)
+        {
+            if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 200)
+                return BadRequest(new { message = "Name must be 1–200 characters." });
+            tenant.Name = request.Name.Trim();
+        }
 
+        if (request.SubscriptionStatus != null)
+        {
+            if (!ValidSubStatuses.Contains(request.SubscriptionStatus.ToUpper()))
+                return BadRequest(new { message = $"Invalid subscription status. Valid values: {string.Join(", ", ValidSubStatuses)}" });
+            tenant.SubscriptionStatus = request.SubscriptionStatus.ToUpper();
+        }
+
+        if (request.SubscriptionPlan != null)
+        {
+            if (!ValidPlans.Contains(request.SubscriptionPlan.ToUpper()))
+                return BadRequest(new { message = $"Invalid plan. Valid values: {string.Join(", ", ValidPlans)}" });
+            tenant.SubscriptionPlan = request.SubscriptionPlan.ToUpper();
+        }
+
+        if (request.Active.HasValue) tenant.Active = request.Active.Value;
+
+        if (request.PlatformCommissionPercent.HasValue)
+        {
+            if (request.PlatformCommissionPercent.Value < 0 || request.PlatformCommissionPercent.Value > 100)
+                return BadRequest(new { message = "Commission must be between 0 and 100." });
+            tenant.PlatformCommissionPercent = request.PlatformCommissionPercent.Value;
+        }
+
+        if (request.DeliveryRadiusKm.HasValue)
+        {
+            if (request.DeliveryRadiusKm.Value < 0 || request.DeliveryRadiusKm.Value > 500)
+                return BadRequest(new { message = "Delivery radius must be between 0 and 500 km." });
+            tenant.DeliveryRadiusKm = request.DeliveryRadiusKm.Value;
+        }
+
+        tenant.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
         return Ok(tenant);
     }

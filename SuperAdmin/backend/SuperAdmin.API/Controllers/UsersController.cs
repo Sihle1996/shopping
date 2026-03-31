@@ -11,6 +11,8 @@ namespace SuperAdmin.API.Controllers;
 [Authorize(Roles = "SUPERADMIN")]
 public class UsersController(AppDbContext db) : ControllerBase
 {
+    private static readonly HashSet<string> ValidRoles = ["USER", "ADMIN", "MANAGER", "SUPERADMIN"];
+
     [HttpGet]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? search,
@@ -18,6 +20,9 @@ public class UsersController(AppDbContext db) : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         var query = db.Users.Where(u => u.Role != "DRIVER").AsQueryable();
 
         if (!string.IsNullOrEmpty(search))
@@ -45,8 +50,16 @@ public class UsersController(AppDbContext db) : ControllerBase
     {
         var user = await db.Users.FindAsync(id);
         if (user == null) return NotFound();
-        if (request.Role != null) user.Role = request.Role;
+
+        if (request.Role != null)
+        {
+            if (!ValidRoles.Contains(request.Role.ToUpper()))
+                return BadRequest(new { message = $"Invalid role. Valid values: {string.Join(", ", ValidRoles)}" });
+            user.Role = request.Role.ToUpper();
+        }
+
         if (request.DriverStatus != null) user.DriverStatus = request.DriverStatus;
+
         await db.SaveChangesAsync();
         return Ok(new UserDto(user.Id, user.Email, user.Role, user.DriverStatus, user.TenantId, null, user.LastPing));
     }

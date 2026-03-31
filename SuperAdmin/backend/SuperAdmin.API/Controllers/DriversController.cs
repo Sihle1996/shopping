@@ -11,6 +11,8 @@ namespace SuperAdmin.API.Controllers;
 [Authorize(Roles = "SUPERADMIN")]
 public class DriversController(AppDbContext db) : ControllerBase
 {
+    private static readonly HashSet<string> ValidDriverStatuses = ["AVAILABLE", "UNAVAILABLE", "SUSPENDED"];
+
     [HttpGet]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? search,
@@ -18,6 +20,9 @@ public class DriversController(AppDbContext db) : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         var query = db.Users.Where(u => u.Role == "DRIVER").AsQueryable();
 
         if (!string.IsNullOrEmpty(search))
@@ -45,7 +50,14 @@ public class DriversController(AppDbContext db) : ControllerBase
     {
         var driver = await db.Users.FindAsync(id);
         if (driver == null || driver.Role != "DRIVER") return NotFound();
-        if (request.DriverStatus != null) driver.DriverStatus = request.DriverStatus;
+
+        if (request.DriverStatus != null)
+        {
+            if (!ValidDriverStatuses.Contains(request.DriverStatus.ToUpper()))
+                return BadRequest(new { message = $"Invalid status. Valid values: {string.Join(", ", ValidDriverStatuses)}" });
+            driver.DriverStatus = request.DriverStatus.ToUpper();
+        }
+
         await db.SaveChangesAsync();
         return Ok(new { driverStatus = driver.DriverStatus });
     }
