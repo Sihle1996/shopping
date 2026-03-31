@@ -17,16 +17,16 @@ import {
 // ── Plan icon map ───────────────────────────────────────────────────────────
 const planIcon = (name: string) => {
   const n = name.toUpperCase()
-  if (n === 'ENTERPRISE') return <Star size={20} className="text-purple-500" />
-  if (n === 'PRO') return <Zap size={20} className="text-blue-500" />
-  return <CreditCard size={20} className="text-gray-500" />
+  if (n === 'ENTERPRISE') return <Star size={20} className="text-purple-400" />
+  if (n === 'PRO') return <Zap size={20} className="text-blue-400" />
+  return <CreditCard size={20} className="text-gray-400" />
 }
 
 const planHeaderColor = (name: string) => {
   const n = name.toUpperCase()
   if (n === 'ENTERPRISE') return 'from-purple-600 to-purple-700'
   if (n === 'PRO') return 'from-blue-600 to-blue-700'
-  return 'from-gray-600 to-gray-700'
+  return 'from-gray-700 to-gray-800'
 }
 
 // ── Plan Form ───────────────────────────────────────────────────────────────
@@ -47,24 +47,26 @@ function PlanForm({ initial, onSubmit, onCancel, saving, submitLabel }: PlanForm
     features: initial?.features ?? ''
   })
 
-  const inputCls = 'w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent'
+  const inputCls = 'w-full px-3 py-2 rounded-lg border border-gray-700 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent'
+  const inputStyle = { background: '#0d1117' }
 
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Plan Name</label>
+        <label className="block text-sm font-medium text-gray-400 mb-1">Plan Name</label>
         <input
           type="text"
           value={form.name}
           onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
           placeholder="e.g. BASIC, PRO, ENTERPRISE"
           className={inputCls}
+          style={inputStyle}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Price (ZAR/mo)</label>
+          <label className="block text-sm font-medium text-gray-400 mb-1">Price (ZAR/mo)</label>
           <input
             type="number"
             min={0}
@@ -72,34 +74,37 @@ function PlanForm({ initial, onSubmit, onCancel, saving, submitLabel }: PlanForm
             value={form.price}
             onChange={e => setForm(f => ({ ...f, price: parseFloat(e.target.value) }))}
             className={inputCls}
+            style={inputStyle}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Max Menu Items</label>
+          <label className="block text-sm font-medium text-gray-400 mb-1">Max Menu Items</label>
           <input
             type="number"
             min={0}
             value={form.maxMenuItems}
             onChange={e => setForm(f => ({ ...f, maxMenuItems: parseInt(e.target.value) }))}
             className={inputCls}
+            style={inputStyle}
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Max Drivers</label>
+        <label className="block text-sm font-medium text-gray-400 mb-1">Max Drivers</label>
         <input
           type="number"
           min={0}
           value={form.maxDrivers}
           onChange={e => setForm(f => ({ ...f, maxDrivers: parseInt(e.target.value) }))}
           className={inputCls}
+          style={inputStyle}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Features <span className="text-gray-400">(comma-separated)</span>
+        <label className="block text-sm font-medium text-gray-400 mb-1">
+          Features <span className="text-gray-600">(comma-separated)</span>
         </label>
         <textarea
           rows={3}
@@ -107,13 +112,14 @@ function PlanForm({ initial, onSubmit, onCancel, saving, submitLabel }: PlanForm
           onChange={e => setForm(f => ({ ...f, features: e.target.value }))}
           placeholder="e.g. Analytics dashboard, Priority support, Custom branding"
           className={`${inputCls} resize-none`}
+          style={inputStyle}
         />
       </div>
 
       <div className="flex justify-end gap-3 pt-2">
         <button
           onClick={onCancel}
-          className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+          className="px-4 py-2 text-sm border border-gray-700 rounded-lg text-gray-400 hover:bg-gray-800 transition-colors"
         >
           Cancel
         </button>
@@ -142,7 +148,10 @@ function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
     : []
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+    <div
+      className="rounded-xl border border-gray-800 overflow-hidden flex flex-col"
+      style={{ background: '#161b22' }}
+    >
       {/* Card header */}
       <div className={`bg-gradient-to-br ${planHeaderColor(plan.name)} px-5 py-4`}>
         <div className="flex items-center justify-between mb-2">
@@ -176,21 +185,21 @@ function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
       {/* Card body */}
       <div className="px-5 py-4 flex-1">
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-gray-50 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-500">Menu Items</p>
-            <p className="text-lg font-bold text-gray-900">{plan.maxMenuItems}</p>
+          <div className="bg-gray-800/60 rounded-lg p-3 text-center border border-gray-800">
+            <p className="text-xs text-gray-600">Menu Items</p>
+            <p className="text-lg font-bold text-gray-200">{plan.maxMenuItems}</p>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-500">Drivers</p>
-            <p className="text-lg font-bold text-gray-900">{plan.maxDrivers}</p>
+          <div className="bg-gray-800/60 rounded-lg p-3 text-center border border-gray-800">
+            <p className="text-xs text-gray-600">Drivers</p>
+            <p className="text-lg font-bold text-gray-200">{plan.maxDrivers}</p>
           </div>
         </div>
 
         {features.length > 0 && (
           <ul className="space-y-1.5">
             {features.map((f, i) => (
-              <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
-                <Check size={14} className="text-green-500 flex-shrink-0" />
+              <li key={i} className="flex items-center gap-2 text-sm text-gray-400">
+                <Check size={14} className="text-green-400 flex-shrink-0" />
                 {f}
               </li>
             ))}
@@ -198,12 +207,12 @@ function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
         )}
 
         {features.length === 0 && (
-          <p className="text-xs text-gray-400 italic">No features listed</p>
+          <p className="text-xs text-gray-600 italic">No features listed</p>
         )}
       </div>
 
       <div className="px-5 pb-4">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-700">
           Created {new Date(plan.createdAt).toLocaleDateString()}
         </p>
       </div>
@@ -254,8 +263,8 @@ export default function Subscriptions() {
       {/* Header row */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-gray-800">Subscription Plans</h2>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h2 className="text-base font-semibold text-gray-200">Subscription Plans</h2>
+          <p className="text-sm text-gray-600 mt-0.5">
             Manage plans assigned to stores on the platform
           </p>
         </div>
@@ -272,20 +281,20 @@ export default function Subscriptions() {
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-xl border border-gray-200 h-64 animate-pulse">
-              <div className="h-32 bg-gray-200 rounded-t-xl" />
+            <div key={i} className="rounded-xl border border-gray-800 h-64 animate-pulse" style={{ background: '#161b22' }}>
+              <div className="h-32 bg-gray-800 rounded-t-xl" />
               <div className="p-5 space-y-3">
-                <div className="h-4 bg-gray-200 rounded w-2/3" />
-                <div className="h-3 bg-gray-200 rounded w-1/2" />
+                <div className="h-4 bg-gray-800 rounded w-2/3" />
+                <div className="h-3 bg-gray-800 rounded w-1/2" />
               </div>
             </div>
           ))}
         </div>
       ) : plans.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-          <CreditCard size={36} className="text-gray-300 mx-auto mb-3" />
+        <div className="rounded-xl border border-gray-800 p-12 text-center" style={{ background: '#161b22' }}>
+          <CreditCard size={36} className="text-gray-700 mx-auto mb-3" />
           <p className="text-gray-500 font-medium">No plans created yet</p>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-gray-600 mt-1">
             Click "Create New Plan" to add a subscription plan
           </p>
         </div>
@@ -350,11 +359,11 @@ export default function Subscriptions() {
       >
         <div className="space-y-4">
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-              <AlertTriangle size={20} className="text-red-600" />
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+              <AlertTriangle size={20} className="text-red-400" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-gray-200">
                 Delete "{deletePlan?.name}" plan?
               </p>
               <p className="text-sm text-gray-500 mt-1">
@@ -365,7 +374,7 @@ export default function Subscriptions() {
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setDeletePlan(null)}
-              className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 text-sm border border-gray-700 rounded-lg text-gray-400 hover:bg-gray-800 transition-colors"
             >
               Cancel
             </button>

@@ -11,25 +11,28 @@ interface StatCardProps {
 }
 
 const colorMap: Record<Color, { bg: string; text: string }> = {
-  blue:   { bg: 'bg-blue-50',   text: 'text-blue-600' },
-  green:  { bg: 'bg-green-50',  text: 'text-green-600' },
-  orange: { bg: 'bg-orange-50', text: 'text-orange-600' },
-  purple: { bg: 'bg-purple-50', text: 'text-purple-600' },
-  red:    { bg: 'bg-red-50',    text: 'text-red-600' }
+  blue:   { bg: 'bg-blue-500/10',   text: 'text-blue-400' },
+  green:  { bg: 'bg-green-500/10',  text: 'text-green-400' },
+  orange: { bg: 'bg-orange-500/10', text: 'text-orange-400' },
+  purple: { bg: 'bg-purple-500/10', text: 'text-purple-400' },
+  red:    { bg: 'bg-red-500/10',    text: 'text-red-400' }
 }
 
 export default function StatCard({ title, value, subtitle, icon: Icon, color }: StatCardProps) {
   const { bg, text } = colorMap[color]
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-start gap-4 shadow-sm">
+    <div
+      className="rounded-xl border border-gray-800 p-5 flex items-start gap-4"
+      style={{ background: '#161b22' }}
+    >
       <div className={`${bg} ${text} rounded-lg p-3 flex-shrink-0`}>
         <Icon size={22} />
       </div>
       <div className="min-w-0">
         <p className="text-sm text-gray-500 font-medium truncate">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 mt-0.5">{value}</p>
-        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+        <p className="text-2xl font-bold text-white mt-0.5">{value}</p>
+        {subtitle && <p className="text-xs text-gray-600 mt-0.5">{subtitle}</p>}
       </div>
     </div>
   )

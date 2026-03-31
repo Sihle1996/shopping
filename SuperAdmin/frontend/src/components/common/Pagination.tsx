@@ -28,14 +28,14 @@ export default function Pagination({ page, totalPages, onPageChange }: Paginatio
       <button
         onClick={() => onPageChange(page - 1)}
         disabled={page === 1}
-        className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+        className="p-1.5 rounded-md text-gray-600 hover:bg-gray-800 hover:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
         <ChevronLeft size={16} />
       </button>
 
       {pages.map((p, i) =>
         p === '...' ? (
-          <span key={`ellipsis-${i}`} className="px-2 text-gray-400 text-sm">
+          <span key={`ellipsis-${i}`} className="px-2 text-gray-600 text-sm">
             ...
           </span>
         ) : (
@@ -46,7 +46,7 @@ export default function Pagination({ page, totalPages, onPageChange }: Paginatio
               'min-w-[32px] h-8 px-2 rounded-md text-sm font-medium transition-colors',
               p === page
                 ? 'bg-orange-500 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
+                : 'text-gray-500 hover:bg-gray-800 hover:text-gray-200'
             ].join(' ')}
           >
             {p}
@@ -57,7 +57,7 @@ export default function Pagination({ page, totalPages, onPageChange }: Paginatio
       <button
         onClick={() => onPageChange(page + 1)}
         disabled={page === totalPages}
-        className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+        className="p-1.5 rounded-md text-gray-600 hover:bg-gray-800 hover:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
         <ChevronRight size={16} />
       </button>

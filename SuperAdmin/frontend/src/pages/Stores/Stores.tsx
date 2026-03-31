@@ -60,13 +60,13 @@ function EditStoreModal({ store, isOpen, onClose, onSave, saving }: EditStoreMod
 
   const field = (label: string, node: React.ReactNode) => (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-gray-400 mb-1">{label}</label>
       {node}
     </div>
   )
 
-  const inputCls = 'w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent'
-  const selectCls = inputCls
+  const inputCls = 'w-full px-3 py-2 rounded-lg border border-gray-700 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent'
+  const inputStyle = { background: '#0d1117' }
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Edit Store — ${store.name}`} size="md">
@@ -77,6 +77,7 @@ function EditStoreModal({ store, isOpen, onClose, onSave, saving }: EditStoreMod
             value={form.name ?? ''}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             className={inputCls}
+            style={inputStyle}
           />
         )}
 
@@ -84,7 +85,8 @@ function EditStoreModal({ store, isOpen, onClose, onSave, saving }: EditStoreMod
           <select
             value={form.subscriptionPlan ?? ''}
             onChange={e => setForm(f => ({ ...f, subscriptionPlan: e.target.value }))}
-            className={selectCls}
+            className={inputCls}
+            style={inputStyle}
           >
             <option value="">— Select plan —</option>
             <option value="BASIC">BASIC</option>
@@ -97,7 +99,8 @@ function EditStoreModal({ store, isOpen, onClose, onSave, saving }: EditStoreMod
           <select
             value={form.subscriptionStatus ?? ''}
             onChange={e => setForm(f => ({ ...f, subscriptionStatus: e.target.value }))}
-            className={selectCls}
+            className={inputCls}
+            style={inputStyle}
           >
             <option value="">— Select status —</option>
             <option value="TRIAL">TRIAL</option>
@@ -116,6 +119,7 @@ function EditStoreModal({ store, isOpen, onClose, onSave, saving }: EditStoreMod
               value={form.platformCommissionPercent ?? 0}
               onChange={e => setForm(f => ({ ...f, platformCommissionPercent: parseFloat(e.target.value) }))}
               className={inputCls}
+              style={inputStyle}
             />
           )}
           {field('Delivery Radius (km)',
@@ -126,6 +130,7 @@ function EditStoreModal({ store, isOpen, onClose, onSave, saving }: EditStoreMod
               value={form.deliveryRadiusKm ?? 0}
               onChange={e => setForm(f => ({ ...f, deliveryRadiusKm: parseFloat(e.target.value) }))}
               className={inputCls}
+              style={inputStyle}
             />
           )}
         </div>
@@ -136,7 +141,7 @@ function EditStoreModal({ store, isOpen, onClose, onSave, saving }: EditStoreMod
             onClick={() => setForm(f => ({ ...f, active: !f.active }))}
             className={[
               'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
-              form.active ? 'bg-orange-500' : 'bg-gray-200'
+              form.active ? 'bg-orange-500' : 'bg-gray-700'
             ].join(' ')}
           >
             <span
@@ -146,13 +151,13 @@ function EditStoreModal({ store, isOpen, onClose, onSave, saving }: EditStoreMod
               ].join(' ')}
             />
           </button>
-          <span className="text-sm text-gray-700">Store Active</span>
+          <span className="text-sm text-gray-400">Store Active</span>
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="px-4 py-2 text-sm text-gray-500 hover:text-gray-300 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors"
           >
             Cancel
           </button>
@@ -214,8 +219,8 @@ export default function Stores() {
       header: 'Name / Slug',
       render: (row: TenantDto) => (
         <div>
-          <p className="font-medium text-gray-900">{row.name}</p>
-          <p className="text-xs text-gray-400 font-mono">{row.slug}</p>
+          <p className="font-medium text-gray-200">{row.name}</p>
+          <p className="text-xs text-gray-600 font-mono">{row.slug}</p>
         </div>
       )
     },
@@ -223,7 +228,7 @@ export default function Stores() {
       key: 'email',
       header: 'Email',
       render: (row: TenantDto) => (
-        <span className="text-gray-600">{row.email ?? '—'}</span>
+        <span className="text-gray-400">{row.email ?? '—'}</span>
       )
     },
     {
@@ -250,23 +255,23 @@ export default function Stores() {
     {
       key: 'userCount',
       header: 'Users',
-      render: (row: TenantDto) => <span className="text-gray-700">{row.userCount}</span>
+      render: (row: TenantDto) => <span className="text-gray-400">{row.userCount}</span>
     },
     {
       key: 'driverCount',
       header: 'Drivers',
-      render: (row: TenantDto) => <span className="text-gray-700">{row.driverCount}</span>
+      render: (row: TenantDto) => <span className="text-gray-400">{row.driverCount}</span>
     },
     {
       key: 'orderCount',
       header: 'Orders',
-      render: (row: TenantDto) => <span className="text-gray-700">{row.orderCount.toLocaleString()}</span>
+      render: (row: TenantDto) => <span className="text-gray-400">{row.orderCount.toLocaleString()}</span>
     },
     {
       key: 'revenue',
       header: 'Revenue',
       render: (row: TenantDto) => (
-        <span className="font-medium text-gray-900">R{row.revenue.toLocaleString()}</span>
+        <span className="font-medium text-orange-400">R{row.revenue.toLocaleString()}</span>
       )
     },
     {
@@ -276,7 +281,7 @@ export default function Stores() {
         <div className="flex items-center gap-1">
           <button
             onClick={() => setEditStore(row)}
-            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+            className="p-1.5 text-gray-600 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition-colors"
             title="Edit"
           >
             <Pencil size={15} />
@@ -285,8 +290,8 @@ export default function Stores() {
             onClick={() => toggleMutation.mutate(row.id)}
             className={`p-1.5 rounded-md transition-colors ${
               row.active
-                ? 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
-                : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                ? 'text-gray-600 hover:text-orange-400 hover:bg-orange-500/10'
+                : 'text-gray-600 hover:text-green-400 hover:bg-green-500/10'
             }`}
             title={row.active ? 'Deactivate' : 'Activate'}
           >
@@ -294,7 +299,7 @@ export default function Stores() {
           </button>
           <button
             onClick={() => setDeleteStore(row)}
-            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+            className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
             title="Delete"
           >
             <Trash2 size={15} />
@@ -307,29 +312,34 @@ export default function Stores() {
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <div className="flex items-center justify-between gap-4">
+      <div
+        className="flex items-center justify-between gap-4 p-4 rounded-xl border border-gray-800"
+        style={{ background: '#161b22' }}
+      >
         <div className="flex items-center gap-3 flex-1">
           <div className="relative max-w-xs w-full">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
             <input
               type="text"
               placeholder="Search stores…"
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full pl-9 pr-3 py-2 border border-gray-700 rounded-lg text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              style={{ background: '#0d1117' }}
             />
           </div>
           <select
             value={status}
             onChange={e => { setStatus(e.target.value); setPage(1) }}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+            className="px-3 py-2 border border-gray-700 rounded-lg text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            style={{ background: '#0d1117' }}
           >
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
         </div>
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-gray-600">
           {data?.total ?? 0} stores
         </span>
       </div>
@@ -366,11 +376,11 @@ export default function Stores() {
       >
         <div className="space-y-4">
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-              <AlertTriangle size={20} className="text-red-600" />
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+              <AlertTriangle size={20} className="text-red-400" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-gray-200">
                 Delete "{deleteStore?.name}"?
               </p>
               <p className="text-sm text-gray-500 mt-1">
@@ -381,7 +391,7 @@ export default function Stores() {
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setDeleteStore(null)}
-              className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 text-sm border border-gray-700 rounded-lg text-gray-400 hover:bg-gray-800 transition-colors"
             >
               Cancel
             </button>

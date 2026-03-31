@@ -1,12 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import {
-  LayoutDashboard,
-  Store,
-  Users,
-  Truck,
-  CreditCard,
-  LogOut
-} from 'lucide-react'
+import { LayoutDashboard, Store, Users, Truck, CreditCard, LogOut, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
@@ -17,58 +10,72 @@ const navItems = [
   { to: '/subscriptions', label: 'Subscriptions', icon: CreditCard }
 ]
 
+function getInitials(email: string) {
+  return email.slice(0, 2).toUpperCase()
+}
+
 export default function Sidebar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
-
   return (
     <aside
-      className="flex flex-col bg-gray-900 text-white"
-      style={{ width: 240, minHeight: '100vh', flexShrink: 0 }}
+      className="flex flex-col text-white border-r border-gray-800"
+      style={{ width: 240, minHeight: '100vh', flexShrink: 0, background: '#0d1117' }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-800">
-        <span className="text-2xl font-bold tracking-tight text-white">
-          Super<span className="text-orange-500">Admin</span>
-        </span>
-        <span className="w-2 h-2 rounded-full bg-orange-500 mt-1" />
+      <div className="flex items-center gap-3 px-5 py-6 border-b border-gray-800">
+        <div className="w-9 h-9 rounded-xl bg-orange-500 flex items-center justify-center flex-shrink-0">
+          <Zap size={18} className="text-white" fill="white" />
+        </div>
+        <div>
+          <p className="text-sm font-bold text-white leading-tight">FastFood</p>
+          <p className="text-xs text-gray-500 leading-tight">Super Admin</p>
+        </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 py-4 px-3 space-y-1">
+      <nav className="flex-1 py-4 px-3 space-y-0.5">
         {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
               [
-                'flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors',
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
                 isActive
-                  ? 'bg-gray-800 text-white border-l-2 border-orange-500 pl-[10px]'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
+                  : 'text-gray-500 hover:text-gray-200 hover:bg-gray-800/60'
               ].join(' ')
             }
           >
-            <Icon size={18} />
-            {label}
+            {({ isActive }) => (
+              <>
+                <Icon size={17} className={isActive ? 'text-orange-400' : ''} />
+                {label}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
 
-      {/* User / Logout */}
-      <div className="border-t border-gray-800 px-4 py-4">
-        <p className="text-xs text-gray-500 truncate mb-3">{user?.email}</p>
+      {/* User */}
+      <div className="border-t border-gray-800 px-3 py-4 space-y-3">
+        <div className="flex items-center gap-3 px-2">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+            {getInitials(user?.email ?? 'SA')}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-gray-300 truncate">{user?.email}</p>
+            <p className="text-xs text-gray-600">{user?.role}</p>
+          </div>
+        </div>
         <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
+          onClick={() => { logout(); navigate('/login') }}
+          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
         >
-          <LogOut size={16} />
-          Logout
+          <LogOut size={15} />
+          Sign out
         </button>
       </div>
     </aside>

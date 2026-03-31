@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usersService } from '../../services/users.service'
 import type { UserDto } from '../../types'
@@ -64,10 +64,10 @@ export default function Users() {
       header: 'User',
       render: (row: UserDto) => (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-gray-600">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-white">
             {getInitials(row.email)}
           </div>
-          <span className="font-medium text-gray-900">{row.email}</span>
+          <span className="font-medium text-gray-200">{row.email}</span>
         </div>
       )
     },
@@ -79,13 +79,13 @@ export default function Users() {
     {
       key: 'tenantName',
       header: 'Store',
-      render: (row: UserDto) => <span className="text-gray-600 text-sm">{row.tenantName ?? '—'}</span>
+      render: (row: UserDto) => <span className="text-gray-500 text-sm">{row.tenantName ?? '—'}</span>
     },
     {
       key: 'lastPing',
       header: 'Last Active',
       render: (row: UserDto) => (
-        <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-md">{timeAgo(row.lastPing?.toString())}</span>
+        <span className="text-xs text-gray-600 bg-gray-800 px-2 py-1 rounded-md">{timeAgo(row.lastPing?.toString())}</span>
       )
     },
     {
@@ -93,10 +93,10 @@ export default function Users() {
       header: 'Actions',
       render: (row: UserDto) => (
         <div className="flex items-center gap-1">
-          <button onClick={() => { setRoleUser(row); setNewRole(row.role ?? 'USER') }} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Change Role">
+          <button onClick={() => { setRoleUser(row); setNewRole(row.role ?? 'USER') }} className="p-1.5 text-gray-600 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition-colors" title="Change Role">
             <UserCog size={15} />
           </button>
-          <button onClick={() => setDeleteUser(row)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
+          <button onClick={() => setDeleteUser(row)} className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors" title="Delete">
             <Trash2 size={15} />
           </button>
         </div>
@@ -106,22 +106,27 @@ export default function Users() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+      <div
+        className="flex items-center justify-between gap-4 p-4 rounded-xl border border-gray-800"
+        style={{ background: '#161b22' }}
+      >
         <div className="flex items-center gap-3 flex-1">
           <div className="relative max-w-xs w-full">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
             <input
               type="text"
               placeholder="Search by email…"
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
-              className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50"
+              className="w-full pl-9 pr-3 py-2 border border-gray-700 rounded-lg text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              style={{ background: '#0d1117' }}
             />
           </div>
           <select
             value={role}
             onChange={e => { setRole(e.target.value); setPage(1) }}
-            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50"
+            className="px-3 py-2 border border-gray-700 rounded-lg text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            style={{ background: '#0d1117' }}
           >
             <option value="">All Roles</option>
             <option value="USER">User</option>
@@ -129,14 +134,14 @@ export default function Users() {
             <option value="MANAGER">Manager</option>
           </select>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
+        <div className="flex items-center gap-2 text-sm text-gray-600">
           <UsersIcon size={15} />
           <span>{data?.total ?? 0} users</span>
         </div>
       </div>
 
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+        <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
           <AlertCircle size={16} className="flex-shrink-0" />
           <span>Failed to load users — {(error as Error).message}</span>
         </div>
@@ -147,17 +152,22 @@ export default function Users() {
 
       <Modal isOpen={!!roleUser} onClose={() => setRoleUser(null)} title="Change User Role" size="sm">
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">Updating role for <strong>{roleUser?.email}</strong></p>
+          <p className="text-sm text-gray-400">Updating role for <strong className="text-gray-200">{roleUser?.email}</strong></p>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">New Role</label>
-            <select value={newRole} onChange={e => setNewRole(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
+            <label className="block text-sm font-medium text-gray-400 mb-1">New Role</label>
+            <select
+              value={newRole}
+              onChange={e => setNewRole(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-700 rounded-lg text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              style={{ background: '#0d1117' }}
+            >
               <option value="USER">USER</option>
               <option value="MANAGER">MANAGER</option>
               <option value="ADMIN">ADMIN</option>
             </select>
           </div>
           <div className="flex justify-end gap-3">
-            <button onClick={() => setRoleUser(null)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setRoleUser(null)} className="px-4 py-2 text-sm border border-gray-700 rounded-lg text-gray-400 hover:bg-gray-800 transition-colors">Cancel</button>
             <button onClick={() => roleUser && updateMutation.mutate({ id: roleUser.id, role: newRole })} disabled={updateMutation.isPending} className="px-4 py-2 text-sm bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium disabled:opacity-60">
               {updateMutation.isPending ? 'Saving…' : 'Update Role'}
             </button>
@@ -168,16 +178,16 @@ export default function Users() {
       <Modal isOpen={!!deleteUser} onClose={() => setDeleteUser(null)} title="Delete User" size="sm">
         <div className="space-y-4">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-              <AlertTriangle size={20} className="text-red-600" />
+            <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle size={20} className="text-red-400" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">Delete "{deleteUser?.email}"?</p>
+              <p className="text-sm font-medium text-gray-200">Delete "{deleteUser?.email}"?</p>
               <p className="text-sm text-gray-500 mt-1">This action cannot be undone.</p>
             </div>
           </div>
           <div className="flex justify-end gap-3">
-            <button onClick={() => setDeleteUser(null)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setDeleteUser(null)} className="px-4 py-2 text-sm border border-gray-700 rounded-lg text-gray-400 hover:bg-gray-800 transition-colors">Cancel</button>
             <button onClick={() => deleteUser && deleteMutation.mutate(deleteUser.id)} disabled={deleteMutation.isPending} className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium disabled:opacity-60">
               {deleteMutation.isPending ? 'Deleting…' : 'Delete User'}
             </button>
