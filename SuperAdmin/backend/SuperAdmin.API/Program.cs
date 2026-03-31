@@ -1,0 +1,91 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using SuperAdmin.API.Data;
+using SuperAdmin.API.Services;
+using System.Text;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<AuthService>();
+
+var jwtKey = builder.Configuration["Jwt:Key"]!;
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReact", policy =>
+    {
+        var origins = builder.Configuration
+            .GetSection("Cors:AllowedOrigins")
+            .Get<string[]>() ?? ["http://localhost:5173"];
+        policy.WithOrigins(origins)
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
+
+var app = builder.Build();
+
+app.UseCors("AllowReact");
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+// Seed subscription_plans table if empty
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Database.ExecuteSqlRaw(@"
+            CREATE TABLE IF NOT EXISTS subscription_plans (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                name VARCHAR(100) NOT NULL,
+                price DECIMAL(10,2) NOT NULL DEFAULT 0,
+                max_menu_items INT NOT NULL DEFAULT 50,
+                max_drivers INT NOT NULL DEFAULT 5,
+                features TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            );
+            INSERT INTO subscription_plans (name, price, max_menu_items, max_drivers, features)
+            SELECT 'BASIC', 299.00, 30, 3, 'Up to 30 menu items, 3 drivers, Basic analytics'
+            WHERE NOT EXISTS (SELECT 1 FROM subscription_plans WHERE name = 'BASIC');
+            INSERT INTO subscription_plans (name, price, max_menu_items, max_drivers, features)
+            SELECT 'PRO', 699.00, 100, 10, 'Up to 100 menu items, 10 drivers, Advanced analytics, Priority support'
+            WHERE NOT EXISTS (SELECT 1 FROM subscription_plans WHERE name = 'PRO');
+            INSERT INTO subscription_plans (name, price, max_menu_items, max_drivers, features)
+            SELECT 'ENTERPRISE', 1499.00, 999, 99, 'Unlimited items, Unlimited drivers, Full analytics, Dedicated support, White-label'
+            WHERE NOT EXISTS (SELECT 1 FROM subscription_plans WHERE name = 'ENTERPRISE');
+        ");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Startup] DB seed warning: {ex.Message}");
+    }
+}
+
+app.Run();
