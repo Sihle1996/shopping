@@ -22,9 +22,12 @@ public class SubscriptionsController(AppDbContext db) : ControllerBase
     [HttpPost("plans")]
     public async Task<IActionResult> CreatePlan([FromBody] CreateUpdatePlanRequest request)
     {
+        var err = ValidatePlanRequest(request);
+        if (err != null) return BadRequest(new { message = err });
+
         var plan = new SubscriptionPlan
         {
-            Name = request.Name,
+            Name = request.Name.Trim().ToUpper(),
             Price = request.Price,
             MaxMenuItems = request.MaxMenuItems,
             MaxDrivers = request.MaxDrivers,
@@ -39,9 +42,13 @@ public class SubscriptionsController(AppDbContext db) : ControllerBase
     [HttpPut("plans/{id}")]
     public async Task<IActionResult> UpdatePlan(Guid id, [FromBody] CreateUpdatePlanRequest request)
     {
+        var err = ValidatePlanRequest(request);
+        if (err != null) return BadRequest(new { message = err });
+
         var plan = await db.SubscriptionPlans.FindAsync(id);
         if (plan == null) return NotFound();
-        plan.Name = request.Name;
+
+        plan.Name = request.Name.Trim().ToUpper();
         plan.Price = request.Price;
         plan.MaxMenuItems = request.MaxMenuItems;
         plan.MaxDrivers = request.MaxDrivers;
@@ -65,10 +72,25 @@ public class SubscriptionsController(AppDbContext db) : ControllerBase
     {
         var tenant = await db.Tenants.FindAsync(tenantId);
         if (tenant == null) return NotFound();
+
+        var planExists = await db.SubscriptionPlans.AnyAsync(p => p.Name == request.PlanName);
+        if (!planExists) return BadRequest(new { message = "Plan not found." });
+
         tenant.SubscriptionPlan = request.PlanName;
         tenant.SubscriptionStatus = "ACTIVE";
         tenant.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
         return Ok(new { subscriptionPlan = tenant.SubscriptionPlan, subscriptionStatus = tenant.SubscriptionStatus });
+    }
+
+    private static string? ValidatePlanRequest(CreateUpdatePlanRequest r)
+    {
+        if (string.IsNullOrWhiteSpace(r.Name)) return "Plan name is required.";
+        if (r.Name.Length > 100) return "Plan name must be 100 characters or fewer.";
+        if (r.Price < 0) return "Price cannot be negative.";
+        if (r.MaxMenuItems < 0) return "Max menu items cannot be negative.";
+        if (r.MaxDrivers < 0) return "Max drivers cannot be negative.";
+        if (r.Features?.Length > 1000) return "Features must be 1000 characters or fewer.";
+        return null;
     }
 }
