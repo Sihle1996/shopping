@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "dotnet publish SuperAdmin.API/SuperAdmin.API.csproj -c Release -o out"
+buildCommand = "dotnet restore SuperAdmin.API/SuperAdmin.API.csproj && dotnet publish SuperAdmin.API/SuperAdmin.API.csproj -c Release -o out"
 
 [deploy]
 startCommand = "dotnet out/SuperAdmin.API.dll"
