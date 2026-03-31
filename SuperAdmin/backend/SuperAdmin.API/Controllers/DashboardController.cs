@@ -40,6 +40,7 @@ public class DashboardController(AppDbContext db) : ControllerBase
     [HttpGet("orders-over-time")]
     public async Task<IActionResult> GetOrdersOverTime([FromQuery] int days = 30)
     {
+        days = Math.Clamp(days, 1, 365);
         var from = DateTime.UtcNow.AddDays(-days).Date;
         var result = await db.Orders
             .Where(o => o.CreatedAt >= from)
@@ -53,6 +54,7 @@ public class DashboardController(AppDbContext db) : ControllerBase
     [HttpGet("top-stores")]
     public async Task<IActionResult> GetTopStores([FromQuery] int limit = 5)
     {
+        limit = Math.Clamp(limit, 1, 50);
         var orderData = await db.Orders
             .Where(o => o.TenantId != null)
             .GroupBy(o => o.TenantId)

@@ -19,8 +19,9 @@ export default function Login() {
     try {
       await login(email, password)
       navigate('/dashboard')
-    } catch {
-      setError('Invalid credentials. Please try again.')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : ''
+      setError(msg || 'Invalid credentials. Please try again.')
     } finally {
       setLoading(false)
     }

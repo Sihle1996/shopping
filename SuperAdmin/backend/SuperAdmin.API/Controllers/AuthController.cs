@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using SuperAdmin.API.Data;
 using SuperAdmin.API.DTOs;
@@ -12,6 +13,7 @@ namespace SuperAdmin.API.Controllers;
 public class AuthController(AuthService authService, AppDbContext db) : ControllerBase
 {
     [HttpPost("login")]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var result = await authService.LoginAsync(request);
@@ -20,10 +22,16 @@ public class AuthController(AuthService authService, AppDbContext db) : Controll
         return Ok(result);
     }
 
-    // One-time setup endpoint — creates SUPERADMIN if none exists
+    // One-time setup endpoint — gated by SETUP_SECRET env var
     [HttpPost("setup")]
-    public async Task<IActionResult> Setup([FromBody] LoginRequest request)
+    public async Task<IActionResult> Setup(
+        [FromBody] LoginRequest request,
+        [FromHeader(Name = "X-Setup-Key")] string? setupKey)
     {
+        var secret = Environment.GetEnvironmentVariable("SETUP_SECRET");
+        if (string.IsNullOrEmpty(secret) || setupKey != secret)
+            return NotFound();
+
         var existing = await db.Users.AnyAsync(u => u.Role == "SUPERADMIN");
         if (existing)
             return BadRequest(new { message = "SUPERADMIN already exists." });

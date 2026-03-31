@@ -9,9 +9,18 @@ public class JwtService(IConfiguration config)
 {
     public (string token, DateTime expiresAt) GenerateToken(string userId, string email, string role)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]!));
+        var rawKey = config["Jwt:Key"]
+            ?? throw new InvalidOperationException("Jwt:Key is not configured.");
+        var issuer = config["Jwt:Issuer"]
+            ?? throw new InvalidOperationException("Jwt:Issuer is not configured.");
+        var audience = config["Jwt:Audience"]
+            ?? throw new InvalidOperationException("Jwt:Audience is not configured.");
+
+        var expiryHours = double.TryParse(config["Jwt:ExpiryHours"], out var h) ? h : 8;
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(rawKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expiresAt = DateTime.UtcNow.AddHours(double.Parse(config["Jwt:ExpiryHours"] ?? "8"));
+        var expiresAt = DateTime.UtcNow.AddHours(expiryHours);
 
         var claims = new[]
         {
@@ -22,8 +31,8 @@ public class JwtService(IConfiguration config)
         };
 
         var token = new JwtSecurityToken(
-            issuer: config["Jwt:Issuer"],
-            audience: config["Jwt:Audience"],
+            issuer: issuer,
+            audience: audience,
             claims: claims,
             expires: expiresAt,
             signingCredentials: creds

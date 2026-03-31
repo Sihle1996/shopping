@@ -13,6 +13,7 @@ export const authService = {
     localStorage.setItem('token', data.token)
     localStorage.setItem('email', data.email)
     localStorage.setItem('role', data.role)
+    localStorage.setItem('expiresAt', data.expiresAt)
     return data
   },
 
@@ -20,10 +21,18 @@ export const authService = {
     localStorage.removeItem('token')
     localStorage.removeItem('email')
     localStorage.removeItem('role')
+    localStorage.removeItem('expiresAt')
   },
 
   isAuthenticated(): boolean {
-    return !!localStorage.getItem('token')
+    const token = localStorage.getItem('token')
+    if (!token) return false
+    const expiresAt = localStorage.getItem('expiresAt')
+    if (expiresAt && new Date(expiresAt) <= new Date()) {
+      this.logout()
+      return false
+    }
+    return true
   },
 
   getToken(): string | null {
