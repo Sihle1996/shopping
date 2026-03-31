@@ -1,0 +1,22 @@
+{
+  "name": "shopping-e2e",
+  "version": "1.0.0",
+  "description": "Playwright E2E tests for Shopping platform",
+  "scripts": {
+    "test":            "playwright test",
+    "test:headed":     "playwright test --headed",
+    "test:ui":         "playwright test --ui",
+    "test:debug":      "playwright test --debug",
+    "test:auth":       "playwright test tests/02-authentication.spec.ts",
+    "test:customer":   "playwright test tests/03-customer-flow.spec.ts",
+    "test:admin":      "playwright test tests/04-admin-dashboard.spec.ts",
+    "test:isolation":  "playwright test tests/05-tenant-isolation.spec.ts",
+    "test:edge":       "playwright test tests/06-edge-cases.spec.ts",
+    "test:onboarding": "playwright test tests/01-store-onboarding.spec.ts",
+    "report":          "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "typescript":       "^5.4.0"
+  }
+}
