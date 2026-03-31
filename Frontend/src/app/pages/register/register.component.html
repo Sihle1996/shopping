@@ -16,7 +16,7 @@
 
     <!-- Card -->
     <div class="bg-white rounded-2xl shadow-card p-8">
-      <form [formGroup]="registerForm" (ngSubmit)="register()" class="space-y-5">
+      <form [formGroup]="registerForm" (ngSubmit)="register()" class="space-y-5" data-testid="register-form">
 
         <!-- Email -->
         <div>
@@ -25,7 +25,7 @@
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
               <i class="bi bi-envelope text-textMuted"></i>
             </div>
-            <input type="email" formControlName="email"
+            <input type="email" formControlName="email" data-testid="register-email"
                    class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
                           placeholder-textMuted text-sm
                           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow"
@@ -43,6 +43,7 @@
               <i class="bi bi-lock text-textMuted"></i>
             </div>
             <input [type]="showPassword ? 'text' : 'password'" formControlName="password"
+                   data-testid="register-password"
                    class="w-full pl-10 pr-12 py-3 rounded-xl border border-borderColor bg-surface text-textDark
                           placeholder-textMuted text-sm
                           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow"
@@ -64,6 +65,7 @@
               <i class="bi bi-lock-fill text-textMuted"></i>
             </div>
             <input [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword"
+                   data-testid="register-confirm-password"
                    class="w-full pl-10 pr-12 py-3 rounded-xl border border-borderColor bg-surface text-textDark
                           placeholder-textMuted text-sm
                           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow"
@@ -79,6 +81,7 @@
 
         <!-- Error -->
         <div *ngIf="errorMessage"
+             data-testid="register-error"
              class="flex items-center gap-2 text-danger text-sm bg-red-50 px-4 py-2.5 rounded-xl">
           <i class="bi bi-exclamation-circle"></i>
           <span>{{ errorMessage }}</span>
@@ -89,6 +92,7 @@
           variant="primary"
           size="lg"
           type="submit"
+          data-testid="register-submit"
           [fullWidth]="true"
           [loading]="isLoading"
           [disabled]="registerForm.invalid">

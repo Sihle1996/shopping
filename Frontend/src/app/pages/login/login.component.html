@@ -12,7 +12,7 @@
 
     <!-- Card -->
     <div class="bg-white rounded-2xl shadow-card p-8">
-      <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="space-y-5">
+      <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="space-y-5" data-testid="login-form">
 
         <!-- Email -->
         <div>
@@ -21,7 +21,7 @@
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
               <i class="bi bi-envelope text-textMuted"></i>
             </div>
-            <input type="email" formControlName="email"
+            <input type="email" formControlName="email" data-testid="login-email"
                    class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
                           placeholder-textMuted text-sm
                           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent
@@ -40,12 +40,14 @@
               <i class="bi bi-lock text-textMuted"></i>
             </div>
             <input [type]="showPassword ? 'text' : 'password'" formControlName="password"
+                   data-testid="login-password"
                    class="w-full pl-10 pr-12 py-3 rounded-xl border border-borderColor bg-surface text-textDark
                           placeholder-textMuted text-sm
                           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent
                           transition-shadow"
                    placeholder="Enter your password" />
             <button type="button" (click)="showPassword = !showPassword"
+                    data-testid="login-password-toggle"
                     class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-textMuted hover:text-textDark transition-colors">
               <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
             </button>
@@ -59,6 +61,7 @@
 
         <!-- Error -->
         <div *ngIf="errorMessage"
+             data-testid="login-error"
              class="flex items-center gap-2 text-danger text-sm bg-red-50 px-4 py-2.5 rounded-xl">
           <i class="bi bi-exclamation-circle"></i>
           <span>{{ errorMessage }}</span>
@@ -69,6 +72,7 @@
           variant="primary"
           size="lg"
           type="submit"
+          data-testid="login-submit"
           [fullWidth]="true"
           [loading]="isLoading"
           [disabled]="loginForm.invalid">
