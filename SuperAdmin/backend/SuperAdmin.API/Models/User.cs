@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SuperAdmin.API.Models;
 
-[Table("users")]
+[Table("_user")]
 public class User
 {
     [Key]
