@@ -17,7 +17,7 @@ public class Order
     public string Status { get; set; } = "";
 
     [Column("total_amount")]
-    public decimal TotalAmount { get; set; }
+    public double TotalAmount { get; set; }
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }

@@ -21,7 +21,7 @@ public class DashboardController(AppDbContext db) : ControllerBase
         var totalOrders = await db.Orders.CountAsync();
         var totalRevenue = await db.Orders
             .Where(o => o.Status == "Delivered")
-            .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
+            .SumAsync(o => (double?)o.TotalAmount) ?? 0;
         var pendingOrders = await db.Orders.CountAsync(o => o.Status == "Pending");
 
         return Ok(new StatsDto(totalStores, activeStores, totalUsers, totalDrivers, totalOrders, totalRevenue, pendingOrders));

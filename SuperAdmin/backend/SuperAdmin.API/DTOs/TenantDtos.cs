@@ -19,7 +19,7 @@ public record TenantDto(
     int UserCount,
     int DriverCount,
     int OrderCount,
-    decimal Revenue
+    double Revenue
 );
 
 public record UpdateTenantRequest(

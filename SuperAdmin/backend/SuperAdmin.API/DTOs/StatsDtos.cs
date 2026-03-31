@@ -6,6 +6,6 @@ public record StatsDto(
     int TotalUsers,
     int TotalDrivers,
     int TotalOrders,
-    decimal TotalRevenue,
+    double TotalRevenue,
     int PendingOrders
 );
