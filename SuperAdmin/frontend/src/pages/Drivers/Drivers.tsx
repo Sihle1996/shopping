@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { driversService } from '../../services/drivers.service'
+import { useToast } from '../../context/ToastContext'
+import { useDebounce } from '../../hooks/useDebounce'
 import type { UserDto } from '../../types'
 import Table from '../../components/common/Table'
 import Badge from '../../components/common/Badge'
@@ -30,25 +32,30 @@ function timeAgo(iso?: string) {
 
 export default function Drivers() {
   const queryClient = useQueryClient()
+  const { showToast } = useToast()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
   const pageSize = 10
   const [confirmDriver, setConfirmDriver] = useState<{ driver: UserDto; newStatus: string } | null>(null)
 
+  const debouncedSearch = useDebounce(search)
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ['drivers', search, status, page],
-    queryFn: () => driversService.getDrivers({ search, status, page, pageSize }),
+    queryKey: ['drivers', debouncedSearch, status, page],
+    queryFn: () => driversService.getDrivers({ search: debouncedSearch, status, page, pageSize }),
     placeholderData: (prev) => prev
   })
 
   const statusMutation = useMutation({
     mutationFn: ({ id, driverStatus }: { id: string; driverStatus: string }) =>
       driversService.updateDriverStatus(id, driverStatus),
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['drivers'] })
       setConfirmDriver(null)
-    }
+      showToast(`Driver ${vars.driverStatus === 'SUSPENDED' ? 'suspended' : 'activated'}`)
+    },
+    onError: (err: Error) => showToast(err.message || 'Failed to update driver status', 'error')
   })
 
   const columns = [

@@ -7,6 +7,10 @@ using SuperAdmin.API.Services;
 using System.Text;
 using System.Threading.RateLimiting;
 
+// Npgsql 6+ requires explicit timestamp timezone handling.
+// This switch allows reading 'timestamp without time zone' columns as DateTime safely.
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -66,6 +70,10 @@ var app = builder.Build();
 
 app.UseExceptionHandler(err => err.Run(async ctx =>
 {
+    var logger = ctx.RequestServices.GetRequiredService<ILogger<Program>>();
+    var exFeature = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+    if (exFeature?.Error != null)
+        logger.LogError(exFeature.Error, "Unhandled exception on {Method} {Path}", ctx.Request.Method, ctx.Request.Path);
     ctx.Response.StatusCode = 500;
     ctx.Response.ContentType = "application/json";
     await ctx.Response.WriteAsJsonAsync(new { message = "An unexpected error occurred." });
@@ -77,12 +85,32 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Seed subscription_plans table if empty
+// Indexes + seed on startup
 using (var scope = app.Services.CreateScope())
 {
+    var startupLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    // Apply indexes individually so one failure doesn't block the rest
+    // Note: User model maps to "_user" table
+    var indexes = new[]
+    {
+        @"CREATE UNIQUE INDEX IF NOT EXISTS ix_users_email ON ""_user""(email)",
+        @"CREATE UNIQUE INDEX IF NOT EXISTS ix_tenants_slug ON tenants(slug)",
+        @"CREATE INDEX IF NOT EXISTS ix_users_role ON ""_user""(role)",
+        @"CREATE INDEX IF NOT EXISTS ix_users_tenant_id ON ""_user""(tenant_id)",
+        @"CREATE INDEX IF NOT EXISTS ix_orders_tenant_id ON orders(tenant_id)",
+        @"CREATE INDEX IF NOT EXISTS ix_orders_created_at ON orders(created_at)",
+        @"CREATE INDEX IF NOT EXISTS ix_orders_status ON orders(status)",
+    };
+    foreach (var sql in indexes)
+    {
+        try { db.Database.ExecuteSqlRaw(sql); }
+        catch (Exception ex) { startupLogger.LogWarning("[Startup] Index skipped: {Message}", ex.Message); }
+    }
+
     try
     {
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         db.Database.ExecuteSqlRaw(@"
             CREATE TABLE IF NOT EXISTS subscription_plans (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -104,9 +132,13 @@ using (var scope = app.Services.CreateScope())
             WHERE NOT EXISTS (SELECT 1 FROM subscription_plans WHERE name = 'ENTERPRISE');
         ");
     }
+        // Add unique index on plans after table is guaranteed to exist
+        try { db.Database.ExecuteSqlRaw(@"CREATE UNIQUE INDEX IF NOT EXISTS ix_subscription_plans_name ON subscription_plans(name)"); }
+        catch (Exception ex) { startupLogger.LogWarning("[Startup] Index skipped: {Message}", ex.Message); }
+    }
     catch (Exception ex)
     {
-        Console.WriteLine($"[Startup] DB seed warning: {ex.Message}");
+        startupLogger.LogWarning(ex, "[Startup] DB seed warning");
     }
 }
 

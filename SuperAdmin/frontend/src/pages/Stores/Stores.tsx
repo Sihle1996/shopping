@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { storesService } from '../../services/stores.service'
-import { subscriptionsService } from '../../services/subscriptions.service'
+import { useToast } from '../../context/ToastContext'
+import { useDebounce } from '../../hooks/useDebounce'
 import type { TenantDto, UpdateStoreDto } from '../../types'
 import Table from '../../components/common/Table'
 import Badge from '../../components/common/Badge'
@@ -38,10 +39,12 @@ interface EditStoreModalProps {
   onClose: () => void
   onSave: (id: string, data: UpdateStoreDto) => void
   saving: boolean
+  saveError?: string | null
 }
 
-function EditStoreModal({ store, isOpen, onClose, onSave, saving }: EditStoreModalProps) {
+function EditStoreModal({ store, isOpen, onClose, onSave, saving, saveError }: EditStoreModalProps) {
   const [form, setForm] = useState<UpdateStoreDto>({})
+  const [validationError, setValidationError] = useState<string | null>(null)
 
   React.useEffect(() => {
     if (store) {
@@ -53,10 +56,30 @@ function EditStoreModal({ store, isOpen, onClose, onSave, saving }: EditStoreMod
         deliveryRadiusKm: store.deliveryRadiusKm,
         active: store.active
       })
+      setValidationError(null)
     }
   }, [store])
 
   if (!store) return null
+
+  const handleSave = () => {
+    if (!form.name || form.name.trim().length === 0) {
+      setValidationError('Store name is required.')
+      return
+    }
+    const commission = form.platformCommissionPercent ?? 0
+    if (commission < 0 || commission > 100) {
+      setValidationError('Commission must be between 0 and 100.')
+      return
+    }
+    const radius = form.deliveryRadiusKm ?? 0
+    if (radius < 0 || radius > 500) {
+      setValidationError('Delivery radius must be between 0 and 500 km.')
+      return
+    }
+    setValidationError(null)
+    onSave(store.id, form)
+  }
 
   const field = (label: string, node: React.ReactNode) => (
     <div>
@@ -154,6 +177,10 @@ function EditStoreModal({ store, isOpen, onClose, onSave, saving }: EditStoreMod
           <span className="text-sm text-gray-400">Store Active</span>
         </div>
 
+        {(validationError || saveError) && (
+          <p className="text-sm text-red-400">{validationError ?? saveError}</p>
+        )}
+
         <div className="flex justify-end gap-3 pt-2">
           <button
             onClick={onClose}
@@ -162,7 +189,7 @@ function EditStoreModal({ store, isOpen, onClose, onSave, saving }: EditStoreMod
             Cancel
           </button>
           <button
-            onClick={() => onSave(store.id, form)}
+            onClick={handleSave}
             disabled={saving}
             className="px-4 py-2 text-sm bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium disabled:opacity-60"
           >
@@ -177,6 +204,7 @@ function EditStoreModal({ store, isOpen, onClose, onSave, saving }: EditStoreMod
 // ── Main Page ───────────────────────────────────────────────────────────────
 export default function Stores() {
   const queryClient = useQueryClient()
+  const { showToast } = useToast()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
@@ -185,9 +213,11 @@ export default function Stores() {
   const [editStore, setEditStore] = useState<TenantDto | null>(null)
   const [deleteStore, setDeleteStore] = useState<TenantDto | null>(null)
 
+  const debouncedSearch = useDebounce(search)
+
   const { data, isLoading } = useQuery({
-    queryKey: ['stores', search, status, page],
-    queryFn: () => storesService.getStores({ search, status, page, pageSize }),
+    queryKey: ['stores', debouncedSearch, status, page],
+    queryFn: () => storesService.getStores({ search: debouncedSearch, status, page, pageSize }),
     placeholderData: (prev) => prev
   })
 
@@ -197,7 +227,9 @@ export default function Stores() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stores'] })
       setEditStore(null)
-    }
+      showToast('Store updated successfully')
+    },
+    onError: (err: Error) => showToast(err.message || 'Failed to update store', 'error')
   })
 
   const toggleMutation = useMutation({
@@ -210,7 +242,9 @@ export default function Stores() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stores'] })
       setDeleteStore(null)
-    }
+      showToast('Store deleted')
+    },
+    onError: (err: Error) => showToast(err.message || 'Failed to delete store', 'error')
   })
 
   const columns = [
@@ -365,6 +399,7 @@ export default function Stores() {
         onClose={() => setEditStore(null)}
         onSave={(id, data) => updateMutation.mutate({ id, data })}
         saving={updateMutation.isPending}
+        saveError={updateMutation.error ? (updateMutation.error as Error).message : null}
       />
 
       {/* Delete Confirm Modal */}

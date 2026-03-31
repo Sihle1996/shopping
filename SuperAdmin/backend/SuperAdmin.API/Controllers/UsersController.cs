@@ -26,9 +26,9 @@ public class UsersController(AppDbContext db) : ControllerBase
         var query = db.Users.Where(u => u.Role != "DRIVER").AsQueryable();
 
         if (!string.IsNullOrEmpty(search))
-            query = query.Where(u => u.Email.Contains(search));
+            query = query.Where(u => u.Email.ToLower().Contains(search.ToLower()));
         if (!string.IsNullOrEmpty(role))
-            query = query.Where(u => u.Role == role);
+            query = query.Where(u => u.Role == role.ToUpper());
 
         var total = await query.CountAsync();
         var users = await query.OrderBy(u => u.Email).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
@@ -69,6 +69,13 @@ public class UsersController(AppDbContext db) : ControllerBase
     {
         var user = await db.Users.FindAsync(id);
         if (user == null) return NotFound();
+
+        if (user.Role == "SUPERADMIN")
+        {
+            var count = await db.Users.CountAsync(u => u.Role == "SUPERADMIN");
+            if (count <= 1) return BadRequest(new { message = "Cannot delete the last SUPERADMIN." });
+        }
+
         db.Users.Remove(user);
         await db.SaveChangesAsync();
         return NoContent();

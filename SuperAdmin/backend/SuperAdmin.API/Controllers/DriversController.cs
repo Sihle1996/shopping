@@ -26,9 +26,9 @@ public class DriversController(AppDbContext db) : ControllerBase
         var query = db.Users.Where(u => u.Role == "DRIVER").AsQueryable();
 
         if (!string.IsNullOrEmpty(search))
-            query = query.Where(u => u.Email.Contains(search));
+            query = query.Where(u => u.Email.ToLower().Contains(search.ToLower()));
         if (!string.IsNullOrEmpty(status))
-            query = query.Where(u => u.DriverStatus == status);
+            query = query.Where(u => u.DriverStatus == status.ToUpper());
 
         var total = await query.CountAsync();
         var drivers = await query.OrderBy(u => u.Email).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();

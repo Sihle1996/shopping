@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { subscriptionsService } from '../../services/subscriptions.service'
+import { useToast } from '../../context/ToastContext'
 import type { SubscriptionPlanDto, CreatePlanDto, UpdatePlanDto } from '../../types'
 import Modal from '../../components/common/Modal'
 import {
@@ -36,9 +37,10 @@ interface PlanFormProps {
   onCancel: () => void
   saving: boolean
   submitLabel: string
+  serverError?: string | null
 }
 
-function PlanForm({ initial, onSubmit, onCancel, saving, submitLabel }: PlanFormProps) {
+function PlanForm({ initial, onSubmit, onCancel, saving, submitLabel, serverError }: PlanFormProps) {
   const [form, setForm] = useState<CreatePlanDto>({
     name: initial?.name ?? '',
     price: initial?.price ?? 0,
@@ -46,6 +48,28 @@ function PlanForm({ initial, onSubmit, onCancel, saving, submitLabel }: PlanForm
     maxDrivers: initial?.maxDrivers ?? 0,
     features: initial?.features ?? ''
   })
+  const [validationError, setValidationError] = useState<string | null>(null)
+
+  const handleSubmit = () => {
+    if (!form.name.trim()) {
+      setValidationError('Plan name is required.')
+      return
+    }
+    if (form.price < 0) {
+      setValidationError('Price cannot be negative.')
+      return
+    }
+    if (form.maxMenuItems < 0) {
+      setValidationError('Max menu items cannot be negative.')
+      return
+    }
+    if (form.maxDrivers < 0) {
+      setValidationError('Max drivers cannot be negative.')
+      return
+    }
+    setValidationError(null)
+    onSubmit(form)
+  }
 
   const inputCls = 'w-full px-3 py-2 rounded-lg border border-gray-700 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent'
   const inputStyle = { background: '#0d1117' }
@@ -116,6 +140,10 @@ function PlanForm({ initial, onSubmit, onCancel, saving, submitLabel }: PlanForm
         />
       </div>
 
+      {(validationError || serverError) && (
+        <p className="text-sm text-red-400">{validationError ?? serverError}</p>
+      )}
+
       <div className="flex justify-end gap-3 pt-2">
         <button
           onClick={onCancel}
@@ -124,8 +152,8 @@ function PlanForm({ initial, onSubmit, onCancel, saving, submitLabel }: PlanForm
           Cancel
         </button>
         <button
-          onClick={() => onSubmit(form)}
-          disabled={saving || !form.name}
+          onClick={handleSubmit}
+          disabled={saving}
           className="px-4 py-2 text-sm bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium disabled:opacity-60"
         >
           {saving ? 'Saving…' : submitLabel}
@@ -223,6 +251,7 @@ function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
 // ── Main Page ───────────────────────────────────────────────────────────────
 export default function Subscriptions() {
   const queryClient = useQueryClient()
+  const { showToast } = useToast()
 
   const [showCreate, setShowCreate] = useState(false)
   const [editPlan, setEditPlan] = useState<SubscriptionPlanDto | null>(null)
@@ -238,6 +267,7 @@ export default function Subscriptions() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plans'] })
       setShowCreate(false)
+      showToast('Plan created successfully')
     }
   })
 
@@ -247,6 +277,7 @@ export default function Subscriptions() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plans'] })
       setEditPlan(null)
+      showToast('Plan updated successfully')
     }
   })
 
@@ -255,7 +286,9 @@ export default function Subscriptions() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plans'] })
       setDeletePlan(null)
-    }
+      showToast('Plan deleted')
+    },
+    onError: (err: Error) => showToast(err.message || 'Failed to delete plan', 'error')
   })
 
   return (
@@ -323,6 +356,7 @@ export default function Subscriptions() {
           onCancel={() => setShowCreate(false)}
           saving={createMutation.isPending}
           submitLabel="Create Plan"
+          serverError={createMutation.error ? (createMutation.error as Error).message : null}
         />
       </Modal>
 
@@ -346,6 +380,7 @@ export default function Subscriptions() {
             onCancel={() => setEditPlan(null)}
             saving={updateMutation.isPending}
             submitLabel="Save Changes"
+            serverError={updateMutation.error ? (updateMutation.error as Error).message : null}
           />
         )}
       </Modal>

@@ -27,10 +27,12 @@ public class StoresController(AppDbContext db) : ControllerBase
         var query = db.Tenants.AsQueryable();
 
         if (!string.IsNullOrEmpty(search))
-            query = query.Where(t => t.Name.Contains(search) || t.Slug.Contains(search) ||
-                                     (t.Email != null && t.Email.Contains(search)));
-        if (status == "active") query = query.Where(t => t.Active);
-        if (status == "inactive") query = query.Where(t => !t.Active);
+            query = query.Where(t => t.Name.ToLower().Contains(search.ToLower()) ||
+                                     t.Slug.ToLower().Contains(search.ToLower()) ||
+                                     (t.Email != null && t.Email.ToLower().Contains(search.ToLower())));
+        var normalizedStatus = status?.ToLower();
+        if (normalizedStatus == "active") query = query.Where(t => t.Active);
+        if (normalizedStatus == "inactive") query = query.Where(t => !t.Active);
 
         var total = await query.CountAsync();
         var tenants = await query

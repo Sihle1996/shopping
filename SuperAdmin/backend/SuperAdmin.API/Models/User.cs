@@ -26,7 +26,7 @@ public class User
     public Guid? TenantId { get; set; }
 
     [Column("last_ping")]
-    public DateTimeOffset? LastPing { get; set; }
+    public DateTime? LastPing { get; set; }
 
     public Tenant? Tenant { get; set; }
 }

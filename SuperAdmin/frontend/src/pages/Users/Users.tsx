@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usersService } from '../../services/users.service'
+import { useToast } from '../../context/ToastContext'
+import { useDebounce } from '../../hooks/useDebounce'
 import type { UserDto } from '../../types'
 import Table from '../../components/common/Table'
 import Badge from '../../components/common/Badge'
@@ -34,6 +36,7 @@ function getInitials(email: string) {
 
 export default function Users() {
   const queryClient = useQueryClient()
+  const { showToast } = useToast()
   const [search, setSearch] = useState('')
   const [role, setRole] = useState('')
   const [page, setPage] = useState(1)
@@ -42,20 +45,32 @@ export default function Users() {
   const [roleUser, setRoleUser] = useState<UserDto | null>(null)
   const [newRole, setNewRole] = useState('')
 
+  const debouncedSearch = useDebounce(search)
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ['users', search, role, page],
-    queryFn: () => usersService.getUsers({ search, role, page, pageSize }),
+    queryKey: ['users', debouncedSearch, role, page],
+    queryFn: () => usersService.getUsers({ search: debouncedSearch, role, page, pageSize }),
     placeholderData: (prev) => prev
   })
 
   const updateMutation = useMutation({
     mutationFn: ({ id, role }: { id: string; role: string }) => usersService.updateUser(id, { role }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); setRoleUser(null) }
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      setRoleUser(null)
+      showToast('Role updated successfully')
+    },
+    onError: (err: Error) => showToast(err.message || 'Failed to update role', 'error')
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => usersService.deleteUser(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); setDeleteUser(null) }
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      setDeleteUser(null)
+      showToast('User deleted')
+    },
+    onError: (err: Error) => showToast(err.message || 'Failed to delete user', 'error')
   })
 
   const columns = [

@@ -7,7 +7,7 @@ public record UserDto(
     string? DriverStatus,
     Guid? TenantId,
     string? TenantName,
-    DateTimeOffset? LastPing
+    DateTime? LastPing
 );
 
 public record UpdateUserRequest(string? Role, string? DriverStatus);

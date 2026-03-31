@@ -73,10 +73,11 @@ public class SubscriptionsController(AppDbContext db) : ControllerBase
         var tenant = await db.Tenants.FindAsync(tenantId);
         if (tenant == null) return NotFound();
 
-        var planExists = await db.SubscriptionPlans.AnyAsync(p => p.Name == request.PlanName);
+        var planName = request.PlanName.Trim().ToUpper();
+        var planExists = await db.SubscriptionPlans.AnyAsync(p => p.Name == planName);
         if (!planExists) return BadRequest(new { message = "Plan not found." });
 
-        tenant.SubscriptionPlan = request.PlanName;
+        tenant.SubscriptionPlan = planName;
         tenant.SubscriptionStatus = "ACTIVE";
         tenant.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();

@@ -27,5 +27,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Tenant>()
             .Property(t => t.DeliveryFeeBase)
             .HasColumnType("numeric");
+
+        // Unique constraints
+        modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+        modelBuilder.Entity<Tenant>().HasIndex(t => t.Slug).IsUnique();
+        modelBuilder.Entity<SubscriptionPlan>().HasIndex(p => p.Name).IsUnique();
+
+        // Performance indexes
+        modelBuilder.Entity<User>().HasIndex(u => u.Role);
+        modelBuilder.Entity<User>().HasIndex(u => u.TenantId);
+        modelBuilder.Entity<Order>().HasIndex(o => o.TenantId);
+        modelBuilder.Entity<Order>().HasIndex(o => o.CreatedAt);
+        modelBuilder.Entity<Order>().HasIndex(o => o.Status);
     }
 }
