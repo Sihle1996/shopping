@@ -73,9 +73,10 @@
     </app-empty-state>
 
     <!-- Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" data-testid="menu-grid">
       <app-product-card
         *ngFor="let item of filteredMenuItems; trackBy: trackById"
+        [attr.data-testid]="'product-card-' + item.id"
         [item]="item"
         [showFavorite]="isLoggedIn"
         [showAddToCart]="isLoggedIn"

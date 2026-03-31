@@ -1,4 +1,4 @@
-<nav class="bg-white border-b border-borderColor py-3 px-4 lg:px-8 fixed w-full z-50 top-0">
+<nav class="bg-white border-b border-borderColor py-3 px-4 lg:px-8 fixed w-full z-50 top-0" data-testid="navbar">
   <div class="max-w-6xl mx-auto flex justify-between items-center">
 
     <!-- Logo + Store Name -->
@@ -36,13 +36,13 @@
 
       <!-- Auth buttons — hidden on landing page (footer handles it) -->
       <li class="ml-2" *ngIf="!isLoggedIn && !isLandingPage">
-        <a routerLink="/login"
+        <a routerLink="/login" data-testid="nav-signin"
            class="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-primary-600 transition-colors">
           Sign In
         </a>
       </li>
       <li class="ml-2" *ngIf="isLoggedIn">
-        <button (click)="logout()"
+        <button (click)="logout()" data-testid="nav-logout"
                 class="px-4 py-2 rounded-lg text-sm font-medium text-textLight hover:text-danger hover:bg-red-50 transition-colors">
           Logout
         </button>

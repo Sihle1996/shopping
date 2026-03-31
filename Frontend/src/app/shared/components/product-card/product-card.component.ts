@@ -19,6 +19,7 @@ export interface ProductCardItem {
     <div
       class="group bg-white rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover
              transition-all duration-300 cursor-pointer animate-fade-in"
+      data-testid="product-card"
       (click)="cardClick.emit(item)">
       <!-- Image -->
       <div class="relative aspect-[4/3] overflow-hidden bg-gray-100">
@@ -58,6 +59,7 @@ export interface ProductCardItem {
           <button
             *ngIf="showAddToCart && item.isAvailable"
             (click)="onAddToCart($event)"
+            data-testid="add-to-cart-btn"
             class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center
                    hover:bg-primary-600 transition-all duration-200 active:scale-90 shadow-sm">
             <i class="bi bi-plus-lg text-base"></i>
