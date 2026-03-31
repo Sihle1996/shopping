@@ -30,12 +30,12 @@ public class MenuService {
         MenuItem menuItem = menuItemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Menu item not found"));
 
-        menuItem.setName(updatedMenuItem.getName());
+        if (updatedMenuItem.getName() != null) menuItem.setName(updatedMenuItem.getName());
+        if (updatedMenuItem.getCategory() != null) menuItem.setCategory(updatedMenuItem.getCategory());
         menuItem.setDescription(updatedMenuItem.getDescription());
         menuItem.setPrice(updatedMenuItem.getPrice());
-        menuItem.setIsAvailable(updatedMenuItem.getIsAvailable());
+        if (updatedMenuItem.getIsAvailable() != null) menuItem.setIsAvailable(updatedMenuItem.getIsAvailable());
         menuItem.setImage(updatedMenuItem.getImage());
-        menuItem.setCategory(updatedMenuItem.getCategory());
         menuItem.setStock(updatedMenuItem.getStock());
         menuItem.setReservedStock(updatedMenuItem.getReservedStock());
         menuItem.setLowStockThreshold(updatedMenuItem.getLowStockThreshold());
