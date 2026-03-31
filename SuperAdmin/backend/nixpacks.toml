@@ -1,0 +1,8 @@
+[phases.install]
+cmds = ["dotnet restore SuperAdmin.API/SuperAdmin.API.csproj"]
+
+[phases.build]
+cmds = ["dotnet publish SuperAdmin.API/SuperAdmin.API.csproj -c Release -o out"]
+
+[start]
+cmd = "dotnet out/SuperAdmin.API.dll"
