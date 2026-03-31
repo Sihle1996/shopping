@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { driversService } from '../../services/drivers.service'
 import type { UserDto } from '../../types'
@@ -6,7 +6,7 @@ import Table from '../../components/common/Table'
 import Badge from '../../components/common/Badge'
 import Modal from '../../components/common/Modal'
 import Pagination from '../../components/common/Pagination'
-import { Search, ShieldOff, ShieldCheck } from 'lucide-react'
+import { Search, ShieldOff, ShieldCheck, Truck, AlertCircle } from 'lucide-react'
 
 function statusVariant(status?: string): 'success' | 'neutral' | 'danger' | 'warning' {
   switch ((status ?? '').toUpperCase()) {
@@ -34,10 +34,9 @@ export default function Drivers() {
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
   const pageSize = 10
-
   const [confirmDriver, setConfirmDriver] = useState<{ driver: UserDto; newStatus: string } | null>(null)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['drivers', search, status, page],
     queryFn: () => driversService.getDrivers({ search, status, page, pageSize }),
     placeholderData: (prev) => prev
@@ -55,33 +54,33 @@ export default function Drivers() {
   const columns = [
     {
       key: 'email',
-      header: 'Email',
+      header: 'Driver',
       render: (row: UserDto) => (
-        <span className="font-medium text-gray-900">{row.email}</span>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+            <Truck size={14} className="text-orange-600" />
+          </div>
+          <span className="font-medium text-gray-900">{row.email}</span>
+        </div>
       )
     },
     {
       key: 'driverStatus',
       header: 'Status',
       render: (row: UserDto) => (
-        <Badge
-          label={row.driverStatus ?? 'UNKNOWN'}
-          variant={statusVariant(row.driverStatus)}
-        />
+        <Badge label={row.driverStatus ?? 'UNKNOWN'} variant={statusVariant(row.driverStatus)} />
       )
     },
     {
       key: 'tenantName',
       header: 'Store',
-      render: (row: UserDto) => (
-        <span className="text-gray-600">{row.tenantName ?? '—'}</span>
-      )
+      render: (row: UserDto) => <span className="text-gray-600">{row.tenantName ?? '—'}</span>
     },
     {
       key: 'lastPing',
-      header: 'Last Ping',
+      header: 'Last Active',
       render: (row: UserDto) => (
-        <span className="text-gray-500 text-xs">{timeAgo(row.lastPing)}</span>
+        <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-md">{timeAgo(row.lastPing?.toString())}</span>
       )
     },
     {
@@ -91,23 +90,14 @@ export default function Drivers() {
         const isSuspended = (row.driverStatus ?? '').toUpperCase() === 'SUSPENDED'
         return (
           <button
-            onClick={() =>
-              setConfirmDriver({
-                driver: row,
-                newStatus: isSuspended ? 'AVAILABLE' : 'SUSPENDED'
-              })
-            }
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            onClick={() => setConfirmDriver({ driver: row, newStatus: isSuspended ? 'AVAILABLE' : 'SUSPENDED' })}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
               isSuspended
-                ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                : 'bg-red-50 text-red-700 hover:bg-red-100'
+                ? 'bg-green-50 text-green-700 hover:bg-green-100 border-green-200'
+                : 'bg-red-50 text-red-700 hover:bg-red-100 border-red-200'
             }`}
           >
-            {isSuspended ? (
-              <><ShieldCheck size={13} /> Activate</>
-            ) : (
-              <><ShieldOff size={13} /> Suspend</>
-            )}
+            {isSuspended ? <><ShieldCheck size={13} /> Activate</> : <><ShieldOff size={13} /> Suspend</>}
           </button>
         )
       }
@@ -116,87 +106,62 @@ export default function Drivers() {
 
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         <div className="flex items-center gap-3 flex-1">
           <div className="relative max-w-xs w-full">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search drivers…"
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50"
             />
           </div>
           <select
             value={status}
             onChange={e => { setStatus(e.target.value); setPage(1) }}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50"
           >
             <option value="">All Status</option>
-            <option value="AVAILABLE">AVAILABLE</option>
-            <option value="UNAVAILABLE">UNAVAILABLE</option>
-            <option value="SUSPENDED">SUSPENDED</option>
+            <option value="AVAILABLE">Available</option>
+            <option value="UNAVAILABLE">Unavailable</option>
+            <option value="SUSPENDED">Suspended</option>
           </select>
         </div>
-        <span className="text-sm text-gray-500">{data?.total ?? 0} drivers</span>
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <Truck size={15} />
+          <span>{data?.total ?? 0} drivers</span>
+        </div>
       </div>
 
-      {/* Table */}
-      <Table
-        columns={columns as any}
-        data={(data?.data ?? []) as any}
-        loading={isLoading}
-      />
+      {error && (
+        <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+          <AlertCircle size={16} className="flex-shrink-0" />
+          <span>Failed to load drivers — {(error as Error).message}</span>
+        </div>
+      )}
 
-      <Pagination
-        page={page}
-        totalPages={data?.totalPages ?? 1}
-        onPageChange={setPage}
-      />
+      <Table columns={columns as any} data={(data?.data ?? []) as any} loading={isLoading} />
+      <Pagination page={page} totalPages={data?.totalPages ?? 1} onPageChange={setPage} />
 
-      {/* Confirm Status Change */}
       {confirmDriver && (
-        <Modal
-          isOpen={!!confirmDriver}
-          onClose={() => setConfirmDriver(null)}
-          title="Update Driver Status"
-          size="sm"
-        >
+        <Modal isOpen={!!confirmDriver} onClose={() => setConfirmDriver(null)} title="Update Driver Status" size="sm">
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              {confirmDriver.newStatus === 'SUSPENDED'
-                ? `Suspend driver `
-                : `Activate driver `}
-              <strong>{confirmDriver.driver.email}</strong>?
+              {confirmDriver.newStatus === 'SUSPENDED' ? 'Suspend' : 'Activate'}{' '}
+              driver <strong>{confirmDriver.driver.email}</strong>?
             </p>
             <div className="flex justify-end gap-3">
+              <button onClick={() => setConfirmDriver(null)} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
               <button
-                onClick={() => setConfirmDriver(null)}
-                className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() =>
-                  statusMutation.mutate({
-                    id: confirmDriver.driver.id,
-                    driverStatus: confirmDriver.newStatus
-                  })
-                }
+                onClick={() => statusMutation.mutate({ id: confirmDriver.driver.id, driverStatus: confirmDriver.newStatus })}
                 disabled={statusMutation.isPending}
                 className={`px-4 py-2 text-sm rounded-lg font-medium text-white disabled:opacity-60 ${
-                  confirmDriver.newStatus === 'SUSPENDED'
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-green-600 hover:bg-green-700'
+                  confirmDriver.newStatus === 'SUSPENDED' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
                 }`}
               >
-                {statusMutation.isPending
-                  ? 'Updating…'
-                  : confirmDriver.newStatus === 'SUSPENDED'
-                  ? 'Suspend'
-                  : 'Activate'}
+                {statusMutation.isPending ? 'Updating…' : confirmDriver.newStatus === 'SUSPENDED' ? 'Suspend' : 'Activate'}
               </button>
             </div>
           </div>
