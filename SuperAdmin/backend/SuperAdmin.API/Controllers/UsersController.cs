@@ -1,0 +1,63 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SuperAdmin.API.Data;
+using SuperAdmin.API.DTOs;
+
+namespace SuperAdmin.API.Controllers;
+
+[ApiController]
+[Route("api/users")]
+[Authorize(Roles = "SUPERADMIN")]
+public class UsersController(AppDbContext db) : ControllerBase
+{
+    [HttpGet]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] string? search,
+        [FromQuery] string? role,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        var query = db.Users.Where(u => u.Role != "DRIVER").AsQueryable();
+
+        if (!string.IsNullOrEmpty(search))
+            query = query.Where(u => u.Email.Contains(search));
+        if (!string.IsNullOrEmpty(role))
+            query = query.Where(u => u.Role == role);
+
+        var total = await query.CountAsync();
+        var users = await query.OrderBy(u => u.Email).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+        var tenantIds = users.Where(u => u.TenantId.HasValue).Select(u => u.TenantId!.Value).Distinct().ToList();
+        var tenants = await db.Tenants.Where(t => tenantIds.Contains(t.Id)).ToDictionaryAsync(t => t.Id, t => t.Name);
+
+        var result = users.Select(u => new UserDto(
+            u.Id, u.Email, u.Role, u.DriverStatus, u.TenantId,
+            u.TenantId.HasValue && tenants.TryGetValue(u.TenantId.Value, out var n) ? n : null,
+            u.LastPing
+        ));
+
+        return Ok(new { data = result, total, page, pageSize, totalPages = (int)Math.Ceiling((double)total / pageSize) });
+    }
+
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserRequest request)
+    {
+        var user = await db.Users.FindAsync(id);
+        if (user == null) return NotFound();
+        if (request.Role != null) user.Role = request.Role;
+        if (request.DriverStatus != null) user.DriverStatus = request.DriverStatus;
+        await db.SaveChangesAsync();
+        return Ok(new UserDto(user.Id, user.Email, user.Role, user.DriverStatus, user.TenantId, null, user.LastPing));
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var user = await db.Users.FindAsync(id);
+        if (user == null) return NotFound();
+        db.Users.Remove(user);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+}
