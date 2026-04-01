@@ -30,6 +30,8 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
   deliverTargetId: string | null = null;
   mapFullscreen = false;
   deliveryStops: DeliveryStop[] = [];
+  earnings: { deliveredCount: number; totalEarnings: number } | null = null;
+  profileIncomplete = false;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -39,9 +41,14 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadOrders();
-    // Set driver as available when dashboard opens
     this.driverService.updateAvailability('AVAILABLE').pipe(takeUntil(this.destroy$)).subscribe();
     this.availability = 'AVAILABLE';
+    this.driverService.getEarnings().pipe(takeUntil(this.destroy$)).subscribe({
+      next: e => this.earnings = e
+    });
+    this.driverService.getProfile().pipe(takeUntil(this.destroy$)).subscribe({
+      next: p => this.profileIncomplete = !p.fullName || !p.phone
+    });
   }
 
   ngOnDestroy(): void {

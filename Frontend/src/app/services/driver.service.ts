@@ -22,4 +22,16 @@ export class DriverService {
   updateAvailability(status: 'AVAILABLE' | 'UNAVAILABLE'): Observable<any> {
     return this.http.put(`${this.baseUrl}/availability?status=${status}`, {});
   }
+
+  getProfile(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/profile`);
+  }
+
+  updateProfile(data: { fullName?: string; phone?: string; vehicleType?: string; vehiclePlate?: string }): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/profile`, data);
+  }
+
+  getEarnings(): Observable<{ deliveredCount: number; totalEarnings: number }> {
+    return this.http.get<any>(`${this.baseUrl}/earnings`);
+  }
 }

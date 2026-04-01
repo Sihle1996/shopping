@@ -1,0 +1,76 @@
+<div class="p-4 pb-24 max-w-2xl mx-auto">
+
+  <!-- Header -->
+  <div class="mb-6">
+    <h2 class="text-xl font-bold text-textDark">My Profile</h2>
+    <p class="text-sm text-textMuted mt-0.5">Update your details and vehicle info</p>
+  </div>
+
+  <!-- Earnings card -->
+  <div *ngIf="earnings" class="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-4 mb-6 text-white">
+    <p class="text-xs font-medium opacity-80 mb-1">Your Earnings</p>
+    <p class="text-3xl font-bold">R{{ earnings.totalEarnings | number:'1.2-2' }}</p>
+    <p class="text-xs opacity-70 mt-1">{{ earnings.deliveredCount }} deliveries completed</p>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="space-y-3">
+    <div *ngFor="let i of [1,2,3,4]" class="h-14 bg-gray-100 rounded-xl animate-pulse"></div>
+  </div>
+
+  <!-- Form -->
+  <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="save()" class="space-y-4">
+
+    <div class="bg-white rounded-2xl border border-borderColor p-4 shadow-card space-y-4">
+      <p class="text-xs font-semibold text-textMuted uppercase tracking-wide">Personal Info</p>
+
+      <div>
+        <label class="text-xs font-medium text-textMuted block mb-1">Full Name</label>
+        <input formControlName="fullName" type="text" placeholder="Your full name"
+               class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
+      </div>
+
+      <div>
+        <label class="text-xs font-medium text-textMuted block mb-1">Phone</label>
+        <input formControlName="phone" type="tel" placeholder="+27..."
+               class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-borderColor p-4 shadow-card space-y-4">
+      <p class="text-xs font-semibold text-textMuted uppercase tracking-wide">Vehicle Info</p>
+
+      <div>
+        <label class="text-xs font-medium text-textMuted block mb-1">Vehicle Type</label>
+        <select formControlName="vehicleType"
+                class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400">
+          <option value="">Select type</option>
+          <option value="Bicycle">Bicycle</option>
+          <option value="Motorcycle">Motorcycle</option>
+          <option value="Car">Car</option>
+          <option value="Scooter">Scooter</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs font-medium text-textMuted block mb-1">Vehicle Plate</label>
+        <input formControlName="vehiclePlate" type="text" placeholder="e.g. CA 123-456"
+               class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
+      </div>
+    </div>
+
+    <button type="submit" [disabled]="saving"
+            class="w-full py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors disabled:opacity-50">
+      {{ saving ? 'Saving...' : 'Save Profile' }}
+    </button>
+  </form>
+
+  <!-- Toast -->
+  <div *ngIf="toast"
+       class="fixed bottom-20 left-4 right-4 z-50 flex justify-center pointer-events-none">
+    <div class="px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg text-white animate-fade-in"
+         [ngClass]="toastType === 'success' ? 'bg-gray-900' : 'bg-red-500'">
+      {{ toast }}
+    </div>
+  </div>
+</div>
