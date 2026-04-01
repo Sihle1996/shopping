@@ -265,6 +265,10 @@ public class OrderService {
         Order updated = orderRepository.save(order);
         OrderDTO dto = convertToOrderDTO(updated);
 
+        // Push real-time status update to the customer
+        String customerId = updated.getUser().getId().toString();
+        messagingTemplate.convertAndSend("/topic/orders/" + customerId, dto);
+
         if ("Delivered".equals(status)) {
             String storeName = updated.getTenant() != null ? updated.getTenant().getName() : "Our Store";
             emailService.sendOrderDelivered(updated.getUser().getEmail(), dto, storeName);
@@ -297,7 +301,9 @@ public class OrderService {
         order.setStatus("Out for Delivery");
 
         Order updated = orderRepository.save(order);
-        return convertToOrderDTO(updated);
+        OrderDTO dto = convertToOrderDTO(updated);
+        messagingTemplate.convertAndSend("/topic/orders/" + updated.getUser().getId(), dto);
+        return dto;
     }
 
     public OrderDTO convertToOrderDTO(Order order) {

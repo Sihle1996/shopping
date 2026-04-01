@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
 import { CartService } from 'src/app/services/cart.service';
+import { NotificationService } from 'src/app/services/notification.service';
 import { ToastrService } from 'ngx-toastr';
+import { Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { BadgeVariant } from 'src/app/shared/components/badge/badge.component';
 
@@ -31,7 +33,7 @@ interface OrderDTO {
   templateUrl: './historyorders.component.html',
   styleUrls: ['./historyorders.component.scss']
 })
-export class HistoryordersComponent implements OnInit {
+export class HistoryordersComponent implements OnInit, OnDestroy {
   orders: OrderDTO[] = [];
   filteredOrders: OrderDTO[] = [];
   loading = true;
@@ -42,17 +44,34 @@ export class HistoryordersComponent implements OnInit {
   allStatuses: string[] = ['All', 'Pending', 'Preparing', 'Out for Delivery', 'Delivered'];
 
   reorderingId: string | null = null;
+  private wsSub?: Subscription;
 
   constructor(
     private http: HttpClient,
     private authService: AuthService,
     private cartService: CartService,
+    private notificationService: NotificationService,
     private toastr: ToastrService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.fetchOrders();
+    const userId = this.authService.getUserId();
+    if (userId) {
+      this.wsSub = this.notificationService.subscribeToOrderUpdates(userId).subscribe(updated => {
+        const idx = this.orders.findIndex(o => o.id === updated.id);
+        if (idx >= 0) {
+          this.orders[idx] = { ...this.orders[idx], ...updated };
+          this.applyFilter();
+          this.toastr.info(`Order #${updated.id?.substring(0, 8)} is now ${updated.status}`, 'Order Update');
+        }
+      });
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.wsSub?.unsubscribe();
   }
 
   fetchOrders(): void {
