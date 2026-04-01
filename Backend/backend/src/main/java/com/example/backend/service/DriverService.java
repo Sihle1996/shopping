@@ -7,6 +7,7 @@ import com.example.backend.repository.UserRepository;
 import com.example.backend.user.DriverStatus;
 import com.example.backend.user.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +20,7 @@ public class DriverService {
     private final UserRepository userRepository;
     private final OrderService orderService;
     private final EmailService emailService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public List<OrderDTO> getOrdersAssignedToDriver(User driver) {
         return orderRepository.findByDriver(driver)
@@ -38,10 +40,14 @@ public class DriverService {
         order.setStatus("Delivered");
         orderRepository.save(order);
 
+        var dto = orderService.convertToOrderDTO(order);
+        // Push real-time update to customer
+        messagingTemplate.convertAndSend("/topic/orders/" + order.getUser().getId(), dto);
+
         // Send delivery email to customer
         String customerEmail = order.getUser().getEmail();
         String storeName = order.getTenant() != null ? order.getTenant().getName() : "the store";
-        emailService.sendOrderDelivered(customerEmail, orderService.convertToOrderDTO(order), storeName);
+        emailService.sendOrderDelivered(customerEmail, dto, storeName);
     }
 
     public void updateAvailability(User driver, DriverStatus status) {

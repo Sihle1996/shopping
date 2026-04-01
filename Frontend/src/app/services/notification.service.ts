@@ -2,7 +2,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Client, IMessage, StompHeaders } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { ToastrService } from 'ngx-toastr';
@@ -94,6 +94,32 @@ export class NotificationService implements OnDestroy {
       this.toastr.info(message.body, 'Notification');
     }
   };
+
+  /** Subscribe to real-time order updates for a specific customer user ID */
+  subscribeToOrderUpdates(userId: string): Observable<any> {
+    const subject = new Subject<any>();
+    const topic = `/topic/orders/${userId}`;
+
+    const trySubscribe = () => {
+      if (this.client?.connected) {
+        this.client.subscribe(topic, (msg: IMessage) => {
+          try { subject.next(JSON.parse(msg.body)); } catch { /* ignore */ }
+        });
+      } else {
+        // Wait for connection, then subscribe
+        const orig = this.client.onConnect;
+        this.client.onConnect = (frame) => {
+          orig?.(frame);
+          this.client.subscribe(topic, (msg: IMessage) => {
+            try { subject.next(JSON.parse(msg.body)); } catch { /* ignore */ }
+          });
+        };
+      }
+    };
+
+    trySubscribe();
+    return subject.asObservable();
+  }
 
   ngOnDestroy(): void {
     if (this.client?.active) this.client.deactivate();
