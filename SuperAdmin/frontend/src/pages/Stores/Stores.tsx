@@ -9,7 +9,8 @@ import Table from '../../components/common/Table'
 import Badge from '../../components/common/Badge'
 import Modal from '../../components/common/Modal'
 import Pagination from '../../components/common/Pagination'
-import { Search, Pencil, Trash2, Eye, EyeOff, AlertTriangle } from 'lucide-react'
+import { Search, Pencil, Trash2, Eye, EyeOff, AlertTriangle, Download } from 'lucide-react'
+import { exportCsv } from '../../utils/exportCsv'
 
 // ── helpers ────────────────────────────────────────────────────────────────
 function planVariant(plan?: string) {
@@ -380,10 +381,38 @@ export default function Stores() {
             <option value="inactive">Inactive</option>
           </select>
         </div>
-        <span className="text-sm text-gray-600">
-          {data?.total ?? 0} stores
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-600">{data?.total ?? 0} stores</span>
+          <button
+            onClick={() => exportCsv('stores.csv', (data?.data ?? []).map(s => ({
+              name: s.name,
+              slug: s.slug,
+              email: s.email ?? '',
+              plan: s.subscriptionPlan ?? '',
+              status: s.subscriptionStatus ?? '',
+              active: s.active,
+              users: s.userCount,
+              drivers: s.driverCount,
+              orders: s.orderCount,
+              revenue: s.revenue
+            })))}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            <Download size={13} /> Export CSV
+          </button>
+        </div>
       </div>
+
+      {/* TRIAL alert */}
+      {(() => {
+        const trialCount = (data?.data ?? []).filter(s => s.subscriptionStatus?.toUpperCase() === 'TRIAL').length
+        return trialCount > 0 ? (
+          <div className="flex items-center gap-3 px-4 py-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-400 text-sm">
+            <AlertTriangle size={15} className="flex-shrink-0" />
+            <span>{trialCount} store{trialCount > 1 ? 's' : ''} on TRIAL — consider following up on conversions.</span>
+          </div>
+        ) : null
+      })()}
 
       {/* Table */}
       <Table

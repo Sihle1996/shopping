@@ -6,6 +6,7 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   '/stores':    { title: 'Stores', subtitle: 'Manage restaurant tenants' },
   '/users':     { title: 'Users', subtitle: 'Manage platform users' },
   '/drivers':   { title: 'Drivers', subtitle: 'Manage delivery drivers' },
+  '/orders':        { title: 'Orders', subtitle: 'Platform-wide order activity' },
   '/subscriptions': { title: 'Subscriptions', subtitle: 'Plans & billing' }
 }
 

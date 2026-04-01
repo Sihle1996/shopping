@@ -73,11 +73,13 @@ function ChartCard({ title, children, className = '' }: { title: string; childre
 }
 
 export default function Dashboard() {
-  const stats = useQuery({ queryKey: ['stats'], queryFn: dashboardService.getStats })
-  const ordersByStatus = useQuery({ queryKey: ['orders-by-status'], queryFn: dashboardService.getOrdersByStatus })
-  const ordersOverTime = useQuery({ queryKey: ['orders-over-time'], queryFn: () => dashboardService.getOrdersOverTime(30) })
-  const topStores = useQuery({ queryKey: ['top-stores'], queryFn: dashboardService.getTopStores })
-  const storesByPlan = useQuery({ queryKey: ['stores-by-plan'], queryFn: dashboardService.getStoresByPlan })
+  const refetchInterval = 30_000
+
+  const stats = useQuery({ queryKey: ['stats'], queryFn: dashboardService.getStats, refetchInterval })
+  const ordersByStatus = useQuery({ queryKey: ['orders-by-status'], queryFn: dashboardService.getOrdersByStatus, refetchInterval })
+  const ordersOverTime = useQuery({ queryKey: ['orders-over-time'], queryFn: () => dashboardService.getOrdersOverTime(30), refetchInterval })
+  const topStores = useQuery({ queryKey: ['top-stores'], queryFn: dashboardService.getTopStores, refetchInterval })
+  const storesByPlan = useQuery({ queryKey: ['stores-by-plan'], queryFn: dashboardService.getStoresByPlan, refetchInterval })
 
   if (stats.isLoading) {
     return (

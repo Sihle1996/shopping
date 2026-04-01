@@ -7,7 +7,8 @@ import type { OrderDto } from '../../types'
 import Table from '../../components/common/Table'
 import Badge from '../../components/common/Badge'
 import Pagination from '../../components/common/Pagination'
-import { Search, ShoppingBag, AlertCircle } from 'lucide-react'
+import { Search, ShoppingBag, AlertCircle, Download } from 'lucide-react'
+import { exportCsv } from '../../utils/exportCsv'
 
 function statusVariant(status: string): 'success' | 'warning' | 'danger' | 'neutral' | 'info' {
   switch (status.toUpperCase()) {
@@ -129,9 +130,23 @@ export default function Orders() {
             ))}
           </select>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <ShoppingBag size={15} />
-          <span>{data?.total ?? 0} orders</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <ShoppingBag size={15} />
+            <span>{data?.total ?? 0} orders</span>
+          </div>
+          <button
+            onClick={() => exportCsv('orders.csv', (data?.data ?? []).map(o => ({
+              id: o.id,
+              store: o.storeName,
+              status: o.status,
+              amount: o.totalAmount.toFixed(2),
+              date: new Date(o.orderDate).toISOString()
+            })))}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-400 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            <Download size={13} /> Export CSV
+          </button>
         </div>
       </div>
 
