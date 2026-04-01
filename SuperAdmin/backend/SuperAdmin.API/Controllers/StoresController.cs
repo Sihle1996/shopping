@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using SuperAdmin.API.Data;
 using SuperAdmin.API.DTOs;
 
@@ -139,7 +140,14 @@ public class StoresController(AppDbContext db) : ControllerBase
         var tenant = await db.Tenants.FindAsync(id);
         if (tenant == null) return NotFound();
         db.Tenants.Remove(tenant);
-        await db.SaveChangesAsync();
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23503")
+        {
+            return BadRequest(new { message = "Cannot delete this store — it still has associated orders or users. Deactivate it instead." });
+        }
         return NoContent();
     }
 }
