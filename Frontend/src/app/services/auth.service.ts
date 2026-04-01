@@ -23,13 +23,13 @@ export class AuthService {
 
   login(credentials: { email: string; password: string }): Observable<{ token: string }> {
     return this.http.post<{ token: string }>(`${this.apiUrlAuth}/login`, credentials).pipe(
-      tap(response => {
-        if (response.token) {
-          localStorage.setItem(this.tokenKey, response.token);
-          this.extractClaimsFromToken(response.token);
-        }
-      })
+      tap(response => { if (response.token) this.storeToken(response.token); })
     );
+  }
+
+  storeToken(token: string): void {
+    localStorage.setItem(this.tokenKey, token);
+    this.extractClaimsFromToken(token);
   }
 
   private extractClaimsFromToken(token: string): void {
