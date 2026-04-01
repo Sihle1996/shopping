@@ -37,7 +37,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<User>().HasIndex(u => u.Role);
         modelBuilder.Entity<User>().HasIndex(u => u.TenantId);
         modelBuilder.Entity<Order>().HasIndex(o => o.TenantId);
-        modelBuilder.Entity<Order>().HasIndex(o => o.CreatedAt);
+        modelBuilder.Entity<Order>().HasIndex(o => o.OrderDate);
         modelBuilder.Entity<Order>().HasIndex(o => o.Status);
     }
 }

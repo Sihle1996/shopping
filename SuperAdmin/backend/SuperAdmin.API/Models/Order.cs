@@ -19,6 +19,6 @@ public class Order
     [Column("total_amount")]
     public double TotalAmount { get; set; }
 
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; }
+    [Column("order_date")]
+    public DateTime OrderDate { get; set; }
 }

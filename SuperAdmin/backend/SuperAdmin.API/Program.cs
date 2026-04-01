@@ -100,7 +100,7 @@ using (var scope = app.Services.CreateScope())
         @"CREATE INDEX IF NOT EXISTS ix_users_role ON ""_user""(role)",
         @"CREATE INDEX IF NOT EXISTS ix_users_tenant_id ON ""_user""(tenant_id)",
         @"CREATE INDEX IF NOT EXISTS ix_orders_tenant_id ON orders(tenant_id)",
-        @"CREATE INDEX IF NOT EXISTS ix_orders_created_at ON orders(created_at)",
+        @"CREATE INDEX IF NOT EXISTS ix_orders_order_date ON orders(order_date)",
         @"CREATE INDEX IF NOT EXISTS ix_orders_status ON orders(status)",
     };
     foreach (var sql in indexes)

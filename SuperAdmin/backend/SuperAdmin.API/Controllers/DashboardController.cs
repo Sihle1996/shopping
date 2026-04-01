@@ -43,8 +43,8 @@ public class DashboardController(AppDbContext db) : ControllerBase
         days = Math.Clamp(days, 1, 365);
         var from = DateTime.UtcNow.AddDays(-days).Date;
         var result = await db.Orders
-            .Where(o => o.CreatedAt >= from)
-            .GroupBy(o => o.CreatedAt.Date)
+            .Where(o => o.OrderDate >= from)
+            .GroupBy(o => o.OrderDate.Date)
             .Select(g => new { date = g.Key, count = g.Count(), revenue = g.Sum(o => o.TotalAmount) })
             .OrderBy(x => x.date)
             .ToListAsync();
