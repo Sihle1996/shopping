@@ -84,7 +84,7 @@
       </div>
 
       <!-- Loading skeletons -->
-      <div *ngIf="isLoading" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div *ngIf="isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div *ngFor="let _ of [1,2,3,4]" class="bg-white rounded-2xl p-6 animate-pulse">
           <div class="flex items-center gap-4">
             <div class="w-14 h-14 bg-gray-200 rounded-xl flex-shrink-0"></div>
@@ -116,7 +116,7 @@
       </div>
 
       <!-- Store grid -->
-      <div *ngIf="!isLoading && stores.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div *ngIf="!isLoading && stores.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div *ngFor="let store of stores"
              (click)="goToStore(store.slug)"
              class="bg-white rounded-2xl p-5 cursor-pointer border border-borderColor
