@@ -18,6 +18,8 @@ interface TenantSettings {
   address: string;
   deliveryRadiusKm: number;
   deliveryFeeBase: number;
+  isOpen: boolean;
+  minimumOrderAmount: number | null;
 }
 
 @Component({
@@ -36,7 +38,9 @@ export class AdminSettingsComponent implements OnInit {
     email: '',
     address: '',
     deliveryRadiusKm: 10,
-    deliveryFeeBase: 0
+    deliveryFeeBase: 0,
+    isOpen: true,
+    minimumOrderAmount: null
   };
   isLoading = false;
   isSaving = false;

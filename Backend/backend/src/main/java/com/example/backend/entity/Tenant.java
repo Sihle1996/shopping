@@ -69,6 +69,13 @@ public class Tenant {
 
     private LocalDateTime trialStartedAt;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isOpen = true;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal minimumOrderAmount;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

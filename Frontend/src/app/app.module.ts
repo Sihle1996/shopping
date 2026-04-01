@@ -29,6 +29,7 @@ import { StoreComponent } from './pages/store/store.component';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 import { LandingComponent } from './pages/landing/landing.component';
 import { AddressBookComponent } from './pages/address-book/address-book.component';
+import { UserProfileComponent } from './pages/user-profile/user-profile.component';
 
 @NgModule({
   declarations: [
@@ -50,6 +51,7 @@ import { AddressBookComponent } from './pages/address-book/address-book.componen
     ForgotPasswordComponent,
     LandingComponent,
     AddressBookComponent,
+    UserProfileComponent,
   ],
   imports: [
     BrowserModule,

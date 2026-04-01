@@ -17,7 +17,8 @@ public class DriverService {
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
-    private final OrderService orderService; // For convertToOrderDTO()
+    private final OrderService orderService;
+    private final EmailService emailService;
 
     public List<OrderDTO> getOrdersAssignedToDriver(User driver) {
         return orderRepository.findByDriver(driver)
@@ -36,6 +37,11 @@ public class DriverService {
 
         order.setStatus("Delivered");
         orderRepository.save(order);
+
+        // Send delivery email to customer
+        String customerEmail = order.getUser().getEmail();
+        String storeName = order.getTenant() != null ? order.getTenant().getName() : "the store";
+        emailService.sendOrderDelivered(customerEmail, orderService.convertToOrderDTO(order), storeName);
     }
 
     public void updateAvailability(User driver, DriverStatus status) {

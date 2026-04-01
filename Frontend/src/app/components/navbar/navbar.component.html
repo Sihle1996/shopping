@@ -85,6 +85,10 @@
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
           <i class="bi bi-receipt text-base"></i> Orders
         </a>
+        <a *ngIf="isLoggedIn" routerLink="/profile" (click)="toggleMenu()"
+           class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
+          <i class="bi bi-person-circle text-base"></i> My Profile
+        </a>
         <a *ngIf="isLoggedIn" routerLink="/profile/addresses" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
           <i class="bi bi-geo-alt text-base"></i> Saved Addresses

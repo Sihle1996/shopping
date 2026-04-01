@@ -22,6 +22,8 @@ export interface Tenant {
   subscriptionStatus: string;
   subscriptionPlan: string;
   active: boolean;
+  isOpen?: boolean;
+  minimumOrderAmount?: number | null;
 }
 
 export interface TenantRegistration {

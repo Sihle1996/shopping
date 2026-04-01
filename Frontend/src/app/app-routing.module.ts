@@ -12,6 +12,7 @@ import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashb
 import { DriverProfileComponent } from './driver/driver-profile/driver-profile.component';
 import { DriverGuard } from './guards/driver.guard';
 import { AddressBookComponent } from './pages/address-book/address-book.component';
+import { UserProfileComponent } from './pages/user-profile/user-profile.component';
 import { SuperadminGuard } from './guards/superadmin.guard';
 import { RegisterRestaurantComponent } from './pages/register-restaurant/register-restaurant.component';
 import { StoreListComponent } from './pages/store-list/store-list.component';
@@ -54,6 +55,7 @@ const routes: Routes = [
   { path: 'driver/dashboard', component: DriverDashboardComponent, canActivate: [DriverGuard] },
   { path: 'driver/profile', component: DriverProfileComponent, canActivate: [DriverGuard] },
   { path: 'profile/addresses', component: AddressBookComponent, canActivate: [UserGuard] },
+  { path: 'profile', component: UserProfileComponent, canActivate: [UserGuard] },
 
   {
     path: 'superadmin',

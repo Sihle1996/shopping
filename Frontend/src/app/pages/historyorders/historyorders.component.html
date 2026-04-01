@@ -96,6 +96,15 @@
         <span class="text-[10px] text-textMuted">On the way</span>
         <span class="text-[10px] text-textMuted">Delivered</span>
       </div>
+
+      <!-- Reorder button (only for delivered orders with items) -->
+      <button *ngIf="order.status === 'Delivered' && order.items?.length"
+              (click)="reorder(order)"
+              [disabled]="reorderingId === order.id"
+              class="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-primary-300 text-primary-600 text-xs font-semibold hover:bg-primary-50 transition-colors disabled:opacity-50">
+        <i class="bi bi-arrow-repeat" [class.animate-spin]="reorderingId === order.id"></i>
+        {{ reorderingId === order.id ? 'Adding...' : 'Reorder' }}
+      </button>
     </div>
   </div>
 
