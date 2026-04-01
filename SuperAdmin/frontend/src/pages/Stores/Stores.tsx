@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { storesService } from '../../services/stores.service'
+import { subscriptionsService } from '../../services/subscriptions.service'
 import { useToast } from '../../context/ToastContext'
 import { useDebounce } from '../../hooks/useDebounce'
 import type { TenantDto, UpdateStoreDto } from '../../types'
@@ -45,6 +46,12 @@ interface EditStoreModalProps {
 function EditStoreModal({ store, isOpen, onClose, onSave, saving, saveError }: EditStoreModalProps) {
   const [form, setForm] = useState<UpdateStoreDto>({})
   const [validationError, setValidationError] = useState<string | null>(null)
+
+  const { data: plans = [] } = useQuery({
+    queryKey: ['plans'],
+    queryFn: () => subscriptionsService.getPlans(),
+    staleTime: 5 * 60 * 1000
+  })
 
   React.useEffect(() => {
     if (store) {
@@ -112,9 +119,9 @@ function EditStoreModal({ store, isOpen, onClose, onSave, saving, saveError }: E
             style={inputStyle}
           >
             <option value="">— Select plan —</option>
-            <option value="BASIC">BASIC</option>
-            <option value="PRO">PRO</option>
-            <option value="ENTERPRISE">ENTERPRISE</option>
+            {plans.map(p => (
+              <option key={p.id} value={p.name}>{p.name}</option>
+            ))}
           </select>
         )}
 
