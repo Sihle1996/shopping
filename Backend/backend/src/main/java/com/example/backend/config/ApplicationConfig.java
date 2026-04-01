@@ -20,6 +20,7 @@ import java.util.UUID;
 
 @Configuration
 @EnableAsync
+@org.springframework.scheduling.annotation.EnableScheduling
 public class ApplicationConfig {
 
     private final UserRepository repository;

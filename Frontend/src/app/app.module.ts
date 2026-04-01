@@ -27,6 +27,7 @@ import { RegisterRestaurantComponent } from './pages/register-restaurant/registe
 import { StoreListComponent } from './pages/store-list/store-list.component';
 import { StoreComponent } from './pages/store/store.component';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
+import { LandingComponent } from './pages/landing/landing.component';
 
 @NgModule({
   declarations: [
@@ -46,6 +47,7 @@ import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password
     StoreListComponent,
     StoreComponent,
     ForgotPasswordComponent,
+    LandingComponent,
   ],
   imports: [
     BrowserModule,

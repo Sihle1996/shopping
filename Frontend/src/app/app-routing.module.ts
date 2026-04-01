@@ -17,10 +17,11 @@ import { StoreComponent } from './pages/store/store.component';
 import { HomeComponent } from './pages/home/home.component';
 import { TenantResolver } from './resolvers/tenant.resolver';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
+import { LandingComponent } from './pages/landing/landing.component';
 
 const routes: Routes = [
-  // Landing — store listing
-  { path: '', component: StoreListComponent },
+  { path: '', component: LandingComponent },
+  { path: 'stores', component: StoreListComponent },
 
   // Store-specific routes — all children of StoreComponent so tenant/brand
   // context (logo, color) is always loaded regardless of which page you land on

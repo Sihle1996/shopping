@@ -1,0 +1,151 @@
+<div class="max-w-2xl mx-auto p-4 pb-24">
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="space-y-4 animate-pulse">
+    <div class="h-8 bg-gray-200 rounded w-1/2"></div>
+    <div class="h-32 bg-gray-200 rounded-xl"></div>
+    <div class="h-48 bg-gray-200 rounded-xl"></div>
+  </div>
+
+  <div *ngIf="!loading && info">
+
+    <!-- Plan header -->
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h2 class="text-xl font-bold text-textDark">Subscription</h2>
+        <p class="text-sm text-textMuted">Your current plan &amp; usage</p>
+      </div>
+      <div class="flex flex-col items-end gap-1">
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
+          [ngClass]="{
+            'bg-yellow-100 text-yellow-700': info.status === 'TRIAL',
+            'bg-green-100 text-green-700': info.status === 'ACTIVE',
+            'bg-red-100 text-red-700': info.status === 'SUSPENDED'
+          }">
+          {{ info.status }}
+        </span>
+        <span class="text-sm font-bold text-primary">{{ info.plan }}</span>
+      </div>
+    </div>
+
+    <!-- SUSPENDED alert -->
+    <div *ngIf="info.status === 'SUSPENDED'"
+         class="mb-4 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3">
+      <i class="bi bi-exclamation-octagon text-red-500 text-xl flex-shrink-0 mt-0.5"></i>
+      <div>
+        <p class="font-semibold text-red-700">Your trial has ended</p>
+        <p class="text-sm text-red-600 mt-0.5">Your store is currently suspended. Upgrade to a paid plan to restore access.</p>
+      </div>
+    </div>
+
+    <!-- TRIAL warning -->
+    <div *ngIf="info.status === 'TRIAL' && info.trialDaysRemaining !== null"
+         class="mb-4 p-4 rounded-xl flex items-start gap-3"
+         [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'bg-red-50 border border-red-200' : 'bg-amber-50 border border-amber-200'">
+      <i class="bi bi-clock text-xl flex-shrink-0 mt-0.5"
+         [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'text-red-500' : 'text-amber-500'"></i>
+      <div>
+        <p class="font-semibold"
+           [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'text-red-700' : 'text-amber-700'">
+          {{ info.trialDaysRemaining }} {{ info.trialDaysRemaining === 1 ? 'day' : 'days' }} left on your trial
+        </p>
+        <p class="text-sm mt-0.5"
+           [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'text-red-600' : 'text-amber-600'">
+          Upgrade before your trial ends to keep your store running.
+        </p>
+      </div>
+    </div>
+
+    <!-- Usage bars -->
+    <div class="bg-white rounded-xl border border-borderColor p-4 mb-4">
+      <h3 class="font-semibold text-textDark mb-3 text-sm">Usage</h3>
+      <div class="space-y-3">
+
+        <div>
+          <div class="flex justify-between text-xs text-textMuted mb-1">
+            <span>Menu Items</span>
+            <span>{{ info.usage.menuItems }} / {{ info.usage.maxMenuItems }}</span>
+          </div>
+          <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all"
+                 [ngClass]="barColor(usagePercent(info.usage.menuItems, info.usage.maxMenuItems))"
+                 [style.width.%]="usagePercent(info.usage.menuItems, info.usage.maxMenuItems)"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-textMuted mb-1">
+            <span>Drivers</span>
+            <span>{{ info.usage.drivers }} / {{ info.usage.maxDrivers }}</span>
+          </div>
+          <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all"
+                 [ngClass]="barColor(usagePercent(info.usage.drivers, info.usage.maxDrivers))"
+                 [style.width.%]="usagePercent(info.usage.drivers, info.usage.maxDrivers)"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-textMuted mb-1">
+            <span>Active Promotions</span>
+            <span>{{ info.usage.activePromotions }} / {{ info.usage.maxPromotions }}</span>
+          </div>
+          <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all"
+                 [ngClass]="barColor(usagePercent(info.usage.activePromotions, info.usage.maxPromotions))"
+                 [style.width.%]="usagePercent(info.usage.activePromotions, info.usage.maxPromotions)"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Feature access table -->
+    <div class="bg-white rounded-xl border border-borderColor p-4 mb-4">
+      <h3 class="font-semibold text-textDark mb-3 text-sm">Feature Access</h3>
+      <div class="space-y-2">
+
+        <div *ngFor="let feature of [
+          { label: 'Analytics & Charts', key: 'hasAnalytics', value: info.features.hasAnalytics },
+          { label: 'Custom Branding (logo & color)', key: 'hasCustomBranding', value: info.features.hasCustomBranding },
+          { label: 'Inventory CSV Export & Audit', key: 'hasInventoryExport', value: info.features.hasInventoryExport }
+        ]" class="flex items-center justify-between py-1.5 border-b border-borderColor last:border-0">
+          <span class="text-sm text-textDark">{{ feature.label }}</span>
+          <span class="flex items-center gap-1 text-xs font-semibold"
+                [ngClass]="feature.value ? 'text-green-600' : 'text-gray-400'">
+            <i class="bi" [ngClass]="feature.value ? 'bi-check-circle-fill' : 'bi-x-circle'"></i>
+            {{ feature.value ? 'Included' : 'Not included' }}
+          </span>
+        </div>
+
+        <div class="flex items-center justify-between py-1.5 border-b border-borderColor">
+          <span class="text-sm text-textDark">Delivery Radius</span>
+          <span class="text-xs font-semibold text-textDark">{{ info.features.maxDeliveryRadiusKm }} km</span>
+        </div>
+        <div class="flex items-center justify-between py-1.5">
+          <span class="text-sm text-textDark">Platform Commission</span>
+          <span class="text-xs font-semibold text-textDark">{{ info.features.commissionPercent }}%</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Upgrade CTA -->
+    <div *ngIf="!upgradeRequested" class="bg-primary-50 rounded-xl border border-primary-200 p-4 text-center">
+      <p class="text-sm font-semibold text-textDark mb-1">Want more?</p>
+      <p class="text-xs text-textMuted mb-3">Upgrade to PRO or ENTERPRISE for unlimited items, analytics, and more.</p>
+      <button (click)="requestUpgrade()"
+              class="px-5 py-2 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary-600 transition-colors">
+        Request Upgrade
+      </button>
+      <p *ngIf="upgradeError" class="mt-2 text-xs text-red-500">{{ upgradeError }}</p>
+    </div>
+
+    <div *ngIf="upgradeRequested" class="bg-green-50 rounded-xl border border-green-200 p-4 text-center">
+      <i class="bi bi-check-circle-fill text-green-500 text-2xl mb-1"></i>
+      <p class="text-sm font-semibold text-green-700">Upgrade request sent!</p>
+      <p class="text-xs text-green-600 mt-0.5">Our team will contact you within 24 hours.</p>
+    </div>
+
+  </div>
+</div>

@@ -55,10 +55,26 @@
 
       <!-- Branding Card -->
       <div class="bg-white rounded-2xl shadow-card p-6">
-        <h3 class="font-heading text-base font-semibold text-textDark mb-4">
-          <i class="bi bi-palette text-primary mr-2"></i>Branding
+        <h3 class="font-heading text-base font-semibold text-textDark mb-1 flex items-center gap-2">
+          <i class="bi bi-palette text-primary"></i>Branding
+          <span *ngIf="!hasCustomBranding"
+                class="text-xs font-normal text-primary bg-primary-100 px-2 py-0.5 rounded-full">PRO</span>
         </h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <!-- Upgrade prompt for BASIC -->
+        <div *ngIf="!hasCustomBranding"
+             class="mt-3 mb-2 flex items-start gap-3 p-3 rounded-xl bg-primary-50 border border-primary-100">
+          <i class="bi bi-lock text-primary mt-0.5 flex-shrink-0"></i>
+          <div>
+            <p class="text-sm text-textDark font-medium">Custom branding requires PRO or higher</p>
+            <p class="text-xs text-textMuted mt-0.5">
+              Upgrade to set your own logo and brand colour.
+              <a routerLink="/admin/subscription" class="text-primary font-semibold hover:underline ml-1">Upgrade →</a>
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" [class.opacity-40]="!hasCustomBranding" [class.pointer-events-none]="!hasCustomBranding">
           <div>
             <label class="block text-xs font-medium text-textDark mb-1">Logo</label>
             <div class="flex items-center gap-3">

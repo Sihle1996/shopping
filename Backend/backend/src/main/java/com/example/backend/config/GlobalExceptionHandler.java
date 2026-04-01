@@ -59,6 +59,18 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), message));
     }
 
+    @ExceptionHandler(PlanLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handlePlanLimitExceeded(PlanLimitExceededException ex) {
+        return ResponseEntity.status(402)
+                .body(new ErrorResponse(LocalDateTime.now(), 402, ex.getMessage()));
+    }
+
+    @ExceptionHandler(PlanFeatureNotAvailableException.class)
+    public ResponseEntity<ErrorResponse> handlePlanFeatureNotAvailable(PlanFeatureNotAvailableException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse(LocalDateTime.now(), HttpStatus.FORBIDDEN.value(), ex.getMessage()));
+    }
+
     // Handle all other exceptions
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {

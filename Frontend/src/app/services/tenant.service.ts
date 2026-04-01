@@ -30,6 +30,8 @@ export interface TenantRegistration {
   email: string;
   phone?: string;
   address?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 @Injectable({

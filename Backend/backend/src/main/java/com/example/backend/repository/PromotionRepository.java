@@ -28,4 +28,5 @@ public interface PromotionRepository extends JpaRepository<Promotion, UUID> {
     List<Promotion> findByTenant_Id(UUID tenantId);
 
     Optional<Promotion> findByCodeAndActiveTrueAndTenant_Id(String code, UUID tenantId);
+    long countByTenant_IdAndActiveTrue(UUID tenantId);
 }

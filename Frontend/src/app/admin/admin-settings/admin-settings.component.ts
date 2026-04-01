@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from 'src/app/services/auth.service';
 import { TenantService } from 'src/app/services/tenant.service';
 import { AdminService } from 'src/app/services/admin.service';
+import { SubscriptionService } from 'src/app/services/subscription.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 
@@ -41,6 +42,9 @@ export class AdminSettingsComponent implements OnInit {
   isSaving = false;
   isUploadingLogo = false;
 
+  hasCustomBranding = false;
+  subscriptionPlan = '';
+
   categories: any[] = [];
   newCategoryName = '';
   savingCategory = false;
@@ -50,12 +54,17 @@ export class AdminSettingsComponent implements OnInit {
     private authService: AuthService,
     private tenantService: TenantService,
     private adminService: AdminService,
+    private subscriptionService: SubscriptionService,
     private toastr: ToastrService
   ) {}
 
   ngOnInit(): void {
     this.loadSettings();
     this.loadCategories();
+    this.subscriptionService.load().subscribe(info => {
+      this.hasCustomBranding = info.features.hasCustomBranding;
+      this.subscriptionPlan = info.plan;
+    });
   }
 
   private getHeaders(): HttpHeaders {

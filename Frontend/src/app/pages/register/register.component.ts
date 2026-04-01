@@ -54,10 +54,26 @@ export class RegisterComponent implements OnInit {
     this.errorMessage = '';
 
     this.authService.register(this.registerForm.value, this.tenantId || undefined).subscribe({
-      next: () => {
-        const queryParams: any = {};
-        if (this.returnUrl) queryParams.returnUrl = this.returnUrl;
-        this.router.navigate(['/login'], { queryParams });
+      next: (response: any) => {
+        // Store the token returned by registration — no separate login needed
+        if (response?.token) {
+          this.authService.storeToken(response.token);
+        }
+
+        if (this.returnUrl) {
+          this.router.navigateByUrl(this.returnUrl, { replaceUrl: true });
+          return;
+        }
+
+        const role = this.authService.getUserRole();
+        if (role === 'ROLE_ADMIN') {
+          this.router.navigate(['/admin/dashboard'], { replaceUrl: true });
+        } else if (role === 'ROLE_SUPERADMIN') {
+          this.router.navigate(['/superadmin'], { replaceUrl: true });
+        } else {
+          const slug = localStorage.getItem('storeSlug');
+          this.router.navigate(slug ? ['/store', slug] : ['/'], { replaceUrl: true });
+        }
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Registration failed. Please try again.';

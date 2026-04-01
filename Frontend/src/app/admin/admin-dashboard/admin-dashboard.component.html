@@ -9,7 +9,7 @@
         <h1 class="font-heading text-2xl font-bold text-textDark">Dashboard</h1>
         <p class="text-textLight text-sm mt-1">Overview of your store performance</p>
       </div>
-      <div class="flex items-center gap-2">
+      <div *ngIf="hasAnalytics" class="flex items-center gap-2">
         <input type="date" [(ngModel)]="startDate" (change)="loadAnalytics()"
                class="px-3 py-2 rounded-xl border border-borderColor bg-white text-sm text-textDark
                       focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
@@ -20,7 +20,7 @@
       </div>
     </div>
 
-    <!-- KPI Cards -->
+    <!-- KPI Cards (always visible) -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
       <div class="bg-white rounded-2xl shadow-card p-5">
         <div class="flex items-center gap-3">
@@ -57,68 +57,86 @@
       </div>
     </div>
 
-    <!-- Charts -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <div class="bg-white rounded-2xl shadow-card p-5">
-        <h3 class="font-heading text-sm font-semibold text-textDark mb-4">Sales Trends</h3>
-        <div class="relative h-64">
-          <canvas #salesChartCanvas class="w-full h-full"></canvas>
-          <div *ngIf="salesEmpty"
-               class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 rounded-xl">
-            <i class="bi bi-bar-chart text-3xl text-gray-300 mb-2"></i>
-            <p class="text-textMuted text-sm">{{ salesError ? 'Failed to load sales data' : 'No sales data for this period' }}</p>
+    <!-- Analytics upgrade prompt (BASIC plan) -->
+    <div *ngIf="!hasAnalytics" class="mb-6 rounded-2xl border-2 border-dashed border-primary-200 bg-primary-50 p-8 text-center">
+      <div class="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+        <i class="bi bi-graph-up text-primary text-2xl"></i>
+      </div>
+      <h3 class="font-heading font-semibold text-textDark mb-1">Analytics available on PRO &amp; ENTERPRISE</h3>
+      <p class="text-textMuted text-sm mb-4 max-w-sm mx-auto">
+        Upgrade to unlock sales trends, top products, average order value, and delivery performance charts.
+      </p>
+      <a routerLink="/admin/subscription"
+         class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary-600 transition-colors">
+        <i class="bi bi-arrow-up-circle"></i> Upgrade Plan
+      </a>
+      <p class="text-xs text-textMuted mt-2">Currently on <strong>{{ subscriptionPlan }}</strong> plan</p>
+    </div>
+
+    <!-- Charts + metrics (PRO/ENTERPRISE only) -->
+    <ng-container *ngIf="hasAnalytics">
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <h3 class="font-heading text-sm font-semibold text-textDark mb-4">Sales Trends</h3>
+          <div class="relative h-64">
+            <canvas #salesChartCanvas class="w-full h-full"></canvas>
+            <div *ngIf="salesEmpty"
+                 class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 rounded-xl">
+              <i class="bi bi-bar-chart text-3xl text-gray-300 mb-2"></i>
+              <p class="text-textMuted text-sm">{{ salesError ? 'Failed to load sales data' : 'No sales data for this period' }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <h3 class="font-heading text-sm font-semibold text-textDark mb-4">Top Products</h3>
+          <div class="relative h-64">
+            <canvas #productsChartCanvas class="w-full h-full"></canvas>
+            <div *ngIf="productsEmpty"
+                 class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 rounded-xl">
+              <i class="bi bi-box-seam text-3xl text-gray-300 mb-2"></i>
+              <p class="text-textMuted text-sm">{{ productsError ? 'Failed to load products data' : 'No products data for this period' }}</p>
+            </div>
           </div>
         </div>
       </div>
-      <div class="bg-white rounded-2xl shadow-card p-5">
-        <h3 class="font-heading text-sm font-semibold text-textDark mb-4">Top Products</h3>
-        <div class="relative h-64">
-          <canvas #productsChartCanvas class="w-full h-full"></canvas>
-          <div *ngIf="productsEmpty"
-               class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 rounded-xl">
-            <i class="bi bi-box-seam text-3xl text-gray-300 mb-2"></i>
-            <p class="text-textMuted text-sm">{{ productsError ? 'Failed to load products data' : 'No products data for this period' }}</p>
-          </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <p class="text-textMuted text-xs mb-1">Avg Order Value</p>
+          <p class="font-numbers text-xl font-bold text-textDark">R{{ aov | number:'1.2-2' }}</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <p class="text-textMuted text-xs mb-1">On-time Delivery</p>
+          <p class="font-numbers text-xl font-bold text-success">{{ onTime | number:'1.0-0' }}%</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <p class="text-textMuted text-xs mb-1">Cancellation Rate</p>
+          <p class="font-numbers text-xl font-bold text-danger">{{ cancellations | number:'1.0-0' }}%</p>
         </div>
       </div>
-    </div>
 
-    <!-- Performance Metrics -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-      <div class="bg-white rounded-2xl shadow-card p-5">
-        <p class="text-textMuted text-xs mb-1">Avg Order Value</p>
-        <p class="font-numbers text-xl font-bold text-textDark">R{{ aov | number:'1.2-2' }}</p>
+      <div *ngIf="topProducts.length" class="bg-white rounded-2xl shadow-card overflow-hidden mb-8">
+        <div class="px-5 py-4 border-b border-borderColor">
+          <h3 class="font-heading text-sm font-semibold text-textDark">Top Selling Products</h3>
+        </div>
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-borderColor">
+              <th class="px-5 py-3 text-left text-xs font-medium text-textMuted uppercase">Product</th>
+              <th class="px-5 py-3 text-right text-xs font-medium text-textMuted uppercase">Sold</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of topProducts" class="border-b border-borderColor last:border-0 hover:bg-surface transition-colors">
+              <td class="px-5 py-3 text-sm font-medium text-textDark">{{ p.name }}</td>
+              <td class="px-5 py-3 text-sm font-numbers font-semibold text-textDark text-right">{{ p.quantity }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <div class="bg-white rounded-2xl shadow-card p-5">
-        <p class="text-textMuted text-xs mb-1">On-time Delivery</p>
-        <p class="font-numbers text-xl font-bold text-success">{{ onTime | number:'1.0-0' }}%</p>
-      </div>
-      <div class="bg-white rounded-2xl shadow-card p-5">
-        <p class="text-textMuted text-xs mb-1">Cancellation Rate</p>
-        <p class="font-numbers text-xl font-bold text-danger">{{ cancellations | number:'1.0-0' }}%</p>
-      </div>
-    </div>
 
-    <!-- Top Products Table -->
-    <div *ngIf="topProducts.length" class="bg-white rounded-2xl shadow-card overflow-hidden mb-8">
-      <div class="px-5 py-4 border-b border-borderColor">
-        <h3 class="font-heading text-sm font-semibold text-textDark">Top Selling Products</h3>
-      </div>
-      <table class="w-full">
-        <thead>
-          <tr class="border-b border-borderColor">
-            <th class="px-5 py-3 text-left text-xs font-medium text-textMuted uppercase">Product</th>
-            <th class="px-5 py-3 text-right text-xs font-medium text-textMuted uppercase">Sold</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let p of topProducts" class="border-b border-borderColor last:border-0 hover:bg-surface transition-colors">
-            <td class="px-5 py-3 text-sm font-medium text-textDark">{{ p.name }}</td>
-            <td class="px-5 py-3 text-sm font-numbers font-semibold text-textDark text-right">{{ p.quantity }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    </ng-container>
 
   </div>
 </div>

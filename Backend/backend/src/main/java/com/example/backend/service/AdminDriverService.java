@@ -26,8 +26,14 @@ public class AdminDriverService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TenantRepository tenantRepository;
+    private final SubscriptionEnforcementService subscriptionEnforcementService;
 
     public DriverDTO createDriver(RegisterRequest request) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId != null) {
+            subscriptionEnforcementService.assertDriverLimit(tenantId);
+        }
+
         userRepository.findByEmail(request.getEmail())
                 .ifPresent(u -> {
                     throw new EmailAlreadyExistsException("Email already exists");
@@ -39,7 +45,6 @@ public class AdminDriverService {
                 .role(Role.DRIVER)
                 .driverStatus(DriverStatus.AVAILABLE);
 
-        UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null) {
             Tenant tenant = tenantRepository.findById(tenantId)
                     .orElseThrow(() -> new RuntimeException("Tenant not found"));

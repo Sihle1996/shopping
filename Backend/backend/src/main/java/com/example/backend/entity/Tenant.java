@@ -67,6 +67,8 @@ public class Tenant {
     @Builder.Default
     private boolean active = true;
 
+    private LocalDateTime trialStartedAt;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
