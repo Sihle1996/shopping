@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using SuperAdmin.API.Data;
 using SuperAdmin.API.DTOs;
 
@@ -77,7 +78,14 @@ public class UsersController(AppDbContext db) : ControllerBase
         }
 
         db.Users.Remove(user);
-        await db.SaveChangesAsync();
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg && pg.SqlState == "23503")
+        {
+            return BadRequest(new { message = "Cannot delete this user — they have associated orders. Remove their orders first." });
+        }
         return NoContent();
     }
 }

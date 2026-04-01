@@ -10,11 +10,10 @@ import Modal from '../../components/common/Modal'
 import Pagination from '../../components/common/Pagination'
 import { Search, ShieldOff, ShieldCheck, Truck, AlertCircle } from 'lucide-react'
 
-function statusVariant(status?: string): 'success' | 'neutral' | 'danger' | 'warning' {
+function statusVariant(status?: string): 'success' | 'neutral' | 'warning' {
   switch ((status ?? '').toUpperCase()) {
     case 'AVAILABLE':   return 'success'
     case 'UNAVAILABLE': return 'warning'
-    case 'SUSPENDED':   return 'danger'
     default:            return 'neutral'
   }
 }
@@ -53,7 +52,7 @@ export default function Drivers() {
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['drivers'] })
       setConfirmDriver(null)
-      showToast(`Driver ${vars.driverStatus === 'SUSPENDED' ? 'suspended' : 'activated'}`)
+      showToast(`Driver set to ${vars.driverStatus.toLowerCase()}`)
     },
     onError: (err: Error) => showToast(err.message || 'Failed to update driver status', 'error')
   })
@@ -94,17 +93,17 @@ export default function Drivers() {
       key: 'actions',
       header: 'Actions',
       render: (row: UserDto) => {
-        const isSuspended = (row.driverStatus ?? '').toUpperCase() === 'SUSPENDED'
+        const isAvailable = (row.driverStatus ?? '').toUpperCase() === 'AVAILABLE'
         return (
           <button
-            onClick={() => setConfirmDriver({ driver: row, newStatus: isSuspended ? 'AVAILABLE' : 'SUSPENDED' })}
+            onClick={() => setConfirmDriver({ driver: row, newStatus: isAvailable ? 'UNAVAILABLE' : 'AVAILABLE' })}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
-              isSuspended
-                ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/20'
-                : 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20'
+              isAvailable
+                ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20'
+                : 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/20'
             }`}
           >
-            {isSuspended ? <><ShieldCheck size={13} /> Activate</> : <><ShieldOff size={13} /> Suspend</>}
+            {isAvailable ? <><ShieldOff size={13} /> Set Unavailable</> : <><ShieldCheck size={13} /> Set Available</>}
           </button>
         )
       }
@@ -138,7 +137,6 @@ export default function Drivers() {
             <option value="">All Status</option>
             <option value="AVAILABLE">Available</option>
             <option value="UNAVAILABLE">Unavailable</option>
-            <option value="SUSPENDED">Suspended</option>
           </select>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -161,8 +159,8 @@ export default function Drivers() {
         <Modal isOpen={!!confirmDriver} onClose={() => setConfirmDriver(null)} title="Update Driver Status" size="sm">
           <div className="space-y-4">
             <p className="text-sm text-gray-400">
-              {confirmDriver.newStatus === 'SUSPENDED' ? 'Suspend' : 'Activate'}{' '}
-              driver <strong className="text-gray-200">{confirmDriver.driver.email}</strong>?
+              Set driver <strong className="text-gray-200">{confirmDriver.driver.email}</strong> to{' '}
+              <strong className="text-gray-200">{confirmDriver.newStatus}</strong>?
             </p>
             <div className="flex justify-end gap-3">
               <button onClick={() => setConfirmDriver(null)} className="px-4 py-2 text-sm border border-gray-700 rounded-lg text-gray-400 hover:bg-gray-800 transition-colors">Cancel</button>
@@ -170,10 +168,10 @@ export default function Drivers() {
                 onClick={() => statusMutation.mutate({ id: confirmDriver.driver.id, driverStatus: confirmDriver.newStatus })}
                 disabled={statusMutation.isPending}
                 className={`px-4 py-2 text-sm rounded-lg font-medium text-white disabled:opacity-60 ${
-                  confirmDriver.newStatus === 'SUSPENDED' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
+                  confirmDriver.newStatus === 'UNAVAILABLE' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
                 }`}
               >
-                {statusMutation.isPending ? 'Updating…' : confirmDriver.newStatus === 'SUSPENDED' ? 'Suspend' : 'Activate'}
+                {statusMutation.isPending ? 'Updating…' : `Set ${confirmDriver.newStatus}`}
               </button>
             </div>
           </div>

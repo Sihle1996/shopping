@@ -11,7 +11,8 @@ namespace SuperAdmin.API.Controllers;
 [Authorize(Roles = "SUPERADMIN")]
 public class DriversController(AppDbContext db) : ControllerBase
 {
-    private static readonly HashSet<string> ValidDriverStatuses = ["AVAILABLE", "UNAVAILABLE", "SUSPENDED"];
+    // Java DriverStatus enum only has AVAILABLE and UNAVAILABLE — SUSPENDED is not a valid DB value
+    private static readonly HashSet<string> ValidDriverStatuses = ["AVAILABLE", "UNAVAILABLE"];
 
     [HttpGet]
     public async Task<IActionResult> GetAll(
