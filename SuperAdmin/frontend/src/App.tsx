@@ -10,6 +10,7 @@ import Stores from './pages/Stores/Stores'
 import Users from './pages/Users/Users'
 import Drivers from './pages/Drivers/Drivers'
 import Subscriptions from './pages/Subscriptions/Subscriptions'
+import Orders from './pages/Orders/Orders'
 import NotFound from './pages/NotFound/NotFound'
 
 export default function App() {
@@ -37,6 +38,7 @@ export default function App() {
               <Route path="/stores" element={<Stores />} />
               <Route path="/users" element={<Users />} />
               <Route path="/drivers" element={<Drivers />} />
+              <Route path="/orders" element={<Orders />} />
               <Route path="/subscriptions" element={<Subscriptions />} />
             </Route>
 

@@ -79,6 +79,23 @@ export interface DriverQueryParams {
   pageSize?: number
 }
 
+export interface OrderDto {
+  id: string
+  status: string
+  totalAmount: number
+  orderDate: string
+  tenantId?: string
+  storeName: string
+}
+
+export interface OrderQueryParams {
+  search?: string
+  status?: string
+  storeId?: string
+  page?: number
+  pageSize?: number
+}
+
 export interface UpdateStoreDto {
   name?: string
   subscriptionStatus?: string
