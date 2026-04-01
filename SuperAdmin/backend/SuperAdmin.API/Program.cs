@@ -131,10 +131,10 @@ using (var scope = app.Services.CreateScope())
             SELECT 'ENTERPRISE', 1499.00, 999, 99, 'Unlimited items, Unlimited drivers, Full analytics, Dedicated support, White-label'
             WHERE NOT EXISTS (SELECT 1 FROM subscription_plans WHERE name = 'ENTERPRISE');
         ");
-    }
+
         // Add unique index on plans after table is guaranteed to exist
         try { db.Database.ExecuteSqlRaw(@"CREATE UNIQUE INDEX IF NOT EXISTS ix_subscription_plans_name ON subscription_plans(name)"); }
-        catch (Exception ex) { startupLogger.LogWarning("[Startup] Index skipped: {Message}", ex.Message); }
+        catch (Exception idxEx) { startupLogger.LogWarning("[Startup] Index skipped: {Message}", idxEx.Message); }
     }
     catch (Exception ex)
     {
