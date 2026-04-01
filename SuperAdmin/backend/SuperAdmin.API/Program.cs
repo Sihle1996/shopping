@@ -135,6 +135,42 @@ using (var scope = app.Services.CreateScope())
         // Add unique index on plans after table is guaranteed to exist
         try { db.Database.ExecuteSqlRaw(@"CREATE UNIQUE INDEX IF NOT EXISTS ix_subscription_plans_name ON subscription_plans(name)"); }
         catch (Exception idxEx) { startupLogger.LogWarning("[Startup] Index skipped: {Message}", idxEx.Message); }
+
+        // Expand plan table with feature-gate columns (idempotent)
+        db.Database.ExecuteSqlRaw(@"
+            ALTER TABLE subscription_plans
+                ADD COLUMN IF NOT EXISTS max_promotions INT NOT NULL DEFAULT 3,
+                ADD COLUMN IF NOT EXISTS max_delivery_radius_km INT NOT NULL DEFAULT 10,
+                ADD COLUMN IF NOT EXISTS has_analytics BOOLEAN NOT NULL DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS has_custom_branding BOOLEAN NOT NULL DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS has_inventory_export BOOLEAN NOT NULL DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS commission_percent DECIMAL(5,2) NOT NULL DEFAULT 4.00;
+
+            ALTER TABLE tenants
+                ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMP;
+
+            UPDATE tenants
+                SET trial_started_at = created_at
+                WHERE subscription_status = 'TRIAL' AND trial_started_at IS NULL;
+
+            UPDATE subscription_plans SET
+                max_promotions = 3, max_delivery_radius_km = 10,
+                has_analytics = FALSE, has_custom_branding = FALSE,
+                has_inventory_export = FALSE, commission_percent = 4.00
+            WHERE name = 'BASIC';
+
+            UPDATE subscription_plans SET
+                max_promotions = 20, max_delivery_radius_km = 25,
+                has_analytics = TRUE, has_custom_branding = TRUE,
+                has_inventory_export = TRUE, commission_percent = 3.00
+            WHERE name = 'PRO';
+
+            UPDATE subscription_plans SET
+                max_promotions = 999, max_delivery_radius_km = 50,
+                has_analytics = TRUE, has_custom_branding = TRUE,
+                has_inventory_export = TRUE, commission_percent = 2.00
+            WHERE name = 'ENTERPRISE';
+        ");
     }
     catch (Exception ex)
     {

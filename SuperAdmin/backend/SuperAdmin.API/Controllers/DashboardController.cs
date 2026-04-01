@@ -87,4 +87,53 @@ public class DashboardController(AppDbContext db) : ControllerBase
             .ToListAsync();
         return Ok(result);
     }
+
+    [HttpGet("subscription-health")]
+    public async Task<IActionResult> GetSubscriptionHealth()
+    {
+        var now = DateTime.UtcNow;
+        var cutoff = now.AddDays(7);
+
+        // Tenants in TRIAL whose trial started more than 7 days ago (7 or fewer days remaining)
+        var trialTenants = await db.Tenants
+            .Where(t => t.SubscriptionStatus == "TRIAL" && t.TrialStartedAt != null)
+            .ToListAsync();
+
+        var expiringTrials = trialTenants
+            .Select(t => new
+            {
+                id = t.Id,
+                name = t.Name,
+                slug = t.Slug,
+                email = t.Email,
+                daysRemaining = Math.Max(0, 14 - (int)(now - t.TrialStartedAt!.Value).TotalDays)
+            })
+            .Where(x => x.daysRemaining <= 7)
+            .OrderBy(x => x.daysRemaining)
+            .ToList();
+
+        // Revenue forecast: sum of plan prices for ACTIVE tenants
+        var activeTenants = await db.Tenants
+            .Where(t => t.SubscriptionStatus == "ACTIVE")
+            .Select(t => t.SubscriptionPlan)
+            .ToListAsync();
+
+        var plans = await db.SubscriptionPlans.ToListAsync();
+        var planPriceMap = plans.ToDictionary(p => p.Name, p => p.Price);
+        var revenueForecast = activeTenants.Sum(plan =>
+            plan != null && planPriceMap.TryGetValue(plan, out var price) ? price : 0);
+
+        // Plan distribution
+        var planDistribution = await db.Tenants
+            .GroupBy(t => t.SubscriptionPlan)
+            .Select(g => new { plan = g.Key ?? "None", count = g.Count() })
+            .ToListAsync();
+
+        return Ok(new
+        {
+            expiringTrials,
+            monthlyRevenueForecast = revenueForecast,
+            planDistribution
+        });
+    }
 }

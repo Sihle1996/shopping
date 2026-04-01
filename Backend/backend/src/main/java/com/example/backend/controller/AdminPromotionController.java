@@ -5,6 +5,7 @@ import com.example.backend.dto.PromotionRequest;
 import com.example.backend.model.Promotion;
 import com.example.backend.repository.PromotionRepository;
 import com.example.backend.repository.TenantRepository;
+import com.example.backend.service.SubscriptionEnforcementService;
 import com.example.backend.tenant.TenantContext;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -23,6 +24,7 @@ public class AdminPromotionController {
 
     private final PromotionRepository promotionRepository;
     private final TenantRepository tenantRepository;
+    private final SubscriptionEnforcementService subscriptionEnforcementService;
 
     @GetMapping
     @Transactional
@@ -40,6 +42,9 @@ public class AdminPromotionController {
         Promotion p = toEntity(new Promotion(), req);
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null) {
+            if (p.isActive()) {
+                subscriptionEnforcementService.assertPromotionLimit(tenantId);
+            }
             tenantRepository.findById(tenantId).ifPresent(p::setTenant);
         }
         Promotion saved = promotionRepository.save(p);

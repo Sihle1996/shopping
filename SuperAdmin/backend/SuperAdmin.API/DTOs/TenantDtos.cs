@@ -19,7 +19,9 @@ public record TenantDto(
     int UserCount,
     int DriverCount,
     int OrderCount,
-    double Revenue
+    double Revenue,
+    DateTime? TrialStartedAt,
+    int? TrialDaysRemaining
 );
 
 public record UpdateTenantRequest(

@@ -14,5 +14,6 @@ export class AdminFooterComponent {
     { route: '/admin/promotions', label: 'Promos', icon: 'bi bi-tag', exact: false },
     { route: '/admin/drivers', label: 'Drivers', icon: 'bi bi-truck', exact: false },
     { route: '/admin/settings', label: 'Settings', icon: 'bi bi-gear', exact: false },
+    { route: '/admin/subscription', label: 'Plan', icon: 'bi bi-credit-card-2-front', exact: false },
   ];
 }

@@ -6,6 +6,12 @@ public record SubscriptionPlanDto(
     decimal Price,
     int MaxMenuItems,
     int MaxDrivers,
+    int MaxPromotions,
+    int MaxDeliveryRadiusKm,
+    bool HasAnalytics,
+    bool HasCustomBranding,
+    bool HasInventoryExport,
+    decimal CommissionPercent,
     string? Features,
     DateTime CreatedAt
 );
@@ -15,6 +21,12 @@ public record CreateUpdatePlanRequest(
     decimal Price,
     int MaxMenuItems,
     int MaxDrivers,
+    int MaxPromotions,
+    int MaxDeliveryRadiusKm,
+    bool HasAnalytics,
+    bool HasCustomBranding,
+    bool HasInventoryExport,
+    decimal CommissionPercent,
     string? Features
 );
 

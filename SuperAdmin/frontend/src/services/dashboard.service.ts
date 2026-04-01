@@ -1,5 +1,5 @@
 import api from './api'
-import type { StatsDto } from '../types'
+import type { StatsDto, SubscriptionHealthDto } from '../types'
 
 export const dashboardService = {
   async getStats(): Promise<StatsDto> {
@@ -20,6 +20,10 @@ export const dashboardService = {
   },
   async getStoresByPlan(): Promise<{ plan: string; count: number }[]> {
     const { data } = await api.get('/dashboard/stores-by-plan')
+    return data
+  },
+  async getSubscriptionHealth(): Promise<SubscriptionHealthDto> {
+    const { data } = await api.get('/dashboard/subscription-health')
     return data
   }
 }

@@ -11,4 +11,5 @@ import java.util.UUID;
 @Repository
 public interface MenuItemRepository extends JpaRepository<MenuItem, UUID> {
     List<MenuItem> findByTenant_Id(UUID tenantId);
+    long countByTenant_Id(UUID tenantId);
 }

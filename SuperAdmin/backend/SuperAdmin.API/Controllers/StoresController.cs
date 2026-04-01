@@ -61,15 +61,24 @@ public class StoresController(AppDbContext db) : ControllerBase
             .Select(g => new { TenantId = g.Key, Count = g.Count(), Revenue = g.Sum(o => o.TotalAmount) })
             .ToListAsync();
 
-        var result = tenants.Select(t => new TenantDto(
-            t.Id, t.Name, t.Slug, t.LogoUrl, t.PrimaryColor, t.Email, t.Phone, t.Address,
-            t.DeliveryRadiusKm, t.DeliveryFeeBase, t.PlatformCommissionPercent,
-            t.SubscriptionStatus, t.SubscriptionPlan, t.Active, t.CreatedAt,
-            userCounts.FirstOrDefault(u => u.TenantId == t.Id)?.Count ?? 0,
-            driverCounts.FirstOrDefault(d => d.TenantId == t.Id)?.Count ?? 0,
-            orderData.FirstOrDefault(o => o.TenantId == t.Id)?.Count ?? 0,
-            orderData.FirstOrDefault(o => o.TenantId == t.Id)?.Revenue ?? 0
-        ));
+        var now = DateTime.UtcNow;
+        var result = tenants.Select(t =>
+        {
+            int? daysRemaining = null;
+            if (t.SubscriptionStatus == "TRIAL" && t.TrialStartedAt.HasValue)
+                daysRemaining = Math.Max(0, 14 - (int)(now - t.TrialStartedAt.Value).TotalDays);
+            return new TenantDto(
+                t.Id, t.Name, t.Slug, t.LogoUrl, t.PrimaryColor, t.Email, t.Phone, t.Address,
+                t.DeliveryRadiusKm, t.DeliveryFeeBase, t.PlatformCommissionPercent,
+                t.SubscriptionStatus, t.SubscriptionPlan, t.Active, t.CreatedAt,
+                userCounts.FirstOrDefault(u => u.TenantId == t.Id)?.Count ?? 0,
+                driverCounts.FirstOrDefault(d => d.TenantId == t.Id)?.Count ?? 0,
+                orderData.FirstOrDefault(o => o.TenantId == t.Id)?.Count ?? 0,
+                (double)(orderData.FirstOrDefault(o => o.TenantId == t.Id)?.Revenue ?? 0),
+                t.TrialStartedAt,
+                daysRemaining
+            );
+        });
 
         return Ok(new { data = result, total, page, pageSize, totalPages = (int)Math.Ceiling((double)total / pageSize) });
     }

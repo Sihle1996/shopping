@@ -10,6 +10,7 @@ import { AdminDiagnosticsComponent } from './admin-diagnostics/admin-diagnostics
 import { AdminGuard } from '../guards/admin.guard';
 import { AdminPromotionsComponent } from './admin-promotions/admin-promotions.component';
 import { AdminSettingsComponent } from './admin-settings/admin-settings.component';
+import { AdminSubscriptionComponent } from './admin-subscription/admin-subscription.component';
 
 const routes: Routes = [
   {
@@ -25,6 +26,7 @@ const routes: Routes = [
       { path: 'promotions', component: AdminPromotionsComponent },
       { path: 'settings', component: AdminSettingsComponent },
       { path: 'diagnostics', component: AdminDiagnosticsComponent },
+      { path: 'subscription', component: AdminSubscriptionComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

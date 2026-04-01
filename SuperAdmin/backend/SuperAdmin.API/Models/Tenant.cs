@@ -55,5 +55,8 @@ public class Tenant
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; }
 
+    [Column("trial_started_at")]
+    public DateTime? TrialStartedAt { get; set; }
+
     public ICollection<User> Users { get; set; } = new List<User>();
 }

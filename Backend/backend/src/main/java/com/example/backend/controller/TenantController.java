@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -34,6 +35,7 @@ public class TenantController {
             @RequestParam double lat,
             @RequestParam double lon) {
         List<NearbyTenantDto> nearby = tenantRepository.findByActiveTrue().stream()
+                .filter(t -> !"SUSPENDED".equals(t.getSubscriptionStatus()))
                 .filter(t -> t.getLatitude() != null && t.getLongitude() != null)
                 .map(t -> {
                     double dist = haversineKm(lat, lon, t.getLatitude(), t.getLongitude());
@@ -89,6 +91,10 @@ public class TenantController {
                     .replaceAll("[^a-z0-9]+", "-")
                     .replaceAll("(^-|-$)", "");
             tenant.setSlug(slug);
+        }
+        // Record trial start time
+        if ("TRIAL".equals(tenant.getSubscriptionStatus()) || tenant.getSubscriptionStatus() == null) {
+            tenant.setTrialStartedAt(LocalDateTime.now());
         }
         Tenant saved = tenantRepository.save(tenant);
         return ResponseEntity.created(URI.create("/api/tenants/" + saved.getSlug())).body(saved);

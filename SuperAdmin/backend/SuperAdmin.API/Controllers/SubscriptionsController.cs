@@ -16,7 +16,7 @@ public class SubscriptionsController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> GetPlans()
     {
         var plans = await db.SubscriptionPlans.OrderBy(p => p.Price).ToListAsync();
-        return Ok(plans.Select(p => new SubscriptionPlanDto(p.Id, p.Name, p.Price, p.MaxMenuItems, p.MaxDrivers, p.Features, p.CreatedAt)));
+        return Ok(plans.Select(ToDto));
     }
 
     [HttpPost("plans")]
@@ -31,12 +31,18 @@ public class SubscriptionsController(AppDbContext db) : ControllerBase
             Price = request.Price,
             MaxMenuItems = request.MaxMenuItems,
             MaxDrivers = request.MaxDrivers,
+            MaxPromotions = request.MaxPromotions,
+            MaxDeliveryRadiusKm = request.MaxDeliveryRadiusKm,
+            HasAnalytics = request.HasAnalytics,
+            HasCustomBranding = request.HasCustomBranding,
+            HasInventoryExport = request.HasInventoryExport,
+            CommissionPercent = request.CommissionPercent,
             Features = request.Features,
             CreatedAt = DateTime.UtcNow
         };
         db.SubscriptionPlans.Add(plan);
         await db.SaveChangesAsync();
-        return Created("", new SubscriptionPlanDto(plan.Id, plan.Name, plan.Price, plan.MaxMenuItems, plan.MaxDrivers, plan.Features, plan.CreatedAt));
+        return Created("", ToDto(plan));
     }
 
     [HttpPut("plans/{id}")]
@@ -52,9 +58,15 @@ public class SubscriptionsController(AppDbContext db) : ControllerBase
         plan.Price = request.Price;
         plan.MaxMenuItems = request.MaxMenuItems;
         plan.MaxDrivers = request.MaxDrivers;
+        plan.MaxPromotions = request.MaxPromotions;
+        plan.MaxDeliveryRadiusKm = request.MaxDeliveryRadiusKm;
+        plan.HasAnalytics = request.HasAnalytics;
+        plan.HasCustomBranding = request.HasCustomBranding;
+        plan.HasInventoryExport = request.HasInventoryExport;
+        plan.CommissionPercent = request.CommissionPercent;
         plan.Features = request.Features;
         await db.SaveChangesAsync();
-        return Ok(new SubscriptionPlanDto(plan.Id, plan.Name, plan.Price, plan.MaxMenuItems, plan.MaxDrivers, plan.Features, plan.CreatedAt));
+        return Ok(ToDto(plan));
     }
 
     [HttpDelete("plans/{id}")]
@@ -84,6 +96,13 @@ public class SubscriptionsController(AppDbContext db) : ControllerBase
         return Ok(new { subscriptionPlan = tenant.SubscriptionPlan, subscriptionStatus = tenant.SubscriptionStatus });
     }
 
+    private static SubscriptionPlanDto ToDto(SubscriptionPlan p) => new(
+        p.Id, p.Name, p.Price, p.MaxMenuItems, p.MaxDrivers,
+        p.MaxPromotions, p.MaxDeliveryRadiusKm,
+        p.HasAnalytics, p.HasCustomBranding, p.HasInventoryExport,
+        p.CommissionPercent, p.Features, p.CreatedAt
+    );
+
     private static string? ValidatePlanRequest(CreateUpdatePlanRequest r)
     {
         if (string.IsNullOrWhiteSpace(r.Name)) return "Plan name is required.";
@@ -91,6 +110,9 @@ public class SubscriptionsController(AppDbContext db) : ControllerBase
         if (r.Price < 0) return "Price cannot be negative.";
         if (r.MaxMenuItems < 0) return "Max menu items cannot be negative.";
         if (r.MaxDrivers < 0) return "Max drivers cannot be negative.";
+        if (r.MaxPromotions < 0) return "Max promotions cannot be negative.";
+        if (r.MaxDeliveryRadiusKm < 0) return "Max delivery radius cannot be negative.";
+        if (r.CommissionPercent < 0 || r.CommissionPercent > 100) return "Commission percent must be between 0 and 100.";
         if (r.Features?.Length > 1000) return "Features must be 1000 characters or fewer.";
         return null;
     }

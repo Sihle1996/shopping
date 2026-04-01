@@ -20,8 +20,13 @@ public class MenuService {
     private final MenuItemRepository menuItemRepository;
     private final TenantRepository tenantRepository;
     private final CartItemRepository cartItemRepository;
+    private final SubscriptionEnforcementService subscriptionEnforcementService;
 
     public MenuItem saveMenuItem(MenuItem menuItem) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId != null) {
+            subscriptionEnforcementService.assertMenuItemLimit(tenantId);
+        }
         setTenantOnEntity(menuItem);
         return menuItemRepository.save(menuItem);
     }

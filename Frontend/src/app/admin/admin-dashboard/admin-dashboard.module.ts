@@ -19,6 +19,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { AdminRoutingModule } from '../admin-routing.module';
 import { AdminPromotionsComponent } from '../admin-promotions/admin-promotions.component';
 import { AdminSettingsComponent } from '../admin-settings/admin-settings.component';
+import { AdminSubscriptionComponent } from '../admin-subscription/admin-subscription.component';
 
 @NgModule({
   declarations: [
@@ -36,6 +37,7 @@ import { AdminSettingsComponent } from '../admin-settings/admin-settings.compone
     AdminLayoutComponent,
     AdminPromotionsComponent,
     AdminSettingsComponent,
+    AdminSubscriptionComponent,
   ],
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, SharedModule, AdminRoutingModule],
   exports: [AdminDashboardComponent, AdminFooterComponent],

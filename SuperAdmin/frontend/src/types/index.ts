@@ -18,6 +18,8 @@ export interface TenantDto {
   driverCount: number
   orderCount: number
   revenue: number
+  trialStartedAt?: string
+  trialDaysRemaining?: number
 }
 
 export interface UserDto {
@@ -46,6 +48,12 @@ export interface SubscriptionPlanDto {
   price: number
   maxMenuItems: number
   maxDrivers: number
+  maxPromotions: number
+  maxDeliveryRadiusKm: number
+  hasAnalytics: boolean
+  hasCustomBranding: boolean
+  hasInventoryExport: boolean
+  commissionPercent: number
   features?: string
   createdAt: string
 }
@@ -115,6 +123,12 @@ export interface CreatePlanDto {
   price: number
   maxMenuItems: number
   maxDrivers: number
+  maxPromotions: number
+  maxDeliveryRadiusKm: number
+  hasAnalytics: boolean
+  hasCustomBranding: boolean
+  hasInventoryExport: boolean
+  commissionPercent: number
   features?: string
 }
 
@@ -123,5 +137,17 @@ export interface UpdatePlanDto {
   price?: number
   maxMenuItems?: number
   maxDrivers?: number
+  maxPromotions?: number
+  maxDeliveryRadiusKm?: number
+  hasAnalytics?: boolean
+  hasCustomBranding?: boolean
+  hasInventoryExport?: boolean
+  commissionPercent?: number
   features?: string
+}
+
+export interface SubscriptionHealthDto {
+  expiringTrials: { id: string; name: string; slug: string; email?: string; daysRemaining: number }[]
+  monthlyRevenueForecast: number
+  planDistribution: { plan: string; count: number }[]
 }

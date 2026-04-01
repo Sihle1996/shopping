@@ -22,6 +22,24 @@ public class SubscriptionPlan
     [Column("max_drivers")]
     public int MaxDrivers { get; set; }
 
+    [Column("max_promotions")]
+    public int MaxPromotions { get; set; }
+
+    [Column("max_delivery_radius_km")]
+    public int MaxDeliveryRadiusKm { get; set; }
+
+    [Column("has_analytics")]
+    public bool HasAnalytics { get; set; }
+
+    [Column("has_custom_branding")]
+    public bool HasCustomBranding { get; set; }
+
+    [Column("has_inventory_export")]
+    public bool HasInventoryExport { get; set; }
+
+    [Column("commission_percent")]
+    public decimal CommissionPercent { get; set; }
+
     [Column("features")]
     public string? Features { get; set; }
 
