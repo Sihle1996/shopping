@@ -3,9 +3,14 @@
   <!-- Header -->
   <div class="bg-white border-b border-borderColor px-4 py-4 sticky top-14 z-10">
     <div class="max-w-lg mx-auto flex items-center justify-between">
-      <div>
-        <h1 class="font-heading text-lg font-bold text-textDark">Driver Dashboard</h1>
-        <p class="text-textMuted text-xs">{{ activeOrders.length }} active deliveries</p>
+      <div class="flex items-center gap-3">
+        <div>
+          <h1 class="font-heading text-lg font-bold text-textDark">Driver Dashboard</h1>
+          <p class="text-textMuted text-xs">{{ activeOrders.length }} active deliveries</p>
+        </div>
+        <a routerLink="/driver/profile" class="p-2 rounded-xl text-textMuted hover:bg-gray-100 transition-colors">
+          <i class="bi bi-person-circle text-xl"></i>
+        </a>
       </div>
       <!-- Availability Toggle -->
       <button (click)="toggleAvailability()"
@@ -20,6 +25,29 @@
   </div>
 
   <div class="max-w-lg mx-auto px-4 pt-4">
+
+    <!-- Profile incomplete banner -->
+    <a *ngIf="profileIncomplete" routerLink="/driver/profile"
+       class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-3 mb-4 text-sm text-amber-800">
+      <i class="bi bi-person-exclamation text-lg text-amber-500 flex-shrink-0"></i>
+      <span class="flex-1">Complete your profile to get more deliveries</span>
+      <i class="bi bi-chevron-right text-amber-400"></i>
+    </a>
+
+    <!-- Earnings widget -->
+    <div *ngIf="earnings" class="bg-white rounded-2xl border border-borderColor p-4 shadow-card mb-4 flex items-center gap-4">
+      <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+        <i class="bi bi-cash-stack text-green-600 text-lg"></i>
+      </div>
+      <div class="flex-1">
+        <p class="text-xs text-textMuted">Total Earnings</p>
+        <p class="text-lg font-bold text-textDark">R{{ earnings.totalEarnings | number:'1.2-2' }}</p>
+      </div>
+      <div class="text-right">
+        <p class="text-xs text-textMuted">Deliveries</p>
+        <p class="text-lg font-bold text-textDark">{{ earnings.deliveredCount }}</p>
+      </div>
+    </div>
 
     <!-- Loading -->
     <div *ngIf="isLoading" class="space-y-3">

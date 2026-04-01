@@ -14,6 +14,7 @@ import { AdminDiagnosticsComponent } from '../admin-diagnostics/admin-diagnostic
 import { InventoryManagementComponent } from '../inventory-management/inventory-management.component';
 import { DriverDashboardComponent } from '../../driver/driver-dashboard/driver-dashboard.component';
 import { DriverMapComponent } from '../../driver/driver-map/driver-map.component';
+import { DriverProfileComponent } from '../../driver/driver-profile/driver-profile.component';
 import { AdminLayoutComponent } from '../admin-layout/admin-layout.component';
 import { SharedModule } from '../../shared/shared.module';
 import { AdminRoutingModule } from '../admin-routing.module';
@@ -35,6 +36,7 @@ import { AdminUsersComponent } from '../admin-users/admin-users.component';
     InventoryManagementComponent,
     DriverDashboardComponent,
     DriverMapComponent,
+    DriverProfileComponent,
     AdminLayoutComponent,
     AdminPromotionsComponent,
     AdminSettingsComponent,

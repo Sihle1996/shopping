@@ -9,6 +9,7 @@ import { ThankYouComponent } from './components/thank-you/thank-you.component';
 import { HistoryordersComponent } from './pages/historyorders/historyorders.component';
 import { UserGuard } from './guards/user.guard';
 import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashboard.component';
+import { DriverProfileComponent } from './driver/driver-profile/driver-profile.component';
 import { DriverGuard } from './guards/driver.guard';
 import { SuperadminGuard } from './guards/superadmin.guard';
 import { RegisterRestaurantComponent } from './pages/register-restaurant/register-restaurant.component';
@@ -50,6 +51,7 @@ const routes: Routes = [
   { path: 'register-restaurant', component: RegisterRestaurantComponent },
 
   { path: 'driver/dashboard', component: DriverDashboardComponent, canActivate: [DriverGuard] },
+  { path: 'driver/profile', component: DriverProfileComponent, canActivate: [DriverGuard] },
 
   {
     path: 'superadmin',
