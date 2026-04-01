@@ -1,4 +1,4 @@
-CREATE TABLE user_address (
+CREATE TABLE IF NOT EXISTS user_address (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES _user(id) ON DELETE CASCADE,
     label VARCHAR(100) NOT NULL,
