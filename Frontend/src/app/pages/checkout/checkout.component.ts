@@ -16,6 +16,7 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { FormControl } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
+import { AddressService, UserAddress } from 'src/app/services/address.service';
 
 declare var paypal: any;
 
@@ -62,6 +63,9 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
 
   @ViewChild('addressInput') addressInputRef!: ElementRef;
 
+  savedAddresses: UserAddress[] = [];
+  showAddressPicker = false;
+
   constructor(
     private cartService: CartService,
     private authService: AuthService,
@@ -70,11 +74,31 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     private http: HttpClient,
     private router: Router,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private addressService: AddressService
   ) {}
 
   ngOnInit(): void {
     this.loadCartAndPromos();
+    this.addressService.list().subscribe({
+      next: addresses => {
+        this.savedAddresses = addresses;
+        const def = addresses.find(a => a.isDefault);
+        if (def) this.fillFromSaved(def);
+      }
+    });
+  }
+
+  fillFromSaved(a: UserAddress): void {
+    this.deliveryDetails.address = a.street;
+    this.deliveryDetails.city = a.city;
+    this.deliveryDetails.zip = a.postalCode ?? '';
+    this.addressControl.setValue(a.street, { emitEvent: false });
+    if (a.latitude && a.longitude) {
+      (this as any).selectedLat = a.latitude;
+      (this as any).selectedLon = a.longitude;
+    }
+    this.showAddressPicker = false;
   }
 
   ngAfterViewInit(): void {
