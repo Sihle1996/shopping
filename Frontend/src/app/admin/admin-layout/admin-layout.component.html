@@ -1,3 +1,24 @@
-<main class="min-h-screen bg-surface pb-24">
-  <router-outlet></router-outlet>
-</main>
+<div class="flex min-h-screen bg-surface">
+
+  <!-- Desktop sidebar (lg+) -->
+  <aside class="hidden lg:flex flex-col w-56 bg-white border-r border-borderColor fixed top-14 bottom-0 z-30 overflow-y-auto">
+    <nav class="p-3 space-y-1 flex-1">
+      <a *ngFor="let item of navItems"
+         [routerLink]="item.route"
+         routerLinkActive="bg-primary-50 text-primary"
+         [routerLinkActiveOptions]="{ exact: item.exact }"
+         class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-textMuted hover:bg-gray-50 hover:text-textDark transition-colors">
+        <i [class]="item.icon + ' text-base w-5 text-center'"></i>
+        <span class="font-medium">{{ item.label }}</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main content — offset on desktop for sidebar -->
+  <main class="flex-1 lg:ml-56 pb-24 lg:pb-6 min-h-screen">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Mobile bottom nav -->
+  <app-admin-footer></app-admin-footer>
+</div>
