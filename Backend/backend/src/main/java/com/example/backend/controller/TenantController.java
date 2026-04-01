@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +27,46 @@ public class TenantController {
     public ResponseEntity<List<Tenant>> getActiveTenants() {
         return ResponseEntity.ok(tenantRepository.findByActiveTrue());
     }
+
+    // Public - nearby active tenants within their delivery radius of the customer
+    @GetMapping("/api/tenants/nearby")
+    public ResponseEntity<List<NearbyTenantDto>> getNearbyTenants(
+            @RequestParam double lat,
+            @RequestParam double lon) {
+        List<NearbyTenantDto> nearby = tenantRepository.findByActiveTrue().stream()
+                .filter(t -> t.getLatitude() != null && t.getLongitude() != null)
+                .map(t -> {
+                    double dist = haversineKm(lat, lon, t.getLatitude(), t.getLongitude());
+                    return new NearbyTenantDto(
+                            t.getId(), t.getName(), t.getSlug(),
+                            t.getLogoUrl(), t.getPrimaryColor(),
+                            t.getAddress(), t.getPhone(),
+                            Math.round(dist * 10.0) / 10.0,
+                            t.getDeliveryRadiusKm()
+                    );
+                })
+                .filter(dto -> dto.distanceKm() <= dto.deliveryRadiusKm())
+                .sorted(Comparator.comparingDouble(NearbyTenantDto::distanceKm))
+                .toList();
+        return ResponseEntity.ok(nearby);
+    }
+
+    private double haversineKm(double lat1, double lon1, double lat2, double lon2) {
+        final double R = 6371.0;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    public record NearbyTenantDto(
+            UUID id, String name, String slug,
+            String logoUrl, String primaryColor,
+            String address, String phone,
+            double distanceKm, Integer deliveryRadiusKm
+    ) {}
 
     // Public - get tenant config by slug
     @GetMapping("/api/tenants/{slug}")

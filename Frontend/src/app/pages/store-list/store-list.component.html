@@ -36,10 +36,10 @@
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div class="text-center">
           <div class="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <i class="bi bi-search text-primary text-2xl"></i>
+            <i class="bi bi-geo-alt-fill text-primary text-2xl"></i>
           </div>
-          <h3 class="font-heading font-semibold text-textDark mb-1">1. Choose a Restaurant</h3>
-          <p class="text-textLight text-sm">Browse local restaurants and find your craving</p>
+          <h3 class="font-heading font-semibold text-textDark mb-1">1. Enter Your Address</h3>
+          <p class="text-textLight text-sm">Tell us where you are so we can show restaurants that deliver to you</p>
         </div>
         <div class="text-center">
           <div class="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -52,52 +52,145 @@
           <div class="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <i class="bi bi-truck text-primary text-2xl"></i>
           </div>
-          <h3 class="font-heading font-semibold text-textDark mb-1">3. Track & Enjoy</h3>
+          <h3 class="font-heading font-semibold text-textDark mb-1">3. Track &amp; Enjoy</h3>
           <p class="text-textLight text-sm">Track your delivery in real-time and enjoy</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Restaurants -->
-  <section id="restaurants" class="py-16 bg-white">
-    <div class="max-w-5xl mx-auto px-4">
-      <h2 class="font-heading text-2xl font-bold text-textDark text-center mb-2">Restaurants Near You</h2>
-      <p class="text-textLight text-sm text-center mb-8">Pick your favourite and start ordering</p>
+  <!-- ── Address Entry Step ──────────────────────────────────────────────── -->
+  <section *ngIf="step === 'address'" id="restaurants" class="py-16 bg-white">
+    <div class="max-w-2xl mx-auto px-4 text-center">
+      <div class="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+        <i class="bi bi-geo-alt-fill text-primary text-3xl"></i>
+      </div>
+      <h2 class="font-heading text-2xl font-bold text-textDark mb-2">Where are you ordering from?</h2>
+      <p class="text-textLight text-sm mb-8">Enter your delivery address to see restaurants that can reach you.</p>
 
-      <!-- Loading -->
+      <div class="max-w-lg mx-auto">
+
+        <!-- Input + button -->
+        <div class="relative flex gap-2">
+          <div class="relative flex-1">
+            <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none"></i>
+            <input
+              type="text"
+              [(ngModel)]="addressInput"
+              (ngModelChange)="onAddressInput()"
+              placeholder="e.g. 12 Main Street, Johannesburg"
+              (keyup.enter)="confirmAddress()"
+              class="w-full pl-9 pr-4 py-3 rounded-xl border-2 border-borderColor focus:border-primary outline-none text-sm text-textDark transition-colors"
+            />
+            <!-- Autocomplete dropdown -->
+            <div *ngIf="suggestions.length > 0"
+                 class="absolute top-full left-0 right-0 bg-white border border-borderColor rounded-xl shadow-lg mt-1 z-20 overflow-hidden">
+              <button
+                *ngFor="let s of suggestions"
+                (click)="selectSuggestion(s)"
+                class="w-full text-left px-4 py-3 text-sm text-textDark hover:bg-primary-50 transition-colors border-b border-borderColor last:border-0 flex items-center gap-2">
+                <i class="bi bi-geo-alt text-textMuted flex-shrink-0"></i>
+                <span class="truncate">{{ s.label }}</span>
+              </button>
+            </div>
+          </div>
+          <button
+            (click)="confirmAddress()"
+            [disabled]="!addressInput.trim() || isLoading"
+            class="px-5 py-3 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-primary-600 transition-colors disabled:opacity-50 whitespace-nowrap">
+            <span *ngIf="!isLoading">Find Stores</span>
+            <span *ngIf="isLoading"><i class="bi bi-arrow-repeat animate-spin mr-1"></i>Searching…</span>
+          </button>
+        </div>
+
+        <!-- Divider -->
+        <div class="flex items-center gap-3 mt-4 mb-4">
+          <div class="h-px flex-1 bg-borderColor"></div>
+          <span class="text-textMuted text-xs">or</span>
+          <div class="h-px flex-1 bg-borderColor"></div>
+        </div>
+
+        <!-- GPS button -->
+        <button
+          (click)="useMyLocation()"
+          [disabled]="gpsLoading"
+          class="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-borderColor text-textDark text-sm font-medium hover:border-primary hover:text-primary transition-colors disabled:opacity-50">
+          <i class="bi bi-crosshair2" [class.animate-pulse]="gpsLoading"></i>
+          {{ gpsLoading ? 'Getting your location…' : 'Use My Current Location' }}
+        </button>
+
+        <!-- Error -->
+        <p *ngIf="addressError" class="mt-4 text-red-500 text-sm flex items-center justify-center gap-1.5">
+          <i class="bi bi-exclamation-circle"></i>{{ addressError }}
+        </p>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Nearby Stores Step ─────────────────────────────────────────────── -->
+  <section *ngIf="step === 'stores'" id="restaurants" class="py-16 bg-white">
+    <div class="max-w-5xl mx-auto px-4">
+
+      <!-- Header row -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-3">
+        <div>
+          <h2 class="font-heading text-2xl font-bold text-textDark mb-1">Restaurants Near You</h2>
+          <p class="text-textMuted text-sm flex items-center gap-1.5">
+            <i class="bi bi-geo-alt-fill text-primary"></i>
+            <span class="truncate max-w-sm">{{ selectedAddress }}</span>
+          </p>
+        </div>
+        <button
+          (click)="changeLocation()"
+          class="flex items-center gap-1.5 text-sm text-primary hover:text-primary-600 font-medium whitespace-nowrap transition-colors">
+          <i class="bi bi-pencil-square"></i> Change location
+        </button>
+      </div>
+
+      <!-- Loading skeletons -->
       <div *ngIf="isLoading" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div *ngFor="let _ of [1,2,3,4]" class="bg-surface rounded-2xl p-6 animate-pulse">
-          <div class="h-12 w-12 bg-gray-200 rounded-xl mb-4"></div>
-          <div class="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-          <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 bg-gray-200 rounded-xl flex-shrink-0"></div>
+            <div class="flex-1 space-y-2">
+              <div class="h-4 bg-gray-200 rounded w-2/3"></div>
+              <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div class="h-3 bg-gray-200 rounded w-1/3"></div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Empty -->
-      <div *ngIf="!isLoading && stores.length === 0" class="text-center py-12">
+      <!-- Error -->
+      <div *ngIf="storesError && !isLoading" class="text-center py-8">
+        <p class="text-red-500 text-sm mb-3"><i class="bi bi-exclamation-circle mr-1"></i>{{ storesError }}</p>
+        <button (click)="changeLocation()" class="text-sm text-primary hover:underline font-medium">Try again</button>
+      </div>
+
+      <!-- Empty state -->
+      <div *ngIf="!isLoading && !storesError && stores.length === 0" class="text-center py-12">
         <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <i class="bi bi-shop text-textMuted text-2xl"></i>
         </div>
-        <h3 class="font-heading font-semibold text-textDark mb-1">No restaurants yet</h3>
-        <p class="text-textLight text-sm mb-4">Be the first to register your restaurant</p>
-        <a routerLink="/register-restaurant"
-           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-primary-600 transition-colors">
-          Register Now
-        </a>
+        <h3 class="font-heading font-semibold text-textDark mb-1">No restaurants nearby</h3>
+        <p class="text-textLight text-sm mb-4">There are no restaurants delivering to your area yet.</p>
+        <button (click)="changeLocation()" class="text-sm text-primary hover:underline font-medium">
+          Try a different address
+        </button>
       </div>
 
-      <!-- Store Grid -->
+      <!-- Store grid -->
       <div *ngIf="!isLoading && stores.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div *ngFor="let store of stores"
              (click)="goToStore(store.slug)"
-             class="bg-surface rounded-2xl p-6 cursor-pointer border border-borderColor
+             class="bg-surface rounded-2xl p-5 cursor-pointer border border-borderColor
                     hover:border-primary hover:shadow-card-hover transition-all duration-200 group">
           <div class="flex items-center gap-4">
             <img *ngIf="store.logoUrl" [src]="getLogoUrl(store)"
-                 class="w-14 h-14 rounded-xl object-cover" />
+                 class="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
             <div *ngIf="!store.logoUrl"
-                 class="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold"
+                 class="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0"
                  [style.backgroundColor]="store.primaryColor || '#FF6F00'">
               {{ store.name.charAt(0) }}
             </div>
@@ -108,11 +201,15 @@
               <p *ngIf="store.address" class="text-textMuted text-xs mt-0.5 truncate">
                 <i class="bi bi-geo-alt mr-1"></i>{{ store.address }}
               </p>
+              <span class="inline-flex items-center gap-1 mt-1.5 text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+                <i class="bi bi-bicycle"></i> {{ store.distanceKm }} km away
+              </span>
             </div>
-            <i class="bi bi-arrow-right text-textMuted group-hover:text-primary transition-colors"></i>
+            <i class="bi bi-arrow-right text-textMuted group-hover:text-primary transition-colors flex-shrink-0"></i>
           </div>
         </div>
       </div>
+
     </div>
   </section>
 
@@ -195,4 +292,5 @@
       </div>
     </div>
   </footer>
+
 </div>
