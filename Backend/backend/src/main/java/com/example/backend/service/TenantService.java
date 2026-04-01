@@ -5,6 +5,7 @@ import com.example.backend.repository.TenantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,6 +21,7 @@ public class TenantService {
                 .name(name)
                 .slug(slug)
                 .email(email)
+                .trialStartedAt(LocalDateTime.now())
                 .build();
         return tenantRepository.save(tenant);
     }

@@ -39,6 +39,15 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private DriverStatus driverStatus;
 
+    @Builder.Default
+    private boolean active = true;
+
+    private String fullName;
+    private String phone;
+    private String vehicleType;
+    private String vehiclePlate;
+    private String profilePhotoUrl;
+
     private Double latitude;
     private Double longitude;
     private Double speed;
@@ -85,6 +94,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return active;
     }
 }
