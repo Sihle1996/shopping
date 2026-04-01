@@ -125,6 +125,18 @@
               </button>
             </div>
           </div>
+          <!-- GPS button -->
+          <button
+            type="button"
+            (click)="useMyLocation()"
+            [disabled]="gpsLoading"
+            class="mt-2 flex items-center gap-1.5 text-xs text-primary hover:text-primary-600 font-medium transition-colors disabled:opacity-50">
+            <i class="bi bi-crosshair2" [class.animate-pulse]="gpsLoading"></i>
+            {{ gpsLoading ? 'Getting location…' : 'Use my current location' }}
+          </button>
+          <p *ngIf="gpsError" class="text-xs text-red-500 mt-1 flex items-center gap-1">
+            <i class="bi bi-exclamation-circle"></i>{{ gpsError }}
+          </p>
           <!-- Geocoded confirmation -->
           <p *ngIf="geocodedLat !== null" class="text-xs text-green-600 mt-1 flex items-center gap-1">
             <i class="bi bi-check-circle-fill"></i> Location pinned — customers nearby will find you

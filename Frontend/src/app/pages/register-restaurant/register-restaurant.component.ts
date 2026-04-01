@@ -26,6 +26,8 @@ export class RegisterRestaurantComponent implements OnInit, OnDestroy {
   addressSuggestions: AddressSuggestion[] = [];
   geocodedLat: number | null = null;
   geocodedLon: number | null = null;
+  gpsLoading = false;
+  gpsError = '';
 
   private addressSearch$ = new Subject<string>();
   private destroy$ = new Subject<void>();
@@ -77,6 +79,38 @@ export class RegisterRestaurantComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  useMyLocation(): void {
+    if (!navigator.geolocation) {
+      this.gpsError = 'Geolocation is not supported by your browser.';
+      return;
+    }
+    this.gpsLoading = true;
+    this.gpsError = '';
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        this.geocodedLat = pos.coords.latitude;
+        this.geocodedLon = pos.coords.longitude;
+        this.gpsLoading = false;
+        this.geocoding.reverseGeocode(this.geocodedLat, this.geocodedLon).subscribe({
+          next: (res: any) => {
+            const label = res.display_name || 'Current location';
+            this.form.get('address')?.setValue(label, { emitEvent: false });
+            this.addressSuggestions = [];
+          },
+          error: () => {
+            this.form.get('address')?.setValue('Current location', { emitEvent: false });
+            this.addressSuggestions = [];
+          }
+        });
+      },
+      () => {
+        this.gpsLoading = false;
+        this.gpsError = 'Could not get your location. Please type your address.';
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
   }
 
   selectAddressSuggestion(s: AddressSuggestion): void {
