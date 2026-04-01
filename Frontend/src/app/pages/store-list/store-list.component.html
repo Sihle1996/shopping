@@ -1,16 +1,5 @@
 <div class="min-h-screen bg-surface">
 
-  <!-- Nav -->
-  <nav class="bg-white border-b border-borderColor px-4 py-3 flex items-center justify-between">
-    <a routerLink="/" class="flex items-center gap-2">
-      <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-        <i class="bi bi-fire text-white text-sm"></i>
-      </div>
-      <span class="font-heading font-bold text-textDark">FastFood</span>
-    </a>
-    <a routerLink="/login" class="text-sm text-textLight hover:text-primary transition-colors">Restaurant Login</a>
-  </nav>
-
   <!-- ── Address Entry Step ──────────────────────────────────────────────── -->
   <section *ngIf="step === 'address'" class="py-16 px-4">
     <div class="max-w-2xl mx-auto text-center">
