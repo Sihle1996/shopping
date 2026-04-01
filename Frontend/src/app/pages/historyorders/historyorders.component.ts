@@ -2,8 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
+import { CartService } from 'src/app/services/cart.service';
+import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 import { BadgeVariant } from 'src/app/shared/components/badge/badge.component';
+
+interface OrderItemDTO {
+  menuItemId: string;
+  name: string;
+  quantity: number;
+  size?: string;
+  price: number;
+}
 
 interface OrderDTO {
   id: string;
@@ -13,6 +23,7 @@ interface OrderDTO {
   promoCode?: string;
   orderDate: string;
   deliveryAddress: string;
+  items?: OrderItemDTO[];
 }
 
 @Component({
@@ -30,9 +41,13 @@ export class HistoryordersComponent implements OnInit {
   selectedStatus = 'All';
   allStatuses: string[] = ['All', 'Pending', 'Preparing', 'Out for Delivery', 'Delivered'];
 
+  reorderingId: string | null = null;
+
   constructor(
     private http: HttpClient,
     private authService: AuthService,
+    private cartService: CartService,
+    private toastr: ToastrService,
     private router: Router
   ) {}
 
@@ -135,5 +150,18 @@ export class HistoryordersComponent implements OnInit {
 
   trackById(_: number, order: OrderDTO): string {
     return order.id;
+  }
+
+  reorder(order: OrderDTO): void {
+    if (!order.items?.length) { this.toastr.warning('No items to reorder'); return; }
+    this.reorderingId = order.id;
+    const adds = order.items.map(item =>
+      this.cartService.addToCart(item.menuItemId, item.quantity, item.size || 'Regular')
+    );
+    let done = 0;
+    adds.forEach(obs => obs.subscribe({
+      next: () => { done++; if (done === adds.length) { this.reorderingId = null; this.toastr.success('Items added to cart'); } },
+      error: () => { this.reorderingId = null; this.toastr.error('Could not reorder some items'); }
+    }));
   }
 }

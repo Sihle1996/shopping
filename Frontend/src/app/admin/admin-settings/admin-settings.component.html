@@ -138,6 +138,26 @@
                           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
             <p class="text-textMuted text-xs mt-1">Charged to customers per order</p>
           </div>
+          <div>
+            <label class="block text-xs font-medium text-textDark mb-1">Minimum Order (ZAR)</label>
+            <input type="number" [(ngModel)]="settings.minimumOrderAmount" min="0" step="10"
+                   class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+            <p class="text-textMuted text-xs mt-1">Leave blank for no minimum</p>
+          </div>
+        </div>
+        <!-- isOpen toggle -->
+        <div class="mt-4 flex items-center justify-between p-4 rounded-xl border border-borderColor bg-gray-50">
+          <div>
+            <p class="text-sm font-semibold text-textDark">Store Open</p>
+            <p class="text-xs text-textMuted">Customers can only order when your store is open</p>
+          </div>
+          <button type="button" (click)="settings.isOpen = !settings.isOpen"
+                  class="relative w-12 h-6 rounded-full transition-colors focus:outline-none"
+                  [ngClass]="settings.isOpen ? 'bg-green-500' : 'bg-gray-300'">
+            <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+                  [ngClass]="settings.isOpen ? 'translate-x-6' : 'translate-x-0'"></span>
+          </button>
         </div>
       </div>
 

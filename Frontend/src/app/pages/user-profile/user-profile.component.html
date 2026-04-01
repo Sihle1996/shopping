@@ -1,0 +1,46 @@
+<div class="p-4 pb-24 max-w-lg mx-auto">
+
+  <div class="mb-6">
+    <h2 class="text-xl font-bold text-textDark">My Profile</h2>
+    <p class="text-sm text-textMuted mt-0.5">Update your name and contact number</p>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="space-y-3">
+    <div *ngFor="let i of [1,2,3]" class="h-14 bg-gray-100 rounded-xl animate-pulse"></div>
+  </div>
+
+  <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="save()" class="space-y-4">
+
+    <!-- Email (read-only) -->
+    <div class="bg-white rounded-2xl border border-borderColor p-4 shadow-card">
+      <label class="text-xs font-medium text-textMuted block mb-1">Email</label>
+      <p class="text-sm font-medium text-textDark">{{ email }}</p>
+      <p class="text-xs text-textMuted mt-0.5">{{ role }}</p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-borderColor p-4 shadow-card space-y-4">
+      <div>
+        <label class="text-xs font-medium text-textMuted block mb-1">Full Name</label>
+        <input formControlName="fullName" type="text" placeholder="Your name"
+               class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
+      </div>
+      <div>
+        <label class="text-xs font-medium text-textMuted block mb-1">Phone</label>
+        <input formControlName="phone" type="tel" placeholder="+27..."
+               class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <button type="submit" [disabled]="saving"
+              class="flex-1 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors disabled:opacity-50">
+        {{ saving ? 'Saving...' : 'Save Changes' }}
+      </button>
+      <a routerLink="/profile/addresses"
+         class="flex items-center gap-1.5 px-4 py-3 rounded-xl border border-borderColor text-sm text-textDark hover:bg-gray-50 transition-colors">
+        <i class="bi bi-geo-alt"></i> Addresses
+      </a>
+    </div>
+  </form>
+</div>

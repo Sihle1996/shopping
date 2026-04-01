@@ -13,6 +13,13 @@
   (action)="router.navigate(['/'])">
 </app-empty-state>
 
+<!-- Store closed banner -->
+<div *ngIf="!notFound && tenant?.isOpen === false"
+     class="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-center gap-2 text-sm text-amber-800">
+  <i class="bi bi-clock text-amber-500"></i>
+  <span>This store is currently <strong>closed</strong>. You can still browse the menu.</span>
+</div>
+
 <!-- Child route outlet — always present so Angular can activate child routes.
      Each child component handles its own loading state. -->
 <router-outlet *ngIf="!notFound"></router-outlet>

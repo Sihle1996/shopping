@@ -57,6 +57,8 @@ public class TenantService {
         if (updates.getStripeAccountId() != null) tenant.setStripeAccountId(updates.getStripeAccountId());
         if (updates.getSubscriptionStatus() != null) tenant.setSubscriptionStatus(updates.getSubscriptionStatus());
         if (updates.getSubscriptionPlan() != null) tenant.setSubscriptionPlan(updates.getSubscriptionPlan());
+        if (updates.getMinimumOrderAmount() != null) tenant.setMinimumOrderAmount(updates.getMinimumOrderAmount());
+        if (updates.getIsOpen() != null) tenant.setIsOpen(updates.getIsOpen());
 
         return tenantRepository.save(tenant);
     }
