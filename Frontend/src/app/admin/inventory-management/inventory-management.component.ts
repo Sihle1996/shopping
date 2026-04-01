@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { AdminService } from 'src/app/services/admin.service';
+import { SubscriptionService } from 'src/app/services/subscription.service';
 
 @Component({
   selector: 'app-inventory-management',
@@ -13,10 +15,21 @@ export class InventoryManagementComponent implements OnInit {
   lowStockOnly = false;
   showAudit = false;
 
-  constructor(private adminService: AdminService) {}
+  hasInventoryExport = false;
+  subscriptionPlan = '';
+
+  constructor(
+    private adminService: AdminService,
+    private subscriptionService: SubscriptionService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.fetchInventory();
+    this.subscriptionService.load().subscribe(info => {
+      this.hasInventoryExport = info.features.hasInventoryExport;
+      this.subscriptionPlan = info.plan;
+    });
   }
 
   fetchInventory(): void {
@@ -79,6 +92,10 @@ export class InventoryManagementComponent implements OnInit {
   }
 
   exportCsv(): void {
+    if (!this.hasInventoryExport) {
+      this.router.navigate(['/admin/subscription']);
+      return;
+    }
     this.adminService.exportInventoryCsv().subscribe({
       next: (blob: Blob) => {
         const url = window.URL.createObjectURL(blob);
@@ -90,6 +107,14 @@ export class InventoryManagementComponent implements OnInit {
       },
       error: () => {}
     });
+  }
+
+  toggleAuditGated(): void {
+    if (!this.hasInventoryExport) {
+      this.router.navigate(['/admin/subscription']);
+      return;
+    }
+    this.toggleAudit();
   }
 
   toggleAudit(): void {

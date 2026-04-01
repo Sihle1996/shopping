@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angula
 import { Chart, registerables } from 'chart.js';
 import { AnalyticsService } from './analytics.service';
 import { AdminService } from 'src/app/services/admin.service';
+import { SubscriptionService } from 'src/app/services/subscription.service';
 
 Chart.register(...registerables);
 
@@ -30,7 +31,14 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
   totalRevenue = 0;
   pendingOrders = 0;
 
-  constructor(private analyticsService: AnalyticsService, private adminService: AdminService) {}
+  hasAnalytics = false;
+  subscriptionPlan = '';
+
+  constructor(
+    private analyticsService: AnalyticsService,
+    private adminService: AdminService,
+    private subscriptionService: SubscriptionService
+  ) {}
 
   ngOnInit(): void {
     const now = new Date();
@@ -38,19 +46,24 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
     this.startDate = start.toISOString().substring(0, 10);
     this.endDate = now.toISOString().substring(0, 10);
     this.loadStats();
+
+    this.subscriptionService.load().subscribe(info => {
+      this.hasAnalytics = info.features.hasAnalytics;
+      this.subscriptionPlan = info.plan;
+    });
   }
 
   ngAfterViewInit(): void {
-    // Defer to next microtask to ensure canvases are attached to DOM
     Promise.resolve().then(() => {
       this.loadAnalytics();
     });
   }
 
   loadAnalytics(): void {
-    // Use date-only strings expected by the backend (avoid timezone shifting)
-    const start = this.startDate; // format yyyy-MM-dd
-    const end = this.endDate;     // format yyyy-MM-dd
+    if (!this.hasAnalytics) return;
+
+    const start = this.startDate;
+    const end = this.endDate;
 
     this.salesError = false;
     this.analyticsService.getSalesTrends(start, end).subscribe({
@@ -122,4 +135,3 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
     });
   }
 }
-
