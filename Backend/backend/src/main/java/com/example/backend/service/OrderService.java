@@ -128,10 +128,19 @@ public class OrderService {
         order.setPaymentId(request.getPaymentId());
         order.setPayerId(request.getPayerId());
 
-        // Set tenant from context
+        // Set tenant from context and compute platform commission fee
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null) {
-            tenantRepository.findById(tenantId).ifPresent(order::setTenant);
+            tenantRepository.findById(tenantId).ifPresent(tenant -> {
+                order.setTenant(tenant);
+                if (tenant.getPlatformCommissionPercent() != null) {
+                    double fee = BigDecimal.valueOf(totalAmount)
+                            .multiply(tenant.getPlatformCommissionPercent())
+                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
+                            .doubleValue();
+                    order.setPlatformFee(fee);
+                }
+            });
         }
 
         for (OrderItem item : orderItems) {

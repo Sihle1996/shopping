@@ -20,6 +20,7 @@ import { AdminRoutingModule } from '../admin-routing.module';
 import { AdminPromotionsComponent } from '../admin-promotions/admin-promotions.component';
 import { AdminSettingsComponent } from '../admin-settings/admin-settings.component';
 import { AdminSubscriptionComponent } from '../admin-subscription/admin-subscription.component';
+import { AdminUsersComponent } from '../admin-users/admin-users.component';
 
 @NgModule({
   declarations: [
@@ -38,9 +39,9 @@ import { AdminSubscriptionComponent } from '../admin-subscription/admin-subscrip
     AdminPromotionsComponent,
     AdminSettingsComponent,
     AdminSubscriptionComponent,
+    AdminUsersComponent,
   ],
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, SharedModule, AdminRoutingModule],
   exports: [AdminDashboardComponent, AdminFooterComponent],
 })
 export class AdminDashboardModule {}
-
