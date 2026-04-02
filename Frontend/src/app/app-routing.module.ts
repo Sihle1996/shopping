@@ -38,14 +38,14 @@ const routes: Routes = [
       { path: 'cart', component: CartComponent, canActivate: [UserGuard] },
       { path: 'checkout', component: CheckoutComponent },
       { path: 'orders', component: HistoryordersComponent, canActivate: [UserGuard] },
-      { path: 'thank-you', component: ThankYouComponent, canActivate: [UserGuard] },
+      { path: 'thank-you', component: ThankYouComponent },
     ]
   },
 
   // Legacy direct routes (for admin/driver who don't need store context)
   { path: 'product/:id', component: ProductComponent },
   { path: 'orders', component: HistoryordersComponent, canActivate: [UserGuard] },
-  { path: 'thank-you', component: ThankYouComponent, canActivate: [UserGuard] },
+  { path: 'thank-you', component: ThankYouComponent },
 
   { path: 'login', component: LoginComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
