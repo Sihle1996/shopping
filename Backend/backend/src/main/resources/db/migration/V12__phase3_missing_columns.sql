@@ -1,9 +1,8 @@
--- V12: Add the three Phase 3 columns confirmed missing from the live schema.
--- NOTE: Do NOT use ADD COLUMN IF NOT EXISTS here.
--- Flyway 10.21.0 on PostgreSQL 18.3 treats the 42701 "duplicate column" NOTICE
--- that IF NOT EXISTS emits as an error and rolls back the whole migration.
--- Only the columns that are absent from the DB are listed below.
-
-ALTER TABLE tenants     ADD COLUMN estimated_delivery_minutes INT  NOT NULL DEFAULT 30;
-ALTER TABLE order_items ADD COLUMN special_instructions       TEXT;
-ALTER TABLE cart_items  ADD COLUMN selected_choices_json      TEXT;
+-- V12: Add estimated_delivery_minutes to tenants.
+-- This is the only Phase 3 column not yet in the live schema:
+--   - opening_hours, cuisine_type         already added by C# startup SQL
+--   - order_notes, guest_email, guest_phone already added by C# startup SQL
+--   - special_instructions, selected_choices_json added by Hibernate ddl-auto=update
+--   - estimated_delivery_minutes was rejected by Hibernate (NOT NULL, no DEFAULT)
+--     and never added by C# — so it is the sole column missing.
+ALTER TABLE tenants ADD COLUMN estimated_delivery_minutes INT NOT NULL DEFAULT 30;
