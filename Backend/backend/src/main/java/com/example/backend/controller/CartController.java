@@ -26,8 +26,10 @@ public class CartController {
         UUID userId = principal.getId(); // always use authenticated user's ID
         UUID menuItemId = UUID.fromString(payload.get("menuItemId").toString());
         Integer quantity = Integer.valueOf(payload.get("quantity").toString());
+        String selectedChoicesJson = payload.containsKey("selectedChoicesJson")
+                ? (String) payload.get("selectedChoicesJson") : null;
         try {
-            return ResponseEntity.ok(cartService.addItemToCart(userId, menuItemId, quantity));
+            return ResponseEntity.ok(cartService.addItemToCart(userId, menuItemId, quantity, selectedChoicesJson));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

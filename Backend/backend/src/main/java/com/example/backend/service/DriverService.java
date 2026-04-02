@@ -41,13 +41,17 @@ public class DriverService {
         orderRepository.save(order);
 
         var dto = orderService.convertToOrderDTO(order);
-        // Push real-time update to customer
-        messagingTemplate.convertAndSend("/topic/orders/" + order.getUser().getId(), dto);
+        // Push real-time update to customer (only if authenticated user)
+        if (order.getUser() != null) {
+            messagingTemplate.convertAndSend("/topic/orders/" + order.getUser().getId(), dto);
+        }
 
-        // Send delivery email to customer
-        String customerEmail = order.getUser().getEmail();
-        String storeName = order.getTenant() != null ? order.getTenant().getName() : "the store";
-        emailService.sendOrderDelivered(customerEmail, dto, storeName);
+        // Send delivery email to customer or guest
+        String customerEmail = order.getUser() != null ? order.getUser().getEmail() : order.getGuestEmail();
+        if (customerEmail != null && !customerEmail.isBlank()) {
+            String storeName = order.getTenant() != null ? order.getTenant().getName() : "the store";
+            emailService.sendOrderDelivered(customerEmail, dto, storeName);
+        }
     }
 
     public void updateAvailability(User driver, DriverStatus status) {

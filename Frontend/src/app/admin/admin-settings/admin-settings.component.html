@@ -159,6 +159,50 @@
                   [ngClass]="settings.isOpen ? 'translate-x-6' : 'translate-x-0'"></span>
           </button>
         </div>
+
+        <!-- ETA + Cuisine -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div>
+            <label class="block text-xs font-medium text-textDark mb-1">
+              Estimated Delivery Time (minutes)
+            </label>
+            <input type="number" [(ngModel)]="settings.estimatedDeliveryMinutes" min="5" max="120" step="5"
+                   name="estimatedDeliveryMinutes"
+                   class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+            <p class="text-[10px] text-textMuted mt-1">Shown to customers as "~30 min" on the store card</p>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-textDark mb-1">Cuisine Type</label>
+            <select [(ngModel)]="settings.cuisineType" name="cuisineType"
+                    class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent">
+              <option value="">Select cuisine type</option>
+              <option value="Burgers">Burgers</option>
+              <option value="Pizza">Pizza</option>
+              <option value="Chicken">Chicken</option>
+              <option value="Sushi">Sushi</option>
+              <option value="Wraps">Wraps</option>
+              <option value="Steaks">Steaks</option>
+              <option value="Seafood">Seafood</option>
+              <option value="Healthy">Healthy</option>
+              <option value="Desserts">Desserts</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Opening Hours -->
+        <div class="mt-4">
+          <label class="block text-xs font-medium text-textDark mb-1">
+            Opening Hours <span class="text-textMuted font-normal">(optional — e.g. Mon–Fri 09:00–22:00, Sat 10:00–20:00)</span>
+          </label>
+          <textarea [(ngModel)]="settings.openingHours" name="openingHours" rows="2"
+                    class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent resize-none"
+                    placeholder="e.g. Mon–Fri 09:00–22:00, Sat 10:00–20:00, Sun Closed"></textarea>
+          <p class="text-[10px] text-textMuted mt-1">Displayed on your store page so customers know when you're available</p>
+        </div>
       </div>
 
       <!-- Categories Card -->

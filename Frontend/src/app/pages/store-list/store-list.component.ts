@@ -16,6 +16,9 @@ interface StoreSummary {
   phone?: string;
   distanceKm?: number;
   deliveryRadiusKm?: number;
+  estimatedDeliveryMinutes?: number;
+  cuisineType?: string;
+  isOpen?: boolean;
 }
 
 interface AddressSuggestion {

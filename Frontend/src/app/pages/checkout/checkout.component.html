@@ -31,7 +31,28 @@
         </button>
       </div>
 
+      <!-- Guest info banner -->
+      <div *ngIf="!isLoggedIn" class="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
+        <i class="bi bi-person-fill-exclamation mt-0.5 flex-shrink-0"></i>
+        <span>Checking out as guest. <a routerLink="/login" class="font-semibold underline">Sign in</a> to save your address and view order history.</span>
+      </div>
+
       <form (ngSubmit)="onSubmit()" class="space-y-4">
+
+        <!-- Guest email (shown when not logged in) -->
+        <div *ngIf="!isLoggedIn">
+          <label class="block text-xs font-medium text-textDark mb-1.5">Email Address <span class="text-danger">*</span></label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <i class="bi bi-envelope text-textMuted text-sm"></i>
+            </div>
+            <input type="email" [(ngModel)]="guestEmail" name="guestEmail"
+                   class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                          placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
+                          focus:border-transparent transition-shadow"
+                   placeholder="your@email.com" />
+          </div>
+        </div>
 
         <!-- Full Name -->
         <div>
@@ -116,6 +137,23 @@
                           placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
                           focus:border-transparent transition-shadow"
                    placeholder="071 234 5678" />
+          </div>
+        </div>
+
+        <!-- Delivery Notes -->
+        <div>
+          <label class="block text-xs font-medium text-textDark mb-1.5">
+            Delivery Notes <span class="text-textMuted font-normal">(optional)</span>
+          </label>
+          <div class="relative">
+            <div class="absolute top-3 left-3.5 pointer-events-none">
+              <i class="bi bi-chat-left-text text-textMuted text-sm"></i>
+            </div>
+            <textarea [(ngModel)]="orderNotes" name="orderNotes" rows="2"
+                      class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                             placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
+                             focus:border-transparent transition-shadow resize-none"
+                      placeholder="Gate code, access instructions, ring the bell..."></textarea>
           </div>
         </div>
 

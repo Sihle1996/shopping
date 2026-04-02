@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AdminService } from 'src/app/services/admin.service';
+import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 
@@ -31,7 +33,32 @@ export class AdminMenuComponent implements OnInit {
     isAvailable: true
   };
 
-  constructor(private adminService: AdminService, private toastr: ToastrService) {}
+  // ── Option groups state ─────────────────────────────────────────────────
+  expandedOptionsItemId: string | null = null;
+  optionGroups: { [itemId: string]: any[] } = {};
+  newGroupName: { [itemId: string]: string } = {};
+  newGroupType: { [itemId: string]: string } = {};
+  newGroupRequired: { [itemId: string]: boolean } = {};
+  newChoiceLabel: { [groupId: string]: string } = {};
+  newChoicePrice: { [groupId: string]: number } = {};
+  optionsLoading: { [itemId: string]: boolean } = {};
+
+  private get authHeaders(): HttpHeaders {
+    const tenantId = localStorage.getItem('tenantId');
+    const headers: any = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.authService.getToken()}`
+    };
+    if (tenantId) headers['X-Tenant-Id'] = tenantId;
+    return new HttpHeaders(headers);
+  }
+
+  constructor(
+    private adminService: AdminService,
+    private toastr: ToastrService,
+    private http: HttpClient,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
     this.adminService.menuItems$.subscribe((data: any[]) => {
@@ -137,14 +164,84 @@ export class AdminMenuComponent implements OnInit {
     if (file) {
       const formData = new FormData();
       formData.append('file', file);
-  
       this.adminService.uploadImage(formData).subscribe({
-        next: (url: string) => {
-          this.formData.image = url;
-        },
+        next: (url: string) => { this.formData.image = url; },
         error: () => {}
       });
     }
   }
-  
+
+  // ── Option groups ──────────────────────────────────────────────────────────
+
+  toggleOptions(item: any): void {
+    if (this.expandedOptionsItemId === item.id) {
+      this.expandedOptionsItemId = null;
+      return;
+    }
+    this.expandedOptionsItemId = item.id;
+    this.loadOptions(item.id);
+  }
+
+  loadOptions(itemId: string): void {
+    this.optionsLoading[itemId] = true;
+    this.http.get<any[]>(
+      `${environment.apiUrl}/api/admin/menu-items/${itemId}/options`,
+      { headers: this.authHeaders }
+    ).subscribe({
+      next: groups => { this.optionGroups[itemId] = groups; this.optionsLoading[itemId] = false; },
+      error: () => { this.optionsLoading[itemId] = false; }
+    });
+  }
+
+  addGroup(itemId: string): void {
+    const name = (this.newGroupName[itemId] || '').trim();
+    if (!name) return;
+    const body = {
+      name,
+      type: this.newGroupType[itemId] || 'RADIO',
+      required: this.newGroupRequired[itemId] || false
+    };
+    this.http.post(
+      `${environment.apiUrl}/api/admin/menu-items/${itemId}/options`,
+      body,
+      { headers: this.authHeaders }
+    ).subscribe({
+      next: () => { this.newGroupName[itemId] = ''; this.loadOptions(itemId); },
+      error: () => this.toastr.error('Failed to add option group')
+    });
+  }
+
+  deleteGroup(itemId: string, groupId: string): void {
+    this.http.delete(
+      `${environment.apiUrl}/api/admin/menu-items/${itemId}/options/${groupId}`,
+      { headers: this.authHeaders }
+    ).subscribe({
+      next: () => this.loadOptions(itemId),
+      error: () => this.toastr.error('Failed to delete group')
+    });
+  }
+
+  addChoice(itemId: string, groupId: string): void {
+    const label = (this.newChoiceLabel[groupId] || '').trim();
+    if (!label) return;
+    const body = { label, priceModifier: this.newChoicePrice[groupId] || 0 };
+    this.http.post(
+      `${environment.apiUrl}/api/admin/menu-items/${itemId}/options/${groupId}/choices`,
+      body,
+      { headers: this.authHeaders }
+    ).subscribe({
+      next: () => { this.newChoiceLabel[groupId] = ''; this.newChoicePrice[groupId] = 0; this.loadOptions(itemId); },
+      error: () => this.toastr.error('Failed to add choice')
+    });
+  }
+
+  deleteChoice(itemId: string, groupId: string, choiceId: string): void {
+    this.http.delete(
+      `${environment.apiUrl}/api/admin/menu-items/${itemId}/options/${groupId}/choices/${choiceId}`,
+      { headers: this.authHeaders }
+    ).subscribe({
+      next: () => this.loadOptions(itemId),
+      error: () => this.toastr.error('Failed to delete choice')
+    });
+  }
 }

@@ -27,4 +27,8 @@ public class CartItem {
     private Integer quantity = 0;
 
     private Double totalPrice;
+
+    /** JSON array snapshot of selected modifier choices, e.g. [{groupName,choiceLabel,priceModifier}] */
+    @Column(columnDefinition = "TEXT")
+    private String selectedChoicesJson;
 }

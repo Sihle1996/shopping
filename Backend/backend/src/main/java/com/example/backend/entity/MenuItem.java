@@ -72,6 +72,11 @@ public class MenuItem {
     @ToString.Exclude
     private List<CartItem> cartItems = new ArrayList<>();
 
+    @OneToMany(mappedBy = "menuItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("sortOrder ASC")
+    @ToString.Exclude
+    private List<MenuItemOptionGroup> optionGroups = new ArrayList<>();
+
     @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;

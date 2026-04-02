@@ -24,6 +24,9 @@ export interface Tenant {
   active: boolean;
   isOpen?: boolean;
   minimumOrderAmount?: number | null;
+  estimatedDeliveryMinutes?: number;
+  openingHours?: string;
+  cuisineType?: string;
 }
 
 export interface TenantRegistration {

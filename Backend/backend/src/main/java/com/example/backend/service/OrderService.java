@@ -51,6 +51,20 @@ public class OrderService {
             item.setQuantity(itemDTO.getQuantity());
             item.setTotalPrice(itemDTO.getPrice() * itemDTO.getQuantity());
             item.setSize(itemDTO.getSize());
+            item.setSpecialInstructions(itemDTO.getSpecialInstructions());
+
+            // Snapshot selected modifier choices
+            if (itemDTO.getSelectedChoices() != null) {
+                for (OrderItemDTO.SelectedChoiceDTO sc : itemDTO.getSelectedChoices()) {
+                    OrderItemChoice choice = new OrderItemChoice();
+                    choice.setOrderItem(item);
+                    choice.setGroupName(sc.getGroupName());
+                    choice.setChoiceLabel(sc.getChoiceLabel());
+                    choice.setPriceModifier(sc.getPriceModifier() != null ? sc.getPriceModifier() : 0.0);
+                    item.getChoices().add(choice);
+                }
+            }
+
             MenuItem menuItem = menuItemRepository.findById(itemDTO.getProductId())
                     .orElseThrow(() -> new RuntimeException("Menu item not found: " + itemDTO.getProductId()));
 
@@ -115,7 +129,11 @@ public class OrderService {
                 .doubleValue();
 
         Order order = new Order();
-        order.setUser(user);
+        order.setUser(user); // null for guest orders
+        if (user == null) {
+            order.setGuestEmail(request.getGuestEmail());
+            order.setGuestPhone(request.getGuestPhone());
+        }
         order.setOrderItems(orderItems);
         order.setTotalAmount(totalAmount);
         order.setDiscountAmount(discountAmount);
@@ -127,6 +145,7 @@ public class OrderService {
         order.setDeliveryLon(request.getDeliveryLon());
         order.setPaymentId(request.getPaymentId());
         order.setPayerId(request.getPayerId());
+        order.setOrderNotes(request.getOrderNotes());
 
         // Set tenant from context and compute platform commission fee
         UUID tenantId = TenantContext.getCurrentTenantId();
@@ -150,14 +169,19 @@ public class OrderService {
         Order saved = orderRepository.save(order);
         OrderDTO dto = convertToOrderDTO(saved);
 
-        messagingTemplate.convertAndSendToUser(
-                String.valueOf(user.getId()),
-                "/queue/orders",
-                dto
-        );
+        if (user != null) {
+            messagingTemplate.convertAndSendToUser(
+                    String.valueOf(user.getId()),
+                    "/queue/orders",
+                    dto
+            );
+        }
 
         String storeName = saved.getTenant() != null ? saved.getTenant().getName() : "Our Store";
-        emailService.sendOrderConfirmation(user.getEmail(), dto, storeName);
+        String recipientEmail = user != null ? user.getEmail() : request.getGuestEmail();
+        if (recipientEmail != null && !recipientEmail.isBlank()) {
+            emailService.sendOrderConfirmation(recipientEmail, dto, storeName);
+        }
 
         return dto;
     }
@@ -265,13 +289,17 @@ public class OrderService {
         Order updated = orderRepository.save(order);
         OrderDTO dto = convertToOrderDTO(updated);
 
-        // Push real-time status update to the customer
-        String customerId = updated.getUser().getId().toString();
-        messagingTemplate.convertAndSend("/topic/orders/" + customerId, dto);
+        // Push real-time status update to the customer (only if authenticated user)
+        if (updated.getUser() != null) {
+            messagingTemplate.convertAndSend("/topic/orders/" + updated.getUser().getId(), dto);
+        }
 
         if ("Delivered".equals(status)) {
             String storeName = updated.getTenant() != null ? updated.getTenant().getName() : "Our Store";
-            emailService.sendOrderDelivered(updated.getUser().getEmail(), dto, storeName);
+            String email = updated.getUser() != null ? updated.getUser().getEmail() : updated.getGuestEmail();
+            if (email != null && !email.isBlank()) {
+                emailService.sendOrderDelivered(email, dto, storeName);
+            }
         }
 
         return dto;
@@ -302,7 +330,9 @@ public class OrderService {
 
         Order updated = orderRepository.save(order);
         OrderDTO dto = convertToOrderDTO(updated);
-        messagingTemplate.convertAndSend("/topic/orders/" + updated.getUser().getId(), dto);
+        if (updated.getUser() != null) {
+            messagingTemplate.convertAndSend("/topic/orders/" + updated.getUser().getId(), dto);
+        }
         return dto;
     }
 
@@ -316,8 +346,21 @@ public class OrderService {
             dto.setQuantity(item.getQuantity());
             dto.setSize(item.getSize());
             dto.setPrice(item.getTotalPrice());
+            dto.setSpecialInstructions(item.getSpecialInstructions());
+            if (item.getChoices() != null && !item.getChoices().isEmpty()) {
+                dto.setSelectedChoices(item.getChoices().stream().map(c -> {
+                    OrderItemDTO.SelectedChoiceDTO sc = new OrderItemDTO.SelectedChoiceDTO();
+                    sc.setGroupName(c.getGroupName());
+                    sc.setChoiceLabel(c.getChoiceLabel());
+                    sc.setPriceModifier(c.getPriceModifier());
+                    return sc;
+                }).toList());
+            }
             return dto;
         }).toList();
+
+        UUID userId = order.getUser() != null ? order.getUser().getId() : null;
+        String userEmail = order.getUser() != null ? order.getUser().getEmail() : order.getGuestEmail();
 
         OrderDTO dto = new OrderDTO(
                 order.getId(),
@@ -325,8 +368,8 @@ public class OrderService {
                 order.getStatus(),
                 formattedDate,
                 order.getDeliveryAddress(),
-                order.getUser().getId(),
-                order.getUser().getEmail(),
+                userId,
+                userEmail,
                 order.getPaymentId(),
                 order.getPayerId(),
                 itemDTOs,
@@ -337,6 +380,7 @@ public class OrderService {
                 order.getDeliveryLat(),
                 order.getDeliveryLon()
         );
+        dto.setOrderNotes(order.getOrderNotes());
 
         if (order.getDriver() != null) {
             dto.setDriverName(order.getDriver().getEmail());

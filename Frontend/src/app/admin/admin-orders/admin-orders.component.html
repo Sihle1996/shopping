@@ -220,6 +220,13 @@
             <p class="text-textMuted text-xs">Delivery</p>
             <p class="font-medium text-textDark">{{ so.deliveryAddress || '—' }}</p>
           </div>
+          <div *ngIf="so.orderNotes" class="col-span-2">
+            <p class="text-textMuted text-xs">Delivery Notes</p>
+            <p class="font-medium text-textDark flex items-start gap-1.5">
+              <i class="bi bi-chat-left-text text-primary mt-0.5 flex-shrink-0"></i>
+              {{ so.orderNotes }}
+            </p>
+          </div>
         </div>
 
         <!-- Items -->
@@ -232,6 +239,9 @@
                   <span class="text-textMuted text-xs">({{ item.size || 'std' }})</span>
                 </p>
                 <p class="text-xs text-textMuted">Qty: {{ item.quantity }}</p>
+                <p *ngIf="item.specialInstructions" class="text-xs text-amber-700 mt-0.5 flex items-center gap-1">
+                  <i class="bi bi-exclamation-circle-fill"></i>{{ item.specialInstructions }}
+                </p>
               </div>
               <p class="font-numbers font-semibold text-sm text-textDark">
                 R{{ ((item.price ?? 0) * item.quantity) | number:'1.2-2' }}

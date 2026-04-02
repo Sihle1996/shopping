@@ -130,15 +130,29 @@
               {{ store.name.charAt(0) }}
             </div>
             <div class="flex-1 min-w-0">
-              <h3 class="font-heading font-bold text-textDark group-hover:text-primary transition-colors truncate">
-                {{ store.name }}
-              </h3>
-              <p *ngIf="store.address" class="text-textMuted text-xs mt-0.5 truncate">
+              <div class="flex items-center gap-2">
+                <h3 class="font-heading font-bold text-textDark group-hover:text-primary transition-colors truncate">
+                  {{ store.name }}
+                </h3>
+                <span *ngIf="store.isOpen === false"
+                      class="flex-shrink-0 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full">
+                  Closed
+                </span>
+              </div>
+              <p *ngIf="store.cuisineType" class="text-textMuted text-xs mt-0.5">
+                <i class="bi bi-egg-fried mr-1"></i>{{ store.cuisineType }}
+              </p>
+              <p *ngIf="store.address && !store.cuisineType" class="text-textMuted text-xs mt-0.5 truncate">
                 <i class="bi bi-geo-alt mr-1"></i>{{ store.address }}
               </p>
-              <span class="inline-flex items-center gap-1 mt-1.5 text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
-                <i class="bi bi-bicycle"></i> {{ store.distanceKm }} km away
-              </span>
+              <div class="flex items-center gap-2 flex-wrap mt-1.5">
+                <span class="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+                  <i class="bi bi-bicycle"></i> {{ store.distanceKm }} km away
+                </span>
+                <span *ngIf="store.estimatedDeliveryMinutes" class="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
+                  <i class="bi bi-clock"></i> ~{{ store.estimatedDeliveryMinutes }} min
+                </span>
+              </div>
             </div>
             <i class="bi bi-arrow-right text-textMuted group-hover:text-primary transition-colors flex-shrink-0"></i>
           </div>

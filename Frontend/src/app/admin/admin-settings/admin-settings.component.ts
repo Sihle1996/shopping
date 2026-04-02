@@ -20,6 +20,9 @@ interface TenantSettings {
   deliveryFeeBase: number;
   isOpen: boolean;
   minimumOrderAmount: number | null;
+  estimatedDeliveryMinutes: number;
+  openingHours: string;
+  cuisineType: string;
 }
 
 @Component({
@@ -40,7 +43,10 @@ export class AdminSettingsComponent implements OnInit {
     deliveryRadiusKm: 10,
     deliveryFeeBase: 0,
     isOpen: true,
-    minimumOrderAmount: null
+    minimumOrderAmount: null,
+    estimatedDeliveryMinutes: 30,
+    openingHours: '',
+    cuisineType: ''
   };
   isLoading = false;
   isSaving = false;

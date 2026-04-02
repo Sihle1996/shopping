@@ -18,4 +18,7 @@ public class OrderRequestDTO {
     private Double deliveryLon;
     private UUID tenantId;
     private String promoCode;
+    private String orderNotes;
+    private String guestEmail;
+    private String guestPhone;
 }

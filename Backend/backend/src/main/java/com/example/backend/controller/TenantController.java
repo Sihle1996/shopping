@@ -44,7 +44,10 @@ public class TenantController {
                             t.getLogoUrl(), t.getPrimaryColor(),
                             t.getAddress(), t.getPhone(),
                             Math.round(dist * 10.0) / 10.0,
-                            t.getDeliveryRadiusKm()
+                            t.getDeliveryRadiusKm(),
+                            t.getEstimatedDeliveryMinutes(),
+                            t.getCuisineType(),
+                            t.getIsOpen()
                     );
                 })
                 .filter(dto -> dto.distanceKm() <= dto.deliveryRadiusKm())
@@ -67,7 +70,8 @@ public class TenantController {
             UUID id, String name, String slug,
             String logoUrl, String primaryColor,
             String address, String phone,
-            double distanceKm, Integer deliveryRadiusKm
+            double distanceKm, Integer deliveryRadiusKm,
+            Integer estimatedDeliveryMinutes, String cuisineType, Boolean isOpen
     ) {}
 
     // Public - get tenant config by slug

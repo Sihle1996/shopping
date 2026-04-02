@@ -26,9 +26,12 @@ public class Order {
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
     @JsonBackReference
     private User user;
+
+    private String guestEmail;
+    private String guestPhone;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id")
@@ -52,6 +55,9 @@ public class Order {
     private String promoCode;
     private Double deliveryLat;
     private Double deliveryLon;
+
+    @Column(columnDefinition = "TEXT")
+    private String orderNotes;
 
     public Order(User user, Tenant tenant, List<OrderItem> orderItems, Double totalAmount, Instant orderDate, String status, String deliveryAddress) {
         this.user = user;

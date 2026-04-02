@@ -53,6 +53,13 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
 
   addressControl = new FormControl();
 
+  orderNotes = '';
+  isLoggedIn = false;
+
+  // Guest checkout fields (shown when not logged in)
+  guestEmail = '';
+  guestPhone = '';
+
   deliveryDetails = {
     fullName: '',
     address: '',
@@ -79,14 +86,17 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
+    this.isLoggedIn = this.authService.isLoggedIn();
     this.loadCartAndPromos();
-    this.addressService.list().subscribe({
-      next: addresses => {
-        this.savedAddresses = addresses;
-        const def = addresses.find(a => a.isDefault);
-        if (def) this.fillFromSaved(def);
-      }
-    });
+    if (this.isLoggedIn) {
+      this.addressService.list().subscribe({
+        next: addresses => {
+          this.savedAddresses = addresses;
+          const def = addresses.find(a => a.isDefault);
+          if (def) this.fillFromSaved(def);
+        }
+      });
+    }
   }
 
   fillFromSaved(a: UserAddress): void {
@@ -327,9 +337,15 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
 
   onSubmit(): void {
     const d = this.deliveryDetails;
-    if (!d.fullName || !d.address || !d.city || !d.zip || !d.phone) {
+    if (!d.address || !d.city || !d.zip || !d.phone) {
       this.toastr.warning('Please fill in all delivery fields');
       return;
+    }
+    if (!this.isLoggedIn) {
+      if (!this.guestEmail || !this.guestEmail.includes('@')) {
+        this.toastr.warning('Please enter a valid email address');
+        return;
+      }
     }
 
     this.cartService.getCartItems().subscribe(items => {
@@ -354,7 +370,9 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
             const details = await actions.order.capture();
 
             const orderData: any = {
-              userId: this.authService.getUserId(),
+              userId: this.isLoggedIn ? this.authService.getUserId() : null,
+              guestEmail: !this.isLoggedIn ? this.guestEmail.trim() : null,
+              guestPhone: !this.isLoggedIn ? (this.guestPhone.trim() || this.deliveryDetails.phone) : null,
               deliveryAddress: `${d.address}, ${d.city}, ${d.zip}, South Africa`,
               deliveryLat: this.selectedLat,
               deliveryLon: this.selectedLon,
@@ -363,19 +381,22 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
                 name: item.menuItemName,
                 price: item.menuItemPrice,
                 quantity: item.quantity,
-                size: item.size
+                size: item.size,
+                selectedChoices: (item as any).selectedChoicesJson
+                  ? JSON.parse((item as any).selectedChoicesJson)
+                  : null
               })),
               total: this.subtotal,
               promoCode: this.appliedPromo?.code?.trim() || null,
+              orderNotes: this.orderNotes?.trim() || null,
               paymentId: details.id,
               payerId: details.payer.payer_id,
               status: details.status
             };
 
-            const headers: any = {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${this.authService.getToken()}`
-            };
+            const headers: any = { 'Content-Type': 'application/json' };
+            const token = this.authService.getToken();
+            if (token) headers['Authorization'] = `Bearer ${token}`;
             const tenantId = localStorage.getItem('tenantId');
             if (tenantId) headers['X-Tenant-Id'] = tenantId;
 

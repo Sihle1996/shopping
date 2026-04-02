@@ -24,6 +24,10 @@ public class CartService {
     private final UserRepository userRepository;
 
     public CartItemDTO addItemToCart(UUID userId, UUID menuItemId, Integer quantity) {
+        return addItemToCart(userId, menuItemId, quantity, null);
+    }
+
+    public CartItemDTO addItemToCart(UUID userId, UUID menuItemId, Integer quantity, String selectedChoicesJson) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -56,6 +60,9 @@ public class CartService {
 
         cartItem.setQuantity(newTotalQty);
         cartItem.setTotalPrice(menuItem.getPrice() * cartItem.getQuantity());
+        if (selectedChoicesJson != null) {
+            cartItem.setSelectedChoicesJson(selectedChoicesJson);
+        }
 
         cartItem = cartItemRepository.save(cartItem);
 
@@ -113,6 +120,8 @@ public class CartService {
         dto.setTotalPrice(cartItem.getTotalPrice());
         dto.setImage(cartItem.getMenuItem().getImage());
         dto.setMenuItemCategory(cartItem.getMenuItem().getCategory());
+        dto.setSelectedChoicesJson(cartItem.getSelectedChoicesJson());
+        dto.setOptionGroups(cartItem.getMenuItem().getOptionGroups());
         return dto;
     }
 }

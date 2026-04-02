@@ -31,6 +31,7 @@ public class OrderDTO {
     private String promoCode;
     private Double deliveryLat;
     private Double deliveryLon;
+    private String orderNotes;
 
     public OrderDTO(UUID id, Double totalAmount, String status, Instant orderDate,
                     String deliveryAddress, UUID userId, String userEmail) {

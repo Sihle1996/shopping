@@ -12,6 +12,7 @@ interface OrderItem {
   quantity: number;
   size?: string;
   price?: number;
+  specialInstructions?: string;
 }
 interface Order {
   id: string;
@@ -21,6 +22,7 @@ interface Order {
   deliveryAddress: string;
   userEmail: string;
   paymentId?: string;
+  orderNotes?: string;
   items: OrderItem[];
 }
 interface PageResp<T> {

@@ -76,6 +76,16 @@ public class Tenant {
     @Column(precision = 10, scale = 2)
     private BigDecimal minimumOrderAmount;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer estimatedDeliveryMinutes = 30;
+
+    @Column(length = 500)
+    private String openingHours;
+
+    @Column(length = 50)
+    private String cuisineType;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

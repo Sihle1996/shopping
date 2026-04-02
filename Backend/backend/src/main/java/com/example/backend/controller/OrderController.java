@@ -20,14 +20,11 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    // ✅ Place an Order from PayPal Checkout
+    // ✅ Place an Order from PayPal Checkout (supports both authenticated and guest users)
     @PostMapping("/place")
     public ResponseEntity<?> placeOrder(@AuthenticationPrincipal User authenticatedUser,
                                         @RequestBody OrderRequestDTO request) {
-        if (authenticatedUser == null) {
-            return ResponseEntity.status(401).body("User not authenticated");
-        }
-
+        // Guest orders allowed — authenticatedUser may be null
         try {
             OrderDTO orderDTO = orderService.placeOrderFromPayment(request, authenticatedUser);
             return ResponseEntity.ok(orderDTO);

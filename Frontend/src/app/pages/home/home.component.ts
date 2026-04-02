@@ -49,6 +49,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   cartItemCount = 0;
   cartTotal = 0;
 
+  // Modifier modal state
+  modifierModalOpen = false;
+  modifierItem: ProductCardItem | null = null;
+  modifierGroups: any[] = [];
+  modifierSelections: { [groupId: string]: string[] } = {};
+  modifierLoading = false;
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -60,6 +67,90 @@ export class HomeComponent implements OnInit, OnDestroy {
     private promotionService: PromotionService,
     private toastr: ToastrService
   ) {}
+
+  // ── Modifier modal ────────────────────────────────────────────────────────
+
+  private openModifierModal(item: ProductCardItem, groups: any[]): void {
+    this.modifierItem = item;
+    this.modifierGroups = groups;
+    this.modifierSelections = {};
+    // Pre-select first choice for RADIO groups
+    for (const g of groups) {
+      if (g.type === 'RADIO' && g.choices?.length) {
+        this.modifierSelections[g.id] = [g.choices[0].id];
+      }
+    }
+    this.modifierModalOpen = true;
+  }
+
+  closeModifierModal(): void {
+    this.modifierModalOpen = false;
+    this.modifierItem = null;
+    this.modifierGroups = [];
+    this.modifierSelections = {};
+  }
+
+  modifierToggleChoice(group: any, choiceId: string): void {
+    if (group.type === 'RADIO') {
+      this.modifierSelections[group.id] = [choiceId];
+    } else {
+      const current = this.modifierSelections[group.id] || [];
+      const idx = current.indexOf(choiceId);
+      this.modifierSelections[group.id] = idx >= 0
+        ? current.filter(id => id !== choiceId)
+        : [...current, choiceId];
+    }
+  }
+
+  isChoiceSelected(groupId: string, choiceId: string): boolean {
+    return (this.modifierSelections[groupId] || []).includes(choiceId);
+  }
+
+  get modifierTotal(): number {
+    if (!this.modifierItem) return 0;
+    let extra = 0;
+    for (const g of this.modifierGroups) {
+      const selectedIds = this.modifierSelections[g.id] || [];
+      for (const c of g.choices || []) {
+        if (selectedIds.includes(c.id)) extra += c.priceModifier || 0;
+      }
+    }
+    return (this.modifierItem.price || 0) + extra;
+  }
+
+  get modifierRequiredSatisfied(): boolean {
+    return this.modifierGroups
+      .filter(g => g.required)
+      .every(g => (this.modifierSelections[g.id] || []).length > 0);
+  }
+
+  confirmModifiers(): void {
+    if (!this.modifierItem || !this.modifierRequiredSatisfied) return;
+    const choices: any[] = [];
+    for (const g of this.modifierGroups) {
+      const selectedIds = this.modifierSelections[g.id] || [];
+      for (const c of g.choices || []) {
+        if (selectedIds.includes(c.id)) {
+          choices.push({ groupName: g.name, choiceLabel: c.label, priceModifier: c.priceModifier || 0 });
+        }
+      }
+    }
+    const selectedChoicesJson = JSON.stringify(choices);
+    this.cartService.addToCart(this.modifierItem.id!, 1, 'M', selectedChoicesJson, {
+      name: this.modifierItem.name,
+      price: this.modifierItem.price || 0,
+      category: this.modifierItem.category,
+      image: this.modifierItem.image
+    }).subscribe({
+      next: () => {
+        clearTimeout(this.cartAddedTimer);
+        this.cartAddedName = this.modifierItem!.name;
+        this.cartAddedTimer = setTimeout(() => this.cartAddedName = '', 3000);
+        this.closeModifierModal();
+      },
+      error: (err) => this.toastr.error(err?.error || 'Failed to add item to cart')
+    });
+  }
 
   ngOnInit(): void {
     this.isAdmin = this.authService.getUserRole() === 'ROLE_ADMIN';
@@ -76,8 +167,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private subscribeToCart(): void {
-    if (!this.isLoggedIn) return;
-
     this.cartService.getCartItemCount()
       .pipe(takeUntil(this.destroy$))
       .subscribe(count => this.cartItemCount = count);
@@ -244,16 +333,29 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   quickAddToCart(item: ProductCardItem): void {
     if (!item.id) return;
-    if (!this.isLoggedIn) {
-      this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
-      return;
-    }
     if (!item.isAvailable) {
       this.outOfStockItemName = item.name;
       this.showOutOfStockModal = true;
       return;
     }
-    this.cartService.addToCart(item.id, 1, 'M').subscribe({
+
+    // Check for modifier groups loaded with the menu item
+    const menuItem = this.menuItems.find(m => m.id === item.id) as any;
+    const groups: any[] = menuItem?.optionGroups ?? [];
+    if (groups.length > 0) {
+      this.openModifierModal(item, groups);
+      return;
+    }
+    this.addDirectToCart(item);
+  }
+
+  private addDirectToCart(item: ProductCardItem): void {
+    this.cartService.addToCart(item.id!, 1, 'M', null, {
+      name: item.name,
+      price: item.price || 0,
+      category: item.category,
+      image: item.image
+    }).subscribe({
       next: () => {
         clearTimeout(this.cartAddedTimer);
         this.cartAddedName = item.name;
@@ -263,7 +365,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
   }
 
-  toggleFavorite(item: ProductCardItem): void {
+  toggleFavorite(_item: ProductCardItem): void {
     // Future favorite logic
   }
 

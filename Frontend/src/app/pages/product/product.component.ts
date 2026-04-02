@@ -78,18 +78,18 @@ export class ProductComponent implements OnInit {
   addToCart(): void {
     if (!this.product?.id) return;
 
-    if (!this.authService.isLoggedIn()) {
-      this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
-      return;
-    }
-
     if (!this.product.isAvailable) {
       this.showOutOfStockModal = true;
       return;
     }
 
     this.isAddingToCart = true;
-    this.cartService.addToCart(this.product.id, this.quantity, this.selectedSize).subscribe({
+    this.cartService.addToCart(this.product.id, this.quantity, this.selectedSize, null, {
+      name: this.product.name,
+      price: this.product.price,
+      category: this.product.category,
+      image: this.product.image
+    }).subscribe({
       next: () => {
         this.isAddingToCart = false;
         clearTimeout(this.addedBannerTimer);

@@ -15,6 +15,7 @@ export class AdminPromotionsComponent implements OnInit {
   form!: FormGroup;
   editingId: string | null = null;
   loading = false;
+  submitError: string | null = null;
 
   showDeleteConfirm = false;
   deleteTarget: Promotion | null = null;
@@ -109,8 +110,18 @@ export class AdminPromotionsComponent implements OnInit {
       ? this.api.update(this.editingId, payload)
       : this.api.create(payload);
 
+    this.submitError = null;
     op.subscribe({
       next: () => { this.resetForm(); this.refresh(); },
+      error: (err) => {
+        if (err?.status === 402) {
+          this.submitError = err?.error?.message || 'Promotion limit reached for your plan. Upgrade to add more.';
+        } else if (err?.status === 403) {
+          this.submitError = err?.error?.message || 'This feature requires a higher plan.';
+        } else {
+          this.submitError = 'Something went wrong. Please try again.';
+        }
+      }
     });
   }
 
@@ -137,6 +148,7 @@ export class AdminPromotionsComponent implements OnInit {
   resetForm(): void {
     this.editingId = null;
     this.imagePreviewUrl = '';
+    this.submitError = null;
     this.form.reset({ appliesTo: 'ALL', active: true, featured: false });
   }
 
