@@ -206,9 +206,14 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
       </div>`;
   }
 
+  private isValidSACoord(lat: number, lng: number): boolean {
+    return lat >= -35 && lat <= -22 && lng >= 16 && lng <= 33;
+  }
+
   private loadInitialLocations(): void {
     this.adminService.getDriverLocations().subscribe((data: DriverLocation[]) => {
       data.forEach((d: DriverLocation) => {
+        if (!d.latitude || !d.longitude || !this.isValidSACoord(d.latitude, d.longitude)) return;
         this.drivers[d.id] = { ...d, history: [[d.longitude, d.latitude]] };
       });
       if (this.mapLoaded) {
@@ -229,6 +234,7 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
     this.stompClient.connect(headers, () => {
       this.stompClient.subscribe('/topic/drivers', (message: any) => {
         const loc: DriverLocation = JSON.parse(message.body);
+        if (!loc.latitude || !loc.longitude || !this.isValidSACoord(loc.latitude, loc.longitude)) return;
         const driver = this.drivers[loc.id] || { history: [] };
         driver.email = loc.email;
         driver.driverStatus = loc.driverStatus;
