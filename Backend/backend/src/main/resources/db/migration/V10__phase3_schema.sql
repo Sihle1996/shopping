@@ -1,27 +1,25 @@
 -- Phase 3: competitive parity schema additions
+-- Each ALTER TABLE uses a DO block so pre-existing columns are silently skipped.
+-- CREATE TABLE IF NOT EXISTS is already idempotent.
 
 -- Tenant: ETA, opening hours, cuisine type
-ALTER TABLE tenants
-    ADD COLUMN IF NOT EXISTS estimated_delivery_minutes INT NOT NULL DEFAULT 30,
-    ADD COLUMN IF NOT EXISTS opening_hours TEXT,
-    ADD COLUMN IF NOT EXISTS cuisine_type VARCHAR(50);
+DO $$ BEGIN ALTER TABLE tenants ADD COLUMN estimated_delivery_minutes INT NOT NULL DEFAULT 30; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE tenants ADD COLUMN opening_hours TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE tenants ADD COLUMN cuisine_type VARCHAR(50); EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 
 -- Orders: delivery notes + guest checkout support
-ALTER TABLE orders
-    ADD COLUMN IF NOT EXISTS order_notes TEXT,
-    ADD COLUMN IF NOT EXISTS guest_email VARCHAR(255),
-    ADD COLUMN IF NOT EXISTS guest_phone VARCHAR(50);
+DO $$ BEGIN ALTER TABLE orders ADD COLUMN order_notes TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE orders ADD COLUMN guest_email VARCHAR(255); EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE orders ADD COLUMN guest_phone VARCHAR(50); EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 
 -- Make orders.user_id nullable (guest orders have no user)
-ALTER TABLE orders ALTER COLUMN user_id DROP NOT NULL;
+DO $$ BEGIN ALTER TABLE orders ALTER COLUMN user_id DROP NOT NULL; EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'user_id drop not null skipped: %', SQLERRM; END $$;
 
 -- Order items: per-item special instructions
-ALTER TABLE order_items
-    ADD COLUMN IF NOT EXISTS special_instructions TEXT;
+DO $$ BEGIN ALTER TABLE order_items ADD COLUMN special_instructions TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 
 -- Cart items: serialised modifier selections
-ALTER TABLE cart_items
-    ADD COLUMN IF NOT EXISTS selected_choices_json TEXT;
+DO $$ BEGIN ALTER TABLE cart_items ADD COLUMN selected_choices_json TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 
 -- Menu item option groups (Size, Spice level, etc.)
 CREATE TABLE IF NOT EXISTS menu_item_option_groups (
