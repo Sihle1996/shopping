@@ -17,6 +17,7 @@ import { FormControl } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 import { AddressService, UserAddress } from 'src/app/services/address.service';
+import { LoyaltyService, LoyaltyBalance } from 'src/app/services/loyalty.service';
 
 declare var paypal: any;
 
@@ -29,7 +30,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   cartItems: any[] = [];
   subtotal: number = 0;
   discount: number = 0;
-  get totalPrice(): number { return Math.max(0, this.subtotal - this.discount); }
+  get totalPrice(): number { return Math.max(0, this.subtotal - this.discount - this.loyaltyDiscount); }
 
   showPayPal: boolean = false;
 
@@ -38,6 +39,13 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   promoLoading = false;
   appliedPromo: Promotion | null = null;
   promoError: string = '';
+
+  // Loyalty
+  loyaltyBalance: LoyaltyBalance | null = null;
+  loyaltyPointsInput = 0;
+  loyaltyDiscount = 0;
+  loyaltyPointsToRedeem = 0;
+  loyaltyLoading = false;
 
   locating = false;
   private selectedLat: number | null = null;
@@ -82,13 +90,18 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     private router: Router,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
-    private addressService: AddressService
+    private addressService: AddressService,
+    private loyaltyService: LoyaltyService
   ) {}
 
   ngOnInit(): void {
     this.isLoggedIn = this.authService.isLoggedIn();
     this.loadCartAndPromos();
     if (this.isLoggedIn) {
+      this.loyaltyService.getBalance().subscribe({
+        next: b => this.loyaltyBalance = b,
+        error: () => {}
+      });
       this.addressService.list().subscribe({
         next: addresses => {
           this.savedAddresses = addresses;
@@ -216,6 +229,33 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     this.promoCode = '';
     this.promoError = '';
     this.discount = 0;
+  }
+
+  applyLoyalty(): void {
+    const pts = this.loyaltyPointsInput;
+    if (!pts || pts < 100 || pts % 100 !== 0) {
+      this.toastr.warning('Enter a multiple of 100 points (minimum 100)');
+      return;
+    }
+    this.loyaltyLoading = true;
+    this.loyaltyService.calculate(pts).subscribe({
+      next: result => {
+        this.loyaltyDiscount = result.discount;
+        this.loyaltyPointsToRedeem = result.pointsUsed;
+        this.loyaltyLoading = false;
+        this.toastr.success(`${result.pointsUsed} pts → R${result.discount.toFixed(2)} off`);
+      },
+      error: (err) => {
+        this.loyaltyLoading = false;
+        this.toastr.error(err?.error || 'Could not apply loyalty points');
+      }
+    });
+  }
+
+  removeLoyalty(): void {
+    this.loyaltyDiscount = 0;
+    this.loyaltyPointsToRedeem = 0;
+    this.loyaltyPointsInput = 0;
   }
 
   useMyLocation(): void {
@@ -389,6 +429,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
               total: this.subtotal,
               promoCode: this.appliedPromo?.code?.trim() || null,
               orderNotes: this.orderNotes?.trim() || null,
+              loyaltyPointsRedeemed: this.loyaltyPointsToRedeem || 0,
               paymentId: details.id,
               payerId: details.payer.payer_id,
               status: details.status

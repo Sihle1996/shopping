@@ -211,6 +211,52 @@
       </div>
     </div>
 
+    <!-- Loyalty Points Card (logged-in users with points) -->
+    <div *ngIf="isLoggedIn && loyaltyBalance && loyaltyBalance.balance >= 100"
+         class="bg-white rounded-2xl shadow-card p-6 mb-4">
+      <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
+        <i class="bi bi-gift text-amber-500"></i> Loyalty Points
+        <span class="ml-auto text-xs font-normal text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+          {{ loyaltyBalance.balance }} pts available
+        </span>
+      </h2>
+
+      <!-- Applied state -->
+      <div *ngIf="loyaltyPointsToRedeem > 0"
+           class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+        <div>
+          <p class="text-sm font-semibold text-amber-700">
+            <i class="bi bi-check-circle-fill mr-1.5"></i>{{ loyaltyPointsToRedeem }} points applied
+          </p>
+          <p class="text-xs text-amber-600 mt-0.5">-R{{ loyaltyDiscount.toFixed(2) }} discount</p>
+        </div>
+        <button type="button" (click)="removeLoyalty()"
+                class="text-amber-600 hover:text-amber-800 text-lg leading-none transition-colors">
+          <i class="bi bi-x-circle"></i>
+        </button>
+      </div>
+
+      <!-- Input state -->
+      <div *ngIf="loyaltyPointsToRedeem === 0">
+        <p class="text-xs text-textMuted mb-3">
+          Worth R{{ loyaltyBalance.cashValue.toFixed(2) }} — use multiples of 100 pts (100 pts = R10)
+        </p>
+        <div class="flex gap-2">
+          <input type="number" [(ngModel)]="loyaltyPointsInput" min="100" step="100"
+                 [max]="loyaltyBalance.balance"
+                 placeholder="e.g. 100"
+                 class="flex-1 px-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                        placeholder-textMuted text-sm
+                        focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-shadow" />
+          <app-button variant="secondary" size="md" [disabled]="!loyaltyPointsInput || loyaltyLoading"
+                      (clicked)="applyLoyalty()">
+            <span *ngIf="!loyaltyLoading">Apply</span>
+            <span *ngIf="loyaltyLoading"><i class="bi bi-arrow-repeat animate-spin"></i></span>
+          </app-button>
+        </div>
+      </div>
+    </div>
+
     <!-- Order Summary Card -->
     <div class="bg-white rounded-2xl shadow-card p-6 mb-4">
       <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
@@ -238,6 +284,13 @@
             {{ appliedPromo?.code ? appliedPromo?.code : 'Auto-applied' }} ({{ appliedPromo?.discountPercent }}% off)
           </span>
           <span class="font-numbers font-semibold">-R{{ discount.toFixed(2) }}</span>
+        </div>
+        <div *ngIf="loyaltyDiscount > 0" class="flex justify-between text-sm text-amber-600">
+          <span class="flex items-center gap-1">
+            <i class="bi bi-gift-fill text-xs"></i>
+            {{ loyaltyPointsToRedeem }} loyalty pts
+          </span>
+          <span class="font-numbers font-semibold">-R{{ loyaltyDiscount.toFixed(2) }}</span>
         </div>
         <div class="flex justify-between text-base font-bold text-textDark pt-1 border-t border-borderColor">
           <span>Total</span>

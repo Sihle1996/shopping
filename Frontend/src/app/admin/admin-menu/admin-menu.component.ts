@@ -33,6 +33,10 @@ export class AdminMenuComponent implements OnInit {
     isAvailable: true
   };
 
+  // ── CSV import state ────────────────────────────────────────────────────
+  importLoading = false;
+  importResult: string | null = null;
+
   // ── Option groups state ─────────────────────────────────────────────────
   expandedOptionsItemId: string | null = null;
   optionGroups: { [itemId: string]: any[] } = {};
@@ -169,6 +173,43 @@ export class AdminMenuComponent implements OnInit {
         error: () => {}
       });
     }
+  }
+
+  // ── CSV import ────────────────────────────────────────────────────────────
+
+  triggerCsvImport(): void {
+    document.getElementById('csvImportInput')?.click();
+  }
+
+  onCsvSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (!file) return;
+    this.importLoading = true;
+    this.importResult = null;
+    const formData = new FormData();
+    formData.append('file', file);
+    this.http.post<any>(
+      `${environment.apiUrl}/api/admin/menu/import-csv`,
+      formData,
+      { headers: new HttpHeaders({ 'Authorization': `Bearer ${this.authService.getToken()}` }) }
+    ).subscribe({
+      next: (res) => {
+        this.importLoading = false;
+        this.importResult = `${res.created} items imported, ${res.skipped} skipped`;
+        if (res.created > 0) {
+          this.toastr.success(`${res.created} items imported`);
+          this.fetchMenuItems();
+        } else {
+          this.toastr.warning('No items were imported');
+        }
+        event.target.value = '';
+      },
+      error: () => {
+        this.importLoading = false;
+        this.toastr.error('CSV import failed');
+        event.target.value = '';
+      }
+    });
   }
 
   // ── Option groups ──────────────────────────────────────────────────────────

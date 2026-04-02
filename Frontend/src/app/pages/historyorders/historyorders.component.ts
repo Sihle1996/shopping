@@ -4,6 +4,8 @@ import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
 import { CartService } from 'src/app/services/cart.service';
 import { NotificationService } from 'src/app/services/notification.service';
+import { ReviewService } from 'src/app/services/review.service';
+import { LoyaltyService, LoyaltyBalance } from 'src/app/services/loyalty.service';
 import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -46,17 +48,33 @@ export class HistoryordersComponent implements OnInit, OnDestroy {
   reorderingId: string | null = null;
   private wsSub?: Subscription;
 
+  // Review modal state
+  reviewModalOpen = false;
+  reviewOrderId: string | null = null;
+  reviewRating = 5;
+  reviewComment = '';
+  reviewSubmitting = false;
+  reviewedOrderIds = new Set<string>();
+
+  // Loyalty
+  loyaltyBalance: LoyaltyBalance | null = null;
+
   constructor(
     private http: HttpClient,
     private authService: AuthService,
     private cartService: CartService,
     private notificationService: NotificationService,
+    private reviewService: ReviewService,
+    private loyaltyService: LoyaltyService,
     private toastr: ToastrService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.fetchOrders();
+    if (this.authService.isLoggedIn()) {
+      this.loyaltyService.getBalance().subscribe({ next: b => this.loyaltyBalance = b, error: () => {} });
+    }
     const userId = this.authService.getUserId();
     if (userId) {
       this.wsSub = this.notificationService.subscribeToOrderUpdates(userId).subscribe(updated => {
@@ -169,6 +187,41 @@ export class HistoryordersComponent implements OnInit, OnDestroy {
 
   trackById(_: number, order: OrderDTO): string {
     return order.id;
+  }
+
+  openReview(orderId: string): void {
+    this.reviewOrderId = orderId;
+    this.reviewRating = 5;
+    this.reviewComment = '';
+    this.reviewModalOpen = true;
+  }
+
+  closeReview(): void {
+    this.reviewModalOpen = false;
+    this.reviewOrderId = null;
+  }
+
+  setReviewRating(r: number): void { this.reviewRating = r; }
+
+  submitReview(): void {
+    if (!this.reviewOrderId) return;
+    this.reviewSubmitting = true;
+    this.reviewService.submitReview(this.reviewOrderId, this.reviewRating, this.reviewComment).subscribe({
+      next: () => {
+        this.reviewedOrderIds.add(this.reviewOrderId!);
+        this.reviewSubmitting = false;
+        this.closeReview();
+        this.toastr.success('Thanks for your review!');
+      },
+      error: (err) => {
+        this.reviewSubmitting = false;
+        this.toastr.error(err?.error || 'Could not submit review.');
+      }
+    });
+  }
+
+  canReview(order: OrderDTO): boolean {
+    return order.status === 'Delivered' && !this.reviewedOrderIds.has(order.id);
   }
 
   reorder(order: OrderDTO): void {

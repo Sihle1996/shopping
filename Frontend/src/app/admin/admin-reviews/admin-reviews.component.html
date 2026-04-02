@@ -1,0 +1,58 @@
+<div class="px-4 pt-6 lg:px-8">
+  <div class="max-w-4xl mx-auto">
+
+    <div class="mb-6">
+      <h1 class="font-heading text-2xl font-bold text-textDark">Customer Reviews</h1>
+      <p class="text-textLight text-sm mt-1">View and moderate customer feedback</p>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="space-y-4">
+      <div *ngFor="let _ of [1,2,3]" class="bg-white rounded-2xl p-5 shadow-card animate-pulse">
+        <div class="h-4 bg-gray-200 rounded w-1/4 mb-3"></div>
+        <div class="h-3 bg-gray-200 rounded w-3/4"></div>
+      </div>
+    </div>
+
+    <!-- Empty -->
+    <app-empty-state
+      *ngIf="!loading && reviews.length === 0"
+      icon="bi bi-star"
+      title="No reviews yet"
+      message="Customer reviews will appear here once orders are delivered">
+    </app-empty-state>
+
+    <!-- Reviews list -->
+    <div *ngIf="!loading && reviews.length > 0" class="space-y-4">
+      <div *ngFor="let review of reviews"
+           class="bg-white rounded-2xl shadow-card p-5 animate-fade-in">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-semibold text-sm text-textDark">{{ review.userName }}</span>
+              <span class="text-xs text-textMuted">{{ review.createdAt | date:'mediumDate' }}</span>
+            </div>
+            <!-- Stars -->
+            <div class="flex gap-0.5 mb-2">
+              <i *ngFor="let s of stars(review.rating)"
+                 class="bi text-sm"
+                 [class.bi-star-fill]="s <= review.rating"
+                 [class.bi-star]="s > review.rating"
+                 [class.text-amber-400]="s <= review.rating"
+                 [class.text-gray-300]="s > review.rating"></i>
+            </div>
+            <p *ngIf="review.comment" class="text-sm text-textDark">{{ review.comment }}</p>
+            <p *ngIf="!review.comment" class="text-xs text-textMuted italic">No comment</p>
+          </div>
+          <button (click)="deleteReview(review.id)"
+                  [disabled]="deletingId === review.id"
+                  class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-xl text-danger hover:bg-red-50 transition-colors disabled:opacity-50">
+            <i class="bi" [class.bi-trash]="deletingId !== review.id" [class.bi-arrow-repeat]="deletingId === review.id"
+               [class.animate-spin]="deletingId === review.id"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

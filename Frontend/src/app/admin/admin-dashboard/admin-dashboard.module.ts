@@ -22,6 +22,7 @@ import { AdminPromotionsComponent } from '../admin-promotions/admin-promotions.c
 import { AdminSettingsComponent } from '../admin-settings/admin-settings.component';
 import { AdminSubscriptionComponent } from '../admin-subscription/admin-subscription.component';
 import { AdminUsersComponent } from '../admin-users/admin-users.component';
+import { AdminReviewsComponent } from '../admin-reviews/admin-reviews.component';
 
 @NgModule({
   declarations: [
@@ -42,6 +43,7 @@ import { AdminUsersComponent } from '../admin-users/admin-users.component';
     AdminSettingsComponent,
     AdminSubscriptionComponent,
     AdminUsersComponent,
+    AdminReviewsComponent,
   ],
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, SharedModule, AdminRoutingModule],
   exports: [AdminDashboardComponent, AdminFooterComponent],

@@ -11,8 +11,14 @@ import com.example.backend.service.MenuService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -59,6 +65,51 @@ public class AdminMenuController {
     @PostMapping("/bulk")
     public List<MenuItem> createBulkMenuItems(@RequestBody List<MenuItem> menuItems) {
         return menuService.saveAllMenuItems(menuItems);
+    }
+
+    /**
+     * CSV import — expected header row: name,price,category,description,stock
+     * Returns { created, skipped, errors }
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/import-csv")
+    public ResponseEntity<?> importCsv(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) return ResponseEntity.badRequest().body("CSV file is empty.");
+        int created = 0, skipped = 0;
+        List<String> errors = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            String line;
+            int row = 0;
+            while ((line = reader.readLine()) != null) {
+                row++;
+                if (row == 1) continue; // skip header
+                if (line.isBlank()) continue;
+                String[] cols = line.split(",", -1);
+                if (cols.length < 3) { errors.add("Row " + row + ": need at least name,price,category"); skipped++; continue; }
+                try {
+                    MenuItem item = new MenuItem();
+                    item.setName(cols[0].trim());
+                    item.setPrice(Double.parseDouble(cols[1].trim()));
+                    item.setCategory(cols[2].trim());
+                    if (cols.length > 3) item.setDescription(cols[3].trim());
+                    if (cols.length > 4 && !cols[4].isBlank()) item.setStock(Integer.parseInt(cols[4].trim()));
+                    item.setIsAvailable(true);
+                    menuService.saveMenuItem(item);
+                    created++;
+                } catch (Exception e) {
+                    errors.add("Row " + row + ": " + e.getMessage());
+                    skipped++;
+                }
+            }
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to read file: " + e.getMessage());
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("created", created);
+        result.put("skipped", skipped);
+        result.put("errors", errors);
+        return ResponseEntity.ok(result);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

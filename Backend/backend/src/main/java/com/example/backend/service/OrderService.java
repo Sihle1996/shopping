@@ -19,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
+import com.example.backend.service.LoyaltyService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
@@ -40,6 +41,7 @@ public class OrderService {
     private final SimpMessagingTemplate messagingTemplate;
     private final PromotionService promotionService;
     private final EmailService emailService;
+    private final LoyaltyService loyaltyService;
 
     @Transactional
     public OrderDTO placeOrderFromPayment(OrderRequestDTO request, User user) {
@@ -124,6 +126,21 @@ public class OrderService {
             }
         }
 
+        // Apply loyalty points redemption (authenticated users only)
+        if (user != null && request.getLoyaltyPointsRedeemed() > 0) {
+            try {
+                UUID loyaltyTenantId = TenantContext.getCurrentTenantId();
+                if (loyaltyTenantId != null) {
+                    double loyaltyDiscount = loyaltyService.redeemPoints(user, loyaltyTenantId, request.getLoyaltyPointsRedeemed());
+                    discountAmount = BigDecimal.valueOf(discountAmount + loyaltyDiscount)
+                            .setScale(2, RoundingMode.HALF_UP)
+                            .doubleValue();
+                }
+            } catch (Exception ignored) {
+                // redemption failure doesn't block order
+            }
+        }
+
         double totalAmount = BigDecimal.valueOf(Math.max(0, subtotal - discountAmount))
                 .setScale(2, RoundingMode.HALF_UP)
                 .doubleValue();
@@ -167,6 +184,10 @@ public class OrderService {
         }
 
         Order saved = orderRepository.save(order);
+        // Award loyalty points to authenticated customers
+        if (user != null) {
+            loyaltyService.awardPoints(user, saved);
+        }
         OrderDTO dto = convertToOrderDTO(saved);
 
         if (user != null) {

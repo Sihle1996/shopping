@@ -7,13 +7,32 @@
         <h1 class="font-heading text-2xl font-bold text-textDark">Menu Management</h1>
         <p class="text-textLight text-sm mt-1">Add, edit, and manage your menu items</p>
       </div>
-      <app-button
-        [variant]="showForm ? 'ghost' : 'primary'"
-        size="md"
-        [iconLeft]="showForm ? 'bi bi-x-lg' : 'bi bi-plus-lg'"
-        (clicked)="toggleForm()">
-        {{ showForm ? 'Cancel' : 'Add Item' }}
-      </app-button>
+      <div class="flex items-center gap-2">
+        <!-- Hidden CSV file input -->
+        <input id="csvImportInput" type="file" accept=".csv" class="hidden"
+               (change)="onCsvSelected($event)" />
+        <app-button variant="ghost" size="md" iconLeft="bi bi-upload"
+                    [disabled]="importLoading"
+                    (clicked)="triggerCsvImport()">
+          {{ importLoading ? 'Importing...' : 'Import CSV' }}
+        </app-button>
+        <app-button
+          [variant]="showForm ? 'ghost' : 'primary'"
+          size="md"
+          [iconLeft]="showForm ? 'bi bi-x-lg' : 'bi bi-plus-lg'"
+          (clicked)="toggleForm()">
+          {{ showForm ? 'Cancel' : 'Add Item' }}
+        </app-button>
+      </div>
+    </div>
+
+    <!-- Import result banner -->
+    <div *ngIf="importResult"
+         class="mb-4 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200 text-sm text-blue-700 flex items-center justify-between">
+      <span><i class="bi bi-info-circle mr-2"></i>{{ importResult }}</span>
+      <button (click)="importResult = null" class="text-blue-500 hover:text-blue-700">
+        <i class="bi bi-x"></i>
+      </button>
     </div>
 
     <!-- Add/Edit Form -->

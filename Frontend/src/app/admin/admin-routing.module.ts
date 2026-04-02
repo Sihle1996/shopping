@@ -12,6 +12,7 @@ import { AdminPromotionsComponent } from './admin-promotions/admin-promotions.co
 import { AdminSettingsComponent } from './admin-settings/admin-settings.component';
 import { AdminSubscriptionComponent } from './admin-subscription/admin-subscription.component';
 import { AdminUsersComponent } from './admin-users/admin-users.component';
+import { AdminReviewsComponent } from './admin-reviews/admin-reviews.component';
 
 const routes: Routes = [
   {
@@ -29,6 +30,7 @@ const routes: Routes = [
       { path: 'diagnostics', component: AdminDiagnosticsComponent },
       { path: 'subscription', component: AdminSubscriptionComponent },
       { path: 'users', component: AdminUsersComponent },
+      { path: 'reviews', component: AdminReviewsComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

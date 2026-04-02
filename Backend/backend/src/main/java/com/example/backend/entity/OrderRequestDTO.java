@@ -21,4 +21,5 @@ public class OrderRequestDTO {
     private String orderNotes;
     private String guestEmail;
     private String guestPhone;
+    private int loyaltyPointsRedeemed;
 }
