@@ -1,20 +1,9 @@
--- V12: Add the non-nullable columns that Hibernate ddl-auto=update would
--- otherwise try to add WITHOUT a DEFAULT, causing PostgreSQL to reject them
--- on tables that already have rows.  All nullable columns are included here
--- too so Hibernate skips them entirely.
+-- V12: Add the three Phase 3 columns confirmed missing from the live schema.
+-- NOTE: Do NOT use ADD COLUMN IF NOT EXISTS here.
+-- Flyway 10.21.0 on PostgreSQL 18.3 treats the 42701 "duplicate column" NOTICE
+-- that IF NOT EXISTS emits as an error and rolls back the whole migration.
+-- Only the columns that are absent from the DB are listed below.
 
-ALTER TABLE tenants
-    ADD COLUMN IF NOT EXISTS estimated_delivery_minutes INT NOT NULL DEFAULT 30,
-    ADD COLUMN IF NOT EXISTS opening_hours              TEXT,
-    ADD COLUMN IF NOT EXISTS cuisine_type               VARCHAR(50);
-
-ALTER TABLE orders
-    ADD COLUMN IF NOT EXISTS order_notes   TEXT,
-    ADD COLUMN IF NOT EXISTS guest_email   VARCHAR(255),
-    ADD COLUMN IF NOT EXISTS guest_phone   VARCHAR(50);
-
-ALTER TABLE order_items
-    ADD COLUMN IF NOT EXISTS special_instructions TEXT;
-
-ALTER TABLE cart_items
-    ADD COLUMN IF NOT EXISTS selected_choices_json TEXT;
+ALTER TABLE tenants     ADD COLUMN estimated_delivery_minutes INT  NOT NULL DEFAULT 30;
+ALTER TABLE order_items ADD COLUMN special_instructions       TEXT;
+ALTER TABLE cart_items  ADD COLUMN selected_choices_json      TEXT;
