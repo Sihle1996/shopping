@@ -43,6 +43,23 @@ public class OrderService {
     private final EmailService emailService;
     private final LoyaltyService loyaltyService;
 
+    private void checkLowStock(MenuItem menuItem) {
+        if (menuItem.getStock() >= 0 && menuItem.getStock() <= menuItem.getLowStockThreshold()) {
+            UUID tenantId = TenantContext.getCurrentTenantId();
+            if (tenantId != null) {
+                tenantRepository.findById(tenantId).ifPresent(tenant -> {
+                    if (tenant.getEmail() != null && !tenant.getEmail().isBlank()) {
+                        emailService.sendRaw(tenant.getEmail(),
+                            "Low Stock Alert — " + menuItem.getName(),
+                            "<p>Stock for <strong>" + menuItem.getName() + "</strong> has dropped to <strong>"
+                            + menuItem.getStock() + "</strong> units (threshold: " + menuItem.getLowStockThreshold() + ").</p>"
+                            + "<p>Please restock soon to avoid running out.</p>");
+                    }
+                });
+            }
+        }
+    }
+
     @Transactional
     public OrderDTO placeOrderFromPayment(OrderRequestDTO request, User user) {
         List<OrderItem> orderItems = new ArrayList<>();
@@ -77,6 +94,7 @@ public class OrderService {
                 menuItem.setReservedStock(menuItem.getReservedStock() + itemDTO.getQuantity());
             }
             menuItemRepository.save(menuItem);
+            checkLowStock(menuItem);
 
             InventoryLog log = new InventoryLog();
             log.setMenuItem(menuItem);
@@ -168,6 +186,19 @@ public class OrderService {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null) {
             tenantRepository.findById(tenantId).ifPresent(tenant -> {
+                // Enforce store-closed check
+                if (Boolean.FALSE.equals(tenant.getIsOpen())) {
+                    throw new IllegalStateException("This store is currently closed and not accepting orders.");
+                }
+                // Enforce minimum order amount
+                if (tenant.getMinimumOrderAmount() != null) {
+                    BigDecimal min = tenant.getMinimumOrderAmount();
+                    if (BigDecimal.valueOf(totalAmount).compareTo(min) < 0) {
+                        throw new IllegalStateException(
+                            "Minimum order amount is R" + min.setScale(2, RoundingMode.HALF_UP) +
+                            ". Your order total is R" + BigDecimal.valueOf(totalAmount).setScale(2, RoundingMode.HALF_UP) + ".");
+                    }
+                }
                 order.setTenant(tenant);
                 if (tenant.getPlatformCommissionPercent() != null) {
                     double fee = BigDecimal.valueOf(totalAmount)

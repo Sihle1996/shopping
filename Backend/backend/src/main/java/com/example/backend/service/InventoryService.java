@@ -29,6 +29,7 @@ public class InventoryService {
     private final MenuItemRepository menuItemRepository;
     private final InventoryLogRepository inventoryLogRepository;
     private final TenantRepository tenantRepository;
+    private final EmailService emailService;
 
     @Transactional
     public List<MenuItem> adjustInventory(List<InventoryAdjustmentDTO> adjustments) {
@@ -47,7 +48,25 @@ public class InventoryService {
             } else if (item.getStock() > 0) {
                 item.setIsAvailable(true);
             }
-            updated.add(menuItemRepository.save(item));
+            MenuItem saved = menuItemRepository.save(item);
+            updated.add(saved);
+
+            // Low stock alert: notify admin by email when stock drops to/below threshold
+            if (adj.getStockChange() < 0 && saved.getStock() >= 0
+                    && saved.getStock() <= saved.getLowStockThreshold()) {
+                UUID alertTenantId = TenantContext.getCurrentTenantId();
+                if (alertTenantId != null) {
+                    tenantRepository.findById(alertTenantId).ifPresent(tenant -> {
+                        if (tenant.getEmail() != null && !tenant.getEmail().isBlank()) {
+                            emailService.sendRaw(tenant.getEmail(),
+                                "Low Stock Alert — " + saved.getName(),
+                                "<p>Stock for <strong>" + saved.getName() + "</strong> has dropped to <strong>"
+                                + saved.getStock() + "</strong> units (threshold: " + saved.getLowStockThreshold() + ").</p>"
+                                + "<p>Please restock soon to avoid running out.</p>");
+                        }
+                    });
+                }
+            }
 
             InventoryLog log = new InventoryLog();
             log.setMenuItem(item);

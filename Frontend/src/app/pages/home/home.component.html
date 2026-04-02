@@ -182,6 +182,31 @@
       </div>
     </div>
 
+    <!-- ── Customer Reviews Section ─────────────────────────────── -->
+    <section *ngIf="reviews.length > 0" class="px-4 lg:px-8 py-6 border-t border-borderColor mt-4">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-heading text-lg font-bold text-textDark">Customer Reviews</h2>
+        <span class="text-sm text-textMuted">
+          <i class="bi bi-star-fill text-amber-400 mr-1"></i>
+          {{ avgRating | number:'1.1-1' }} ({{ reviews.length }})
+        </span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div *ngFor="let r of reviews.slice(0, 6)"
+             class="bg-white rounded-2xl border border-borderColor p-4 shadow-sm">
+          <div class="flex items-center gap-1 mb-2">
+            <i *ngFor="let s of [1,2,3,4,5]"
+               class="bi text-sm"
+               [class.bi-star-fill]="s <= r.rating"
+               [class.bi-star]="s > r.rating"
+               [ngClass]="s <= r.rating ? 'text-amber-400' : 'text-gray-300'"></i>
+          </div>
+          <p *ngIf="r.comment" class="text-textDark text-sm leading-relaxed line-clamp-3">{{ r.comment }}</p>
+          <p class="text-textMuted text-xs mt-2">{{ r.createdAt | date:'mediumDate' }}</p>
+        </div>
+      </div>
+    </section>
+
     <!-- Footer -->
     <div class="px-5 py-4 border-t border-borderColor flex-shrink-0">
       <button (click)="confirmModifiers()"

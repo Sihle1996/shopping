@@ -53,8 +53,6 @@ public class Tenant {
     @Builder.Default
     private BigDecimal platformCommissionPercent = new BigDecimal("4.00");
 
-    private String stripeAccountId;
-
     @Column(nullable = false)
     @Builder.Default
     private String subscriptionStatus = "TRIAL";

@@ -1,6 +1,23 @@
 <div class="min-h-screen bg-surface py-6 px-4 lg:py-10 lg:px-8">
   <div class="max-w-5xl mx-auto animate-fade-in">
 
+    <!-- Store closed banner -->
+    <div *ngIf="!storeIsOpen"
+         class="mb-6 bg-red-50 border border-red-200 rounded-2xl px-5 py-4 flex items-center gap-3 text-red-700">
+      <i class="bi bi-shop-window text-xl flex-shrink-0"></i>
+      <div>
+        <p class="font-semibold text-sm">Store is currently closed</p>
+        <p class="text-xs text-red-500 mt-0.5">Orders cannot be placed right now. Please check back later.</p>
+      </div>
+    </div>
+
+    <!-- Minimum order warning -->
+    <div *ngIf="belowMinimum"
+         class="mb-6 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 flex items-center gap-3 text-amber-700">
+      <i class="bi bi-exclamation-triangle text-xl flex-shrink-0"></i>
+      <p class="text-sm">Minimum order is <strong>R{{ minimumOrderAmount!.toFixed(2) }}</strong>. Add more items to continue.</p>
+    </div>
+
     <!-- Header -->
     <div class="text-center mb-8">
       <div class="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-md">

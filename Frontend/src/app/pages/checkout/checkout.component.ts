@@ -32,6 +32,12 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   discount: number = 0;
   get totalPrice(): number { return Math.max(0, this.subtotal - this.discount - this.loyaltyDiscount); }
 
+  storeIsOpen: boolean = true;
+  minimumOrderAmount: number | null = null;
+  get belowMinimum(): boolean {
+    return this.minimumOrderAmount !== null && this.totalPrice < this.minimumOrderAmount;
+  }
+
   showPayPal: boolean = false;
 
   // Promo code
@@ -96,6 +102,20 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.isLoggedIn = this.authService.isLoggedIn();
+    // Load tenant info for store-closed and minimum order checks
+    const tenantId = localStorage.getItem('tenantId');
+    if (tenantId) {
+      const slug = localStorage.getItem('storeSlug');
+      if (slug) {
+        this.http.get<any>(`${environment.apiUrl}/api/tenants/${slug}`).subscribe({
+          next: (t) => {
+            this.storeIsOpen = t.isOpen !== false;
+            this.minimumOrderAmount = t.minimumOrderAmount ?? null;
+          },
+          error: () => {}
+        });
+      }
+    }
     this.loadCartAndPromos();
     if (this.isLoggedIn) {
       this.loyaltyService.getBalance().subscribe({
@@ -377,6 +397,14 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
 
   onSubmit(): void {
     const d = this.deliveryDetails;
+    if (!this.storeIsOpen) {
+      this.toastr.error('This store is currently closed and not accepting orders.');
+      return;
+    }
+    if (this.belowMinimum) {
+      this.toastr.warning(`Minimum order amount is R${this.minimumOrderAmount!.toFixed(2)}. Add more items to continue.`);
+      return;
+    }
     if (!d.address || !d.city || !d.zip || !d.phone) {
       this.toastr.warning('Please fill in all delivery fields');
       return;

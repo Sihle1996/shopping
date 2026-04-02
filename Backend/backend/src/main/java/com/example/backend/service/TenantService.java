@@ -54,7 +54,6 @@ public class TenantService {
         if (updates.getDeliveryRadiusKm() != null) tenant.setDeliveryRadiusKm(updates.getDeliveryRadiusKm());
         if (updates.getDeliveryFeeBase() != null) tenant.setDeliveryFeeBase(updates.getDeliveryFeeBase());
         if (updates.getPlatformCommissionPercent() != null) tenant.setPlatformCommissionPercent(updates.getPlatformCommissionPercent());
-        if (updates.getStripeAccountId() != null) tenant.setStripeAccountId(updates.getStripeAccountId());
         if (updates.getSubscriptionStatus() != null) tenant.setSubscriptionStatus(updates.getSubscriptionStatus());
         if (updates.getSubscriptionPlan() != null) tenant.setSubscriptionPlan(updates.getSubscriptionPlan());
         if (updates.getMinimumOrderAmount() != null) tenant.setMinimumOrderAmount(updates.getMinimumOrderAmount());
