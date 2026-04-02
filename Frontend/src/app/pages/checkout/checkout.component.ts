@@ -160,14 +160,14 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     ).subscribe({
       next: (items) => {
         this.cartItems = items;
-        this.subtotal = items.reduce((sum, item) => sum + item.menuItemPrice * item.quantity, 0);
+        this.subtotal = items.reduce((sum, item) => sum + (item.totalPrice ?? item.menuItemPrice * item.quantity), 0);
         this.recalcDiscount();
         this.cdr.detectChanges();
       },
       error: () => {
         this.cartService.getCartItems().subscribe(items => {
           this.cartItems = items;
-          this.subtotal = items.reduce((sum, item) => sum + item.menuItemPrice * item.quantity, 0);
+          this.subtotal = items.reduce((sum, item) => sum + (item.totalPrice ?? item.menuItemPrice * item.quantity), 0);
         });
       }
     });
@@ -390,7 +390,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
 
     this.cartService.getCartItems().subscribe(items => {
       this.cartItems = items;
-      this.subtotal = items.reduce((sum, item) => sum + item.menuItemPrice * item.quantity, 0);
+      this.subtotal = items.reduce((sum, item) => sum + (item.totalPrice ?? item.menuItemPrice * item.quantity), 0);
       this.recalcDiscount();
       this.showPayPal = true;
       this.cdr.detectChanges();

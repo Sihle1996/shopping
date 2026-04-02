@@ -93,7 +93,7 @@ export class CartService {
 
   private updateTotalPrice(): void {
     const cartItems = this.cartItems.value;
-    const total = cartItems.reduce((sum, item) => sum + (item.menuItemPrice * item.quantity), 0);
+    const total = cartItems.reduce((sum, item) => sum + (item.totalPrice ?? item.menuItemPrice * item.quantity), 0);
     this.totalPrice.next(total);
   }
 
@@ -117,9 +117,14 @@ export class CartService {
       const existing = cart.find(
         i => i.menuItemId === menuItemId && (i.selectedChoicesJson || '') === (selectedChoicesJson || '')
       );
+      const modSum = selectedChoicesJson
+        ? (JSON.parse(selectedChoicesJson) as any[]).reduce((s: number, c: any) => s + (c.priceModifier || 0), 0)
+        : 0;
+      const effectiveUnitPrice = (itemInfo?.price || 0) + modSum;
       if (existing) {
         existing.quantity += quantity;
-        existing.totalPrice = existing.menuItemPrice * existing.quantity;
+        existing.menuItemPrice = effectiveUnitPrice;
+        existing.totalPrice = effectiveUnitPrice * existing.quantity;
       } else {
         const id = typeof crypto !== 'undefined' && crypto.randomUUID
           ? crypto.randomUUID()
@@ -129,9 +134,9 @@ export class CartService {
           menuItemId,
           menuItemName: itemInfo?.name || 'Item',
           menuItemCategory: itemInfo?.category,
-          menuItemPrice: itemInfo?.price || 0,
+          menuItemPrice: effectiveUnitPrice,
           quantity,
-          totalPrice: (itemInfo?.price || 0) * quantity,
+          totalPrice: effectiveUnitPrice * quantity,
           image: itemInfo?.image || 'assets/placeholder.png',
           size,
           selectedChoicesJson: selectedChoicesJson || undefined

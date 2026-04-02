@@ -35,8 +35,8 @@ public class ReviewController {
 
         List<Review> reviews = reviewRepository.findByTenant_IdOrderByCreatedAtDesc(tenantId);
         List<Map<String, Object>> result = reviews.stream().map(r -> {
-            String name = r.getUser() != null
-                    ? r.getUser().getFirstName() + " " + r.getUser().getLastName().charAt(0) + "."
+            String name = r.getUser() != null && r.getUser().getFullName() != null
+                    ? r.getUser().getFullName()
                     : "Guest";
             return Map.<String, Object>of(
                     "id", r.getId(),
@@ -96,7 +96,20 @@ public class ReviewController {
     public ResponseEntity<?> adminReviews() {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId == null) return ResponseEntity.badRequest().build();
-        return ResponseEntity.ok(reviewRepository.findByTenant_IdOrderByCreatedAtDesc(tenantId));
+        List<Review> reviews = reviewRepository.findByTenant_IdOrderByCreatedAtDesc(tenantId);
+        List<Map<String, Object>> result = reviews.stream().map(r -> {
+            String name = r.getUser() != null && r.getUser().getFullName() != null
+                    ? r.getUser().getFullName()
+                    : "Guest";
+            return Map.<String, Object>of(
+                    "id", r.getId(),
+                    "rating", r.getRating(),
+                    "comment", r.getComment() != null ? r.getComment() : "",
+                    "userName", name,
+                    "createdAt", r.getCreatedAt() != null ? r.getCreatedAt().toString() : ""
+            );
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(result);
     }
 
     /** Admin: delete a review */

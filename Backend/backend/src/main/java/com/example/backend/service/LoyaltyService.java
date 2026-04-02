@@ -10,7 +10,8 @@ import com.example.backend.repository.TenantRepository;
 import com.example.backend.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -64,8 +65,10 @@ public class LoyaltyService {
         txRepo.save(tx);
     }
 
-    /** Called at checkout — deducts points and returns rand discount */
-    @Transactional
+    /** Called at checkout — deducts points and returns rand discount.
+     *  REQUIRES_NEW ensures this commits independently so a catch in the
+     *  caller doesn't leave the outer transaction marked rollback-only. */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public double redeemPoints(User user, UUID tenantId, int pointsToRedeem) {
         if (pointsToRedeem < POINTS_PER_REDEMPTION) {
             throw new IllegalArgumentException("Minimum redemption is " + POINTS_PER_REDEMPTION + " points.");

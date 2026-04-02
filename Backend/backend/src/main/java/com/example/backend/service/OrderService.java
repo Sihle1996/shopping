@@ -367,6 +367,7 @@ public class OrderService {
             dto.setQuantity(item.getQuantity());
             dto.setSize(item.getSize());
             dto.setPrice(item.getTotalPrice());
+            if (item.getMenuItem() != null) dto.setProductId(item.getMenuItem().getId());
             dto.setSpecialInstructions(item.getSpecialInstructions());
             if (item.getChoices() != null && !item.getChoices().isEmpty()) {
                 dto.setSelectedChoices(item.getChoices().stream().map(c -> {

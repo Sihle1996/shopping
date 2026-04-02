@@ -12,7 +12,7 @@ import { environment } from 'src/environments/environment';
 import { BadgeVariant } from 'src/app/shared/components/badge/badge.component';
 
 interface OrderItemDTO {
-  menuItemId: string;
+  productId: string;
   name: string;
   quantity: number;
   size?: string;
@@ -228,7 +228,7 @@ export class HistoryordersComponent implements OnInit, OnDestroy {
     if (!order.items?.length) { this.toastr.warning('No items to reorder'); return; }
     this.reorderingId = order.id;
     const adds = order.items.map(item =>
-      this.cartService.addToCart(item.menuItemId, item.quantity, item.size || 'Regular')
+      this.cartService.addToCart(item.productId, item.quantity, item.size || 'Regular')
     );
     let done = 0;
     adds.forEach(obs => obs.subscribe({

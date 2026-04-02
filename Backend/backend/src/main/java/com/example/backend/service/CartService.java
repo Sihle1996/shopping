@@ -8,6 +8,8 @@ import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.tenant.TenantContext;
 import com.example.backend.user.User;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -59,10 +61,11 @@ public class CartService {
         }
 
         cartItem.setQuantity(newTotalQty);
-        cartItem.setTotalPrice(menuItem.getPrice() * cartItem.getQuantity());
         if (selectedChoicesJson != null) {
             cartItem.setSelectedChoicesJson(selectedChoicesJson);
         }
+        double unitPrice = menuItem.getPrice() + sumModifiers(cartItem.getSelectedChoicesJson());
+        cartItem.setTotalPrice(unitPrice * cartItem.getQuantity());
 
         cartItem = cartItemRepository.save(cartItem);
 
@@ -87,7 +90,8 @@ public class CartService {
         }
 
         cartItem.setQuantity(quantity);
-        cartItem.setTotalPrice(cartItem.getMenuItem().getPrice() * quantity);
+        double unitPrice = cartItem.getMenuItem().getPrice() + sumModifiers(cartItem.getSelectedChoicesJson());
+        cartItem.setTotalPrice(unitPrice * quantity);
 
         cartItem = cartItemRepository.save(cartItem);
 
@@ -110,12 +114,31 @@ public class CartService {
         cartItemRepository.deleteAll(userCart);
     }
 
+    /** Sums the priceModifier values from a selectedChoicesJson string. */
+    private double sumModifiers(String selectedChoicesJson) {
+        if (selectedChoicesJson == null || selectedChoicesJson.isBlank()) return 0.0;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode arr = mapper.readTree(selectedChoicesJson);
+            double total = 0.0;
+            if (arr.isArray()) {
+                for (JsonNode node : arr) {
+                    total += node.path("priceModifier").asDouble(0.0);
+                }
+            }
+            return total;
+        } catch (Exception e) {
+            return 0.0;
+        }
+    }
+
     private CartItemDTO convertToDTO(CartItem cartItem) {
         CartItemDTO dto = new CartItemDTO();
         dto.setId(cartItem.getId());
         dto.setMenuItemId(cartItem.getMenuItem().getId());
         dto.setMenuItemName(cartItem.getMenuItem().getName());
-        dto.setMenuItemPrice(cartItem.getMenuItem().getPrice());
+        double effectiveUnitPrice = cartItem.getMenuItem().getPrice() + sumModifiers(cartItem.getSelectedChoicesJson());
+        dto.setMenuItemPrice(effectiveUnitPrice);
         dto.setQuantity(cartItem.getQuantity());
         dto.setTotalPrice(cartItem.getTotalPrice());
         dto.setImage(cartItem.getMenuItem().getImage());

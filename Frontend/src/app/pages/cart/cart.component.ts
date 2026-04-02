@@ -50,7 +50,7 @@ export class CartComponent implements OnInit {
   }
 
   private updateTotals(): void {
-    this.subtotal = this.cartItems.reduce((sum, item) => sum + item.menuItemPrice * item.quantity, 0);
+    this.subtotal = this.cartItems.reduce((sum, item) => sum + (item.totalPrice ?? item.menuItemPrice * item.quantity), 0);
     this.bestPromo = this.pickBestPromo();
     if (!this.bestPromo || !this.bestPromo.discountPercent) { this.discount = 0; return; }
     const pct = this.bestPromo.discountPercent / 100;
