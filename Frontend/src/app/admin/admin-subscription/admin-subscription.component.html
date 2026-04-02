@@ -130,10 +130,11 @@
       </div>
     </div>
 
-    <!-- Upgrade CTA -->
-    <div *ngIf="!upgradeRequested" class="bg-primary-50 rounded-xl border border-primary-200 p-4 text-center">
+    <!-- Upgrade CTA — only shown when not already on the highest plan -->
+    <div *ngIf="!upgradeRequested && info.plan !== 'ENTERPRISE'" class="bg-primary-50 rounded-xl border border-primary-200 p-4 text-center">
       <p class="text-sm font-semibold text-textDark mb-1">Want more?</p>
-      <p class="text-xs text-textMuted mb-3">Upgrade to PRO or ENTERPRISE for unlimited items, analytics, and more.</p>
+      <p *ngIf="info.plan === 'BASIC'" class="text-xs text-textMuted mb-3">Upgrade to PRO or ENTERPRISE for unlimited items, analytics, and more.</p>
+      <p *ngIf="info.plan !== 'BASIC'" class="text-xs text-textMuted mb-3">Upgrade to ENTERPRISE for unlimited items, radius, and a reduced commission rate.</p>
       <button (click)="requestUpgrade()"
               class="px-5 py-2 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary-600 transition-colors">
         Request Upgrade
