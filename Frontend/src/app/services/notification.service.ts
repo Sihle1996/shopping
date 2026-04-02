@@ -95,9 +95,7 @@ export class NotificationService implements OnDestroy {
     }
   };
 
-  /** Subscribe to real-time order updates for a specific customer user ID.
-   *  If the current STOMP session has no auth (opened before login), reconnect
-   *  with the current token first so the server can validate the subscription. */
+  /** Subscribe to real-time order updates for a specific customer user ID. */
   subscribeToOrderUpdates(userId: string): Observable<any> {
     const subject = new Subject<any>();
     const topic = `/topic/orders/${userId}`;
@@ -108,20 +106,7 @@ export class NotificationService implements OnDestroy {
       });
     };
 
-    const token = this.auth.getToken();
-    const hasAuth = !!(this.client as any)._connectHeaders?.['Authorization'];
-
-    if (token && !hasAuth) {
-      // Session was opened without auth — reconnect with token
-      this.client.deactivate().then(() => {
-        this.connect();
-        const origConnect = this.client.onConnect;
-        this.client.onConnect = (frame) => {
-          origConnect?.(frame);
-          doSubscribe();
-        };
-      });
-    } else if (this.client?.connected) {
+    if (this.client?.connected) {
       doSubscribe();
     } else {
       const orig = this.client.onConnect;
