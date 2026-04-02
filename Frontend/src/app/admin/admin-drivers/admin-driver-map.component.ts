@@ -181,6 +181,7 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
 
       // Apply data that arrived before map was ready
       this.refreshSource();
+      this.fitToDrivers();
     });
   }
 
@@ -218,8 +219,24 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
       });
       if (this.mapLoaded) {
         this.refreshSource();
+        this.fitToDrivers();
       }
     });
+  }
+
+  private fitToDrivers(): void {
+    const active = Object.values(this.drivers).filter((d: any) =>
+      this.selectedStatuses.has(d.driverStatus) && d.history?.length
+    );
+    if (!active.length) return;
+    if (active.length === 1) {
+      const [lng, lat] = active[0].history[active[0].history.length - 1];
+      this.map.flyTo({ center: [lng, lat], zoom: 14, pitch: 45, duration: 1200 });
+    } else {
+      const bounds = new mapboxgl.LngLatBounds();
+      active.forEach((d: any) => bounds.extend(d.history[d.history.length - 1]));
+      this.map.fitBounds(bounds, { padding: 80, maxZoom: 14, pitch: 45, duration: 1200 } as any);
+    }
   }
 
   private connectWebSocket(): void {
@@ -235,6 +252,7 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
       this.stompClient.subscribe('/topic/drivers', (message: any) => {
         const loc: DriverLocation = JSON.parse(message.body);
         if (!loc.latitude || !loc.longitude || !this.isValidSACoord(loc.latitude, loc.longitude)) return;
+        const isNew = !this.drivers[loc.id];
         const driver = this.drivers[loc.id] || { history: [] };
         driver.email = loc.email;
         driver.driverStatus = loc.driverStatus;
@@ -248,6 +266,7 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
         if (this.mapLoaded) {
           this.refreshSource();
           this.updateRoute(loc.id);
+          if (isNew) this.fitToDrivers();
         }
       });
     });
