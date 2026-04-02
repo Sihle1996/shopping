@@ -13,6 +13,10 @@ import { environment } from 'src/environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { Stomp } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
+import { jwtDecode } from 'jwt-decode';
+import { AuthService } from 'src/app/services/auth.service';
 
 export interface DeliveryStop {
   id: string;
@@ -103,8 +107,11 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
   @Input() deliveryAddress!: string;
   @Input() deliveryStops: DeliveryStop[] = [];
   @Input() mapId = 'map';
+  @Input() driverStatus = 'AVAILABLE';
   @Output() mapLoaded = new EventEmitter<void>();
   @Output() arrived = new EventEmitter<string>();
+
+  private stompClient: any;
 
   private map: mapboxgl.Map | null = null;
   private driverMarker: mapboxgl.Marker | null = null;
@@ -132,10 +139,11 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
   voiceEnabled = true;
   isNearDestination = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private authService: AuthService) {}
 
   ngAfterViewInit(): void {
     setTimeout(() => this.initMap(), 100);
+    this.connectLocationSocket();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -153,6 +161,7 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
     if (this.routeSub) { this.routeSub.unsubscribe(); this.routeSub = null; }
     if (this.watchId !== null) navigator.geolocation.clearWatch(this.watchId);
     if (this.map) { this.map.remove(); this.map = null; }
+    if (this.stompClient) { this.stompClient.disconnect(); }
     speechSynthesis.cancel();
   }
 
@@ -352,6 +361,7 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
       }
       this.checkArrivals(newCoords);
       this.updateVoiceNavigation();
+      this.sendLocationUpdate(newCoords, pos.coords.speed ?? 0);
     }, () => {}, { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 });
   }
 
@@ -437,5 +447,32 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
   recenterMap(): void {
     this.isFollowing = true;
     if (this.map && this.driverCoords) this.map.flyTo({ center: this.driverCoords, zoom: 17.5, pitch: 65, duration: 1200 });
+  }
+
+  private connectLocationSocket(): void {
+    const token = this.authService.getToken();
+    if (!token) return;
+    const socketFactory = () => new SockJS(`${environment.apiUrl}/ws`);
+    this.stompClient = Stomp.over(socketFactory);
+    this.stompClient.debug = () => {};
+    this.stompClient.connect({ Authorization: `Bearer ${token}` }, () => {});
+  }
+
+  private sendLocationUpdate(coords: [number, number], speedMs: number): void {
+    const token = this.authService.getToken();
+    const userId = this.authService.getUserId();
+    if (!token || !userId || !this.stompClient?.connected) return;
+    try {
+      const decoded: any = jwtDecode(token);
+      const email = decoded.sub || decoded.email || '';
+      this.stompClient.send('/app/drivers', {}, JSON.stringify({
+        id: userId,
+        email,
+        driverStatus: this.driverStatus,
+        latitude: coords[1],
+        longitude: coords[0],
+        speed: speedMs ? +(speedMs * 3.6).toFixed(1) : 0
+      }));
+    } catch { /* silent */ }
   }
 }

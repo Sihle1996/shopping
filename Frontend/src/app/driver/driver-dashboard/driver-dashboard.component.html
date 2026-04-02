@@ -121,7 +121,8 @@
       <div class="h-56">
         <app-driver-map
           [deliveryStops]="deliveryStops"
-          [mapId]="'main-driver-map'">
+          [mapId]="'main-driver-map'"
+          [driverStatus]="availability">
         </app-driver-map>
       </div>
     </div>
@@ -188,7 +189,8 @@
     <app-driver-map
       class="block h-full w-full"
       [deliveryStops]="deliveryStops"
-      [mapId]="'fullscreen-driver-map'">
+      [mapId]="'fullscreen-driver-map'"
+      [driverStatus]="availability">
     </app-driver-map>
   </div>
 
