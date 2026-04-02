@@ -1,8 +1,7 @@
-<div class="flex min-h-screen bg-surface max-w-7xl mx-auto">
+<div class="flex min-h-screen bg-surface">
 
-  <!-- Desktop sidebar — sticky so it stays within the max-w container -->
-  <aside class="hidden lg:flex flex-col w-64 bg-white border-r border-borderColor
-                sticky top-14 self-start h-[calc(100vh-3.5rem)] z-30 overflow-y-auto flex-shrink-0">
+  <!-- Desktop sidebar (lg+) -->
+  <aside class="hidden lg:flex flex-col w-64 bg-white border-r border-borderColor fixed top-14 bottom-0 z-30 overflow-y-auto">
     <nav class="p-3 space-y-1 flex-1">
       <a *ngFor="let item of navItems"
          [routerLink]="item.route"
@@ -15,8 +14,8 @@
     </nav>
   </aside>
 
-  <!-- Main content area -->
-  <main class="flex-1 pb-24 lg:pb-6 min-w-0">
+  <!-- Main content — offset on desktop for sidebar -->
+  <main class="flex-1 lg:ml-64 pb-24 lg:pb-6 min-h-screen">
     <router-outlet></router-outlet>
   </main>
 
