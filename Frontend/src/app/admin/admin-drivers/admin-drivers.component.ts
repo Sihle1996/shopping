@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { AdminService } from 'src/app/services/admin.service';
 
 @Component({
@@ -6,22 +6,67 @@ import { AdminService } from 'src/app/services/admin.service';
   templateUrl: './admin-drivers.component.html',
   styleUrls: ['./admin-drivers.component.scss']
 })
-  export class AdminDriversComponent {
-    newDriver = { email: '', password: '' };
+export class AdminDriversComponent implements OnInit {
+  newDriver = { email: '', password: '' };
+  drivers: any[] = [];
+  loading = false;
+  submitting = false;
+  deletingId: string | null = null;
+  toast: string | null = null;
+  toastType: 'success' | 'error' = 'success';
 
-    constructor(private adminService: AdminService) {}
+  constructor(private adminService: AdminService) {}
 
-    addDriver(): void {
-      if (!this.newDriver.email || !this.newDriver.password) {
-        return;
-      }
-
-      this.adminService.createDriver(this.newDriver).subscribe({
-        next: () => {
-          this.newDriver = { email: '', password: '' };
-        },
-        error: () => {}
-      });
-    }
+  ngOnInit(): void {
+    this.loadDrivers();
   }
 
+  loadDrivers(): void {
+    this.loading = true;
+    this.adminService.getDrivers().subscribe({
+      next: (drivers: any[]) => {
+        this.drivers = drivers;
+        this.loading = false;
+      },
+      error: () => { this.loading = false; }
+    });
+  }
+
+  addDriver(): void {
+    if (!this.newDriver.email || !this.newDriver.password) return;
+    this.submitting = true;
+    this.adminService.createDriver(this.newDriver).subscribe({
+      next: () => {
+        this.newDriver = { email: '', password: '' };
+        this.submitting = false;
+        this.showToast('Driver added successfully', 'success');
+        this.loadDrivers();
+      },
+      error: (err: any) => {
+        this.submitting = false;
+        this.showToast(err?.error?.message || 'Failed to add driver', 'error');
+      }
+    });
+  }
+
+  deleteDriver(id: string): void {
+    this.deletingId = id;
+    this.adminService.deleteDriver(id).subscribe({
+      next: () => {
+        this.drivers = this.drivers.filter((d: any) => d.id !== id);
+        this.deletingId = null;
+        this.showToast('Driver removed', 'success');
+      },
+      error: () => {
+        this.deletingId = null;
+        this.showToast('Failed to remove driver', 'error');
+      }
+    });
+  }
+
+  private showToast(msg: string, type: 'success' | 'error'): void {
+    this.toast = msg;
+    this.toastType = type;
+    setTimeout(() => (this.toast = null), 3000);
+  }
+}

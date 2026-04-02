@@ -1,48 +1,108 @@
-<div class="px-4 pt-6 lg:px-8">
-  <div class="w-full">
+<div class="px-4 pt-6 pb-24 lg:px-8 lg:pt-8">
 
-    <!-- Header -->
-    <div class="mb-6">
-      <h1 class="font-heading text-2xl font-bold text-textDark">Driver Management</h1>
-      <p class="text-textLight text-sm mt-1">Add drivers and track their locations</p>
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="font-heading text-2xl font-bold text-textDark">Drivers</h1>
+      <p class="text-textLight text-sm mt-1">Manage drivers and track their live locations</p>
     </div>
+    <span *ngIf="!loading"
+          class="inline-flex items-center gap-1.5 text-sm text-textMuted bg-white border border-borderColor px-3 py-1.5 rounded-xl">
+      <i class="bi bi-people text-primary text-xs"></i>
+      {{ drivers.length }} {{ drivers.length === 1 ? 'driver' : 'drivers' }}
+    </span>
+  </div>
 
-    <!-- Add Driver Form -->
-    <div class="bg-white rounded-2xl shadow-card p-6 mb-6">
-      <h3 class="font-heading text-base font-semibold text-textDark mb-4">Add New Driver</h3>
-      <form (ngSubmit)="addDriver()" class="flex flex-col sm:flex-row gap-3">
-        <div class="relative flex-1">
-          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-            <i class="bi bi-envelope text-textMuted"></i>
+  <!-- Desktop: sidebar + map | Mobile: stacked -->
+  <div class="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6 items-start">
+
+    <!-- LEFT: Add form + driver list -->
+    <div class="space-y-4">
+
+      <!-- Add Driver -->
+      <div class="bg-white rounded-2xl shadow-card border border-borderColor p-5">
+        <h3 class="font-semibold text-sm text-textDark mb-4">Add New Driver</h3>
+        <form (ngSubmit)="addDriver()" class="space-y-3">
+          <div class="relative">
+            <i class="bi bi-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted text-sm pointer-events-none"></i>
+            <input type="email" [(ngModel)]="newDriver.email" name="email" required
+                   placeholder="driver@email.com"
+                   class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                          placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
           </div>
-          <input type="email" [(ngModel)]="newDriver.email" name="email" required
-                 class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                        placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
-                 placeholder="driver@email.com" />
-        </div>
-        <div class="relative flex-1">
-          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-            <i class="bi bi-lock text-textMuted"></i>
+          <div class="relative">
+            <i class="bi bi-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted text-sm pointer-events-none"></i>
+            <input type="password" [(ngModel)]="newDriver.password" name="password" required
+                   placeholder="Password"
+                   class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                          placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
           </div>
-          <input type="password" [(ngModel)]="newDriver.password" name="password" required
-                 class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                        placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
-                 placeholder="Password" />
+          <button type="submit" [disabled]="submitting"
+                  class="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600
+                         transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+            <i class="bi" [ngClass]="submitting ? 'bi-arrow-repeat animate-spin' : 'bi-plus-lg'"></i>
+            {{ submitting ? 'Adding...' : 'Add Driver' }}
+          </button>
+        </form>
+      </div>
+
+      <!-- Driver List -->
+      <div class="bg-white rounded-2xl shadow-card border border-borderColor overflow-hidden">
+        <div class="px-5 py-3.5 border-b border-borderColor">
+          <h3 class="font-semibold text-sm text-textDark">All Drivers</h3>
         </div>
-        <app-button variant="primary" size="md" type="submit" iconLeft="bi bi-plus-lg">
-          Add Driver
-        </app-button>
-      </form>
+
+        <div *ngIf="loading" class="p-4 space-y-3">
+          <div *ngFor="let _ of [1,2,3]" class="h-14 bg-gray-100 rounded-xl animate-pulse"></div>
+        </div>
+
+        <div *ngIf="!loading && drivers.length === 0" class="px-5 py-10 text-center">
+          <i class="bi bi-person-x text-3xl text-textMuted opacity-30 block mb-2"></i>
+          <p class="text-sm text-textMuted">No drivers yet. Add one above.</p>
+        </div>
+
+        <div *ngIf="!loading && drivers.length > 0" class="divide-y divide-borderColor">
+          <div *ngFor="let driver of drivers" class="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50/60 transition-colors">
+            <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+              {{ (driver.fullName || driver.email).charAt(0).toUpperCase() }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-textDark truncate">{{ driver.fullName || driver.email }}</p>
+              <p *ngIf="driver.fullName" class="text-xs text-textMuted truncate">{{ driver.email }}</p>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
+                  [ngClass]="driver.active !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'">
+              {{ driver.active !== false ? 'Active' : 'Off' }}
+            </span>
+            <button (click)="deleteDriver(driver.id)"
+                    [disabled]="deletingId === driver.id"
+                    class="w-8 h-8 flex items-center justify-center rounded-xl text-textMuted
+                           hover:text-danger hover:bg-red-50 transition-colors disabled:opacity-40 flex-shrink-0">
+              <i class="bi text-sm"
+                 [ngClass]="deletingId === driver.id ? 'bi-arrow-repeat animate-spin' : 'bi-trash'"></i>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Driver Map -->
-    <div class="bg-white rounded-2xl shadow-card overflow-hidden">
-      <div class="px-5 py-4 border-b border-borderColor">
-        <h3 class="font-heading text-sm font-semibold text-textDark">Live Driver Locations</h3>
+    <!-- RIGHT: Live Map -->
+    <div class="bg-white rounded-2xl shadow-card border border-borderColor overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-borderColor flex items-center gap-2">
+        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+        <h3 class="font-semibold text-sm text-textDark">Live Driver Locations</h3>
       </div>
-      <div class="p-2">
-        <app-admin-driver-map></app-admin-driver-map>
-      </div>
+      <app-admin-driver-map></app-admin-driver-map>
     </div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div *ngIf="toast"
+     class="fixed bottom-20 left-4 right-4 z-50 flex justify-center pointer-events-none">
+  <div class="px-5 py-2.5 rounded-xl text-sm font-medium shadow-lg text-white animate-fade-in"
+       [ngClass]="toastType === 'success' ? 'bg-gray-900' : 'bg-danger'">
+    {{ toast }}
   </div>
 </div>

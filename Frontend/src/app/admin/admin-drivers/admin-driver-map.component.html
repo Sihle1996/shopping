@@ -1,9 +1,16 @@
-<div class="driver-map-wrapper">
-  <div class="filter-controls mb-2">
-    <label class="mr-4" *ngFor="let status of ['AVAILABLE','UNAVAILABLE']">
-      <input type="checkbox" [checked]="selectedStatuses.has(status)" (change)="toggleStatus(status, $event)" />
-      {{status}}
-    </label>
+<div class="relative" style="height:520px">
+  <!-- Status filter overlay -->
+  <div class="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
+    <button *ngFor="let status of STATUS_LIST"
+            (click)="toggleStatus(status)"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm transition-all border"
+            [ngClass]="selectedStatuses.has(status)
+              ? getStatusActiveClass(status)
+              : 'bg-white text-textMuted border-borderColor opacity-50'">
+      <span class="w-2 h-2 rounded-full flex-shrink-0" [ngClass]="getStatusDotClass(status)"></span>
+      {{ getStatusLabel(status) }}
+    </button>
   </div>
-  <div id="adminDriverMap" class="map-container"></div>
+
+  <div id="adminDriverMap" class="w-full h-full"></div>
 </div>

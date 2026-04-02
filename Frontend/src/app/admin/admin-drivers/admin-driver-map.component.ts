@@ -27,7 +27,10 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
   private stompClient: any;
   private drivers: Record<string, any> = {};
   private replayLength = 5;
-  selectedStatuses = new Set<string>(['AVAILABLE', 'UNAVAILABLE']);
+  private mapLoaded = false;
+  selectedStatuses = new Set<string>(['AVAILABLE', 'UNAVAILABLE', 'ON_DELIVERY']);
+
+  readonly STATUS_LIST = ['AVAILABLE', 'ON_DELIVERY', 'UNAVAILABLE'];
 
   constructor(private adminService: AdminService, private authService: AuthService) {}
 
@@ -46,100 +49,143 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  toggleStatus(status: string, event: any): void {
-    if (event.target.checked) {
-      this.selectedStatuses.add(status);
-    } else {
+  toggleStatus(status: string): void {
+    if (this.selectedStatuses.has(status)) {
       this.selectedStatuses.delete(status);
+    } else {
+      this.selectedStatuses.add(status);
     }
-    this.refreshSource();
+    if (this.mapLoaded) {
+      this.refreshSource();
+    }
+  }
+
+  getStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      AVAILABLE: 'Available',
+      ON_DELIVERY: 'On Delivery',
+      UNAVAILABLE: 'Offline'
+    };
+    return labels[status] ?? status;
+  }
+
+  getStatusDotClass(status: string): string {
+    const classes: Record<string, string> = {
+      AVAILABLE: 'bg-green-500',
+      ON_DELIVERY: 'bg-orange-400',
+      UNAVAILABLE: 'bg-gray-400'
+    };
+    return classes[status] ?? 'bg-gray-400';
+  }
+
+  getStatusActiveClass(status: string): string {
+    const classes: Record<string, string> = {
+      AVAILABLE: 'bg-green-50 text-green-700 border-green-200',
+      ON_DELIVERY: 'bg-orange-50 text-orange-700 border-orange-200',
+      UNAVAILABLE: 'bg-gray-100 text-gray-600 border-gray-200'
+    };
+    return classes[status] ?? 'bg-gray-100 text-gray-600 border-gray-200';
   }
 
   private initMap(): void {
     this.map = new maplibregl.Map({
       container: 'adminDriverMap',
-      style: 'https://demotiles.maplibre.org/style.json',
+      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
       center: [28.0473, -26.2041] as LngLatLike,
-      zoom: 9
+      zoom: 10
     });
 
+    this.map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
     this.map.on('load', () => {
+      this.mapLoaded = true;
+
       this.map.addSource('drivers', {
         type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
-        cluster: true,
-        clusterMaxZoom: 14,
-        clusterRadius: 50
+        data: { type: 'FeatureCollection', features: [] }
       });
 
+      // Driver circles — color by status
       this.map.addLayer({
-        id: 'clusters',
+        id: 'driver-circles',
         type: 'circle',
         source: 'drivers',
-        filter: ['has', 'point_count'],
         paint: {
-          'circle-color': '#51bbd6',
-          'circle-radius': ['step', ['get', 'point_count'], 15, 10, 20, 25, 25]
+          'circle-color': [
+            'match', ['get', 'driverStatus'],
+            'AVAILABLE', '#22c55e',
+            'ON_DELIVERY', '#f97316',
+            '#94a3b8'
+          ],
+          'circle-radius': 10,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff'
         }
       });
 
+      // Driver initial label inside circle
       this.map.addLayer({
-        id: 'cluster-count',
+        id: 'driver-labels',
         type: 'symbol',
         source: 'drivers',
-        filter: ['has', 'point_count'],
         layout: {
-          'text-field': ['get', 'point_count_abbreviated'],
-          'text-font': ['Open Sans Bold'],
-          'text-size': 12
-        }
-      });
-
-      this.map.addLayer({
-        id: 'unclustered-point',
-        type: 'circle',
-        source: 'drivers',
-        filter: ['!', ['has', 'point_count']],
+          'text-field': ['get', 'initial'],
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+          'text-size': 10,
+          'text-allow-overlap': true
+        },
         paint: {
-          'circle-color': '#11b4da',
-          'circle-radius': 8,
-          'circle-stroke-width': 1,
-          'circle-stroke-color': '#fff'
+          'text-color': '#ffffff'
         }
       });
 
-      this.map.on('click', 'unclustered-point', e => {
+      // Click popup
+      this.map.on('click', 'driver-circles', e => {
         const feature = e.features && e.features[0];
         if (!feature) return;
         const id = feature.properties && feature.properties['id'];
         const driver = this.drivers[id];
         if (!driver) return;
         const coords = (feature.geometry as any)['coordinates'];
-        new maplibregl.Popup()
+        new maplibregl.Popup({ offset: 14, closeButton: false })
           .setLngLat(coords as LngLatLike)
           .setHTML(this.popupHtml(driver))
           .addTo(this.map);
       });
+
+      this.map.on('mouseenter', 'driver-circles', () => {
+        this.map.getCanvas().style.cursor = 'pointer';
+      });
+      this.map.on('mouseleave', 'driver-circles', () => {
+        this.map.getCanvas().style.cursor = '';
+      });
+
+      // Apply any data that loaded before the map was ready
+      this.refreshSource();
     });
   }
 
   private popupHtml(driver: any): string {
-    const eta = driver.speed > 0 && driver.history.length > 1
-      ? (this.computeDistance(driver.history.at(-2), driver.history.at(-1)) / driver.speed * 60).toFixed(1)
-      : 'N/A';
-    return `<div><strong>${driver.email}</strong><br>Status: ${driver.driverStatus}<br>Speed: ${driver.speed?.toFixed(1) || '0'} km/h<br>ETA: ${eta} min</div>`;
-  }
-
-  private computeDistance(a: [number, number], b: [number, number]): number {
-    const toRad = (n: number) => (n * Math.PI) / 180;
-    const R = 6371; // km
-    const dLat = toRad(b[1] - a[1]);
-    const dLon = toRad(b[0] - a[0]);
-    const lat1 = toRad(a[1]);
-    const lat2 = toRad(b[1]);
-    const aVal = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
-    const c = 2 * Math.atan2(Math.sqrt(aVal), Math.sqrt(1 - aVal));
-    return R * c;
+    const statusColor: Record<string, string> = {
+      AVAILABLE: '#22c55e',
+      ON_DELIVERY: '#f97316',
+      UNAVAILABLE: '#94a3b8'
+    };
+    const color = statusColor[driver.driverStatus] ?? '#94a3b8';
+    const label = driver.driverStatus === 'ON_DELIVERY' ? 'On Delivery'
+      : driver.driverStatus === 'AVAILABLE' ? 'Available' : 'Offline';
+    const speed = driver.speed > 0 ? `${driver.speed.toFixed(1)} km/h` : 'Stationary';
+    const ping = driver.lastPing ? new Date(driver.lastPing).toLocaleTimeString() : 'N/A';
+    return `
+      <div style="font-family:sans-serif;min-width:160px;padding:4px 0">
+        <p style="font-weight:700;font-size:13px;margin:0 0 6px">${driver.email}</p>
+        <p style="margin:0 0 4px;font-size:12px">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:5px"></span>
+          ${label}
+        </p>
+        <p style="margin:0 0 2px;font-size:11px;color:#64748b">Speed: ${speed}</p>
+        <p style="margin:0;font-size:11px;color:#64748b">Last ping: ${ping}</p>
+      </div>`;
   }
 
   private loadInitialLocations(): void {
@@ -147,7 +193,9 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
       data.forEach((d: DriverLocation) => {
         this.drivers[d.id] = { ...d, history: [[d.longitude, d.latitude]] };
       });
-      this.refreshSource();
+      if (this.mapLoaded) {
+        this.refreshSource();
+      }
     });
   }
 
@@ -173,8 +221,10 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
           driver.history.shift();
         }
         this.drivers[loc.id] = driver;
-        this.refreshSource();
-        this.updateRoute(loc.id);
+        if (this.mapLoaded) {
+          this.refreshSource();
+          this.updateRoute(loc.id);
+        }
       });
     });
   }
@@ -184,12 +234,18 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
       .filter((d: any) => this.selectedStatuses.has(d.driverStatus))
       .map((d: any) => ({
         type: 'Feature',
-        properties: { id: d.id, driverStatus: d.driverStatus, email: d.email },
+        properties: {
+          id: d.id,
+          driverStatus: d.driverStatus,
+          email: d.email,
+          initial: (d.email || '?').charAt(0).toUpperCase()
+        },
         geometry: {
           type: 'Point',
           coordinates: d.history[d.history.length - 1]
         }
       } as Feature<Point>));
+
     const source = this.map.getSource('drivers') as GeoJSONSource;
     if (source) {
       const collection: FeatureCollection<Point> = { type: 'FeatureCollection', features };
@@ -214,9 +270,8 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
         id: routeId,
         type: 'line',
         source: routeId,
-        paint: { 'line-color': '#f00', 'line-width': 2 }
+        paint: { 'line-color': '#f97316', 'line-width': 2, 'line-opacity': 0.7 }
       });
     }
   }
 }
-
