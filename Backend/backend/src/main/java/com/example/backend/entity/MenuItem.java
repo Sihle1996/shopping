@@ -72,7 +72,7 @@ public class MenuItem {
     @ToString.Exclude
     private List<CartItem> cartItems = new ArrayList<>();
 
-    @OneToMany(mappedBy = "menuItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "menuItem", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("sortOrder ASC")
     @ToString.Exclude
     private List<MenuItemOptionGroup> optionGroups = new ArrayList<>();

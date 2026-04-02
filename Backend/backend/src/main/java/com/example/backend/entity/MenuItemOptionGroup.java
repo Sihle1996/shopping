@@ -39,7 +39,7 @@ public class MenuItemOptionGroup {
     @Column(nullable = false)
     private Integer sortOrder = 0;
 
-    @OneToMany(mappedBy = "optionGroup", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "optionGroup", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("sortOrder ASC")
     private List<MenuItemOptionChoice> choices = new ArrayList<>();
 }
