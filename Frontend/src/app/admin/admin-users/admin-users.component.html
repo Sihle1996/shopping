@@ -1,146 +1,184 @@
-<div class="p-4 pb-24 max-w-5xl mx-auto">
+<div class="px-4 pt-6 pb-24 lg:px-8 lg:pt-8">
+  <div class="max-w-5xl mx-auto">
 
-  <!-- Header -->
-  <div class="flex items-center justify-between mb-5">
-    <div>
-      <h2 class="text-xl font-bold text-textDark">Users</h2>
-      <p class="text-sm text-textMuted mt-0.5">Manage customers and drivers for your store</p>
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="font-heading text-2xl font-bold text-textDark">Users</h1>
+        <p class="text-textLight text-sm mt-1">Manage customers and drivers for your store</p>
+      </div>
+      <span *ngIf="!loading"
+            class="inline-flex items-center gap-1.5 text-sm text-textMuted bg-white border border-borderColor px-3 py-1.5 rounded-xl">
+        <i class="bi bi-people text-primary"></i>
+        {{ filtered.length }} users
+      </span>
     </div>
-    <span class="text-sm text-textMuted">{{ filtered.length }} users</span>
-  </div>
 
-  <!-- Filters -->
-  <div class="flex flex-col sm:flex-row gap-3 mb-5">
-    <input [(ngModel)]="search" (ngModelChange)="applyFilter()"
-           placeholder="Search by email or name..."
-           data-testid="user-search"
-           class="flex-1 px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
-    <select [(ngModel)]="roleFilter" (ngModelChange)="applyFilter()"
-            class="px-3 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400">
-      <option value="">All roles</option>
-      <option value="USER">Customer</option>
-      <option value="DRIVER">Driver</option>
-      <option value="ADMIN">Admin</option>
-    </select>
-  </div>
+    <!-- Filters -->
+    <div class="flex flex-col sm:flex-row gap-3 mb-6">
+      <div class="relative flex-1">
+        <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none text-sm"></i>
+        <input [(ngModel)]="search" (ngModelChange)="applyFilter()"
+               placeholder="Search by name or email..."
+               data-testid="user-search"
+               class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-borderColor bg-white text-sm text-textDark
+                      focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+      </div>
+      <select [(ngModel)]="roleFilter" (ngModelChange)="applyFilter()"
+              class="px-3 py-2.5 rounded-xl border border-borderColor bg-white text-sm text-textDark
+                     focus:outline-none focus:ring-2 focus:ring-primary-400 sm:w-40">
+        <option value="">All roles</option>
+        <option value="USER">Customers</option>
+        <option value="DRIVER">Drivers</option>
+        <option value="ADMIN">Admins</option>
+      </select>
+    </div>
 
-  <!-- Loading -->
-  <div *ngIf="loading" class="space-y-3">
-    <div *ngFor="let i of [1,2,3,4,5]" class="h-16 bg-gray-100 rounded-xl animate-pulse"></div>
-  </div>
+    <!-- Loading -->
+    <div *ngIf="loading" class="space-y-3">
+      <div *ngFor="let i of [1,2,3,4,5]" class="h-16 bg-white rounded-2xl animate-pulse border border-borderColor"></div>
+    </div>
 
-  <!-- Empty -->
-  <div *ngIf="!loading && filtered.length === 0" class="text-center py-16 text-textMuted">
-    <i class="bi bi-people text-4xl block mb-2"></i>
-    <p class="text-sm">No users found</p>
-  </div>
+    <!-- Empty -->
+    <div *ngIf="!loading && filtered.length === 0" class="text-center py-16 text-textMuted">
+      <i class="bi bi-people text-4xl block mb-3 opacity-30"></i>
+      <p class="font-medium text-textDark">No users found</p>
+      <p class="text-sm mt-1">Try adjusting your search or filter</p>
+    </div>
 
-  <!-- Desktop table (md+) -->
-  <div *ngIf="!loading && filtered.length > 0" class="hidden md:block bg-white rounded-2xl border border-borderColor overflow-hidden shadow-card">
-    <table class="w-full text-sm">
-      <thead class="bg-gray-50 border-b border-borderColor">
-        <tr>
-          <th class="text-left px-4 py-3 font-semibold text-textMuted">User</th>
-          <th class="text-left px-4 py-3 font-semibold text-textMuted">Role</th>
-          <th class="text-left px-4 py-3 font-semibold text-textMuted">Status</th>
-          <th class="text-right px-4 py-3 font-semibold text-textMuted">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-borderColor">
-        <tr *ngFor="let user of filtered" class="hover:bg-gray-50 transition-colors">
-          <td class="px-4 py-3">
-            <p class="font-medium text-textDark">{{ user.fullName || user.email }}</p>
-            <p class="text-xs text-textMuted">{{ user.fullName ? user.email : '' }}</p>
-          </td>
-          <td class="px-4 py-3">
-            <select [value]="user.role" (change)="setRole(user, $any($event.target).value)"
-                    class="text-xs px-2 py-1 rounded-lg border border-borderColor bg-white focus:outline-none focus:ring-1 focus:ring-primary-400">
-              <option value="USER">Customer</option>
-              <option value="DRIVER">Driver</option>
-              <option value="ADMIN">Admin</option>
-            </select>
-          </td>
-          <td class="px-4 py-3">
-            <button (click)="toggleActive(user)"
-                    class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full transition-colors"
-                    [ngClass]="user.active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-600 hover:bg-red-200'">
-              <i class="bi" [ngClass]="user.active ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
-              {{ user.active ? 'Active' : 'Deactivated' }}
-            </button>
-          </td>
-          <td class="px-4 py-3 text-right">
-            <button (click)="confirmDelete(user.id)"
-                    class="p-1.5 rounded-lg text-textMuted hover:text-red-500 hover:bg-red-50 transition-colors">
-              <i class="bi bi-trash text-base"></i>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <!-- Desktop table -->
+    <div *ngIf="!loading && filtered.length > 0"
+         class="hidden md:block bg-white rounded-2xl border border-borderColor overflow-hidden shadow-card">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-borderColor">
+          <tr>
+            <th class="text-left px-5 py-3.5 font-semibold text-textMuted text-xs uppercase tracking-wide">User</th>
+            <th class="text-left px-5 py-3.5 font-semibold text-textMuted text-xs uppercase tracking-wide">Role</th>
+            <th class="text-left px-5 py-3.5 font-semibold text-textMuted text-xs uppercase tracking-wide">Status</th>
+            <th class="text-right px-5 py-3.5 font-semibold text-textMuted text-xs uppercase tracking-wide">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-borderColor">
+          <tr *ngFor="let user of filtered" class="hover:bg-gray-50/60 transition-colors">
 
-  <!-- Mobile cards -->
-  <div *ngIf="!loading && filtered.length > 0" class="md:hidden space-y-3">
-    <div *ngFor="let user of filtered"
-         class="bg-white rounded-2xl border border-borderColor p-4 shadow-card">
-      <div class="flex items-start justify-between mb-3">
-        <div>
-          <p class="font-semibold text-textDark text-sm">{{ user.fullName || user.email }}</p>
-          <p *ngIf="user.fullName" class="text-xs text-textMuted">{{ user.email }}</p>
+            <!-- User info with avatar -->
+            <td class="px-5 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                     [ngClass]="roleBadgeClass(user.role).includes('purple') ? 'bg-purple-500' :
+                                 roleBadgeClass(user.role).includes('blue') ? 'bg-blue-500' : 'bg-primary'">
+                  {{ (user.fullName || user.email).charAt(0).toUpperCase() }}
+                </div>
+                <div class="min-w-0">
+                  <p class="font-medium text-textDark truncate">{{ user.fullName || user.email }}</p>
+                  <p *ngIf="user.fullName" class="text-xs text-textMuted truncate">{{ user.email }}</p>
+                </div>
+              </div>
+            </td>
+
+            <!-- Role dropdown -->
+            <td class="px-5 py-4">
+              <select [value]="user.role" (change)="setRole(user, $any($event.target).value)"
+                      class="text-xs px-2.5 py-1.5 rounded-lg border border-borderColor bg-white
+                             focus:outline-none focus:ring-1 focus:ring-primary-400 cursor-pointer">
+                <option value="USER">Customer</option>
+                <option value="DRIVER">Driver</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+            </td>
+
+            <!-- Status toggle -->
+            <td class="px-5 py-4">
+              <button (click)="toggleActive(user)"
+                      class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+                      [ngClass]="user.active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-600 hover:bg-red-200'">
+                <i class="bi text-[10px]" [ngClass]="user.active ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
+                {{ user.active ? 'Active' : 'Deactivated' }}
+              </button>
+            </td>
+
+            <!-- Delete -->
+            <td class="px-5 py-4 text-right">
+              <button (click)="confirmDelete(user.id)"
+                      class="w-8 h-8 flex items-center justify-center rounded-xl text-textMuted
+                             hover:text-danger hover:bg-red-50 transition-colors ml-auto">
+                <i class="bi bi-trash text-base"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile cards -->
+    <div *ngIf="!loading && filtered.length > 0" class="md:hidden space-y-3">
+      <div *ngFor="let user of filtered"
+           class="bg-white rounded-2xl border border-borderColor p-4 shadow-card">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+              {{ (user.fullName || user.email).charAt(0).toUpperCase() }}
+            </div>
+            <div class="min-w-0">
+              <p class="font-semibold text-textDark text-sm truncate">{{ user.fullName || user.email }}</p>
+              <p *ngIf="user.fullName" class="text-xs text-textMuted truncate">{{ user.email }}</p>
+            </div>
+          </div>
+          <button (click)="toggleActive(user)"
+                  class="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ml-2"
+                  [ngClass]="user.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'">
+            {{ user.active ? 'Active' : 'Off' }}
+          </button>
         </div>
-        <button (click)="toggleActive(user)"
-                class="text-xs font-semibold px-2.5 py-1 rounded-full"
-                [ngClass]="user.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'">
-          {{ user.active ? 'Active' : 'Off' }}
-        </button>
-      </div>
-      <div class="flex items-center justify-between">
-        <select [value]="user.role" (change)="setRole(user, $any($event.target).value)"
-                class="text-xs px-2 py-1.5 rounded-lg border border-borderColor bg-white focus:outline-none">
-          <option value="USER">Customer</option>
-          <option value="DRIVER">Driver</option>
-          <option value="ADMIN">Admin</option>
-        </select>
-        <button (click)="confirmDelete(user.id)"
-                class="p-1.5 rounded-lg text-textMuted hover:text-red-500 hover:bg-red-50 transition-colors">
-          <i class="bi bi-trash text-base"></i>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Delete Confirm Modal -->
-  <div *ngIf="confirmDeleteId"
-       class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-          <i class="bi bi-exclamation-triangle text-red-500 text-lg"></i>
-        </div>
-        <div>
-          <p class="font-semibold text-textDark">Delete user?</p>
-          <p class="text-sm text-textMuted">This will also delete their orders and cart. Cannot be undone.</p>
+        <div class="flex items-center justify-between">
+          <select [value]="user.role" (change)="setRole(user, $any($event.target).value)"
+                  class="text-xs px-2.5 py-1.5 rounded-lg border border-borderColor bg-white focus:outline-none">
+            <option value="USER">Customer</option>
+            <option value="DRIVER">Driver</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+          <button (click)="confirmDelete(user.id)"
+                  class="w-8 h-8 flex items-center justify-center rounded-xl text-textMuted hover:text-danger hover:bg-red-50 transition-colors">
+            <i class="bi bi-trash text-base"></i>
+          </button>
         </div>
       </div>
-      <div class="flex gap-3">
-        <button (click)="cancelDelete()"
-                class="flex-1 py-2.5 rounded-xl border border-borderColor text-sm text-textDark hover:bg-gray-50 transition-colors">
-          Cancel
-        </button>
-        <button (click)="deleteUser()"
-                class="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors">
-          Delete
-        </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div *ngIf="confirmDeleteId"
+     class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl animate-fade-in">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="w-11 h-11 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+        <i class="bi bi-exclamation-triangle text-red-500 text-lg"></i>
+      </div>
+      <div>
+        <p class="font-semibold text-textDark">Delete this user?</p>
+        <p class="text-sm text-textMuted mt-0.5">This will also delete their orders and cart. Cannot be undone.</p>
       </div>
     </div>
-  </div>
-
-  <!-- Toast -->
-  <div *ngIf="toast"
-       class="fixed bottom-20 left-4 right-4 z-50 flex justify-center pointer-events-none">
-    <div class="px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg text-white animate-fade-in"
-         [ngClass]="toastType === 'success' ? 'bg-gray-900' : 'bg-red-500'">
-      {{ toast }}
+    <div class="flex gap-3">
+      <button (click)="cancelDelete()"
+              class="flex-1 py-2.5 rounded-xl border border-borderColor text-sm text-textDark hover:bg-gray-50 transition-colors">
+        Cancel
+      </button>
+      <button (click)="deleteUser()"
+              class="flex-1 py-2.5 rounded-xl bg-danger hover:bg-red-600 text-white text-sm font-semibold transition-colors">
+        Delete
+      </button>
     </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div *ngIf="toast"
+     class="fixed bottom-20 left-4 right-4 z-50 flex justify-center pointer-events-none">
+  <div class="px-5 py-2.5 rounded-xl text-sm font-medium shadow-lg text-white animate-fade-in"
+       [ngClass]="toastType === 'success' ? 'bg-gray-900' : 'bg-danger'">
+    {{ toast }}
   </div>
 </div>

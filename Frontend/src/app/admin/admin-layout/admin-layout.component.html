@@ -1,7 +1,7 @@
 <div class="flex min-h-screen bg-surface">
 
   <!-- Desktop sidebar (lg+) -->
-  <aside class="hidden lg:flex flex-col w-56 bg-white border-r border-borderColor fixed top-14 bottom-0 z-30 overflow-y-auto">
+  <aside class="hidden lg:flex flex-col w-64 bg-white border-r border-borderColor fixed top-14 bottom-0 z-30 overflow-y-auto">
     <nav class="p-3 space-y-1 flex-1">
       <a *ngFor="let item of navItems"
          [routerLink]="item.route"
@@ -15,7 +15,7 @@
   </aside>
 
   <!-- Main content — offset on desktop for sidebar -->
-  <main class="flex-1 lg:ml-56 pb-24 lg:pb-6 min-h-screen">
+  <main class="flex-1 lg:ml-64 pb-24 lg:pb-6 min-h-screen">
     <router-outlet></router-outlet>
   </main>
 

@@ -1,152 +1,329 @@
-<div class="max-w-2xl mx-auto p-4 pb-24">
+<div class="min-h-screen bg-surface pb-24 px-4 pt-6 lg:px-8 lg:pt-8">
+  <div class="max-w-5xl mx-auto">
 
-  <!-- Loading -->
-  <div *ngIf="loading" class="space-y-4 animate-pulse">
-    <div class="h-8 bg-gray-200 rounded w-1/2"></div>
-    <div class="h-32 bg-gray-200 rounded-xl"></div>
-    <div class="h-48 bg-gray-200 rounded-xl"></div>
-  </div>
-
-  <div *ngIf="!loading && info">
-
-    <!-- Plan header -->
-    <div class="flex items-center justify-between mb-4">
-      <div>
-        <h2 class="text-xl font-bold text-textDark">Subscription</h2>
-        <p class="text-sm text-textMuted">Your current plan &amp; usage</p>
+    <!-- Loading skeleton -->
+    <div *ngIf="loading" class="animate-pulse space-y-6">
+      <div class="h-8 bg-gray-200 rounded w-52"></div>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="h-56 bg-gray-200 rounded-2xl"></div>
+        <div class="h-56 bg-gray-200 rounded-2xl"></div>
+        <div class="h-56 bg-gray-200 rounded-2xl"></div>
       </div>
-      <div class="flex flex-col items-end gap-1">
-        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
+      <div class="grid grid-cols-2 gap-4">
+        <div class="h-44 bg-gray-200 rounded-2xl"></div>
+        <div class="h-44 bg-gray-200 rounded-2xl"></div>
+      </div>
+    </div>
+
+    <div *ngIf="!loading && info">
+
+      <!-- Page header -->
+      <div class="flex items-start justify-between mb-6">
+        <div>
+          <h1 class="font-heading text-2xl font-bold text-textDark">Subscription</h1>
+          <p class="text-textLight text-sm mt-1">Manage your plan, usage &amp; billing</p>
+        </div>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
           [ngClass]="{
             'bg-yellow-100 text-yellow-700': info.status === 'TRIAL',
             'bg-green-100 text-green-700': info.status === 'ACTIVE',
             'bg-red-100 text-red-700': info.status === 'SUSPENDED'
           }">
+          <i class="bi" [ngClass]="{
+            'bi-hourglass-split': info.status === 'TRIAL',
+            'bi-check-circle-fill': info.status === 'ACTIVE',
+            'bi-x-octagon-fill': info.status === 'SUSPENDED'
+          }"></i>
           {{ info.status }}
         </span>
-        <span class="text-sm font-bold text-primary">{{ info.plan }}</span>
       </div>
-    </div>
 
-    <!-- SUSPENDED alert -->
-    <div *ngIf="info.status === 'SUSPENDED'"
-         class="mb-4 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3">
-      <i class="bi bi-exclamation-octagon text-red-500 text-xl flex-shrink-0 mt-0.5"></i>
-      <div>
-        <p class="font-semibold text-red-700">Your trial has ended</p>
-        <p class="text-sm text-red-600 mt-0.5">Your store is currently suspended. Upgrade to a paid plan to restore access.</p>
-      </div>
-    </div>
-
-    <!-- TRIAL warning -->
-    <div *ngIf="info.status === 'TRIAL' && info.trialDaysRemaining !== null"
-         class="mb-4 p-4 rounded-xl flex items-start gap-3"
-         [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'bg-red-50 border border-red-200' : 'bg-amber-50 border border-amber-200'">
-      <i class="bi bi-clock text-xl flex-shrink-0 mt-0.5"
-         [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'text-red-500' : 'text-amber-500'"></i>
-      <div>
-        <p class="font-semibold"
-           [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'text-red-700' : 'text-amber-700'">
-          {{ info.trialDaysRemaining }} {{ info.trialDaysRemaining === 1 ? 'day' : 'days' }} left on your trial
-        </p>
-        <p class="text-sm mt-0.5"
-           [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'text-red-600' : 'text-amber-600'">
-          Upgrade before your trial ends to keep your store running.
-        </p>
-      </div>
-    </div>
-
-    <!-- Usage bars -->
-    <div class="bg-white rounded-xl border border-borderColor p-4 mb-4">
-      <h3 class="font-semibold text-textDark mb-3 text-sm">Usage</h3>
-      <div class="space-y-3">
-
+      <!-- SUSPENDED alert -->
+      <div *ngIf="info.status === 'SUSPENDED'"
+           class="mb-6 p-5 rounded-2xl bg-red-50 border border-red-200 flex items-start gap-4">
+        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+          <i class="bi bi-x-octagon-fill text-red-500 text-lg"></i>
+        </div>
         <div>
-          <div class="flex justify-between text-xs text-textMuted mb-1">
-            <span>Menu Items</span>
-            <span>{{ info.usage.menuItems }} / {{ info.usage.maxMenuItems }}</span>
+          <p class="font-semibold text-red-700">Your trial has ended</p>
+          <p class="text-sm text-red-600 mt-1">Your store is suspended. Upgrade to a paid plan to restore access and continue serving customers.</p>
+        </div>
+      </div>
+
+      <!-- TRIAL warning -->
+      <div *ngIf="info.status === 'TRIAL' && info.trialDaysRemaining !== null"
+           class="mb-6 p-5 rounded-2xl flex items-start gap-4"
+           [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'bg-red-50 border border-red-200' : 'bg-amber-50 border border-amber-200'">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+             [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'bg-red-100' : 'bg-amber-100'">
+          <i class="bi bi-clock text-lg"
+             [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'text-red-500' : 'text-amber-500'"></i>
+        </div>
+        <div>
+          <p class="font-semibold"
+             [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'text-red-700' : 'text-amber-700'">
+            {{ info.trialDaysRemaining }} {{ info.trialDaysRemaining === 1 ? 'day' : 'days' }} remaining on your free trial
+          </p>
+          <p class="text-sm mt-1"
+             [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'text-red-600' : 'text-amber-600'">
+            Upgrade before your trial ends to keep your store live.
+          </p>
+        </div>
+      </div>
+
+      <!-- ── Plan comparison cards ── -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+
+        <!-- BASIC -->
+        <div class="bg-white rounded-2xl border-2 p-6 relative transition-shadow"
+             [ngClass]="info.plan === 'BASIC' ? 'border-primary shadow-lg' : 'border-borderColor'">
+          <div *ngIf="info.plan === 'BASIC'"
+               class="absolute -top-3.5 left-1/2 -translate-x-1/2">
+            <span class="bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full whitespace-nowrap shadow-sm">
+              ✓ Current Plan
+            </span>
           </div>
-          <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div class="h-full rounded-full transition-all"
-                 [ngClass]="barColor(usagePercent(info.usage.menuItems, info.usage.maxMenuItems))"
-                 [style.width.%]="usagePercent(info.usage.menuItems, info.usage.maxMenuItems)"></div>
+          <p class="text-[11px] font-bold text-textMuted uppercase tracking-widest mb-2">Basic</p>
+          <div class="flex items-baseline gap-1 mb-5">
+            <span class="font-heading text-3xl font-bold text-textDark">R299</span>
+            <span class="text-textMuted text-sm">/mo</span>
+          </div>
+          <ul class="space-y-2.5 text-sm mb-5">
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>30 menu items</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>3 drivers</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>3 promotions</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>10 km radius</li>
+            <li class="flex items-center gap-2 text-textMuted"><i class="bi bi-x-circle text-gray-300 text-xs"></i>Analytics</li>
+            <li class="flex items-center gap-2 text-textMuted"><i class="bi bi-x-circle text-gray-300 text-xs"></i>Custom branding</li>
+            <li class="flex items-center gap-2 text-textMuted"><i class="bi bi-x-circle text-gray-300 text-xs"></i>Inventory export</li>
+          </ul>
+          <div class="pt-4 border-t border-borderColor text-center">
+            <p class="text-xs text-textMuted">4% platform commission</p>
           </div>
         </div>
 
-        <div>
-          <div class="flex justify-between text-xs text-textMuted mb-1">
-            <span>Drivers</span>
-            <span>{{ info.usage.drivers }} / {{ info.usage.maxDrivers }}</span>
+        <!-- PRO -->
+        <div class="bg-white rounded-2xl border-2 p-6 relative transition-shadow"
+             [ngClass]="info.plan === 'PRO' ? 'border-primary shadow-lg' : 'border-borderColor'">
+          <div *ngIf="info.plan === 'PRO'"
+               class="absolute -top-3.5 left-1/2 -translate-x-1/2">
+            <span class="bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full whitespace-nowrap shadow-sm">
+              ✓ Current Plan
+            </span>
           </div>
-          <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div class="h-full rounded-full transition-all"
-                 [ngClass]="barColor(usagePercent(info.usage.drivers, info.usage.maxDrivers))"
-                 [style.width.%]="usagePercent(info.usage.drivers, info.usage.maxDrivers)"></div>
+          <p class="text-[11px] font-bold text-textMuted uppercase tracking-widest mb-2">Pro</p>
+          <div class="flex items-baseline gap-1 mb-5">
+            <span class="font-heading text-3xl font-bold text-textDark">R699</span>
+            <span class="text-textMuted text-sm">/mo</span>
+          </div>
+          <ul class="space-y-2.5 text-sm mb-5">
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>100 menu items</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>10 drivers</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>20 promotions</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>25 km radius</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Analytics</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Custom branding</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Inventory export</li>
+          </ul>
+          <div class="pt-4 border-t border-borderColor text-center">
+            <p class="text-xs text-textMuted">3% platform commission</p>
           </div>
         </div>
 
-        <div>
-          <div class="flex justify-between text-xs text-textMuted mb-1">
-            <span>Active Promotions</span>
-            <span>{{ info.usage.activePromotions }} / {{ info.usage.maxPromotions }}</span>
+        <!-- ENTERPRISE -->
+        <div class="bg-white rounded-2xl border-2 p-6 relative transition-shadow"
+             [ngClass]="info.plan === 'ENTERPRISE' ? 'border-primary shadow-lg' : 'border-borderColor'">
+          <div *ngIf="info.plan === 'ENTERPRISE'"
+               class="absolute -top-3.5 left-1/2 -translate-x-1/2">
+            <span class="bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full whitespace-nowrap shadow-sm">
+              ✓ Current Plan
+            </span>
           </div>
-          <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div class="h-full rounded-full transition-all"
-                 [ngClass]="barColor(usagePercent(info.usage.activePromotions, info.usage.maxPromotions))"
-                 [style.width.%]="usagePercent(info.usage.activePromotions, info.usage.maxPromotions)"></div>
+          <p class="text-[11px] font-bold text-textMuted uppercase tracking-widest mb-2">Enterprise</p>
+          <div class="flex items-baseline gap-1 mb-5">
+            <span class="font-heading text-3xl font-bold text-textDark">R1499</span>
+            <span class="text-textMuted text-sm">/mo</span>
+          </div>
+          <ul class="space-y-2.5 text-sm mb-5">
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Unlimited items</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Unlimited drivers</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Unlimited promotions</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>50 km radius</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Analytics</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Custom branding</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Inventory export</li>
+          </ul>
+          <div class="pt-4 border-t border-borderColor text-center">
+            <p class="text-xs text-textMuted">2% platform commission</p>
           </div>
         </div>
 
       </div>
-    </div>
 
-    <!-- Feature access table -->
-    <div class="bg-white rounded-xl border border-borderColor p-4 mb-4">
-      <h3 class="font-semibold text-textDark mb-3 text-sm">Feature Access</h3>
-      <div class="space-y-2">
+      <!-- ── Usage + Features grid ── -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        <div *ngFor="let feature of [
-          { label: 'Analytics & Charts', key: 'hasAnalytics', value: info.features.hasAnalytics },
-          { label: 'Custom Branding (logo & color)', key: 'hasCustomBranding', value: info.features.hasCustomBranding },
-          { label: 'Inventory CSV Export & Audit', key: 'hasInventoryExport', value: info.features.hasInventoryExport }
-        ]" class="flex items-center justify-between py-1.5 border-b border-borderColor last:border-0">
-          <span class="text-sm text-textDark">{{ feature.label }}</span>
-          <span class="flex items-center gap-1 text-xs font-semibold"
-                [ngClass]="feature.value ? 'text-green-600' : 'text-gray-400'">
-            <i class="bi" [ngClass]="feature.value ? 'bi-check-circle-fill' : 'bi-x-circle'"></i>
-            {{ feature.value ? 'Included' : 'Not included' }}
-          </span>
+        <!-- Usage -->
+        <div class="bg-white rounded-2xl border border-borderColor p-6">
+          <h3 class="font-heading font-semibold text-textDark mb-5 flex items-center gap-2">
+            <i class="bi bi-bar-chart-fill text-primary"></i> Current Usage
+          </h3>
+          <div class="space-y-6">
+
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="flex items-center gap-2 text-sm text-textDark">
+                  <i class="bi bi-card-list text-textMuted"></i> Menu Items
+                </span>
+                <span class="text-sm font-numbers font-semibold text-textDark">
+                  {{ info.usage.menuItems }} <span class="text-textMuted font-normal">/ {{ info.usage.maxMenuItems }}</span>
+                </span>
+              </div>
+              <div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-500"
+                     [ngClass]="barColor(usagePercent(info.usage.menuItems, info.usage.maxMenuItems))"
+                     [style.width.%]="usagePercent(info.usage.menuItems, info.usage.maxMenuItems)"></div>
+              </div>
+              <p class="text-xs text-textMuted mt-1.5">{{ usagePercent(info.usage.menuItems, info.usage.maxMenuItems) }}% used</p>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="flex items-center gap-2 text-sm text-textDark">
+                  <i class="bi bi-truck text-textMuted"></i> Drivers
+                </span>
+                <span class="text-sm font-numbers font-semibold text-textDark">
+                  {{ info.usage.drivers }} <span class="text-textMuted font-normal">/ {{ info.usage.maxDrivers }}</span>
+                </span>
+              </div>
+              <div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-500"
+                     [ngClass]="barColor(usagePercent(info.usage.drivers, info.usage.maxDrivers))"
+                     [style.width.%]="usagePercent(info.usage.drivers, info.usage.maxDrivers)"></div>
+              </div>
+              <p class="text-xs text-textMuted mt-1.5">{{ usagePercent(info.usage.drivers, info.usage.maxDrivers) }}% used</p>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="flex items-center gap-2 text-sm text-textDark">
+                  <i class="bi bi-tag text-textMuted"></i> Active Promotions
+                </span>
+                <span class="text-sm font-numbers font-semibold text-textDark">
+                  {{ info.usage.activePromotions }} <span class="text-textMuted font-normal">/ {{ info.usage.maxPromotions }}</span>
+                </span>
+              </div>
+              <div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-500"
+                     [ngClass]="barColor(usagePercent(info.usage.activePromotions, info.usage.maxPromotions))"
+                     [style.width.%]="usagePercent(info.usage.activePromotions, info.usage.maxPromotions)"></div>
+              </div>
+              <p class="text-xs text-textMuted mt-1.5">{{ usagePercent(info.usage.activePromotions, info.usage.maxPromotions) }}% used</p>
+            </div>
+
+          </div>
         </div>
 
-        <div class="flex items-center justify-between py-1.5 border-b border-borderColor">
-          <span class="text-sm text-textDark">Delivery Radius</span>
-          <span class="text-xs font-semibold text-textDark">{{ info.features.maxDeliveryRadiusKm }} km</span>
-        </div>
-        <div class="flex items-center justify-between py-1.5">
-          <span class="text-sm text-textDark">Platform Commission</span>
-          <span class="text-xs font-semibold text-textDark">{{ info.features.commissionPercent }}%</span>
-        </div>
+        <!-- Features + CTA -->
+        <div class="flex flex-col gap-5">
 
+          <div class="bg-white rounded-2xl border border-borderColor p-6">
+            <h3 class="font-heading font-semibold text-textDark mb-5 flex items-center gap-2">
+              <i class="bi bi-toggles text-primary"></i> Feature Access
+            </h3>
+            <div class="space-y-3">
+
+              <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2 text-sm text-textDark">
+                  <i class="bi bi-graph-up text-textMuted text-base"></i> Analytics &amp; Charts
+                </span>
+                <span class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                      [ngClass]="info.features.hasAnalytics ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'">
+                  <i class="bi text-[10px]" [ngClass]="info.features.hasAnalytics ? 'bi-check-circle-fill' : 'bi-lock-fill'"></i>
+                  {{ info.features.hasAnalytics ? 'Included' : 'Locked' }}
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2 text-sm text-textDark">
+                  <i class="bi bi-palette text-textMuted text-base"></i> Custom Branding
+                </span>
+                <span class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                      [ngClass]="info.features.hasCustomBranding ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'">
+                  <i class="bi text-[10px]" [ngClass]="info.features.hasCustomBranding ? 'bi-check-circle-fill' : 'bi-lock-fill'"></i>
+                  {{ info.features.hasCustomBranding ? 'Included' : 'Locked' }}
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2 text-sm text-textDark">
+                  <i class="bi bi-download text-textMuted text-base"></i> Inventory Export
+                </span>
+                <span class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                      [ngClass]="info.features.hasInventoryExport ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'">
+                  <i class="bi text-[10px]" [ngClass]="info.features.hasInventoryExport ? 'bi-check-circle-fill' : 'bi-lock-fill'"></i>
+                  {{ info.features.hasInventoryExport ? 'Included' : 'Locked' }}
+                </span>
+              </div>
+
+              <div class="h-px bg-borderColor"></div>
+
+              <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2 text-sm text-textDark">
+                  <i class="bi bi-geo-alt text-textMuted text-base"></i> Delivery Radius
+                </span>
+                <span class="text-sm font-numbers font-semibold text-textDark">{{ info.features.maxDeliveryRadiusKm }} km</span>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2 text-sm text-textDark">
+                  <i class="bi bi-percent text-textMuted text-base"></i> Platform Commission
+                </span>
+                <span class="text-sm font-numbers font-semibold text-textDark">{{ info.features.commissionPercent }}%</span>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Upgrade CTA -->
+          <div *ngIf="!upgradeRequested && info.plan !== 'ENTERPRISE'"
+               class="bg-gradient-to-br from-primary to-primary-600 rounded-2xl p-6 text-white">
+            <div class="flex items-start gap-3 mb-5">
+              <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                <i class="bi bi-rocket-takeoff text-white text-lg"></i>
+              </div>
+              <div>
+                <p class="font-semibold text-base">Ready to scale?</p>
+                <p *ngIf="info.plan === 'BASIC'" class="text-sm text-white/80 mt-0.5">Upgrade to PRO or ENTERPRISE for analytics, branding, and more capacity.</p>
+                <p *ngIf="info.plan !== 'BASIC'" class="text-sm text-white/80 mt-0.5">Upgrade to ENTERPRISE for unlimited capacity and the lowest commission rate.</p>
+              </div>
+            </div>
+            <button (click)="requestUpgrade()"
+                    class="w-full py-2.5 bg-white text-primary font-semibold text-sm rounded-xl hover:bg-primary-50 transition-colors">
+              Request Upgrade
+            </button>
+            <p *ngIf="upgradeError" class="mt-2 text-xs text-red-200 text-center">{{ upgradeError }}</p>
+          </div>
+
+          <!-- Sent confirmation -->
+          <div *ngIf="upgradeRequested"
+               class="bg-green-50 rounded-2xl border border-green-200 p-6 text-center">
+            <i class="bi bi-check-circle-fill text-green-500 text-3xl mb-2 block"></i>
+            <p class="font-semibold text-green-700">Upgrade request sent!</p>
+            <p class="text-xs text-green-600 mt-1">Our team will contact you within 24 hours.</p>
+          </div>
+
+          <!-- Top plan badge -->
+          <div *ngIf="info.plan === 'ENTERPRISE'"
+               class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 text-white text-center">
+            <i class="bi bi-award-fill text-primary text-3xl mb-2 block"></i>
+            <p class="font-semibold">You're on the top plan</p>
+            <p class="text-sm text-gray-400 mt-1">Full access to all features.</p>
+          </div>
+
+        </div>
       </div>
-    </div>
 
-    <!-- Upgrade CTA — only shown when not already on the highest plan -->
-    <div *ngIf="!upgradeRequested && info.plan !== 'ENTERPRISE'" class="bg-primary-50 rounded-xl border border-primary-200 p-4 text-center">
-      <p class="text-sm font-semibold text-textDark mb-1">Want more?</p>
-      <p *ngIf="info.plan === 'BASIC'" class="text-xs text-textMuted mb-3">Upgrade to PRO or ENTERPRISE for unlimited items, analytics, and more.</p>
-      <p *ngIf="info.plan !== 'BASIC'" class="text-xs text-textMuted mb-3">Upgrade to ENTERPRISE for unlimited items, radius, and a reduced commission rate.</p>
-      <button (click)="requestUpgrade()"
-              class="px-5 py-2 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary-600 transition-colors">
-        Request Upgrade
-      </button>
-      <p *ngIf="upgradeError" class="mt-2 text-xs text-red-500">{{ upgradeError }}</p>
     </div>
-
-    <div *ngIf="upgradeRequested" class="bg-green-50 rounded-xl border border-green-200 p-4 text-center">
-      <i class="bi bi-check-circle-fill text-green-500 text-2xl mb-1"></i>
-      <p class="text-sm font-semibold text-green-700">Upgrade request sent!</p>
-      <p class="text-xs text-green-600 mt-0.5">Our team will contact you within 24 hours.</p>
-    </div>
-
   </div>
 </div>
