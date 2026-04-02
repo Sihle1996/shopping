@@ -50,13 +50,14 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
     this.subscriptionService.load().subscribe(info => {
       this.hasAnalytics = info.features.hasAnalytics;
       this.subscriptionPlan = info.plan;
+      // Charts canvases are ready by the time the HTTP response arrives,
+      // so trigger analytics load here instead of ngAfterViewInit.
+      this.loadAnalytics();
     });
   }
 
   ngAfterViewInit(): void {
-    Promise.resolve().then(() => {
-      this.loadAnalytics();
-    });
+    // intentionally empty — analytics are loaded once subscription info arrives
   }
 
   loadAnalytics(): void {
