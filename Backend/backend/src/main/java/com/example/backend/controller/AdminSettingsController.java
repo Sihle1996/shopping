@@ -34,9 +34,13 @@ public class AdminSettingsController {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId == null) return ResponseEntity.badRequest().build();
 
-        // Gate custom branding fields
-        boolean updatingBranding = updates.getLogoUrl() != null || updates.getPrimaryColor() != null;
-        if (updatingBranding) {
+        // Gate branding only when the value is actually being changed (not just re-sent unchanged)
+        Tenant current = tenantService.getTenantById(tenantId).orElse(null);
+        boolean changingLogo = updates.getLogoUrl() != null
+                && (current == null || !updates.getLogoUrl().equals(current.getLogoUrl()));
+        boolean changingColor = updates.getPrimaryColor() != null
+                && (current == null || !updates.getPrimaryColor().equals(current.getPrimaryColor()));
+        if (changingLogo || changingColor) {
             subscriptionEnforcementService.assertCustomBrandingAccess(tenantId);
         }
 
