@@ -37,8 +37,9 @@ public class SecurityConfiguration {
                     } else {
                         config.setAllowedOriginPatterns(Collections.singletonList("*"));
                     }
-                    config.addAllowedHeader("*");
+                    config.addAllowedHeader("*"); // includes X-Tenant-Id, Authorization, Content-Type etc.
                     config.addAllowedMethod("*");
+                    config.addExposedHeader("Authorization");
                     return config;
                 }))
                 .csrf(AbstractHttpConfigurer::disable)
