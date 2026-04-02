@@ -28,6 +28,10 @@ public class OrderController {
         try {
             OrderDTO orderDTO = orderService.placeOrderFromPayment(request, authenticatedUser);
             return ResponseEntity.ok(orderDTO);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(
+                Map.of("error", e.getMessage())
+            );
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body(

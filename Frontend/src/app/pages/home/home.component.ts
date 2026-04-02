@@ -10,6 +10,8 @@ import { CartService, CartItem } from 'src/app/services/cart.service';
 import { PromotionService, Promotion } from 'src/app/services/promotion.service';
 import { ProductCardItem } from 'src/app/shared/components/product-card/product-card.component';
 import { ToastrService } from 'ngx-toastr';
+import { HttpClient } from '@angular/common/http';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-home',
@@ -56,6 +58,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   modifierSelections: { [groupId: string]: string[] } = {};
   modifierLoading = false;
 
+  reviews: any[] = [];
+  avgRating = 0;
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -65,7 +70,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     private cartService: CartService,
     private router: Router,
     private promotionService: PromotionService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private http: HttpClient
   ) {}
 
   // ── Modifier modal ────────────────────────────────────────────────────────
@@ -158,6 +164,21 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.fetchMenu();
     this.loadPromotions();
     this.subscribeToCart();
+    this.loadReviews();
+  }
+
+  private loadReviews(): void {
+    const tenantId = localStorage.getItem('tenantId');
+    const headers: any = tenantId ? { 'X-Tenant-Id': tenantId } : {};
+    this.http.get<any[]>(`${environment.apiUrl}/api/reviews`, { headers }).subscribe({
+      next: (reviews) => {
+        this.reviews = reviews;
+        if (reviews.length) {
+          this.avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+        }
+      },
+      error: () => {}
+    });
   }
 
   ngOnDestroy(): void {
