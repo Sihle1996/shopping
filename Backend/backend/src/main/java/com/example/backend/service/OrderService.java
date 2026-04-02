@@ -427,6 +427,8 @@ public class OrderService {
                 order.getPayerId(),
                 itemDTOs,
                 null, // driverName, set below
+                null, // driverLat, set below
+                null, // driverLon, set below
                 order.getTenant() != null ? order.getTenant().getId() : null,
                 order.getDiscountAmount() != null ? order.getDiscountAmount() : 0.0,
                 order.getPromoCode(),
@@ -436,7 +438,10 @@ public class OrderService {
         );
 
         if (order.getDriver() != null) {
-            dto.setDriverName(order.getDriver().getEmail());
+            User driver = order.getDriver();
+            dto.setDriverName(driver.getFullName() != null ? driver.getFullName() : driver.getEmail());
+            dto.setDriverLat(driver.getLatitude());
+            dto.setDriverLon(driver.getLongitude());
         }
 
         return dto;
