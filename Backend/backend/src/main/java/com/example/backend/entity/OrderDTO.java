@@ -26,6 +26,8 @@ public class OrderDTO {
     private String payerId;
     private List<OrderItemDTO> items;
     private String driverName;
+    private Double driverLat;
+    private Double driverLon;
     private UUID tenantId;
     private Double discountAmount;
     private String promoCode;

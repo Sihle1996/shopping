@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewChecked } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
@@ -10,6 +10,7 @@ import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { BadgeVariant } from 'src/app/shared/components/badge/badge.component';
+import mapboxgl from 'mapbox-gl';
 
 interface OrderItemDTO {
   productId: string;
@@ -28,6 +29,11 @@ interface OrderDTO {
   orderDate: string;
   deliveryAddress: string;
   items?: OrderItemDTO[];
+  driverLat?: number;
+  driverLon?: number;
+  driverName?: string;
+  deliveryLat?: number;
+  deliveryLon?: number;
 }
 
 @Component({
@@ -35,7 +41,7 @@ interface OrderDTO {
   templateUrl: './historyorders.component.html',
   styleUrls: ['./historyorders.component.scss']
 })
-export class HistoryordersComponent implements OnInit, OnDestroy {
+export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewChecked {
   orders: OrderDTO[] = [];
   filteredOrders: OrderDTO[] = [];
   loading = true;
@@ -58,6 +64,12 @@ export class HistoryordersComponent implements OnInit, OnDestroy {
 
   // Loyalty
   loyaltyBalance: LoyaltyBalance | null = null;
+
+  // Tracking
+  trackingOrder: OrderDTO | null = null;
+  private trackingMap: mapboxgl.Map | null = null;
+  private trackingMarker: mapboxgl.Marker | null = null;
+  private mapInitPending = false;
 
   constructor(
     private http: HttpClient,
@@ -90,6 +102,51 @@ export class HistoryordersComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.wsSub?.unsubscribe();
+    this.trackingMap?.remove();
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.mapInitPending && document.getElementById('customer-tracking-map')) {
+      this.mapInitPending = false;
+      this.initTrackingMap();
+    }
+  }
+
+  openTracking(order: OrderDTO): void {
+    this.trackingOrder = order;
+    this.trackingMap?.remove();
+    this.trackingMap = null;
+    this.mapInitPending = true;
+  }
+
+  closeTracking(): void {
+    this.trackingMap?.remove();
+    this.trackingMap = null;
+    this.trackingMarker = null;
+    this.trackingOrder = null;
+  }
+
+  private initTrackingMap(): void {
+    if (!this.trackingOrder?.driverLat || !this.trackingOrder?.driverLon) return;
+    (mapboxgl as any).accessToken = environment.mapboxToken;
+    this.trackingMap = new mapboxgl.Map({
+      container: 'customer-tracking-map',
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [this.trackingOrder.driverLon, this.trackingOrder.driverLat],
+      zoom: 14
+    });
+    // Driver marker
+    const el = document.createElement('div');
+    el.innerHTML = '<i class="bi bi-bicycle" style="font-size:22px;color:#FF6F00"></i>';
+    this.trackingMarker = new mapboxgl.Marker({ element: el })
+      .setLngLat([this.trackingOrder.driverLon, this.trackingOrder.driverLat])
+      .addTo(this.trackingMap);
+    // Delivery pin
+    if (this.trackingOrder.deliveryLat && this.trackingOrder.deliveryLon) {
+      new mapboxgl.Marker({ color: '#10b981' })
+        .setLngLat([this.trackingOrder.deliveryLon, this.trackingOrder.deliveryLat])
+        .addTo(this.trackingMap!);
+    }
   }
 
   fetchOrders(): void {
