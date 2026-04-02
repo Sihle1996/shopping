@@ -378,9 +378,9 @@ public class OrderService {
                 order.getDiscountAmount() != null ? order.getDiscountAmount() : 0.0,
                 order.getPromoCode(),
                 order.getDeliveryLat(),
-                order.getDeliveryLon()
+                order.getDeliveryLon(),
+                order.getOrderNotes()
         );
-        dto.setOrderNotes(order.getOrderNotes());
 
         if (order.getDriver() != null) {
             dto.setDriverName(order.getDriver().getEmail());
