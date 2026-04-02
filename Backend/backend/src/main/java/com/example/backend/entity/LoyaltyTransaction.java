@@ -35,5 +35,6 @@ public class LoyaltyTransaction {
     private String description;
 
     @CreationTimestamp
+    @Column(updatable = false)
     private LocalDateTime createdAt;
 }

@@ -34,5 +34,6 @@ public class LoyaltyAccount {
     private int totalEarned = 0;
 
     @CreationTimestamp
+    @Column(updatable = false)
     private LocalDateTime createdAt;
 }
