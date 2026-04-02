@@ -80,14 +80,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                             if (destination.startsWith("/topic/orders/")) {
                                 String destUserId = destination.substring("/topic/orders/".length());
                                 if (userId == null || !userId.equals(destUserId)) {
-                                    throw new IllegalArgumentException("Forbidden subscription");
+                                    return null; // silently drop — no ERROR frame sent to client
                                 }
                             } else if (destination.startsWith("/topic/admin") && !"ROLE_ADMIN".equals(role)) {
-                                throw new IllegalArgumentException("Forbidden subscription");
+                                return null;
                             } else if (destination.startsWith("/topic/driver") && !"ROLE_DRIVER".equals(role)) {
-                                throw new IllegalArgumentException("Forbidden subscription");
+                                return null;
                             } else if (destination.startsWith("/topic/manager") && !"ROLE_MANAGER".equals(role)) {
-                                throw new IllegalArgumentException("Forbidden subscription");
+                                return null;
                             }
                         }
                     }
