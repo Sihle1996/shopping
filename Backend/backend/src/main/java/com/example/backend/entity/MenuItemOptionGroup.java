@@ -2,7 +2,9 @@ package com.example.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,15 +31,12 @@ public class MenuItemOptionGroup {
 
     /** RADIO = pick exactly one, CHECKBOX = pick any/multiple */
     @Column(nullable = false)
-    @Builder.Default
     private String type = "RADIO";
 
     @Column(nullable = false)
-    @Builder.Default
     private Boolean required = false;
 
     @Column(nullable = false)
-    @Builder.Default
     private Integer sortOrder = 0;
 
     @OneToMany(mappedBy = "optionGroup", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -2,7 +2,9 @@ package com.example.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
@@ -27,10 +29,8 @@ public class MenuItemOptionChoice {
 
     /** Extra cost in ZAR. 0 = no extra charge. Can be negative for removals. */
     @Column(nullable = false)
-    @Builder.Default
     private Double priceModifier = 0.0;
 
     @Column(nullable = false)
-    @Builder.Default
     private Integer sortOrder = 0;
 }
