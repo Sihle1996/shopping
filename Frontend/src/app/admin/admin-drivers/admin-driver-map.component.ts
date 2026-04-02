@@ -3,8 +3,7 @@ import { AdminService } from 'src/app/services/admin.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { Stomp } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import maplibregl, { Map, GeoJSONSource, LngLatLike } from 'maplibre-gl';
-import { Feature, FeatureCollection, LineString, Point } from 'geojson';
+import mapboxgl from 'mapbox-gl';
 import { environment } from 'src/environments/environment';
 
 interface DriverLocation {
@@ -23,7 +22,7 @@ interface DriverLocation {
   styleUrls: ['./admin-driver-map.component.scss']
 })
 export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
-  private map!: Map;
+  private map!: mapboxgl.Map;
   private stompClient: any;
   private drivers: Record<string, any> = {};
   private replayLength = 5;
@@ -88,14 +87,16 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
   }
 
   private initMap(): void {
-    this.map = new maplibregl.Map({
+    (mapboxgl as any).accessToken = environment.mapboxToken;
+
+    this.map = new mapboxgl.Map({
       container: 'adminDriverMap',
-      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-      center: [28.0473, -26.2041] as LngLatLike,
+      style: 'mapbox://styles/mapbox/light-v11',
+      center: [28.0473, -26.2041],
       zoom: 10
     });
 
-    this.map.addControl(new maplibregl.NavigationControl(), 'top-right');
+    this.map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
     this.map.on('load', () => {
       this.mapLoaded = true;
@@ -105,7 +106,7 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
         data: { type: 'FeatureCollection', features: [] }
       });
 
-      // Driver circles — color by status
+      // Color-coded circles by driver status
       this.map.addLayer({
         id: 'driver-circles',
         type: 'circle',
@@ -117,13 +118,13 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
             'ON_DELIVERY', '#f97316',
             '#94a3b8'
           ],
-          'circle-radius': 10,
+          'circle-radius': 12,
           'circle-stroke-width': 2,
           'circle-stroke-color': '#ffffff'
         }
       });
 
-      // Driver initial label inside circle
+      // Driver initial letter inside circle
       this.map.addLayer({
         id: 'driver-labels',
         type: 'symbol',
@@ -139,7 +140,7 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
         }
       });
 
-      // Click popup
+      // Click to show popup
       this.map.on('click', 'driver-circles', e => {
         const feature = e.features && e.features[0];
         if (!feature) return;
@@ -147,8 +148,8 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
         const driver = this.drivers[id];
         if (!driver) return;
         const coords = (feature.geometry as any)['coordinates'];
-        new maplibregl.Popup({ offset: 14, closeButton: false })
-          .setLngLat(coords as LngLatLike)
+        new mapboxgl.Popup({ offset: 16, closeButton: false })
+          .setLngLat(coords)
           .setHTML(this.popupHtml(driver))
           .addTo(this.map);
       });
@@ -160,7 +161,7 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
         this.map.getCanvas().style.cursor = '';
       });
 
-      // Apply any data that loaded before the map was ready
+      // Apply data that arrived before map was ready
       this.refreshSource();
     });
   }
@@ -172,8 +173,7 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
       UNAVAILABLE: '#94a3b8'
     };
     const color = statusColor[driver.driverStatus] ?? '#94a3b8';
-    const label = driver.driverStatus === 'ON_DELIVERY' ? 'On Delivery'
-      : driver.driverStatus === 'AVAILABLE' ? 'Available' : 'Offline';
+    const label = this.getStatusLabel(driver.driverStatus);
     const speed = driver.speed > 0 ? `${driver.speed.toFixed(1)} km/h` : 'Stationary';
     const ping = driver.lastPing ? new Date(driver.lastPing).toLocaleTimeString() : 'N/A';
     return `
@@ -230,10 +230,10 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
   }
 
   private refreshSource(): void {
-    const features: Feature<Point>[] = Object.values(this.drivers)
+    const features = Object.values(this.drivers)
       .filter((d: any) => this.selectedStatuses.has(d.driverStatus))
       .map((d: any) => ({
-        type: 'Feature',
+        type: 'Feature' as const,
         properties: {
           id: d.id,
           driverStatus: d.driverStatus,
@@ -241,15 +241,14 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
           initial: (d.email || '?').charAt(0).toUpperCase()
         },
         geometry: {
-          type: 'Point',
+          type: 'Point' as const,
           coordinates: d.history[d.history.length - 1]
         }
-      } as Feature<Point>));
+      }));
 
-    const source = this.map.getSource('drivers') as GeoJSONSource;
+    const source = this.map.getSource('drivers') as mapboxgl.GeoJSONSource;
     if (source) {
-      const collection: FeatureCollection<Point> = { type: 'FeatureCollection', features };
-      source.setData(collection);
+      source.setData({ type: 'FeatureCollection', features });
     }
   }
 
@@ -257,13 +256,13 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
     const driver = this.drivers[id];
     if (!driver || driver.history.length < 2) return;
     const routeId = `route-${id}`;
-    const data: Feature<LineString> = {
+    const data: GeoJSON.Feature<GeoJSON.LineString> = {
       type: 'Feature',
       properties: {},
       geometry: { type: 'LineString', coordinates: driver.history }
     };
     if (this.map.getSource(routeId)) {
-      (this.map.getSource(routeId) as GeoJSONSource).setData(data);
+      (this.map.getSource(routeId) as mapboxgl.GeoJSONSource).setData(data);
     } else {
       this.map.addSource(routeId, { type: 'geojson', data });
       this.map.addLayer({
