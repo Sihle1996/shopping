@@ -1,315 +1,326 @@
-<div class="min-h-screen bg-surface flex items-center justify-center p-4">
-  <div class="w-full max-w-md animate-fade-in">
+<div class="min-h-screen bg-surface py-6 px-4 lg:py-10 lg:px-8">
+  <div class="max-w-5xl mx-auto animate-fade-in">
 
     <!-- Header -->
     <div class="text-center mb-8">
-      <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
+      <div class="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-md">
         <i class="bi bi-truck text-white text-2xl"></i>
       </div>
       <h1 class="font-heading text-2xl font-bold text-textDark">Checkout</h1>
       <p class="text-textLight text-sm mt-1">Complete your order</p>
     </div>
 
-    <!-- Delivery Details Card -->
-    <div class="bg-white rounded-2xl shadow-card p-6 mb-4">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="font-heading text-sm font-semibold text-textDark flex items-center gap-2">
-          <i class="bi bi-geo-alt text-primary"></i> Delivery Details
-        </h2>
-        <button *ngIf="savedAddresses.length > 0" type="button" (click)="showAddressPicker = !showAddressPicker"
-                class="text-xs font-medium text-primary-600 hover:text-primary-700 flex items-center gap-1">
-          <i class="bi bi-bookmark-fill"></i> Saved
-        </button>
-      </div>
+    <!-- Two-column grid on desktop, single column on mobile -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
 
-      <!-- Saved address picker -->
-      <div *ngIf="showAddressPicker" class="mb-4 space-y-2">
-        <button *ngFor="let a of savedAddresses" type="button" (click)="fillFromSaved(a)"
-                class="w-full text-left px-3 py-2 rounded-xl border border-borderColor bg-gray-50 hover:bg-primary-50 hover:border-primary-300 transition-colors">
-          <span class="text-xs font-semibold text-textDark block">{{ a.label }}</span>
-          <span class="text-xs text-textMuted">{{ a.street }}, {{ a.city }}</span>
-        </button>
-      </div>
+      <!-- ── LEFT: Delivery + Promo + Loyalty ── -->
+      <div class="space-y-4">
 
-      <!-- Guest info banner -->
-      <div *ngIf="!isLoggedIn" class="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
-        <i class="bi bi-person-fill-exclamation mt-0.5 flex-shrink-0"></i>
-        <span>Checking out as guest. <a routerLink="/login" class="font-semibold underline">Sign in</a> to save your address and view order history.</span>
-      </div>
-
-      <form (ngSubmit)="onSubmit()" class="space-y-4">
-
-        <!-- Guest email (shown when not logged in) -->
-        <div *ngIf="!isLoggedIn">
-          <label class="block text-xs font-medium text-textDark mb-1.5">Email Address <span class="text-danger">*</span></label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <i class="bi bi-envelope text-textMuted text-sm"></i>
-            </div>
-            <input type="email" [(ngModel)]="guestEmail" name="guestEmail"
-                   class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
-                          placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
-                          focus:border-transparent transition-shadow"
-                   placeholder="your@email.com" />
-          </div>
-        </div>
-
-        <!-- Full Name -->
-        <div>
-          <label class="block text-xs font-medium text-textDark mb-1.5">Full Name</label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <i class="bi bi-person text-textMuted text-sm"></i>
-            </div>
-            <input type="text" [(ngModel)]="deliveryDetails.fullName" name="fullName" required
-                   class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
-                          placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
-                          focus:border-transparent transition-shadow"
-                   placeholder="John Doe" />
-          </div>
-        </div>
-
-        <!-- Street Address with Autocomplete -->
-        <div class="relative">
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="block text-xs font-medium text-textDark">Street Address</label>
-            <button type="button" (click)="useMyLocation()"
-                    [disabled]="locating"
-                    class="flex items-center gap-1 text-xs font-medium transition-colors"
-                    style="color: var(--brand-primary)">
-              <i class="bi" [class.bi-geo-alt-fill]="!locating" [class.bi-arrow-repeat]="locating"
-                 [class.animate-spin]="locating"></i>
-              {{ locating ? 'Locating...' : 'Use my location' }}
+        <!-- Delivery Details Card -->
+        <div class="bg-white rounded-2xl shadow-card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-heading text-sm font-semibold text-textDark flex items-center gap-2">
+              <i class="bi bi-geo-alt text-primary"></i> Delivery Details
+            </h2>
+            <button *ngIf="savedAddresses.length > 0" type="button" (click)="showAddressPicker = !showAddressPicker"
+                    class="text-xs font-medium text-primary-600 hover:text-primary-700 flex items-center gap-1">
+              <i class="bi bi-bookmark-fill"></i> Saved
             </button>
           </div>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <i class="bi bi-geo-alt text-textMuted text-sm"></i>
+
+          <!-- Saved address picker -->
+          <div *ngIf="showAddressPicker" class="mb-4 space-y-2">
+            <button *ngFor="let a of savedAddresses" type="button" (click)="fillFromSaved(a)"
+                    class="w-full text-left px-3 py-2 rounded-xl border border-borderColor bg-gray-50 hover:bg-primary-50 hover:border-primary-300 transition-colors">
+              <span class="text-xs font-semibold text-textDark block">{{ a.label }}</span>
+              <span class="text-xs text-textMuted">{{ a.street }}, {{ a.city }}</span>
+            </button>
+          </div>
+
+          <!-- Guest info banner -->
+          <div *ngIf="!isLoggedIn" class="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
+            <i class="bi bi-person-fill-exclamation mt-0.5 flex-shrink-0"></i>
+            <span>Checking out as guest. <a routerLink="/login" class="font-semibold underline">Sign in</a> to save your address and view order history.</span>
+          </div>
+
+          <form (ngSubmit)="onSubmit()" class="space-y-4">
+
+            <!-- Guest email -->
+            <div *ngIf="!isLoggedIn">
+              <label class="block text-xs font-medium text-textDark mb-1.5">Email Address <span class="text-danger">*</span></label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <i class="bi bi-envelope text-textMuted text-sm"></i>
+                </div>
+                <input type="email" [(ngModel)]="guestEmail" name="guestEmail"
+                       class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                              placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
+                              focus:border-transparent transition-shadow"
+                       placeholder="your@email.com" />
+              </div>
             </div>
-            <input type="text" [formControl]="addressControl"
-                   [(ngModel)]="deliveryDetails.address" name="address" required
-                   #addressInput
-                   class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
-                          placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
-                          focus:border-transparent transition-shadow"
-                   placeholder="Start typing your address..." />
-          </div>
-          <ul *ngIf="addressSuggestions.length > 0"
-              class="absolute z-50 bg-white border border-borderColor rounded-xl shadow-float w-full max-h-48 overflow-auto mt-1">
-            <li *ngFor="let suggestion of addressSuggestions"
-                (click)="selectAddress(suggestion)"
-                class="px-4 py-3 hover:bg-surface cursor-pointer text-sm text-textDark
-                       border-b border-borderColor last:border-0 transition-colors">
-              <i class="bi bi-geo-alt text-primary mr-2"></i>{{ suggestion.label }}
-            </li>
-          </ul>
-        </div>
 
-        <!-- City & Zip -->
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-textDark mb-1.5">City</label>
-            <input type="text" [(ngModel)]="deliveryDetails.city" name="city" required
-                   class="w-full px-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
-                          placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
-                          focus:border-transparent transition-shadow"
-                   placeholder="Johannesburg" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-textDark mb-1.5">Zip Code</label>
-            <input type="text" [(ngModel)]="deliveryDetails.zip" name="zip" required
-                   class="w-full px-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
-                          placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
-                          focus:border-transparent transition-shadow"
-                   placeholder="2000" />
-          </div>
-        </div>
-
-        <!-- Phone -->
-        <div>
-          <label class="block text-xs font-medium text-textDark mb-1.5">Phone Number</label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <i class="bi bi-telephone text-textMuted text-sm"></i>
+            <!-- Full Name -->
+            <div>
+              <label class="block text-xs font-medium text-textDark mb-1.5">Full Name</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <i class="bi bi-person text-textMuted text-sm"></i>
+                </div>
+                <input type="text" [(ngModel)]="deliveryDetails.fullName" name="fullName" required
+                       class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                              placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
+                              focus:border-transparent transition-shadow"
+                       placeholder="John Doe" />
+              </div>
             </div>
-            <input type="tel" [(ngModel)]="deliveryDetails.phone" name="phone" required
-                   class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
-                          placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
-                          focus:border-transparent transition-shadow"
-                   placeholder="071 234 5678" />
-          </div>
-        </div>
 
-        <!-- Delivery Notes -->
-        <div>
-          <label class="block text-xs font-medium text-textDark mb-1.5">
-            Delivery Notes <span class="text-textMuted font-normal">(optional)</span>
-          </label>
-          <div class="relative">
-            <div class="absolute top-3 left-3.5 pointer-events-none">
-              <i class="bi bi-chat-left-text text-textMuted text-sm"></i>
+            <!-- Street Address with Autocomplete -->
+            <div class="relative">
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block text-xs font-medium text-textDark">Street Address</label>
+                <button type="button" (click)="useMyLocation()"
+                        [disabled]="locating"
+                        class="flex items-center gap-1 text-xs font-medium transition-colors"
+                        style="color: var(--brand-primary)">
+                  <i class="bi" [class.bi-geo-alt-fill]="!locating" [class.bi-arrow-repeat]="locating"
+                     [class.animate-spin]="locating"></i>
+                  {{ locating ? 'Locating...' : 'Use my location' }}
+                </button>
+              </div>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <i class="bi bi-geo-alt text-textMuted text-sm"></i>
+                </div>
+                <input type="text" [formControl]="addressControl"
+                       [(ngModel)]="deliveryDetails.address" name="address" required
+                       #addressInput
+                       class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                              placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
+                              focus:border-transparent transition-shadow"
+                       placeholder="Start typing your address..." />
+              </div>
+              <ul *ngIf="addressSuggestions.length > 0"
+                  class="absolute z-50 bg-white border border-borderColor rounded-xl shadow-float w-full max-h-48 overflow-auto mt-1">
+                <li *ngFor="let suggestion of addressSuggestions"
+                    (click)="selectAddress(suggestion)"
+                    class="px-4 py-3 hover:bg-surface cursor-pointer text-sm text-textDark
+                           border-b border-borderColor last:border-0 transition-colors">
+                  <i class="bi bi-geo-alt text-primary mr-2"></i>{{ suggestion.label }}
+                </li>
+              </ul>
             </div>
-            <textarea [(ngModel)]="orderNotes" name="orderNotes" rows="2"
-                      class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
-                             placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
-                             focus:border-transparent transition-shadow resize-none"
-                      placeholder="Gate code, access instructions, ring the bell..."></textarea>
+
+            <!-- City & Zip -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-textDark mb-1.5">City</label>
+                <input type="text" [(ngModel)]="deliveryDetails.city" name="city" required
+                       class="w-full px-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                              placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
+                              focus:border-transparent transition-shadow"
+                       placeholder="Johannesburg" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-textDark mb-1.5">Zip Code</label>
+                <input type="text" [(ngModel)]="deliveryDetails.zip" name="zip" required
+                       class="w-full px-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                              placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
+                              focus:border-transparent transition-shadow"
+                       placeholder="2000" />
+              </div>
+            </div>
+
+            <!-- Phone -->
+            <div>
+              <label class="block text-xs font-medium text-textDark mb-1.5">Phone Number</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <i class="bi bi-telephone text-textMuted text-sm"></i>
+                </div>
+                <input type="tel" [(ngModel)]="deliveryDetails.phone" name="phone" required
+                       class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                              placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
+                              focus:border-transparent transition-shadow"
+                       placeholder="071 234 5678" />
+              </div>
+            </div>
+
+            <!-- Delivery Notes -->
+            <div>
+              <label class="block text-xs font-medium text-textDark mb-1.5">
+                Delivery Notes <span class="text-textMuted font-normal">(optional)</span>
+              </label>
+              <div class="relative">
+                <div class="absolute top-3 left-3.5 pointer-events-none">
+                  <i class="bi bi-chat-left-text text-textMuted text-sm"></i>
+                </div>
+                <textarea [(ngModel)]="orderNotes" name="orderNotes" rows="2"
+                          class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                                 placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
+                                 focus:border-transparent transition-shadow resize-none"
+                          placeholder="Gate code, access instructions, ring the bell..."></textarea>
+              </div>
+            </div>
+
+            <!-- Submit -->
+            <app-button
+              variant="primary"
+              size="lg"
+              type="submit"
+              [fullWidth]="true"
+              iconRight="bi bi-arrow-right">
+              Continue to Payment
+            </app-button>
+          </form>
+        </div>
+
+        <!-- Promo Code Card -->
+        <div class="bg-white rounded-2xl shadow-card p-6">
+          <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
+            <i class="bi bi-tag text-primary"></i> Promo Code
+          </h2>
+
+          <div *ngIf="appliedPromo" class="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+            <div>
+              <p class="text-sm font-semibold text-green-700">
+                <i class="bi bi-check-circle-fill mr-1.5"></i>{{ appliedPromo.title }}
+              </p>
+              <p class="text-xs text-green-600 mt-0.5">
+                {{ appliedPromo.code ? appliedPromo.code + ' — ' : 'Auto-applied — ' }}{{ appliedPromo.discountPercent }}% off
+              </p>
+            </div>
+            <button *ngIf="appliedPromo.code" type="button" (click)="removePromo()"
+                    class="text-green-600 hover:text-green-800 text-lg leading-none transition-colors">
+              <i class="bi bi-x-circle"></i>
+            </button>
+          </div>
+
+          <div *ngIf="!appliedPromo">
+            <div class="flex gap-2">
+              <input type="text" [(ngModel)]="promoCode" (keyup.enter)="applyPromoCode()"
+                     placeholder="Enter promo code"
+                     class="flex-1 px-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                            placeholder-textMuted text-sm uppercase tracking-wide
+                            focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow" />
+              <app-button variant="secondary" size="md" [disabled]="!promoCode.trim() || promoLoading"
+                          (clicked)="applyPromoCode()">
+                <span *ngIf="!promoLoading">Apply</span>
+                <span *ngIf="promoLoading"><i class="bi bi-arrow-repeat animate-spin"></i></span>
+              </app-button>
+            </div>
+            <p *ngIf="promoError" class="text-danger text-xs mt-2 flex items-center gap-1">
+              <i class="bi bi-exclamation-circle"></i>{{ promoError }}
+            </p>
           </div>
         </div>
 
-        <!-- Submit -->
-        <app-button
-          variant="primary"
-          size="lg"
-          type="submit"
-          [fullWidth]="true"
-          iconRight="bi bi-arrow-right">
-          Continue to Payment
-        </app-button>
-      </form>
+        <!-- Loyalty Points Card -->
+        <div *ngIf="isLoggedIn && loyaltyBalance && loyaltyBalance.balance >= 100"
+             class="bg-white rounded-2xl shadow-card p-6">
+          <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
+            <i class="bi bi-gift text-amber-500"></i> Loyalty Points
+            <span class="ml-auto text-xs font-normal text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+              {{ loyaltyBalance.balance }} pts available
+            </span>
+          </h2>
+
+          <div *ngIf="loyaltyPointsToRedeem > 0"
+               class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+            <div>
+              <p class="text-sm font-semibold text-amber-700">
+                <i class="bi bi-check-circle-fill mr-1.5"></i>{{ loyaltyPointsToRedeem }} points applied
+              </p>
+              <p class="text-xs text-amber-600 mt-0.5">-R{{ loyaltyDiscount.toFixed(2) }} discount</p>
+            </div>
+            <button type="button" (click)="removeLoyalty()"
+                    class="text-amber-600 hover:text-amber-800 text-lg leading-none transition-colors">
+              <i class="bi bi-x-circle"></i>
+            </button>
+          </div>
+
+          <div *ngIf="loyaltyPointsToRedeem === 0">
+            <p class="text-xs text-textMuted mb-3">
+              Worth R{{ loyaltyBalance.cashValue.toFixed(2) }} — use multiples of 100 pts (100 pts = R10)
+            </p>
+            <div class="flex gap-2">
+              <input type="number" [(ngModel)]="loyaltyPointsInput" min="100" step="100"
+                     [max]="loyaltyBalance.balance"
+                     placeholder="e.g. 100"
+                     class="flex-1 px-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                            placeholder-textMuted text-sm
+                            focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-shadow" />
+              <app-button variant="secondary" size="md" [disabled]="!loyaltyPointsInput || loyaltyLoading"
+                          (clicked)="applyLoyalty()">
+                <span *ngIf="!loyaltyLoading">Apply</span>
+                <span *ngIf="loyaltyLoading"><i class="bi bi-arrow-repeat animate-spin"></i></span>
+              </app-button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── RIGHT: Order Summary + PayPal (sticky on desktop) ── -->
+      <div class="space-y-4 lg:sticky lg:top-20">
+
+        <!-- Order Summary Card -->
+        <div class="bg-white rounded-2xl shadow-card p-6">
+          <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
+            <i class="bi bi-receipt text-primary"></i> Order Summary
+          </h2>
+
+          <div class="space-y-2 mb-4">
+            <div *ngFor="let item of cartItems" class="flex items-center justify-between text-sm">
+              <span class="text-textDark">{{ item.menuItemName }}
+                <span class="text-textMuted">× {{ item.quantity }}</span>
+              </span>
+              <span class="font-numbers font-medium text-textDark">
+                R{{ (item.totalPrice ?? item.menuItemPrice * item.quantity).toFixed(2) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="border-t border-borderColor pt-3 space-y-2">
+            <div class="flex justify-between text-sm text-textLight">
+              <span>Subtotal</span>
+              <span class="font-numbers">R{{ subtotal.toFixed(2) }}</span>
+            </div>
+            <div *ngIf="discount > 0" class="flex justify-between text-sm text-green-600">
+              <span class="flex items-center gap-1">
+                <i class="bi bi-tag-fill text-xs"></i>
+                {{ appliedPromo?.code ? appliedPromo?.code : 'Auto-applied' }} ({{ appliedPromo?.discountPercent }}% off)
+              </span>
+              <span class="font-numbers font-semibold">-R{{ discount.toFixed(2) }}</span>
+            </div>
+            <div *ngIf="loyaltyDiscount > 0" class="flex justify-between text-sm text-amber-600">
+              <span class="flex items-center gap-1">
+                <i class="bi bi-gift-fill text-xs"></i>
+                {{ loyaltyPointsToRedeem }} loyalty pts
+              </span>
+              <span class="font-numbers font-semibold">-R{{ loyaltyDiscount.toFixed(2) }}</span>
+            </div>
+            <div class="flex justify-between text-base font-bold text-textDark pt-1 border-t border-borderColor">
+              <span>Total</span>
+              <span class="font-numbers text-primary">R{{ totalPrice.toFixed(2) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- PayPal Section -->
+        <div *ngIf="showPayPal" class="bg-white rounded-2xl shadow-card p-6 animate-fade-in">
+          <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
+            <i class="bi bi-credit-card text-primary"></i> Payment
+          </h2>
+          <div class="flex items-center justify-between mb-4 bg-primary-50 rounded-xl px-4 py-3">
+            <span class="text-sm text-textDark">Amount due</span>
+            <span class="font-numbers font-bold text-lg text-primary">R{{ totalPrice.toFixed(2) }}</span>
+          </div>
+          <div id="paypal-button-container"></div>
+        </div>
+
+      </div>
+
     </div>
-
-    <!-- Promo Code Card -->
-    <div class="bg-white rounded-2xl shadow-card p-6 mb-4">
-      <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
-        <i class="bi bi-tag text-primary"></i> Promo Code
-      </h2>
-
-      <!-- Applied state -->
-      <div *ngIf="appliedPromo" class="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-        <div>
-          <p class="text-sm font-semibold text-green-700">
-            <i class="bi bi-check-circle-fill mr-1.5"></i>{{ appliedPromo.title }}
-          </p>
-          <p class="text-xs text-green-600 mt-0.5">
-            {{ appliedPromo.code ? appliedPromo.code + ' — ' : 'Auto-applied — ' }}{{ appliedPromo.discountPercent }}% off
-          </p>
-        </div>
-        <button *ngIf="appliedPromo.code" type="button" (click)="removePromo()"
-                class="text-green-600 hover:text-green-800 text-lg leading-none transition-colors">
-          <i class="bi bi-x-circle"></i>
-        </button>
-      </div>
-
-      <!-- Input state -->
-      <div *ngIf="!appliedPromo">
-        <div class="flex gap-2">
-          <input type="text" [(ngModel)]="promoCode" (keyup.enter)="applyPromoCode()"
-                 placeholder="Enter promo code"
-                 class="flex-1 px-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
-                        placeholder-textMuted text-sm uppercase tracking-wide
-                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow" />
-          <app-button variant="secondary" size="md" [disabled]="!promoCode.trim() || promoLoading"
-                      (clicked)="applyPromoCode()">
-            <span *ngIf="!promoLoading">Apply</span>
-            <span *ngIf="promoLoading"><i class="bi bi-arrow-repeat animate-spin"></i></span>
-          </app-button>
-        </div>
-        <p *ngIf="promoError" class="text-danger text-xs mt-2 flex items-center gap-1">
-          <i class="bi bi-exclamation-circle"></i>{{ promoError }}
-        </p>
-      </div>
-    </div>
-
-    <!-- Loyalty Points Card (logged-in users with points) -->
-    <div *ngIf="isLoggedIn && loyaltyBalance && loyaltyBalance.balance >= 100"
-         class="bg-white rounded-2xl shadow-card p-6 mb-4">
-      <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
-        <i class="bi bi-gift text-amber-500"></i> Loyalty Points
-        <span class="ml-auto text-xs font-normal text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-          {{ loyaltyBalance.balance }} pts available
-        </span>
-      </h2>
-
-      <!-- Applied state -->
-      <div *ngIf="loyaltyPointsToRedeem > 0"
-           class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-        <div>
-          <p class="text-sm font-semibold text-amber-700">
-            <i class="bi bi-check-circle-fill mr-1.5"></i>{{ loyaltyPointsToRedeem }} points applied
-          </p>
-          <p class="text-xs text-amber-600 mt-0.5">-R{{ loyaltyDiscount.toFixed(2) }} discount</p>
-        </div>
-        <button type="button" (click)="removeLoyalty()"
-                class="text-amber-600 hover:text-amber-800 text-lg leading-none transition-colors">
-          <i class="bi bi-x-circle"></i>
-        </button>
-      </div>
-
-      <!-- Input state -->
-      <div *ngIf="loyaltyPointsToRedeem === 0">
-        <p class="text-xs text-textMuted mb-3">
-          Worth R{{ loyaltyBalance.cashValue.toFixed(2) }} — use multiples of 100 pts (100 pts = R10)
-        </p>
-        <div class="flex gap-2">
-          <input type="number" [(ngModel)]="loyaltyPointsInput" min="100" step="100"
-                 [max]="loyaltyBalance.balance"
-                 placeholder="e.g. 100"
-                 class="flex-1 px-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
-                        placeholder-textMuted text-sm
-                        focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-shadow" />
-          <app-button variant="secondary" size="md" [disabled]="!loyaltyPointsInput || loyaltyLoading"
-                      (clicked)="applyLoyalty()">
-            <span *ngIf="!loyaltyLoading">Apply</span>
-            <span *ngIf="loyaltyLoading"><i class="bi bi-arrow-repeat animate-spin"></i></span>
-          </app-button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Order Summary Card -->
-    <div class="bg-white rounded-2xl shadow-card p-6 mb-4">
-      <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
-        <i class="bi bi-receipt text-primary"></i> Order Summary
-      </h2>
-
-      <!-- Items -->
-      <div class="space-y-2 mb-4">
-        <div *ngFor="let item of cartItems" class="flex items-center justify-between text-sm">
-          <span class="text-textDark">{{ item.menuItemName }}
-            <span class="text-textMuted">× {{ item.quantity }}</span>
-          </span>
-          <span class="font-numbers font-medium text-textDark">R{{ (item.menuItemPrice * item.quantity).toFixed(2) }}</span>
-        </div>
-      </div>
-
-      <div class="border-t border-borderColor pt-3 space-y-2">
-        <div class="flex justify-between text-sm text-textLight">
-          <span>Subtotal</span>
-          <span class="font-numbers">R{{ subtotal.toFixed(2) }}</span>
-        </div>
-        <div *ngIf="discount > 0" class="flex justify-between text-sm text-green-600">
-          <span class="flex items-center gap-1">
-            <i class="bi bi-tag-fill text-xs"></i>
-            {{ appliedPromo?.code ? appliedPromo?.code : 'Auto-applied' }} ({{ appliedPromo?.discountPercent }}% off)
-          </span>
-          <span class="font-numbers font-semibold">-R{{ discount.toFixed(2) }}</span>
-        </div>
-        <div *ngIf="loyaltyDiscount > 0" class="flex justify-between text-sm text-amber-600">
-          <span class="flex items-center gap-1">
-            <i class="bi bi-gift-fill text-xs"></i>
-            {{ loyaltyPointsToRedeem }} loyalty pts
-          </span>
-          <span class="font-numbers font-semibold">-R{{ loyaltyDiscount.toFixed(2) }}</span>
-        </div>
-        <div class="flex justify-between text-base font-bold text-textDark pt-1 border-t border-borderColor">
-          <span>Total</span>
-          <span class="font-numbers text-primary">R{{ totalPrice.toFixed(2) }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- PayPal Section -->
-    <div *ngIf="showPayPal" class="bg-white rounded-2xl shadow-card p-6 animate-fade-in">
-      <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
-        <i class="bi bi-credit-card text-primary"></i> Payment
-      </h2>
-      <div class="flex items-center justify-between mb-4 bg-primary-50 rounded-xl px-4 py-3">
-        <span class="text-sm text-textDark">Amount due</span>
-        <span class="font-numbers font-bold text-lg text-primary">R{{ totalPrice.toFixed(2) }}</span>
-      </div>
-      <div id="paypal-button-container"></div>
-    </div>
-
   </div>
 </div>
