@@ -91,9 +91,11 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
 
     this.map = new mapboxgl.Map({
       container: 'adminDriverMap',
-      style: 'mapbox://styles/mapbox/light-v11',
+      style: 'mapbox://styles/mapbox/streets-v12',
       center: [28.0473, -26.2041],
-      zoom: 10
+      zoom: 12,
+      pitch: 45,
+      bearing: 0
     });
 
     this.map.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -160,6 +162,22 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
       this.map.on('mouseleave', 'driver-circles', () => {
         this.map.getCanvas().style.cursor = '';
       });
+
+      // 3D buildings (same as driver map)
+      let labelId: string | undefined;
+      for (const l of this.map.getStyle().layers || []) {
+        if (l.type === 'symbol' && (l.layout as any)?.['text-field']) { labelId = l.id; break; }
+      }
+      this.map.addLayer({
+        id: '3d-buildings', source: 'composite', 'source-layer': 'building',
+        filter: ['==', 'extrude', 'true'], type: 'fill-extrusion', minzoom: 13,
+        paint: {
+          'fill-extrusion-color': '#c8c8c8',
+          'fill-extrusion-height': ['get', 'height'],
+          'fill-extrusion-base': ['get', 'min_height'],
+          'fill-extrusion-opacity': 0.7
+        }
+      }, labelId);
 
       // Apply data that arrived before map was ready
       this.refreshSource();
