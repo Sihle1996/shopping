@@ -86,8 +86,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                                 return null;
                             } else if (destination.startsWith("/topic/driver") && !"ROLE_DRIVER".equals(role)) {
                                 return null;
-                            } else if (destination.startsWith("/topic/manager") && !"ROLE_MANAGER".equals(role)) {
-                                return null;
                             }
                         }
                     }

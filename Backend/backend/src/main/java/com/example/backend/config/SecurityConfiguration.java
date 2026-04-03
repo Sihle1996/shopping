@@ -73,9 +73,6 @@ public class SecurityConfiguration {
                         // Driver routes
                         .requestMatchers("/api/driver/**").hasRole("DRIVER")
 
-                        // Manager routes
-                        .requestMatchers("/api/manager/**").hasRole("MANAGER")
-
                         // ✅ Everything else requires authentication
                         .anyRequest().authenticated()
                 )

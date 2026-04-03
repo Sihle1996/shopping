@@ -21,7 +21,6 @@ import { AdminDashboardModule } from './admin/admin-dashboard/admin-dashboard.mo
 import { AuthInterceptor } from './authInterceptor/auth.interceptor';
 import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
 import { SharedModule } from './shared/shared.module';
-import { ManagerModule } from './manager/manager.module';
 import { HistoryordersComponent } from './pages/historyorders/historyorders.component';
 import { RegisterRestaurantComponent } from './pages/register-restaurant/register-restaurant.component';
 import { StoreListComponent } from './pages/store-list/store-list.component';
@@ -62,7 +61,6 @@ import { UserProfileComponent } from './pages/user-profile/user-profile.componen
     ReactiveFormsModule,
     AdminDashboardModule,
     SharedModule,
-    ManagerModule,
     AppRoutingModule,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',

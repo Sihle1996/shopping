@@ -33,8 +33,6 @@ export class AdminGuard implements CanActivate {
         });
       }
       return true;
-    } else if (role === 'ROLE_MANAGER') {
-      this.router.navigate(['/manager/dashboard']);
     } else if (role === 'ROLE_DRIVER') {
       this.router.navigate(['/driver/dashboard']);
     } else if (role === 'ROLE_USER') {

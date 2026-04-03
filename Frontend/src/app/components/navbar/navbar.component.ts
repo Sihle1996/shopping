@@ -108,7 +108,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     switch (this.userRole) {
       case 'ROLE_ADMIN': return '/admin/dashboard';
       case 'ROLE_DRIVER': return '/driver/dashboard';
-      case 'ROLE_MANAGER': return '/manager/dashboard';
       default:
         // If browsing a store, go back to that store
         const slug = localStorage.getItem('storeSlug');
@@ -127,8 +126,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.router.navigate(['/admin/dashboard']);
     } else if (this.userRole === 'ROLE_DRIVER') {
       this.router.navigate(['/driver/dashboard']);
-    } else if (this.userRole === 'ROLE_MANAGER') {
-      this.router.navigate(['/manager/dashboard']);
     } else {
       const slug = localStorage.getItem('storeSlug');
       if (slug) {
