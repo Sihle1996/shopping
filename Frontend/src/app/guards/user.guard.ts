@@ -14,8 +14,6 @@ export class UserGuard implements CanActivate {
       return true;
     } else if (role === 'ROLE_ADMIN') {
       this.router.navigate(['/admin/dashboard']);
-    } else if (role === 'ROLE_MANAGER') {
-      this.router.navigate(['/manager/dashboard']);
     } else if (role === 'ROLE_DRIVER') {
       this.router.navigate(['/driver/dashboard']);
     } else {

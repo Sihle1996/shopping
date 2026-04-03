@@ -17,8 +17,6 @@ export class DriverGuard implements CanActivate {
       return true;
     } else if (role === 'ROLE_ADMIN') {
       this.router.navigate(['/admin/dashboard']);
-    } else if (role === 'ROLE_MANAGER') {
-      this.router.navigate(['/manager/dashboard']);
     } else if (role === 'ROLE_USER') {
       this.router.navigate(['/']);
     } else {

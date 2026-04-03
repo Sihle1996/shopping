@@ -13,7 +13,7 @@ public class NotificationWebSocketController {
     private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/admin/notify")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public void broadcast(String message) {
         messagingTemplate.convertAndSend("/topic/admin/notifications", message);
     }
