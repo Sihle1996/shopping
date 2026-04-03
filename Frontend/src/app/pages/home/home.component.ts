@@ -170,12 +170,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   private loadReviews(): void {
     const tenantId = localStorage.getItem('tenantId');
     const headers: any = tenantId ? { 'X-Tenant-Id': tenantId } : {};
-    this.http.get<any[]>(`${environment.apiUrl}/api/reviews`, { headers }).subscribe({
-      next: (reviews) => {
-        this.reviews = reviews;
-        if (reviews.length) {
-          this.avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-        }
+    this.http.get<any>(`${environment.apiUrl}/api/reviews`, { headers }).subscribe({
+      next: (res) => {
+        this.reviews = res.reviews ?? res ?? [];
+        this.avgRating = res.averageRating ?? 0;
       },
       error: () => {}
     });
