@@ -57,5 +57,20 @@ public class PayPalService {
         paymentExecution.setPayerId(payerId);
         return payment.execute(apiContext, paymentExecution);
     }
+
+    // ✅ Refund a payment by PayPal payment ID
+    public boolean refundPayment(String paymentId) throws PayPalRESTException {
+        Payment payment = Payment.get(apiContext, paymentId);
+        if (payment == null || payment.getTransactions() == null || payment.getTransactions().isEmpty()) {
+            return false;
+        }
+        List<RelatedResources> related = payment.getTransactions().get(0).getRelatedResources();
+        if (related == null || related.isEmpty()) return false;
+        Sale sale = related.get(0).getSale();
+        if (sale == null) return false;
+        RefundRequest refundRequest = new RefundRequest();
+        Refund refund = sale.refund(apiContext, refundRequest);
+        return "completed".equalsIgnoreCase(refund.getState());
+    }
 }
 

@@ -70,4 +70,23 @@ public class OrderController {
             return ResponseEntity.status(500).body("An error occurred while fetching the order.");
         }
     }
+
+    // ✅ Cancel a pending order (customer)
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<?> cancelOrder(@PathVariable UUID id,
+                                         @AuthenticationPrincipal User authenticatedUser) {
+        if (authenticatedUser == null) {
+            return ResponseEntity.status(401).body("User not authenticated");
+        }
+        try {
+            OrderDTO orderDTO = orderService.cancelOrder(id, authenticatedUser);
+            return ResponseEntity.ok(orderDTO);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to cancel order"));
+        }
+    }
 }

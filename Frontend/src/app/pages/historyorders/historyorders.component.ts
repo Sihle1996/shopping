@@ -49,9 +49,10 @@ export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewCheck
   currentPage = 1;
   itemsPerPage = 5;
   selectedStatus = 'All';
-  allStatuses: string[] = ['All', 'Pending', 'Preparing', 'Out for Delivery', 'Delivered'];
+  allStatuses: string[] = ['All', 'Pending', 'Preparing', 'Out for Delivery', 'Delivered', 'Cancelled'];
 
   reorderingId: string | null = null;
+  cancellingId: string | null = null;
   private wsSub?: Subscription;
 
   // Review modal state
@@ -292,5 +293,26 @@ export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewCheck
       next: () => { done++; if (done === adds.length) { this.reorderingId = null; this.toastr.success('Items added to cart'); } },
       error: () => { this.reorderingId = null; this.toastr.error('Could not reorder some items'); }
     }));
+  }
+
+  cancelOrder(order: OrderDTO): void {
+    if (!confirm('Are you sure you want to cancel this order?')) return;
+    this.cancellingId = order.id;
+    const token = this.authService.getToken();
+    const headers = new HttpHeaders(token ? { Authorization: `Bearer ${token}` } : {});
+    this.http.patch<OrderDTO>(`${environment.apiUrl}/api/orders/${order.id}/cancel`, {}, { headers }).subscribe({
+      next: (updated) => {
+        const idx = this.orders.findIndex(o => o.id === order.id);
+        if (idx !== -1) this.orders[idx] = updated;
+        this.applyFilter();
+        this.cancellingId = null;
+        this.toastr.success('Order cancelled successfully');
+      },
+      error: (err) => {
+        this.cancellingId = null;
+        const msg = err.error?.error || 'Could not cancel order';
+        this.toastr.error(msg);
+      }
+    });
   }
 }
