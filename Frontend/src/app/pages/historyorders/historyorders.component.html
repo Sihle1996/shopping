@@ -97,6 +97,16 @@
         <span class="text-[10px] text-textMuted">Delivered</span>
       </div>
 
+      <!-- Cancel button (Pending orders only) -->
+      <div *ngIf="order.status === 'Pending'" class="mt-3">
+        <button (click)="cancelOrder(order)"
+                [disabled]="cancellingId === order.id"
+                class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-300 text-red-600 text-xs font-semibold hover:bg-red-50 transition-colors disabled:opacity-50">
+          <i class="bi bi-x-circle"></i>
+          {{ cancellingId === order.id ? 'Cancelling...' : 'Cancel Order' }}
+        </button>
+      </div>
+
       <!-- Track order button (active orders with driver location) -->
       <div *ngIf="order.status === 'Out for Delivery' && order.driverLat && order.driverLon"
            class="mt-3">

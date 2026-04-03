@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import com.example.backend.service.LoyaltyService;
+import com.paypal.base.rest.PayPalRESTException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
@@ -42,6 +43,7 @@ public class OrderService {
     private final PromotionService promotionService;
     private final EmailService emailService;
     private final LoyaltyService loyaltyService;
+    private final PayPalService payPalService;
 
     private void checkLowStock(MenuItem menuItem) {
         if (menuItem.getStock() >= 0 && menuItem.getStock() <= menuItem.getLowStockThreshold()) {
@@ -470,5 +472,42 @@ public class OrderService {
         return getAllOrders().stream()
                 .filter(o -> "Pending".equals(o.getStatus()))
                 .count();
+    }
+
+    @Transactional
+    public OrderDTO cancelOrder(UUID orderId, User user) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+
+        if (order.getUser() == null || !order.getUser().getId().equals(user.getId())) {
+            throw new IllegalStateException("You are not authorized to cancel this order");
+        }
+        if (!"Pending".equals(order.getStatus())) {
+            throw new IllegalStateException("Only pending orders can be cancelled");
+        }
+
+        // Restore stock for each item
+        for (OrderItem item : order.getOrderItems()) {
+            MenuItem menuItem = item.getMenuItem();
+            if (menuItem != null) {
+                menuItem.setStock(menuItem.getStock() + item.getQuantity());
+                menuItemRepository.save(menuItem);
+            }
+        }
+
+        order.setStatus("Cancelled");
+        orderRepository.save(order);
+
+        // Attempt PayPal refund if payment ID is present
+        if (order.getPaymentId() != null && !order.getPaymentId().isBlank()) {
+            try {
+                payPalService.refundPayment(order.getPaymentId());
+            } catch (PayPalRESTException e) {
+                // Refund failure is logged but does not block cancellation
+                System.err.println("PayPal refund failed for order " + orderId + ": " + e.getMessage());
+            }
+        }
+
+        return convertToOrderDTO(order);
     }
 }
