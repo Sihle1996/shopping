@@ -1,12 +1,67 @@
 <div class="min-h-screen bg-surface">
 
   <!-- ── Address Entry Step ──────────────────────────────────────────────── -->
-  <section *ngIf="step === 'address'" class="py-16 px-4">
-    <div class="max-w-2xl mx-auto text-center">
-      <div class="max-w-lg mx-auto">
+  <section *ngIf="step === 'address'" class="min-h-[calc(100vh-56px)] flex flex-col lg:flex-row">
+
+    <!-- Left: hero panel (desktop only) -->
+    <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/90 to-primary-600 flex-col justify-center px-16 py-20 text-white relative overflow-hidden">
+      <!-- Decorative circles -->
+      <div class="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/5"></div>
+      <div class="absolute -bottom-24 -left-12 w-80 h-80 rounded-full bg-white/5"></div>
+
+      <div class="relative z-10">
+        <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-6">
+          <i class="bi bi-bicycle text-white text-2xl"></i>
+        </div>
+        <h1 class="font-heading text-4xl font-extrabold leading-tight mb-4">
+          Great food,<br>delivered fast.
+        </h1>
+        <p class="text-white/80 text-base leading-relaxed mb-8">
+          Enter your delivery address to discover restaurants near you.
+        </p>
+
+        <!-- Feature pills -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <i class="bi bi-shop text-white text-sm"></i>
+            </div>
+            <span class="text-white/90 text-sm">Browse local restaurants</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <i class="bi bi-clock text-white text-sm"></i>
+            </div>
+            <span class="text-white/90 text-sm">Live order tracking</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <i class="bi bi-star text-white text-sm"></i>
+            </div>
+            <span class="text-white/90 text-sm">Earn loyalty points on every order</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: search form -->
+    <div class="flex-1 flex flex-col justify-center px-6 py-12 lg:px-16 lg:py-20 bg-surface">
+      <div class="max-w-md w-full mx-auto lg:mx-0">
+
+        <!-- Mobile heading -->
+        <div class="lg:hidden text-center mb-8">
+          <h1 class="font-heading text-2xl font-extrabold text-textDark mb-1">Find restaurants near you</h1>
+          <p class="text-textMuted text-sm">Enter your delivery address to get started</p>
+        </div>
+
+        <!-- Desktop heading -->
+        <div class="hidden lg:block mb-8">
+          <h2 class="font-heading text-2xl font-bold text-textDark mb-1">Enter your address</h2>
+          <p class="text-textMuted text-sm">We'll show restaurants that deliver to you</p>
+        </div>
 
         <!-- Input + button -->
-        <div class="relative flex gap-2">
+        <div class="relative flex gap-2 mb-4">
           <div class="relative flex-1">
             <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none"></i>
             <input
@@ -15,7 +70,7 @@
               (ngModelChange)="onAddressInput()"
               placeholder="e.g. 12 Main Street, Johannesburg"
               (keyup.enter)="confirmAddress()"
-              class="w-full pl-9 pr-4 py-3 rounded-xl border-2 border-borderColor focus:border-primary outline-none text-sm text-textDark transition-colors"
+              class="w-full pl-9 pr-4 py-3.5 rounded-xl border-2 border-borderColor bg-white focus:border-primary outline-none text-sm text-textDark transition-colors shadow-sm"
             />
             <!-- Autocomplete dropdown -->
             <div *ngIf="suggestions.length > 0"
@@ -32,14 +87,14 @@
           <button
             (click)="confirmAddress()"
             [disabled]="!addressInput.trim() || isLoading"
-            class="px-5 py-3 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-primary-600 transition-colors disabled:opacity-50 whitespace-nowrap">
+            class="px-5 py-3.5 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-primary-600 transition-colors disabled:opacity-50 whitespace-nowrap shadow-sm">
             <span *ngIf="!isLoading">Find Stores</span>
             <span *ngIf="isLoading"><i class="bi bi-arrow-repeat animate-spin mr-1"></i>Searching…</span>
           </button>
         </div>
 
         <!-- Divider -->
-        <div class="flex items-center gap-3 mt-4 mb-4">
+        <div class="flex items-center gap-3 mb-4">
           <div class="h-px flex-1 bg-borderColor"></div>
           <span class="text-textMuted text-xs">or</span>
           <div class="h-px flex-1 bg-borderColor"></div>
@@ -49,13 +104,13 @@
         <button
           (click)="useMyLocation()"
           [disabled]="gpsLoading"
-          class="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-borderColor text-textDark text-sm font-medium hover:border-primary hover:text-primary transition-colors disabled:opacity-50">
+          class="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 border-borderColor bg-white text-textDark text-sm font-medium hover:border-primary hover:text-primary transition-colors disabled:opacity-50 shadow-sm">
           <i class="bi bi-crosshair2" [class.animate-pulse]="gpsLoading"></i>
           {{ gpsLoading ? 'Getting your location…' : 'Use My Current Location' }}
         </button>
 
         <!-- Error -->
-        <p *ngIf="addressError" class="mt-4 text-red-500 text-sm flex items-center justify-center gap-1.5">
+        <p *ngIf="addressError" class="mt-4 text-red-500 text-sm flex items-center gap-1.5">
           <i class="bi bi-exclamation-circle"></i>{{ addressError }}
         </p>
 
