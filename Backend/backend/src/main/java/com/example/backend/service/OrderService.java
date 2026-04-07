@@ -381,6 +381,12 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
+        String currentStatus = order.getStatus();
+        if ("Cancelled".equals(currentStatus) || "Rejected".equals(currentStatus) || "Delivered".equals(currentStatus)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Cannot assign a driver to a " + currentStatus + " order");
+        }
+
         User driver = userRepository.findById(driverId)
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
 

@@ -283,8 +283,9 @@
 
         </div><!-- end scrollable content -->
 
-        <!-- Assign Driver — sticky footer always visible, pb-20 clears bottom nav -->
-        <div class="p-6 pt-4 pb-20 border-t border-borderColor bg-white">
+        <!-- Assign Driver — active orders only -->
+        <div *ngIf="selectedOrder && !['Cancelled','Rejected','Delivered'].includes(selectedOrder.status)"
+             class="p-6 pt-4 pb-20 border-t border-borderColor bg-white">
           <h4 class="text-sm font-semibold text-textDark mb-3">Assign Driver</h4>
           <div class="flex gap-2">
             <select [(ngModel)]="selectedDriverId"
@@ -300,6 +301,14 @@
               Assign
             </app-button>
           </div>
+        </div>
+
+        <!-- Terminal order: read-only notice -->
+        <div *ngIf="selectedOrder && ['Cancelled','Rejected','Delivered'].includes(selectedOrder.status)"
+             class="p-6 pt-4 pb-20 border-t border-borderColor bg-white">
+          <p class="text-sm text-textLight">
+            Driver assignment is not available for <strong>{{ selectedOrder.status }}</strong> orders.
+          </p>
         </div>
       </aside>
     </div>

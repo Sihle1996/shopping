@@ -395,6 +395,15 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       .join(', ');
   }
 
+  get isCheckoutValid(): boolean {
+    const d = this.deliveryDetails;
+    const fieldsOk = !!(d.address?.trim() && d.city?.trim() && d.zip?.trim() && d.phone?.trim());
+    if (!this.isLoggedIn) {
+      return fieldsOk && !!(this.guestEmail?.includes('@'));
+    }
+    return fieldsOk;
+  }
+
   onSubmit(): void {
     const d = this.deliveryDetails;
     if (!this.storeIsOpen) {

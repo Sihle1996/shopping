@@ -72,6 +72,7 @@
       variant="primary"
       size="lg"
       [fullWidth]="true"
+      [disabled]="!cartItems.length"
       iconRight="bi bi-arrow-right"
       (clicked)="proceedToCheckout()">
       Proceed to Checkout

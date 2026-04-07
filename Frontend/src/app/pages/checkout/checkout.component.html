@@ -186,9 +186,13 @@
               size="lg"
               type="submit"
               [fullWidth]="true"
+              [disabled]="!isCheckoutValid"
               iconRight="bi bi-arrow-right">
               Continue to Payment
             </app-button>
+            <p *ngIf="!isCheckoutValid" class="text-xs text-textLight text-center mt-2">
+              Please fill in all required delivery fields to continue.
+            </p>
           </form>
         </div>
 
