@@ -45,10 +45,16 @@ export class AppComponent implements OnDestroy {
     });
   }
 
+  private isStaffRole(): boolean {
+    const role = this.authService.getUserRole();
+    return role === 'ROLE_ADMIN' || role === 'ROLE_SUPERADMIN' ||
+           role === 'ROLE_MANAGER' || role === 'ROLE_DRIVER';
+  }
+
   private resetIdleTimer(): void {
     clearTimeout(this.idleTimer);
     this.idleTimer = setTimeout(() => {
-      if (this.authService.isLoggedIn()) {
+      if (this.authService.isLoggedIn() && this.isStaffRole()) {
         this.ngZone.run(() => this.authService.logout());
       }
     }, IDLE_TIMEOUT_MS);
