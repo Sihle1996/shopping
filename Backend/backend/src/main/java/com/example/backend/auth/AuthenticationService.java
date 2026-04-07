@@ -143,4 +143,15 @@ public class AuthenticationService {
         user.setResetOtp(null);
         repository.save(user);
     }
+
+    public void changePassword(User user, String currentPassword, String newPassword) {
+        if (currentPassword == null || newPassword == null || newPassword.length() < 6) {
+            throw new IllegalArgumentException("New password must be at least 6 characters");
+        }
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        repository.save(user);
+    }
 }

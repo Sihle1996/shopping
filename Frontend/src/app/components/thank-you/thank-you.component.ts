@@ -1,6 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
+interface OrderSummary {
+  orderId?: string;
+  items: Array<{ name: string; quantity: number }>;
+  total: number;
+  address: string;
+  loyaltyEarned: number;
+}
+
 @Component({
   selector: 'app-thank-you',
   templateUrl: './thank-you.component.html',
@@ -9,6 +17,7 @@ import { Router } from '@angular/router';
 export class ThankYouComponent implements OnInit {
   menuRoute = '/';
   ordersRoute = '/orders';
+  summary: OrderSummary | null = null;
 
   constructor(private router: Router) {}
 
@@ -17,15 +26,23 @@ export class ThankYouComponent implements OnInit {
     this.menuRoute = slug ? `/store/${slug}` : '/';
     this.ordersRoute = slug ? `/store/${slug}/orders` : '/orders';
 
-    // Auto-redirect after 5 seconds
-    setTimeout(() => this.router.navigateByUrl(this.menuRoute), 5000);
+    try {
+      const raw = localStorage.getItem('lastOrderSummary');
+      if (raw) {
+        this.summary = JSON.parse(raw);
+        localStorage.removeItem('lastOrderSummary');
+      }
+    } catch {}
   }
 
-  goToMenu(): void {
-    this.router.navigateByUrl(this.menuRoute);
+  get itemsSummary(): string {
+    if (!this.summary?.items?.length) return '';
+    return this.summary.items
+      .slice(0, 3)
+      .map(i => `${i.quantity}x ${i.name}`)
+      .join(', ') + (this.summary.items.length > 3 ? ` +${this.summary.items.length - 3} more` : '');
   }
 
-  goToOrders(): void {
-    this.router.navigateByUrl(this.ordersRoute);
-  }
+  goToMenu(): void { this.router.navigateByUrl(this.menuRoute); }
+  goToOrders(): void { this.router.navigateByUrl(this.ordersRoute); }
 }

@@ -18,6 +18,7 @@ interface OrderItemDTO {
   quantity: number;
   size?: string;
   price: number;
+  selectedChoices?: any[];
 }
 
 interface OrderDTO {
@@ -28,6 +29,7 @@ interface OrderDTO {
   promoCode?: string;
   orderDate: string;
   deliveryAddress: string;
+  orderNotes?: string;
   items?: OrderItemDTO[];
   driverLat?: number;
   driverLon?: number;
@@ -58,7 +60,8 @@ export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewCheck
   // Review modal state
   reviewModalOpen = false;
   reviewOrderId: string | null = null;
-  reviewRating = 5;
+  reviewTargetOrder: OrderDTO | null = null;
+  reviewRating = 0;
   reviewComment = '';
   reviewSubmitting = false;
   reviewedOrderIds = new Set<string>();
@@ -247,9 +250,10 @@ export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewCheck
     return order.id;
   }
 
-  openReview(orderId: string): void {
-    this.reviewOrderId = orderId;
-    this.reviewRating = 5;
+  openReview(order: OrderDTO): void {
+    this.reviewOrderId = order.id;
+    this.reviewTargetOrder = order;
+    this.reviewRating = 0;
     this.reviewComment = '';
     this.reviewModalOpen = true;
   }
@@ -257,12 +261,13 @@ export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewCheck
   closeReview(): void {
     this.reviewModalOpen = false;
     this.reviewOrderId = null;
+    this.reviewTargetOrder = null;
   }
 
   setReviewRating(r: number): void { this.reviewRating = r; }
 
   submitReview(): void {
-    if (!this.reviewOrderId) return;
+    if (!this.reviewOrderId || this.reviewRating < 1) return;
     this.reviewSubmitting = true;
     this.reviewService.submitReview(this.reviewOrderId, this.reviewRating, this.reviewComment).subscribe({
       next: () => {
@@ -286,7 +291,12 @@ export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewCheck
     if (!order.items?.length) { this.toastr.warning('No items to reorder'); return; }
     this.reorderingId = order.id;
     const adds = order.items.map(item =>
-      this.cartService.addToCart(item.productId, item.quantity, item.size || 'Regular')
+      this.cartService.addToCart(
+        item.productId,
+        item.quantity,
+        item.size || 'Regular',
+        item.selectedChoices ? JSON.stringify(item.selectedChoices) : undefined
+      )
     );
     let done = 0;
     adds.forEach(obs => obs.subscribe({

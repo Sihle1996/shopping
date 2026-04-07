@@ -81,21 +81,34 @@
         </div>
       </div>
 
-      <!-- Progress bar -->
-      <div class="w-full bg-gray-100 h-2 rounded-full mt-4 overflow-hidden">
-        <div [class]="getProgressBarColor(order.status)"
-             class="h-2 rounded-full transition-all duration-500"
-             [style.width]="getProgressPercent(order.status)">
-        </div>
+      <!-- Order notes -->
+      <p *ngIf="order.orderNotes"
+         class="text-xs text-textMuted italic mt-2 border-l-2 border-borderColor pl-2">
+        {{ order.orderNotes }}
+      </p>
+
+      <!-- Cancelled banner -->
+      <div *ngIf="order.status === 'Cancelled' || order.status === 'Rejected'"
+           class="mt-3 flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+        <i class="bi bi-x-circle-fill text-red-500 text-sm"></i>
+        <span class="text-xs font-medium text-red-700">Order {{ order.status }}</span>
       </div>
 
-      <!-- Progress labels -->
-      <div class="flex justify-between mt-2">
-        <span class="text-[10px] text-textMuted">Pending</span>
-        <span class="text-[10px] text-textMuted">Preparing</span>
-        <span class="text-[10px] text-textMuted">On the way</span>
-        <span class="text-[10px] text-textMuted">Delivered</span>
-      </div>
+      <!-- Progress bar (active orders only) -->
+      <ng-container *ngIf="!['Cancelled','Rejected'].includes(order.status)">
+        <div class="w-full bg-gray-100 h-2 rounded-full mt-4 overflow-hidden">
+          <div [class]="getProgressBarColor(order.status)"
+               class="h-2 rounded-full transition-all duration-500"
+               [style.width]="getProgressPercent(order.status)">
+          </div>
+        </div>
+        <div class="flex justify-between mt-2">
+          <span class="text-[10px] text-textMuted">Pending</span>
+          <span class="text-[10px] text-textMuted">Preparing</span>
+          <span class="text-[10px] text-textMuted">On the way</span>
+          <span class="text-[10px] text-textMuted">Delivered</span>
+        </div>
+      </ng-container>
 
       <!-- Cancel button (Pending orders only) -->
       <div *ngIf="order.status === 'Pending'" class="mt-3">
@@ -126,7 +139,7 @@
           {{ reorderingId === order.id ? 'Adding...' : 'Reorder' }}
         </button>
         <button *ngIf="canReview(order)"
-                (click)="openReview(order.id)"
+                (click)="openReview(order)"
                 class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-colors">
           <i class="bi bi-star-fill text-amber-400"></i> Leave a Review
         </button>
@@ -148,6 +161,7 @@
       <p class="text-xs text-primary-500 mt-0.5">
         Worth R{{ loyaltyBalance.cashValue.toFixed(2) }} — redeem at checkout
       </p>
+      <p class="text-xs text-primary-400 mt-0.5">Earn 1 point per R1 spent</p>
     </div>
     <i class="bi bi-star-fill text-amber-400 text-xl"></i>
   </div>
@@ -157,7 +171,11 @@
        class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4">
     <div class="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 animate-fade-in">
       <h3 class="font-heading text-lg font-bold text-textDark mb-1">How was your order?</h3>
-      <p class="text-xs text-textMuted mb-4">Your feedback helps us improve.</p>
+      <p class="text-xs text-textMuted mb-1">
+        Order <span class="font-mono font-medium">#{{ reviewTargetOrder?.id?.substring(0,8) }}</span>
+      </p>
+      <p *ngIf="reviewRating === 0" class="text-xs text-amber-600 mb-3">Tap a star to rate</p>
+      <p *ngIf="reviewRating > 0" class="text-xs text-textMuted mb-3">Your feedback helps us improve.</p>
 
       <!-- Stars -->
       <div class="flex gap-2 justify-center mb-5">
@@ -179,7 +197,7 @@
                 class="flex-1 py-2.5 rounded-xl border border-borderColor text-sm font-semibold text-textDark hover:bg-gray-50 transition-colors">
           Cancel
         </button>
-        <button (click)="submitReview()" [disabled]="reviewSubmitting"
+        <button (click)="submitReview()" [disabled]="reviewSubmitting || reviewRating < 1"
                 class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors disabled:opacity-50"
                 style="background: var(--brand-primary)">
           {{ reviewSubmitting ? 'Submitting...' : 'Submit Review' }}

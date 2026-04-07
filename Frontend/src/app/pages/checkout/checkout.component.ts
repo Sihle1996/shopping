@@ -478,11 +478,20 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
             const tenantId = localStorage.getItem('tenantId');
             if (tenantId) headers['X-Tenant-Id'] = tenantId;
 
-            this.http.post(`${environment.apiUrl}/api/orders/place`, orderData, { headers }).subscribe({
-              next: () => {
+            this.http.post<any>(`${environment.apiUrl}/api/orders/place`, orderData, { headers }).subscribe({
+              next: (res) => {
                 this.cartService.clearCart();
                 this.toastr.success('Order placed successfully!');
                 const slug = localStorage.getItem('storeSlug');
+                // Save summary for thank-you page
+                const summary = {
+                  orderId: res?.id,
+                  items: orderData.items,
+                  total: this.totalPrice,
+                  address: orderData.deliveryAddress,
+                  loyaltyEarned: Math.floor(this.totalPrice)
+                };
+                localStorage.setItem('lastOrderSummary', JSON.stringify(summary));
                 this.router.navigate(slug ? ['/store', slug, 'thank-you'] : ['/thank-you']);
               },
               error: () => this.toastr.error('Failed to place order. Please try again.')

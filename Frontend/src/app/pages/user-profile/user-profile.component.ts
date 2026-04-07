@@ -10,13 +10,16 @@ import { ToastrService } from 'ngx-toastr';
 })
 export class UserProfileComponent implements OnInit {
   form: FormGroup;
+  passwordForm: FormGroup;
   loading = true;
   saving = false;
+  changingPassword = false;
   email = '';
   role = '';
 
   constructor(private fb: FormBuilder, private http: HttpClient, private toastr: ToastrService) {
     this.form = this.fb.group({ fullName: [''], phone: [''] });
+    this.passwordForm = this.fb.group({ currentPassword: [''], newPassword: [''], confirmPassword: [''] });
   }
 
   ngOnInit() {
@@ -36,6 +39,25 @@ export class UserProfileComponent implements OnInit {
     this.http.put<any>(`${environment.apiUrl}/api/me`, this.form.value).subscribe({
       next: () => { this.saving = false; this.toastr.success('Profile saved'); },
       error: () => { this.saving = false; this.toastr.error('Failed to save'); }
+    });
+  }
+
+  changePassword() {
+    const { currentPassword, newPassword, confirmPassword } = this.passwordForm.value;
+    if (!currentPassword || !newPassword) { this.toastr.warning('Please fill in all password fields'); return; }
+    if (newPassword !== confirmPassword) { this.toastr.warning('New passwords do not match'); return; }
+    if (newPassword.length < 6) { this.toastr.warning('New password must be at least 6 characters'); return; }
+    this.changingPassword = true;
+    this.http.put<any>(`${environment.apiUrl}/api/change-password`, { currentPassword, newPassword }).subscribe({
+      next: () => {
+        this.changingPassword = false;
+        this.passwordForm.reset();
+        this.toastr.success('Password changed successfully');
+      },
+      error: (err) => {
+        this.changingPassword = false;
+        this.toastr.error(err?.error || 'Failed to change password');
+      }
     });
   }
 }

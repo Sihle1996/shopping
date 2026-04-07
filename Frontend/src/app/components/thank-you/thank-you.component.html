@@ -1,30 +1,70 @@
-<div class="min-h-screen flex flex-col items-center justify-center bg-surface text-center p-6">
+<div class="min-h-screen flex flex-col items-center justify-center bg-surface p-6">
 
   <!-- Success icon -->
-  <div class="w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-lg"
+  <div class="w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-lg"
        style="background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)">
-    <i class="bi bi-check-lg text-white text-5xl"></i>
+    <i class="bi bi-check-lg text-white text-4xl"></i>
   </div>
 
-  <h1 class="font-heading text-3xl font-extrabold text-textDark mb-2">
-    Thank You for Shopping With Us!
+  <h1 class="font-heading text-2xl font-extrabold text-textDark mb-1 text-center">
+    Order Placed!
   </h1>
-  <p class="text-textLight text-sm max-w-xs mb-1">
-    Your payment was successful. Your order is being prepared and will be on its way shortly.
+  <p class="text-textLight text-sm text-center max-w-xs mb-6">
+    Your payment was successful. Your order is being prepared.
   </p>
-  <p class="text-xs text-textMuted mb-8">Redirecting you back to the menu in 5 seconds...</p>
 
-  <div class="flex flex-col sm:flex-row gap-3">
-    <button (click)="goToMenu()"
-            class="px-8 py-3 rounded-2xl text-white font-semibold text-sm shadow-md
-                   transition-all duration-200 active:scale-95"
-            style="background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)">
-      <i class="bi bi-shop mr-2"></i>Back to Menu
-    </button>
+  <!-- Order summary card -->
+  <div *ngIf="summary" class="w-full max-w-sm bg-white rounded-2xl shadow-card p-5 mb-6 space-y-3">
+
+    <!-- Order ID -->
+    <div *ngIf="summary.orderId" class="flex items-center justify-between">
+      <span class="text-xs text-textMuted">Order</span>
+      <span class="font-mono text-sm font-semibold text-textDark">#{{ summary.orderId | slice:0:8 | uppercase }}</span>
+    </div>
+
+    <!-- Items -->
+    <div *ngIf="itemsSummary" class="flex items-start justify-between gap-3">
+      <span class="text-xs text-textMuted flex-shrink-0">Items</span>
+      <span class="text-xs text-textDark text-right">{{ itemsSummary }}</span>
+    </div>
+
+    <!-- Total -->
+    <div class="flex items-center justify-between border-t border-borderColor pt-3">
+      <span class="text-xs text-textMuted">Total paid</span>
+      <span class="font-numbers font-bold text-textDark">R{{ summary.total.toFixed(2) }}</span>
+    </div>
+
+    <!-- Address -->
+    <div class="flex items-start gap-2">
+      <i class="bi bi-geo-alt text-textMuted text-xs mt-0.5 flex-shrink-0"></i>
+      <span class="text-xs text-textMuted">{{ summary.address }}</span>
+    </div>
+
+    <!-- Loyalty earned -->
+    <div *ngIf="summary.loyaltyEarned > 0"
+         class="flex items-center gap-2 bg-amber-50 rounded-xl px-3 py-2 border border-amber-100">
+      <i class="bi bi-star-fill text-amber-400 text-sm"></i>
+      <span class="text-xs font-medium text-amber-700">
+        You earned <strong>{{ summary.loyaltyEarned }}</strong> loyalty points from this order!
+      </span>
+    </div>
+  </div>
+
+  <p class="text-xs text-textMuted mb-6 text-center">
+    <i class="bi bi-bell mr-1"></i>We'll notify you when your order status changes.
+  </p>
+
+  <div class="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
     <button (click)="goToOrders()"
-            class="px-8 py-3 rounded-2xl font-semibold text-sm border-2 border-primary text-primary
-                   bg-white hover:bg-surface transition-all duration-200 active:scale-95">
+            class="flex-1 px-6 py-3 rounded-2xl text-white font-semibold text-sm shadow-md
+                   transition-all active:scale-95"
+            style="background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)">
       <i class="bi bi-receipt mr-2"></i>View My Orders
+    </button>
+    <button (click)="goToMenu()"
+            class="flex-1 px-6 py-3 rounded-2xl font-semibold text-sm border-2 border-primary text-primary
+                   bg-white hover:bg-surface transition-all active:scale-95">
+      <i class="bi bi-shop mr-2"></i>Back to Menu
     </button>
   </div>
 

@@ -8,8 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 
@@ -60,6 +62,19 @@ public class AuthenticationController {
         try {
             service.resetPassword(request.getEmail(), request.getOtp(), request.getNewPassword());
             return ResponseEntity.ok("Password reset successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            @AuthenticationPrincipal User user,
+            @RequestBody Map<String, String> body) {
+        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        try {
+            service.changePassword(user, body.get("currentPassword"), body.get("newPassword"));
+            return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

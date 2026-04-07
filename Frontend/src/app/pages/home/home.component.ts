@@ -8,6 +8,7 @@ import { AdminService } from 'src/app/services/admin.service';
 import { MenuService, MenuItem } from 'src/app/services/menu.service';
 import { CartService, CartItem } from 'src/app/services/cart.service';
 import { PromotionService, Promotion } from 'src/app/services/promotion.service';
+import { TenantService } from 'src/app/services/tenant.service';
 import { ProductCardItem } from 'src/app/shared/components/product-card/product-card.component';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
@@ -30,13 +31,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   cartAddedName = '';
   private cartAddedTimer: any;
 
-  categories = [
-    { name: 'All', icon: 'assets/istockphoto-1419247070-612x612.jpg' },
-    { name: 'Burgers', icon: 'assets/istockphoto-468676382-612x612.jpg' },
-    { name: 'Pizza', icon: 'assets/photo-1513104890138-7c749659a591.jpg' },
-    { name: 'Desserts', icon: 'assets/domino-s-pizza.jpg' },
-    { name: 'Drinks', icon: 'assets/photo-1513104890138-7c749659a591.jpg' },
-  ];
+  get categories(): { name: string; icon: string }[] {
+    const unique = [...new Set(this.menuItems.map(i => (i as any).category).filter(Boolean))] as string[];
+    return [
+      { name: 'All', icon: '' },
+      ...unique.map(name => ({ name, icon: '' }))
+    ];
+  }
 
   selectedCategory = 'All';
   selectedSort = 'default';
@@ -44,6 +45,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   isAdmin = false;
   isLoggedIn = false;
+  storeIsOpen = true;
 
   // Cart state
   isCartOpen = false;
@@ -71,7 +73,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     private router: Router,
     private promotionService: PromotionService,
     private toastr: ToastrService,
-    private http: HttpClient
+    private http: HttpClient,
+    private tenantService: TenantService
   ) {}
 
   // ── Modifier modal ────────────────────────────────────────────────────────
@@ -161,6 +164,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.isAdmin = this.authService.getUserRole() === 'ROLE_ADMIN';
     this.isLoggedIn = this.authService.isLoggedIn();
+    const tenant = this.tenantService.getCurrentTenant();
+    if (tenant) this.storeIsOpen = tenant.isOpen !== false;
     this.fetchMenu();
     this.loadPromotions();
     this.subscribeToCart();

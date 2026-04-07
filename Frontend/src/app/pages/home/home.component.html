@@ -11,6 +11,13 @@
       </div>
     </div>
 
+    <!-- Store closed banner -->
+    <div *ngIf="!storeIsOpen"
+         class="mb-4 flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-sm text-amber-800">
+      <i class="bi bi-clock text-amber-500 flex-shrink-0"></i>
+      <span>This store is currently <strong>closed</strong>. You can browse the menu but ordering is unavailable.</span>
+    </div>
+
     <!-- Featured Promotion Banner -->
     <div class="mb-6" *ngIf="isFeaturedPromoValid && featuredPromotion as fp">
       <app-promotion-banner [promotion]="fp"></app-promotion-banner>
@@ -79,7 +86,7 @@
         [attr.data-testid]="'product-card-' + item.id"
         [item]="item"
         [showFavorite]="isLoggedIn"
-        [showAddToCart]="true"
+        [showAddToCart]="storeIsOpen"
         [discountPercent]="getDiscountForItem(item)"
         (cardClick)="goToProductDetails($event)"
         (addToCart)="quickAddToCart($event)"
