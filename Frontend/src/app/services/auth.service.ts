@@ -149,7 +149,6 @@ export class AuthService {
 
     if (upper.some((r) => r.includes('SUPERADMIN'))) return 'ROLE_SUPERADMIN';
     if (upper.some((r) => r.includes('ADMIN'))) return 'ROLE_ADMIN';
-    if (upper.some((r) => r.includes('MANAGER'))) return 'ROLE_MANAGER';
     if (upper.some((r) => r.includes('DRIVER'))) return 'ROLE_DRIVER';
     if (upper.some((r) => r.includes('USER'))) return 'ROLE_USER';
 

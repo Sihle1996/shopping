@@ -53,8 +53,6 @@ export class LoginComponent implements OnInit {
             this.router.navigate(['/admin/dashboard'], { replaceUrl: true });
           } else if (role === 'ROLE_DRIVER') {
             this.router.navigate(['/driver/dashboard'], { replaceUrl: true });
-          } else if (role === 'ROLE_MANAGER') {
-            this.router.navigate(['/manager/dashboard'], { replaceUrl: true });
           } else {
             this.router.navigate(['/stores'], { replaceUrl: true });
           }

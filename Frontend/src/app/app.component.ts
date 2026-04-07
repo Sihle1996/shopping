@@ -47,8 +47,7 @@ export class AppComponent implements OnDestroy {
 
   private isStaffRole(): boolean {
     const role = this.authService.getUserRole();
-    return role === 'ROLE_ADMIN' || role === 'ROLE_SUPERADMIN' ||
-           role === 'ROLE_MANAGER' || role === 'ROLE_DRIVER';
+    return role === 'ROLE_ADMIN' || role === 'ROLE_SUPERADMIN' || role === 'ROLE_DRIVER';
   }
 
   private resetIdleTimer(): void {
