@@ -82,8 +82,31 @@ export class AuthService {
     }
   }
 
+  isTokenExpired(token: string): boolean {
+    try {
+      const decoded: any = jwtDecode(token);
+      if (!decoded.exp) return false;
+      return decoded.exp * 1000 < Date.now();
+    } catch {
+      return true;
+    }
+  }
+
   isLoggedIn(): boolean {
-    return !!this.getToken() && !!this.getUserId();
+    const token = this.getToken();
+    if (!token) return false;
+    if (this.isTokenExpired(token)) {
+      localStorage.removeItem(this.tokenKey);
+      return false;
+    }
+    return !!this.getUserId();
+  }
+
+  checkSessionOnStartup(): void {
+    const token = this.getToken();
+    if (token && this.isTokenExpired(token)) {
+      this.logout();
+    }
   }
 
   logout(): void {
