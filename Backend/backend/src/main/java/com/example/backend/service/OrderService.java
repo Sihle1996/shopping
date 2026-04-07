@@ -326,7 +326,6 @@ public class OrderService {
                 && !"Rejected".equals(order.getStatus());
 
         if (isCancelling) {
-            UUID tenantId = TenantContext.getCurrentTenantId();
             for (OrderItem oi : order.getOrderItems()) {
                 MenuItem menuItem = oi.getMenuItem();
                 if (menuItem == null) continue;
