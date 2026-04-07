@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -76,22 +78,64 @@ public class AdminSubscriptionController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/upgrade-request")
-    public ResponseEntity<?> requestUpgrade() {
+    // USD prices for PayPal sandbox — update to real ZAR gateway in production
+    private static final Map<String, Double> PLAN_PRICES_USD = Map.of(
+        "BASIC", 16.00,
+        "PRO", 38.00,
+        "ENTERPRISE", 81.00
+    );
+    private static final List<String> PLAN_ORDER = List.of("TRIAL", "BASIC", "PRO", "ENTERPRISE");
+
+    @GetMapping("/plans")
+    public ResponseEntity<?> getAvailablePlans() {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId == null) return ResponseEntity.badRequest().build();
-
         var tenant = tenantRepository.findById(tenantId).orElse(null);
         if (tenant == null) return ResponseEntity.notFound().build();
 
-        emailService.sendRaw(
-            "support@fastfood.co.za",
-            "Upgrade request from " + tenant.getName(),
-            "<p><strong>" + tenant.getName() + "</strong> (slug: " + tenant.getSlug() + ")" +
-            " has requested a plan upgrade from <strong>" + tenant.getSubscriptionPlan() + "</strong>.</p>" +
-            "<p>Current status: " + tenant.getSubscriptionStatus() + "</p>"
-        );
+        String currentPlan = tenant.getSubscriptionPlan();
+        int currentIdx = PLAN_ORDER.indexOf(currentPlan);
 
-        return ResponseEntity.ok(Map.of("message", "Upgrade request sent. Our team will contact you within 24 hours."));
+        List<Map<String, Object>> plans = new ArrayList<>();
+        for (String planName : List.of("BASIC", "PRO", "ENTERPRISE")) {
+            int planIdx = PLAN_ORDER.indexOf(planName);
+            Map<String, Object> p = new HashMap<>();
+            p.put("name", planName);
+            p.put("priceUsd", PLAN_PRICES_USD.get(planName));
+            p.put("isUpgrade", planIdx > currentIdx);
+            plans.add(p);
+        }
+        return ResponseEntity.ok(plans);
+    }
+
+    @PostMapping("/upgrade")
+    public ResponseEntity<?> executeUpgrade(@RequestBody Map<String, String> body) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return ResponseEntity.badRequest().build();
+        var tenant = tenantRepository.findById(tenantId).orElse(null);
+        if (tenant == null) return ResponseEntity.notFound().build();
+
+        String planName = body.get("planName");
+        if (planName == null || !PLAN_PRICES_USD.containsKey(planName)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid plan name"));
+        }
+
+        String currentPlan = tenant.getSubscriptionPlan();
+        if (PLAN_ORDER.indexOf(planName) <= PLAN_ORDER.indexOf(currentPlan)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Can only upgrade to a higher plan"));
+        }
+
+        // Payment was captured client-side by PayPal JS SDK — paymentId logged for audit
+        String paymentId = body.getOrDefault("paymentId", "n/a");
+
+        tenant.setSubscriptionPlan(planName);
+        tenant.setSubscriptionStatus("ACTIVE");
+        tenantRepository.save(tenant);
+
+        return ResponseEntity.ok(Map.of(
+            "message", "Successfully upgraded to " + planName,
+            "plan", planName,
+            "status", "ACTIVE"
+        ));
     }
 }

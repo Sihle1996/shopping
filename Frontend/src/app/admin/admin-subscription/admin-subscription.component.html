@@ -285,8 +285,8 @@
             </div>
           </div>
 
-          <!-- Upgrade CTA -->
-          <div *ngIf="!upgradeRequested && info.plan !== 'ENTERPRISE'"
+          <!-- Upgrade CTA — self-service PayPal -->
+          <div *ngIf="!upgradeSuccess && upgradablePlans.length > 0"
                class="bg-gradient-to-br from-primary to-primary-600 rounded-2xl p-6 text-white">
             <div class="flex items-start gap-3 mb-5">
               <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
@@ -294,23 +294,44 @@
               </div>
               <div>
                 <p class="font-semibold text-base">Ready to scale?</p>
-                <p *ngIf="info.plan === 'BASIC'" class="text-sm text-white/80 mt-0.5">Upgrade to PRO or ENTERPRISE for analytics, branding, and more capacity.</p>
-                <p *ngIf="info.plan !== 'BASIC'" class="text-sm text-white/80 mt-0.5">Upgrade to ENTERPRISE for unlimited capacity and the lowest commission rate.</p>
+                <p class="text-sm text-white/80 mt-0.5">Upgrade instantly — pay securely with PayPal.</p>
               </div>
             </div>
-            <button (click)="requestUpgrade()"
-                    class="w-full py-2.5 bg-white text-primary font-semibold text-sm rounded-xl hover:bg-primary-50 transition-colors">
-              Request Upgrade
-            </button>
+
+            <!-- Plan buttons -->
+            <div class="flex flex-col gap-2 mb-3">
+              <button *ngFor="let plan of upgradablePlans"
+                      (click)="selectPlan(plan.name)"
+                      class="w-full py-2.5 rounded-xl font-semibold text-sm transition-colors"
+                      [ngClass]="upgradingPlan === plan.name
+                        ? 'bg-white/30 text-white border-2 border-white'
+                        : 'bg-white text-primary hover:bg-primary-50'">
+                <span *ngIf="upgradingPlan !== plan.name">
+                  Upgrade to {{ plan.name }} — ${{ plan.priceUsd }}/mo
+                </span>
+                <span *ngIf="upgradingPlan === plan.name">
+                  <i class="bi bi-x-circle mr-1"></i> Cancel {{ plan.name }} upgrade
+                </span>
+              </button>
+            </div>
+
+            <!-- PayPal button containers (one per upgradable plan) -->
+            <div *ngFor="let plan of upgradablePlans">
+              <div [id]="'paypal-sub-' + plan.name"
+                   *ngIf="upgradingPlan === plan.name"
+                   class="mt-2 rounded-xl overflow-hidden bg-white p-2">
+              </div>
+            </div>
+
             <p *ngIf="upgradeError" class="mt-2 text-xs text-red-200 text-center">{{ upgradeError }}</p>
           </div>
 
-          <!-- Sent confirmation -->
-          <div *ngIf="upgradeRequested"
+          <!-- Upgrade success -->
+          <div *ngIf="upgradeSuccess"
                class="bg-green-50 rounded-2xl border border-green-200 p-6 text-center">
             <i class="bi bi-check-circle-fill text-green-500 text-3xl mb-2 block"></i>
-            <p class="font-semibold text-green-700">Upgrade request sent!</p>
-            <p class="text-xs text-green-600 mt-1">Our team will contact you within 24 hours.</p>
+            <p class="font-semibold text-green-700">Upgraded to {{ upgradeSuccessPlan }}!</p>
+            <p class="text-xs text-green-600 mt-1">Your new plan is now active.</p>
           </div>
 
           <!-- Top plan badge -->

@@ -46,8 +46,12 @@ export class SubscriptionService {
     this.infoSubject.next(null);
   }
 
-  requestUpgrade(): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/api/admin/subscription/upgrade-request`, {});
+  getPlans(): Observable<{ name: string; priceUsd: number; isUpgrade: boolean }[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/admin/subscription/plans`);
+  }
+
+  upgradePlan(planName: string, paymentId: string): Observable<{ message: string; plan: string; status: string }> {
+    return this.http.post<any>(`${this.apiUrl}/api/admin/subscription/upgrade`, { planName, paymentId });
   }
 
   canAccess(feature: 'analytics' | 'customBranding' | 'inventoryExport'): boolean {
