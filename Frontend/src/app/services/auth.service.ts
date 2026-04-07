@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, Inject, forwardRef } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { Router } from '@angular/router';
 import { jwtDecode } from 'jwt-decode';
 import { Observable, tap } from 'rxjs';
@@ -19,10 +19,7 @@ export class AuthService {
   constructor(
     private http: HttpClient,
     private router: Router,
-    @Inject(forwardRef(() => AdminService)) private adminService: AdminService,
-    @Inject(forwardRef(() => SubscriptionService)) private subscriptionService: SubscriptionService,
-    @Inject(forwardRef(() => CartService)) private cartService: CartService,
-    @Inject(forwardRef(() => TenantService)) private tenantService: TenantService
+    private injector: Injector
   ) {}
 
   register(data: { email: string; password: string; confirmPassword: string }, tenantId?: string): Observable<any> {
@@ -92,10 +89,10 @@ export class AuthService {
   logout(): void {
     ['token', 'userId', 'tenantId', 'storeName', 'storeSlug', 'brandPrimary',
      'customer_lat', 'customer_lon', 'customer_address'].forEach(k => localStorage.removeItem(k));
-    this.adminService.reset();
-    this.subscriptionService.reset();
-    this.cartService.reset();
-    this.tenantService.clearTenant();
+    this.injector.get(AdminService).reset();
+    this.injector.get(SubscriptionService).reset();
+    this.injector.get(CartService).reset();
+    this.injector.get(TenantService).clearTenant();
     // Reset brand color to platform default
     const root = document.documentElement;
     root.style.setProperty('--brand-primary', '#FF6F00');
