@@ -64,16 +64,11 @@ export class StoreListComponent implements OnInit, OnDestroy {
       switchMap(q => q.length >= 3 ? this.geocoding.autocomplete(q) : Promise.resolve([]))
     ).subscribe(results => this.suggestions = results);
 
-    // If the user already has a saved location, skip the address step
-    const savedLat = localStorage.getItem('customer_lat');
-    const savedLon = localStorage.getItem('customer_lon');
+    // Pre-fill the address field from last session but don't auto-search —
+    // location may have changed, so the user must confirm with "Find Stores" or GPS
     const savedAddress = localStorage.getItem('customer_address');
-    if (savedLat && savedLon) {
-      this.selectedLat = parseFloat(savedLat);
-      this.selectedLon = parseFloat(savedLon);
-      this.selectedAddress = savedAddress || '';
-      this.addressInput = this.selectedAddress;
-      this.loadNearbyStores();
+    if (savedAddress) {
+      this.addressInput = savedAddress;
     }
   }
 
