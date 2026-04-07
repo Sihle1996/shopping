@@ -431,6 +431,7 @@ public class OrderService {
 
         UUID userId = order.getUser() != null ? order.getUser().getId() : null;
         String userEmail = order.getUser() != null ? order.getUser().getEmail() : order.getGuestEmail();
+        String userPhone = order.getUser() != null ? order.getUser().getPhone() : order.getGuestPhone();
 
         OrderDTO dto = new OrderDTO(
                 order.getId(),
@@ -451,7 +452,8 @@ public class OrderService {
                 order.getPromoCode(),
                 order.getDeliveryLat(),
                 order.getDeliveryLon(),
-                order.getOrderNotes()
+                order.getOrderNotes(),
+                userPhone
         );
 
         if (order.getDriver() != null) {

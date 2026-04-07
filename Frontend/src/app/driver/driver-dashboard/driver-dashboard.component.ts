@@ -12,6 +12,8 @@ interface DriverOrder {
   orderDate: string;
   deliveryAddress: string;
   userEmail: string;
+  userPhone?: string;
+  orderNotes?: string;
   items: Array<{ name: string; quantity: number; size?: string }>;
   deliveryLat?: number;
   deliveryLon?: number;
@@ -32,6 +34,7 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
   deliveryStops: DeliveryStop[] = [];
   earnings: { deliveredCount: number; totalEarnings: number } | null = null;
   profileIncomplete = false;
+  showAllCompleted = false;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -122,5 +125,21 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
 
   get isOnline(): boolean {
     return this.availability === 'AVAILABLE';
+  }
+
+  openNavigation(order: DriverOrder): void {
+    const dest = (order.deliveryLat && order.deliveryLon)
+      ? `${order.deliveryLat},${order.deliveryLon}`
+      : encodeURIComponent(order.deliveryAddress);
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${dest}`, '_blank');
+  }
+
+  driverEarning(order: DriverOrder): number {
+    return Math.round((order.totalAmount ?? 0) * 0.1 * 100) / 100;
+  }
+
+  get visibleCompletedEarnings(): number {
+    const visible = this.showAllCompleted ? this.completedOrders : this.completedOrders.slice(0, 4);
+    return Math.round(visible.reduce((sum, o) => sum + (o.totalAmount ?? 0) * 0.1, 0) * 100) / 100;
   }
 }

@@ -1,64 +1,55 @@
-<div class="min-h-screen bg-surface pb-20">
+<div class="min-h-screen bg-surface pb-20 lg:pb-8">
 
   <!-- Header -->
-  <div class="bg-white border-b border-borderColor px-4 py-4 sticky top-14 z-10">
-    <div class="max-w-lg mx-auto flex items-center justify-between">
+  <div class="bg-white border-b border-borderColor px-4 lg:px-8 py-4 sticky top-14 z-10">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div>
-          <h1 class="font-heading text-lg font-bold text-textDark">Driver Dashboard</h1>
-          <p class="text-textMuted text-xs">{{ activeOrders.length }} active deliveries</p>
-        </div>
-        <a routerLink="/driver/profile" class="p-2 rounded-xl text-textMuted hover:bg-gray-100 transition-colors">
+        <h1 class="font-heading text-lg font-bold text-textDark">Driver Dashboard</h1>
+        <span class="hidden lg:inline text-xs text-textMuted border border-borderColor rounded-full px-2 py-0.5">
+          {{ activeOrders.length }} active &bull; {{ completedOrders.length }} completed
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <a routerLink="/driver/profile"
+           class="p-2 rounded-xl text-textMuted hover:bg-gray-100 transition-colors"
+           title="My Profile">
           <i class="bi bi-person-circle text-xl"></i>
         </a>
+        <button (click)="toggleAvailability()"
+                class="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all"
+                [class]="isOnline
+                  ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                  : 'bg-gray-100 text-textMuted hover:bg-gray-200'">
+          <span class="w-2.5 h-2.5 rounded-full" [class]="isOnline ? 'bg-success' : 'bg-gray-400'"></span>
+          {{ isOnline ? 'Online' : 'Offline' }}
+        </button>
       </div>
-      <!-- Availability Toggle -->
-      <button (click)="toggleAvailability()"
-              class="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all"
-              [class]="isOnline
-                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                : 'bg-gray-100 text-textMuted hover:bg-gray-200'">
-        <span class="w-2.5 h-2.5 rounded-full" [class]="isOnline ? 'bg-success' : 'bg-gray-400'"></span>
-        {{ isOnline ? 'Online' : 'Offline' }}
-      </button>
     </div>
   </div>
 
-  <div class="max-w-lg mx-auto px-4 pt-4">
+  <div class="max-w-7xl mx-auto px-4 lg:px-8 pt-6">
 
     <!-- Profile incomplete banner -->
     <a *ngIf="profileIncomplete" routerLink="/driver/profile"
-       class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-3 mb-4 text-sm text-amber-800">
+       class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-3 mb-5 text-sm text-amber-800">
       <i class="bi bi-person-exclamation text-lg text-amber-500 flex-shrink-0"></i>
       <span class="flex-1">Complete your profile to get more deliveries</span>
       <i class="bi bi-chevron-right text-amber-400"></i>
     </a>
 
-    <!-- Earnings widget -->
-    <div *ngIf="earnings" class="bg-white rounded-2xl border border-borderColor p-4 shadow-card mb-4 flex items-center gap-4">
-      <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
-        <i class="bi bi-cash-stack text-green-600 text-lg"></i>
-      </div>
-      <div class="flex-1">
-        <p class="text-xs text-textMuted">Total Earnings</p>
-        <p class="text-lg font-bold text-textDark">R{{ earnings.totalEarnings | number:'1.2-2' }}</p>
-      </div>
-      <div class="text-right">
-        <p class="text-xs text-textMuted">Deliveries</p>
-        <p class="text-lg font-bold text-textDark">{{ earnings.deliveredCount }}</p>
-      </div>
-    </div>
-
     <!-- Loading -->
-    <div *ngIf="isLoading" class="space-y-3">
-      <div *ngFor="let _ of [1,2]" class="bg-white rounded-2xl p-5 shadow-card animate-pulse">
-        <div class="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
-        <div class="h-3 bg-gray-200 rounded w-2/3 mb-2"></div>
-        <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+    <div *ngIf="isLoading" class="grid lg:grid-cols-3 gap-6">
+      <div class="space-y-4">
+        <div *ngFor="let _ of [1,2]" class="bg-white rounded-2xl p-5 shadow-card animate-pulse">
+          <div class="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
+          <div class="h-3 bg-gray-200 rounded w-2/3 mb-2"></div>
+          <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+        </div>
       </div>
+      <div class="lg:col-span-2 bg-white rounded-2xl shadow-card animate-pulse h-80"></div>
     </div>
 
-    <!-- No Orders -->
+    <!-- Empty state -->
     <app-empty-state
       *ngIf="!isLoading && orders.length === 0"
       icon="bi bi-truck"
@@ -66,113 +57,251 @@
       [message]="isOnline ? 'Waiting for orders to be assigned to you' : 'Go online to receive delivery assignments'">
     </app-empty-state>
 
-    <!-- Current Delivery (highlighted) -->
-    <div *ngIf="currentDelivery as cd" class="mb-6">
-      <p class="text-xs font-medium text-textMuted uppercase mb-2">Current Delivery</p>
-      <div class="bg-white rounded-2xl shadow-card border-2 border-primary overflow-hidden">
-        <div class="bg-primary px-4 py-2 flex items-center justify-between">
-          <span class="text-white text-sm font-semibold">Order #{{ cd.id.substring(0, 8) }}</span>
-          <app-badge variant="warning" size="sm">{{ cd.status }}</app-badge>
-        </div>
-        <div class="p-4 space-y-3">
-          <div class="flex items-start gap-2">
-            <i class="bi bi-geo-alt text-primary mt-0.5"></i>
-            <div>
-              <p class="text-sm font-medium text-textDark">{{ cd.deliveryAddress }}</p>
-              <p class="text-xs text-textMuted">{{ cd.userEmail }}</p>
+    <!-- Main grid -->
+    <div *ngIf="!isLoading && orders.length > 0" class="lg:grid lg:grid-cols-3 lg:gap-6 space-y-5 lg:space-y-0">
+
+      <!-- ── LEFT COLUMN: earnings + active orders ── -->
+      <div class="space-y-5">
+
+        <!-- Earnings card -->
+        <div *ngIf="earnings" class="bg-white rounded-2xl shadow-card overflow-hidden">
+          <div class="bg-gradient-to-br from-green-500 to-emerald-600 px-5 py-5 text-white">
+            <p class="text-xs font-medium opacity-80 mb-1">Total Earnings</p>
+            <p class="text-3xl font-bold font-numbers">R{{ earnings.totalEarnings | number:'1.2-2' }}</p>
+            <p class="text-xs opacity-70 mt-1">{{ earnings.deliveredCount }} deliveries completed</p>
+          </div>
+          <div class="px-5 py-3 flex items-center gap-3 text-sm">
+            <div class="flex items-center gap-1.5 text-textMuted">
+              <i class="bi bi-percent text-primary"></i>
+              <span class="text-xs">10% per delivery</span>
             </div>
           </div>
-          <div class="flex items-center justify-between text-sm">
-            <span class="text-textMuted">Total</span>
-            <span class="font-numbers font-bold text-textDark">R{{ cd.totalAmount?.toFixed(2) }}</span>
-          </div>
-          <!-- Items -->
-          <div *ngIf="cd.items?.length" class="border-t border-borderColor pt-3">
-            <div *ngFor="let item of cd.items" class="flex justify-between text-xs text-textLight py-0.5">
-              <span>{{ item.name }} <span class="text-textMuted">({{ item.size || 'std' }})</span></span>
-              <span>x{{ item.quantity }}</span>
+        </div>
+
+        <!-- Current Delivery -->
+        <div *ngIf="currentDelivery as cd">
+          <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-2">Current Delivery</p>
+          <div class="bg-white rounded-2xl shadow-card border-2 border-primary overflow-hidden">
+            <div class="bg-primary px-4 py-2.5 flex items-center justify-between">
+              <span class="text-white text-sm font-semibold">Order #{{ cd.id.substring(0, 8) }}</span>
+              <app-badge variant="warning" size="sm">{{ cd.status }}</app-badge>
+            </div>
+            <div class="p-4 space-y-3">
+              <!-- Address -->
+              <div class="flex items-start gap-2">
+                <i class="bi bi-geo-alt text-primary mt-0.5 flex-shrink-0"></i>
+                <p class="text-sm font-medium text-textDark leading-snug">{{ cd.deliveryAddress }}</p>
+              </div>
+
+              <!-- Customer info -->
+              <div class="grid grid-cols-2 gap-2">
+                <div class="bg-surface rounded-xl px-3 py-2">
+                  <p class="text-xs text-textMuted mb-0.5">Customer</p>
+                  <p class="text-xs font-medium text-textDark truncate">{{ cd.userEmail }}</p>
+                </div>
+                <div class="bg-surface rounded-xl px-3 py-2">
+                  <p class="text-xs text-textMuted mb-0.5">Phone</p>
+                  <a *ngIf="cd.userPhone; else noPhone"
+                     [href]="'tel:' + cd.userPhone"
+                     class="text-xs font-medium text-primary hover:underline">{{ cd.userPhone }}</a>
+                  <ng-template #noPhone>
+                    <p class="text-xs text-textMuted">—</p>
+                  </ng-template>
+                </div>
+              </div>
+
+              <!-- Order notes -->
+              <div *ngIf="cd.orderNotes"
+                   class="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                <i class="bi bi-info-circle text-amber-500 flex-shrink-0 mt-0.5"></i>
+                <p class="text-xs text-amber-800">{{ cd.orderNotes }}</p>
+              </div>
+
+              <!-- Total & earning -->
+              <div class="flex items-center justify-between text-sm border-t border-borderColor pt-3">
+                <span class="text-textMuted text-xs">Order total</span>
+                <span class="font-numbers font-bold text-textDark">R{{ cd.totalAmount?.toFixed(2) }}</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-textMuted text-xs">Your earning (10%)</span>
+                <span class="font-numbers font-semibold text-success">R{{ driverEarning(cd).toFixed(2) }}</span>
+              </div>
+
+              <!-- Items -->
+              <div *ngIf="cd.items?.length" class="border-t border-borderColor pt-3 space-y-1">
+                <p class="text-xs font-semibold text-textMuted mb-1">Items</p>
+                <div *ngFor="let item of cd.items" class="flex justify-between text-xs text-textLight">
+                  <span>{{ item.name }} <span class="text-textMuted">({{ item.size || 'std' }})</span></span>
+                  <span>x{{ item.quantity }}</span>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="flex gap-2 pt-1">
+                <button (click)="openNavigation(cd)"
+                        class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/5 transition-colors">
+                  <i class="bi bi-map"></i> Navigate
+                </button>
+                <button (click)="confirmDeliver(cd.id)"
+                        class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600 transition-colors">
+                  <i class="bi bi-check-circle"></i> Delivered
+                </button>
+              </div>
             </div>
           </div>
-          <!-- Mark Delivered -->
-          <app-button
-            variant="primary"
-            size="lg"
-            [fullWidth]="true"
-            iconLeft="bi bi-check-circle"
-            (clicked)="confirmDeliver(cd.id)">
-            Mark as Delivered
-          </app-button>
         </div>
-      </div>
-    </div>
 
-    <!-- Map for all deliveries -->
-    <div *ngIf="activeOrders.length > 0 && !mapFullscreen" class="mb-6 bg-white rounded-2xl shadow-card overflow-hidden">
-      <div class="px-4 py-3 border-b border-borderColor flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-textDark">
-          <i class="bi bi-map text-primary mr-1"></i> Route
-          <span *ngIf="activeOrders.length > 1" class="text-textMuted font-normal ml-1">({{ activeOrders.length }} stops)</span>
-        </h3>
-        <button (click)="mapFullscreen = true"
-                class="text-xs text-primary font-medium hover:underline">
-          <i class="bi bi-arrows-fullscreen mr-1"></i>Fullscreen
-        </button>
-      </div>
-      <div class="h-56">
-        <app-driver-map
-          [deliveryStops]="deliveryStops"
-          [mapId]="'main-driver-map'"
-          [driverStatus]="availability">
-        </app-driver-map>
-      </div>
-    </div>
+        <!-- Upcoming Orders -->
+        <div *ngIf="activeOrders.length > 1">
+          <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-2">
+            Upcoming ({{ activeOrders.length - 1 }})
+          </p>
+          <div class="space-y-3">
+            <div *ngFor="let order of activeOrders.slice(1)"
+                 class="bg-white rounded-2xl shadow-card p-4">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-semibold text-textDark">Order #{{ order.id.substring(0, 8) }}</span>
+                <app-badge variant="neutral" size="sm">{{ order.status }}</app-badge>
+              </div>
+              <div class="flex items-start gap-2 mb-2">
+                <i class="bi bi-geo-alt text-textMuted text-sm mt-0.5 flex-shrink-0"></i>
+                <p class="text-xs text-textLight">{{ order.deliveryAddress }}</p>
+              </div>
+              <div *ngIf="order.orderNotes" class="text-xs text-amber-700 bg-amber-50 rounded-lg px-2 py-1 mb-2">
+                <i class="bi bi-info-circle mr-1"></i>{{ order.orderNotes }}
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-textMuted">R{{ order.totalAmount?.toFixed(2) }}</span>
+                <button (click)="openNavigation(order)"
+                        class="text-xs text-primary font-medium hover:underline">
+                  <i class="bi bi-map mr-1"></i>Navigate
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-    <!-- Upcoming Orders -->
-    <div *ngIf="activeOrders.length > 1" class="mb-6">
-      <p class="text-xs font-medium text-textMuted uppercase mb-2">Upcoming ({{ activeOrders.length - 1 }})</p>
-      <div class="space-y-3">
-        <div *ngFor="let order of activeOrders.slice(1)"
-             class="bg-white rounded-2xl shadow-card p-4">
+      </div><!-- end left column -->
+
+      <!-- ── RIGHT COLUMN: map + completed ── -->
+      <div class="lg:col-span-2 space-y-5">
+
+        <!-- Map -->
+        <div *ngIf="activeOrders.length > 0 && !mapFullscreen"
+             class="bg-white rounded-2xl shadow-card overflow-hidden">
+          <div class="px-4 py-3 border-b border-borderColor flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-textDark">
+              <i class="bi bi-map text-primary mr-1"></i> Route
+              <span *ngIf="activeOrders.length > 1" class="text-textMuted font-normal ml-1">
+                ({{ activeOrders.length }} stops)
+              </span>
+            </h3>
+            <button (click)="mapFullscreen = true"
+                    class="text-xs text-primary font-medium hover:underline">
+              <i class="bi bi-arrows-fullscreen mr-1"></i>Fullscreen
+            </button>
+          </div>
+          <div class="h-56 lg:h-[420px]">
+            <app-driver-map
+              [deliveryStops]="deliveryStops"
+              [mapId]="'main-driver-map'"
+              [driverStatus]="availability">
+            </app-driver-map>
+          </div>
+        </div>
+
+        <!-- Completed Orders -->
+        <div *ngIf="completedOrders.length > 0">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-semibold text-textDark">Order #{{ order.id.substring(0, 8) }}</span>
-            <app-badge variant="neutral" size="sm">{{ order.status }}</app-badge>
+            <p class="text-xs font-semibold text-textMuted uppercase tracking-wide">
+              Completed Today ({{ completedOrders.length }})
+            </p>
+            <button *ngIf="completedOrders.length > 4"
+                    (click)="showAllCompleted = !showAllCompleted"
+                    class="text-xs text-primary font-medium hover:underline">
+              {{ showAllCompleted ? 'Show less' : 'Show all ' + completedOrders.length }}
+            </button>
           </div>
-          <div class="flex items-start gap-2 mb-2">
-            <i class="bi bi-geo-alt text-textMuted text-sm mt-0.5"></i>
-            <p class="text-xs text-textLight">{{ order.deliveryAddress }}</p>
-          </div>
-          <div class="flex items-center justify-between text-sm">
-            <span class="text-textMuted text-xs">{{ order.userEmail }}</span>
-            <span class="font-numbers font-semibold text-textDark">R{{ order.totalAmount?.toFixed(2) }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Completed Today -->
-    <div *ngIf="completedOrders.length > 0" class="mb-6">
-      <p class="text-xs font-medium text-textMuted uppercase mb-2">Completed ({{ completedOrders.length }})</p>
-      <div class="space-y-2">
-        <div *ngFor="let order of completedOrders"
-             class="bg-white rounded-2xl shadow-card p-4 opacity-60">
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-textDark">Order #{{ order.id.substring(0, 8) }}</span>
-            <app-badge variant="success" size="sm">Delivered</app-badge>
+          <!-- Desktop table -->
+          <div class="hidden lg:block bg-white rounded-2xl shadow-card overflow-hidden">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-borderColor bg-surface text-xs text-textMuted">
+                  <th class="px-4 py-3 text-left font-medium">Order</th>
+                  <th class="px-4 py-3 text-left font-medium">Address</th>
+                  <th class="px-4 py-3 text-left font-medium">Time</th>
+                  <th class="px-4 py-3 text-right font-medium">Total</th>
+                  <th class="px-4 py-3 text-right font-medium">Earned</th>
+                  <th class="px-4 py-3 text-center font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let order of (showAllCompleted ? completedOrders : completedOrders.slice(0, 4))"
+                    class="border-b border-borderColor last:border-0 text-textDark hover:bg-gray-50 transition-colors">
+                  <td class="px-4 py-3 font-mono text-xs text-textMuted">#{{ order.id.substring(0, 8) }}</td>
+                  <td class="px-4 py-3 text-xs max-w-[200px] truncate" [title]="order.deliveryAddress">
+                    {{ order.deliveryAddress }}
+                  </td>
+                  <td class="px-4 py-3 text-xs text-textMuted whitespace-nowrap">
+                    {{ order.orderDate ? (order.orderDate | slice:11:16) : '—' }}
+                  </td>
+                  <td class="px-4 py-3 text-right font-numbers font-medium text-xs">
+                    R{{ order.totalAmount?.toFixed(2) }}
+                  </td>
+                  <td class="px-4 py-3 text-right font-numbers font-semibold text-xs text-success">
+                    R{{ driverEarning(order).toFixed(2) }}
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <app-badge variant="success" size="sm">Delivered</app-badge>
+                  </td>
+                </tr>
+              </tbody>
+              <!-- Totals row -->
+              <tfoot>
+                <tr class="border-t-2 border-borderColor bg-green-50 text-xs font-semibold">
+                  <td colspan="4" class="px-4 py-3 text-textMuted">
+                    {{ showAllCompleted ? completedOrders.length : (completedOrders.length > 4 ? 4 : completedOrders.length) }} shown
+                  </td>
+                  <td class="px-4 py-3 text-right text-success font-numbers">
+                    R{{ visibleCompletedEarnings | number:'1.2-2' }}
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
-          <p class="text-xs text-textMuted mt-1">{{ order.deliveryAddress }}</p>
-        </div>
-      </div>
-    </div>
+
+          <!-- Mobile cards -->
+          <div class="lg:hidden space-y-2">
+            <div *ngFor="let order of (showAllCompleted ? completedOrders : completedOrders.slice(0, 4))"
+                 class="bg-white rounded-2xl shadow-card p-4">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm text-textDark font-medium">Order #{{ order.id.substring(0, 8) }}</span>
+                <app-badge variant="success" size="sm">Delivered</app-badge>
+              </div>
+              <p class="text-xs text-textMuted mb-2 truncate">{{ order.deliveryAddress }}</p>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-textMuted">{{ order.orderDate ? (order.orderDate | slice:0:16) : '' }}</span>
+                <span class="text-success font-semibold font-numbers">+R{{ driverEarning(order).toFixed(2) }}</span>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- end completed -->
+
+      </div><!-- end right column -->
+
+    </div><!-- end main grid -->
+
   </div>
 </div>
 
 <!-- Fullscreen Map Overlay -->
 <div *ngIf="mapFullscreen && activeOrders.length > 0"
      class="fixed inset-0 z-[9999] bg-black flex flex-col">
-
-  <!-- Top bar -->
   <div class="bg-black/70 backdrop-blur-sm px-4 py-3 z-10 flex-shrink-0">
-    <div class="flex items-center justify-between text-white max-w-lg mx-auto">
+    <div class="flex items-center justify-between text-white max-w-7xl mx-auto">
       <div class="min-w-0 flex-1 mr-4">
         <p class="text-xs opacity-70">{{ activeOrders.length }} delivery{{ activeOrders.length > 1 ? ' stops' : '' }}</p>
         <p class="text-sm font-semibold truncate">{{ currentDelivery?.deliveryAddress }}</p>
@@ -183,8 +312,6 @@
       </button>
     </div>
   </div>
-
-  <!-- Map fills remaining space -->
   <div class="flex-1 relative">
     <app-driver-map
       class="block h-full w-full"
@@ -193,20 +320,21 @@
       [driverStatus]="availability">
     </app-driver-map>
   </div>
-
-  <!-- Bottom action -->
   <div *ngIf="currentDelivery" class="bg-black/70 backdrop-blur-sm px-4 py-4 z-10 flex-shrink-0">
-    <div class="max-w-lg mx-auto">
+    <div class="max-w-7xl mx-auto flex gap-3">
+      <button (click)="openNavigation(currentDelivery)"
+              class="flex-1 py-3 rounded-2xl bg-white/20 text-white font-semibold text-sm hover:bg-white/30 transition-colors">
+        <i class="bi bi-map mr-2"></i>Navigate
+      </button>
       <button (click)="confirmDeliver(currentDelivery.id); mapFullscreen = false"
-              class="w-full py-4 rounded-2xl bg-primary text-white font-semibold text-base shadow-float
-                     hover:bg-primary-600 active:scale-[0.98] transition-all">
-        <i class="bi bi-check-circle mr-2"></i>Mark as Delivered
+              class="flex-1 py-3 rounded-2xl bg-primary text-white font-semibold text-sm hover:bg-primary-600 transition-colors">
+        <i class="bi bi-check-circle mr-2"></i>Mark Delivered
       </button>
     </div>
   </div>
 </div>
 
-<!-- Deliver Confirmation Modal -->
+<!-- Delivery Confirmation Modal -->
 <app-confirm-modal
   [isOpen]="showDeliverConfirm"
   title="Confirm Delivery"
