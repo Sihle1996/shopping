@@ -58,17 +58,10 @@ export class StoreListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    const savedLat = localStorage.getItem('customer_lat');
-    const savedLon = localStorage.getItem('customer_lon');
-    const savedAddress = localStorage.getItem('customer_address');
-
-    if (savedLat && savedLon) {
-      this.selectedLat = parseFloat(savedLat);
-      this.selectedLon = parseFloat(savedLon);
-      this.selectedAddress = savedAddress || '';
-      this.addressInput = savedAddress || '';
-      this.loadNearbyStores();
-    }
+    // Always start fresh — don't pre-fill from a previous session
+    localStorage.removeItem('customer_lat');
+    localStorage.removeItem('customer_lon');
+    localStorage.removeItem('customer_address');
 
     this.searchSubject.pipe(
       debounceTime(300),
