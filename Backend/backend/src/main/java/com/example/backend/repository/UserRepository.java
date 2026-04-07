@@ -23,4 +23,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findByRoleAndDriverStatusAndTenant_Id(Role role, DriverStatus driverStatus, UUID tenantId);
     List<User> findByRoleAndTenant_Id(Role role, UUID tenantId);
     long countByRoleAndTenant_Id(Role role, UUID tenantId);
+    List<User> findAllByEmail(String email);
+    Optional<User> findByIdAndTenant_Id(UUID id, UUID tenantId);
 }

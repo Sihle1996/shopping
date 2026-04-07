@@ -1,9 +1,13 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, forwardRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { jwtDecode } from 'jwt-decode';
 import { Observable, tap } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { AdminService } from './admin.service';
+import { SubscriptionService } from './subscription.service';
+import { CartService } from './cart.service';
+import { TenantService } from './tenant.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +16,14 @@ export class AuthService {
   private tokenKey = 'token';
   private apiUrlAuth = `${environment.apiUrl}/api`;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    @Inject(forwardRef(() => AdminService)) private adminService: AdminService,
+    @Inject(forwardRef(() => SubscriptionService)) private subscriptionService: SubscriptionService,
+    @Inject(forwardRef(() => CartService)) private cartService: CartService,
+    @Inject(forwardRef(() => TenantService)) private tenantService: TenantService
+  ) {}
 
   register(data: { email: string; password: string; confirmPassword: string }, tenantId?: string): Observable<any> {
     const url = tenantId
@@ -79,9 +90,17 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem('userId');
-    localStorage.removeItem('tenantId');
+    ['token', 'userId', 'tenantId', 'storeName', 'storeSlug', 'brandPrimary',
+     'customer_lat', 'customer_lon', 'customer_address'].forEach(k => localStorage.removeItem(k));
+    this.adminService.reset();
+    this.subscriptionService.reset();
+    this.cartService.reset();
+    this.tenantService.clearTenant();
+    // Reset brand color to platform default
+    const root = document.documentElement;
+    root.style.setProperty('--brand-primary', '#FF6F00');
+    root.style.setProperty('--brand-primary-light', '#FF6F001A');
+    root.style.setProperty('--brand-primary-hover', '#EA580C');
     this.router.navigate(['/login']);
   }
 

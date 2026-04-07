@@ -13,4 +13,5 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
     List<Review> findByTenant_IdOrderByCreatedAtDesc(UUID tenantId);
     Optional<Review> findByOrder_Id(UUID orderId);
     boolean existsByOrder_Id(UUID orderId);
+    Optional<Review> findByIdAndTenant_Id(UUID id, UUID tenantId);
 }

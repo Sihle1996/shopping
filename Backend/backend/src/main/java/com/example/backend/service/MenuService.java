@@ -7,8 +7,10 @@ import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.TenantRepository;
 import com.example.backend.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
@@ -32,8 +34,12 @@ public class MenuService {
     }
 
     public MenuItem updateMenuItem(UUID id, MenuItem updatedMenuItem) {
-        MenuItem menuItem = menuItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Menu item not found"));
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        MenuItem menuItem = (tenantId != null)
+                ? menuItemRepository.findByIdAndTenant_Id(id, tenantId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Menu item not found"))
+                : menuItemRepository.findById(id)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Menu item not found"));
 
         if (updatedMenuItem.getName() != null) menuItem.setName(updatedMenuItem.getName());
         if (updatedMenuItem.getCategory() != null) menuItem.setCategory(updatedMenuItem.getCategory());
@@ -50,8 +56,12 @@ public class MenuService {
 
     @Transactional
     public void deleteMenuItem(UUID id) {
-        MenuItem menuItem = menuItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Menu item not found"));
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        MenuItem menuItem = (tenantId != null)
+                ? menuItemRepository.findByIdAndTenant_Id(id, tenantId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Menu item not found"))
+                : menuItemRepository.findById(id)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Menu item not found"));
         cartItemRepository.deleteByMenuItem(menuItem);
         menuItemRepository.delete(menuItem);
     }

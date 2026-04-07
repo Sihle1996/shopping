@@ -13,7 +13,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class AnalyticsService {
@@ -24,14 +23,11 @@ public class AnalyticsService {
     }
 
     private List<Order> getOrdersInRange(Instant start, Instant end) {
-        List<Order> orders = orderRepository.findByOrderDateBetween(start, end);
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null) {
-            orders = orders.stream()
-                    .filter(o -> o.getTenant() != null && tenantId.equals(o.getTenant().getId()))
-                    .collect(Collectors.toList());
+            return orderRepository.findByOrderDateBetweenAndTenant_Id(start, end, tenantId);
         }
-        return orders;
+        return orderRepository.findByOrderDateBetween(start, end);
     }
 
     public List<SalesTrendDTO> getSalesTrends(Instant start, Instant end) {

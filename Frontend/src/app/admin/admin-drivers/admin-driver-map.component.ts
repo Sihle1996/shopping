@@ -249,7 +249,9 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
       headers['Authorization'] = `Bearer ${token}`;
     }
     this.stompClient.connect(headers, () => {
-      this.stompClient.subscribe('/topic/drivers', (message: any) => {
+      const tenantId = localStorage.getItem('tenantId');
+      const topic = tenantId ? `/topic/drivers/${tenantId}` : '/topic/drivers';
+      this.stompClient.subscribe(topic, (message: any) => {
         const loc: DriverLocation = JSON.parse(message.body);
         if (!loc.latitude || !loc.longitude || !this.isValidSACoord(loc.latitude, loc.longitude)) return;
         const isNew = !this.drivers[loc.id];

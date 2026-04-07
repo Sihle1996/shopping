@@ -41,6 +41,11 @@ orders$ = this.ordersSubject.asObservable();
     });
   }
 
+  reset(): void {
+    this.ordersSubject.next([]);
+    this.menuItemsSubject.next([]);
+  }
+
   getDashboardStats(): Observable<any> {
     return this.http.get(`${this.baseUrl}/orders/stats`, {
       headers: this.getAuthHeaders()

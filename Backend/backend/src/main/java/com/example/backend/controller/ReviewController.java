@@ -116,7 +116,12 @@ public class ReviewController {
     @DeleteMapping("/api/admin/reviews/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteReview(@PathVariable UUID id) {
-        if (!reviewRepository.existsById(id)) return ResponseEntity.notFound().build();
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId != null) {
+            if (reviewRepository.findByIdAndTenant_Id(id, tenantId).isEmpty()) return ResponseEntity.notFound().build();
+        } else {
+            if (!reviewRepository.existsById(id)) return ResponseEntity.notFound().build();
+        }
         reviewRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("message", "Review deleted."));
     }

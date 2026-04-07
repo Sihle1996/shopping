@@ -141,24 +141,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   logout() {
-    this.authService.logout();
-    localStorage.removeItem('storeName');
-    localStorage.removeItem('tenantId');
-    localStorage.removeItem('storeSlug');
-    this.tenantService.clearTenant();
     this.isLoggedIn = false;
     this.userRole = null;
     this.storeName = null;
     this.storeLogo = null;
     this.hasStoreContext = false;
     this.menuOpen = false;
-
-    // Reset brand color to default
-    const root = document.documentElement;
-    root.style.setProperty('--brand-primary', '#FF6F00');
-    root.style.setProperty('--brand-primary-light', '#FF6F001A');
-    root.style.setProperty('--brand-primary-hover', '#EA580C');
-
-    this.router.navigate(['/']);
+    this.authService.logout(); // handles all localStorage + service resets + navigation
   }
 }

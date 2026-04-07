@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
     List<Category> findByTenant_Id(UUID tenantId);
     boolean existsByNameAndTenant_Id(String name, UUID tenantId);
+    java.util.Optional<Category> findByIdAndTenant_Id(UUID id, UUID tenantId);
 }

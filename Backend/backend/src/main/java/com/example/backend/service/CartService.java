@@ -12,7 +12,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
@@ -81,8 +84,7 @@ public class CartService {
     }
 
     public CartItemDTO updateCartItem(UUID cartItemId, Integer quantity) {
-        CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+        CartItem cartItem = resolveOwnedCartItem(cartItemId);
 
         MenuItem menuItem = cartItem.getMenuItem();
         if (menuItem.getStock() > 0 && quantity > menuItem.getStock()) {
@@ -99,10 +101,18 @@ public class CartService {
     }
 
     public void deleteCartItem(UUID cartItemId) {
-        if (!cartItemRepository.existsById(cartItemId)) {
-            throw new RuntimeException("Cart item not found");
+        CartItem cartItem = resolveOwnedCartItem(cartItemId);
+        cartItemRepository.delete(cartItem);
+    }
+
+    private CartItem resolveOwnedCartItem(UUID cartItemId) {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof User currentUser) {
+            return cartItemRepository.findByIdAndUserId(cartItemId, currentUser.getId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart item not found"));
         }
-        cartItemRepository.deleteById(cartItemId);
+        return cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart item not found"));
     }
 
     @Transactional

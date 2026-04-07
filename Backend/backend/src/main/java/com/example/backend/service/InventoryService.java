@@ -13,9 +13,11 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -138,9 +140,12 @@ public class InventoryService {
     }
 
     @Transactional
-    public MenuItem setAvailability(java.util.UUID id, Boolean available) {
-        MenuItem item = menuItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Item not found"));
+    public MenuItem setAvailability(UUID id, Boolean available) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        MenuItem item = (tenantId != null
+                ? menuItemRepository.findByIdAndTenant_Id(id, tenantId)
+                : menuItemRepository.findById(id))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found"));
         item.setIsAvailable(available != null ? available : item.getIsAvailable());
         return menuItemRepository.save(item);
     }

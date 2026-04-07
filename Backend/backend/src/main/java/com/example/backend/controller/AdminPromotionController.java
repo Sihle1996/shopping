@@ -55,7 +55,8 @@ public class AdminPromotionController {
     @PutMapping("/{id}")
     @Transactional
     public ResponseEntity<PromotionDTO> update(@PathVariable UUID id, @Valid @RequestBody PromotionRequest req) {
-        return promotionRepository.findById(id)
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        return (tenantId != null ? promotionRepository.findByIdAndTenant_Id(id, tenantId) : promotionRepository.findById(id))
                 .map(existing -> ResponseEntity.ok(PromotionDTO.from(promotionRepository.save(toEntity(existing, req)))))
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -63,7 +64,8 @@ public class AdminPromotionController {
     @PatchMapping("/{id}/activate")
     @Transactional
     public ResponseEntity<PromotionDTO> activate(@PathVariable UUID id, @RequestParam boolean value) {
-        return promotionRepository.findById(id)
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        return (tenantId != null ? promotionRepository.findByIdAndTenant_Id(id, tenantId) : promotionRepository.findById(id))
                 .map(p -> { p.setActive(value); return ResponseEntity.ok(PromotionDTO.from(promotionRepository.save(p))); })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -71,7 +73,8 @@ public class AdminPromotionController {
     @PatchMapping("/{id}/featured")
     @Transactional
     public ResponseEntity<PromotionDTO> featured(@PathVariable UUID id, @RequestParam boolean value) {
-        return promotionRepository.findById(id)
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        return (tenantId != null ? promotionRepository.findByIdAndTenant_Id(id, tenantId) : promotionRepository.findById(id))
                 .map(p -> { p.setFeatured(value); return ResponseEntity.ok(PromotionDTO.from(promotionRepository.save(p))); })
                 .orElse(ResponseEntity.notFound().build());
     }

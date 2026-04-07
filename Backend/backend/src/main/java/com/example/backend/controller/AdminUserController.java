@@ -38,7 +38,8 @@ public class AdminUserController {
         try { role = Role.valueOf(roleName.toUpperCase()); }
         catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", "Invalid role: " + roleName)); }
 
-        User user = userRepository.findById(id)
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        User user = (tenantId != null ? userRepository.findByIdAndTenant_Id(id, tenantId) : userRepository.findById(id))
                 .orElse(null);
         if (user == null) return ResponseEntity.notFound().build();
         user.setRole(role);
@@ -50,7 +51,9 @@ public class AdminUserController {
     public ResponseEntity<?> setActive(@PathVariable UUID id, @RequestBody Map<String, Boolean> body) {
         Boolean active = body.get("active");
         if (active == null) return ResponseEntity.badRequest().body(Map.of("message", "active is required"));
-        User user = userRepository.findById(id).orElse(null);
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        User user = (tenantId != null ? userRepository.findByIdAndTenant_Id(id, tenantId) : userRepository.findById(id))
+                .orElse(null);
         if (user == null) return ResponseEntity.notFound().build();
         user.setActive(active);
         userRepository.save(user);

@@ -191,6 +191,13 @@ export class CartService {
     });
   }
 
+  reset(): void {
+    localStorage.removeItem(this.LOCAL_CART_KEY);
+    this.cartItems.next([]);
+    this.totalPrice.next(0);
+    this.cartItemCount.next(0);
+  }
+
   clearCart(): void {
     if (!this.authService.isLoggedIn()) {
       localStorage.removeItem(this.LOCAL_CART_KEY);

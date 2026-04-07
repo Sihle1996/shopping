@@ -55,12 +55,7 @@ export class LoginComponent implements OnInit {
         } else if (role === 'ROLE_MANAGER') {
           this.router.navigate(['/manager/dashboard'], { replaceUrl: true });
         } else {
-          const slug = localStorage.getItem('storeSlug');
-          if (slug) {
-            this.router.navigate(['/store', slug], { replaceUrl: true });
-          } else {
-            this.router.navigate(['/'], { replaceUrl: true });
-          }
+          this.router.navigate(['/'], { replaceUrl: true });
         }
       },
       error: () => {

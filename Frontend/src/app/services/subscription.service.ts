@@ -42,6 +42,10 @@ export class SubscriptionService {
     );
   }
 
+  reset(): void {
+    this.infoSubject.next(null);
+  }
+
   requestUpgrade(): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${this.apiUrl}/api/admin/subscription/upgrade-request`, {});
   }

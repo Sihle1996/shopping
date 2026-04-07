@@ -16,7 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import com.example.backend.service.LoyaltyService;
@@ -260,8 +262,12 @@ public class OrderService {
     }
 
     public OrderDTO getOrderById(UUID orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        Order order = (tenantId != null)
+                ? orderRepository.findByIdAndTenant_Id(orderId, tenantId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"))
+                : orderRepository.findById(orderId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
         return convertToOrderDTO(order);
     }
 
@@ -308,8 +314,12 @@ public class OrderService {
 
     @Transactional
     public OrderDTO updateOrderStatus(UUID orderId, String status) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        Order order = (tenantId != null)
+                ? orderRepository.findByIdAndTenant_Id(orderId, tenantId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"))
+                : orderRepository.findById(orderId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
 
         boolean isCancelling = ("Cancelled".equals(status) || "Rejected".equals(status))
                 && !"Cancelled".equals(order.getStatus())
