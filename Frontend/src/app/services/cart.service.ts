@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of, forkJoin } from 'rxjs';
+import { tap, map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { environment } from 'src/environments/environment';
 
@@ -189,6 +189,22 @@ export class CartService {
     return this.http.post(`${environment.apiUrl}/api/orders`, order, {
       headers: this.getAuthHeaders()
     });
+  }
+
+  mergeGuestCart(): Observable<void> {
+    const guestItems = this.getLocalCart();
+    if (!guestItems.length) return of(undefined);
+
+    const requests = guestItems.map(item => {
+      const body: any = { menuItemId: item.menuItemId, quantity: item.quantity, size: item.size || 'M' };
+      if (item.selectedChoicesJson) body.selectedChoicesJson = item.selectedChoicesJson;
+      return this.http.post(`${this.apiUrl}/add`, body, { headers: this.getAuthHeaders() });
+    });
+
+    return forkJoin(requests).pipe(
+      tap(() => localStorage.removeItem(this.LOCAL_CART_KEY)),
+      map(() => undefined)
+    );
   }
 
   reset(): void {

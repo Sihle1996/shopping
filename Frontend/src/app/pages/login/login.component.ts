@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
+import { CartService } from 'src/app/services/cart.service';
 
 @Component({
   selector: 'app-login',
@@ -18,6 +19,7 @@ export class LoginComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
+    private cartService: CartService,
     private router: Router,
     private route: ActivatedRoute
   ) {
@@ -39,23 +41,29 @@ export class LoginComponent implements OnInit {
 
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
-        // If there's a return URL (e.g. from store browse), go back there
-        if (this.returnUrl) {
-          this.router.navigateByUrl(this.returnUrl, { replaceUrl: true });
-          return;
-        }
-
         const role = this.authService.getUserRole();
-        if (role === 'ROLE_SUPERADMIN') {
-          this.router.navigate(['/superadmin'], { replaceUrl: true });
-        } else if (role === 'ROLE_ADMIN') {
-          this.router.navigate(['/admin/dashboard'], { replaceUrl: true });
-        } else if (role === 'ROLE_DRIVER') {
-          this.router.navigate(['/driver/dashboard'], { replaceUrl: true });
-        } else if (role === 'ROLE_MANAGER') {
-          this.router.navigate(['/manager/dashboard'], { replaceUrl: true });
+        const isCustomer = !role || role === 'ROLE_USER';
+
+        const navigate = () => {
+          if (this.returnUrl) {
+            this.router.navigateByUrl(this.returnUrl, { replaceUrl: true });
+          } else if (role === 'ROLE_SUPERADMIN') {
+            this.router.navigate(['/superadmin'], { replaceUrl: true });
+          } else if (role === 'ROLE_ADMIN') {
+            this.router.navigate(['/admin/dashboard'], { replaceUrl: true });
+          } else if (role === 'ROLE_DRIVER') {
+            this.router.navigate(['/driver/dashboard'], { replaceUrl: true });
+          } else if (role === 'ROLE_MANAGER') {
+            this.router.navigate(['/manager/dashboard'], { replaceUrl: true });
+          } else {
+            this.router.navigate(['/stores'], { replaceUrl: true });
+          }
+        };
+
+        if (isCustomer) {
+          this.cartService.mergeGuestCart().subscribe({ next: navigate, error: navigate });
         } else {
-          this.router.navigate(['/stores'], { replaceUrl: true });
+          navigate();
         }
       },
       error: () => {
