@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { PlatformStats, SuperadminService } from '../superadmin.service';
+import { PlatformStats, SuperadminService, TrialInfo } from '../superadmin.service';
 
 @Component({
   selector: 'app-superadmin-dashboard',
@@ -9,7 +9,7 @@ import { PlatformStats, SuperadminService } from '../superadmin.service';
 export class SuperadminDashboardComponent implements OnInit {
   stats: PlatformStats = {
     totalTenants: 0, activeTenants: 0, totalOrders: 0, totalRevenue: 0,
-    planBreakdown: {}, statusBreakdown: {}, recentTenants: []
+    planBreakdown: {}, statusBreakdown: {}, recentTenants: [], trialsExpiringSoon: []
   };
   loading = true;
   error = false;
@@ -57,5 +57,15 @@ export class SuperadminDashboardComponent implements OnInit {
 
   get inactiveCount(): number {
     return this.stats.totalTenants - this.stats.activeTenants;
+  }
+
+  get expiringTrials(): TrialInfo[] {
+    return (this.stats.trialsExpiringSoon || []).filter(t => t.daysRemaining <= 7);
+  }
+
+  trialUrgencyClass(days: number): string {
+    if (days <= 2) return 'text-danger';
+    if (days <= 5) return 'text-warning';
+    return 'text-textMuted';
   }
 }

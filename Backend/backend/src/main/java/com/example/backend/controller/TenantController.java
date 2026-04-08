@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -176,6 +177,23 @@ public class TenantController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    // SUPERADMIN only - extend a tenant's trial by N days
+    @PatchMapping("/api/superadmin/tenants/{id}/extend-trial")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    public ResponseEntity<Tenant> extendTrial(@PathVariable UUID id, @RequestBody Map<String, Integer> body) {
+        int days = body.getOrDefault("days", 7);
+        return tenantRepository.findById(id).map(tenant -> {
+            LocalDateTime base = tenant.getTrialStartedAt() != null
+                    ? tenant.getTrialStartedAt()
+                    : LocalDateTime.now().minusDays(14);
+            tenant.setTrialStartedAt(base.plusDays(days));
+            if ("SUSPENDED".equals(tenant.getSubscriptionStatus())) {
+                tenant.setSubscriptionStatus("TRIAL");
+            }
+            return ResponseEntity.ok(tenantRepository.save(tenant));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     // SUPERADMIN only - platform stats
     @GetMapping("/api/superadmin/stats")
     @PreAuthorize("hasRole('SUPERADMIN')")
@@ -207,18 +225,32 @@ public class TenantController {
                         t.getSubscriptionPlan(), t.getSubscriptionStatus(), t.getCreatedAt()))
                 .toList();
 
+        LocalDateTime now = LocalDateTime.now();
+        List<TrialInfo> trialsExpiringSoon = allTenants.stream()
+                .filter(t -> "TRIAL".equals(t.getSubscriptionStatus()) && t.getTrialStartedAt() != null)
+                .map(t -> {
+                    long daysUsed = ChronoUnit.DAYS.between(t.getTrialStartedAt(), now);
+                    int daysRemaining = (int) Math.max(0, 14 - daysUsed);
+                    return new TrialInfo(t.getId(), t.getName(), t.getSlug(), daysRemaining);
+                })
+                .sorted(Comparator.comparingInt(TrialInfo::daysRemaining))
+                .toList();
+
         return ResponseEntity.ok(new PlatformStats(
                 totalTenants, activeTenants, totalOrders, totalRevenue,
-                planBreakdown, statusBreakdown, recentTenants));
+                planBreakdown, statusBreakdown, recentTenants, trialsExpiringSoon));
     }
 
     public record RecentTenant(UUID id, String name, String slug,
                                String subscriptionPlan, String subscriptionStatus,
                                LocalDateTime createdAt) {}
 
+    public record TrialInfo(UUID id, String name, String slug, int daysRemaining) {}
+
     public record PlatformStats(
             long totalTenants, long activeTenants, long totalOrders, double totalRevenue,
             Map<String, Long> planBreakdown,
             Map<String, Long> statusBreakdown,
-            List<RecentTenant> recentTenants) {}
+            List<RecentTenant> recentTenants,
+            List<TrialInfo> trialsExpiringSoon) {}
 }

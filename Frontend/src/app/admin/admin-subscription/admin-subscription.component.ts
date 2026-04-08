@@ -90,7 +90,7 @@ export class AdminSubscriptionComponent implements OnInit {
     this.http.post<any>(`${environment.apiUrl}/api/payfast/initiate`, {
       total: amount.toFixed(2),
       itemName: `${planName} Plan Subscription`,
-      paymentId: `sub-${planName}-${Date.now()}`
+      paymentId: `sub-${tenantId}-${planName}`
     }, { headers }).subscribe({
       next: (res) => {
         this.payFastLoading = false;

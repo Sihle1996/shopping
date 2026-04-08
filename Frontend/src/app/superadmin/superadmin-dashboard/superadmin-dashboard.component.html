@@ -165,6 +165,32 @@
 
       </div>
 
+      <!-- Trials expiring soon -->
+      <div *ngIf="expiringTrials.length > 0" class="mt-4 bg-white rounded-2xl shadow-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-warning"></span>
+            <p class="text-xs font-semibold text-textMuted uppercase tracking-wide">Trials Expiring Soon</p>
+            <span class="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{{ expiringTrials.length }}</span>
+          </div>
+          <a routerLink="/superadmin/subscriptions"
+             class="text-xs font-medium hover:opacity-80 transition-opacity"
+             style="color: var(--brand-primary, #4f46e5);">Manage →</a>
+        </div>
+        <div class="divide-y divide-borderColor">
+          <div *ngFor="let t of expiringTrials"
+               class="flex items-center justify-between py-2.5 gap-3">
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-textDark truncate">{{ t.name }}</p>
+              <p class="text-xs font-mono text-textMuted truncate">{{ t.slug }}</p>
+            </div>
+            <span class="text-xs font-semibold flex-shrink-0" [ngClass]="trialUrgencyClass(t.daysRemaining)">
+              {{ t.daysRemaining === 0 ? 'Expires today' : t.daysRemaining + 'd left' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <!-- Quick Actions -->
       <div class="mt-4 bg-white rounded-2xl shadow-card p-5">
         <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-4">Quick Actions</p>

@@ -35,6 +35,13 @@ export interface RecentTenant {
   createdAt: string;
 }
 
+export interface TrialInfo {
+  id: string;
+  name: string;
+  slug: string;
+  daysRemaining: number;
+}
+
 export interface PlatformStats {
   totalTenants: number;
   activeTenants: number;
@@ -43,6 +50,7 @@ export interface PlatformStats {
   planBreakdown: Record<string, number>;
   statusBreakdown: Record<string, number>;
   recentTenants: RecentTenant[];
+  trialsExpiringSoon: TrialInfo[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -76,6 +84,14 @@ export class SuperadminService {
     return this.http.patch<Tenant>(
       `${this.base}/tenants/${id}/subscription`,
       { subscriptionPlan: plan, subscriptionStatus: status },
+      { headers: this.headers() }
+    );
+  }
+
+  extendTrial(id: string, days = 7): Observable<Tenant> {
+    return this.http.patch<Tenant>(
+      `${this.base}/tenants/${id}/extend-trial`,
+      { days },
       { headers: this.headers() }
     );
   }

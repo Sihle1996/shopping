@@ -123,6 +123,12 @@
               </td>
               <td class="px-5 py-4">
                 <div class="flex items-center justify-end gap-2">
+                  <button *ngIf="t.subscriptionStatus === 'TRIAL' || t.subscriptionStatus === 'SUSPENDED'"
+                          (click)="extendTrial(t)" [disabled]="extendingId === t.id"
+                          class="text-xs text-amber-600 hover:text-amber-800 transition-colors px-2 py-1.5 rounded-lg hover:bg-amber-50 disabled:opacity-40 flex items-center gap-1">
+                    <i *ngIf="extendingId === t.id" class="bi bi-arrow-repeat animate-spin"></i>
+                    {{ extendingId === t.id ? '...' : '+7d' }}
+                  </button>
                   <button *ngIf="isDirty(t)" (click)="reset(t)"
                           class="text-xs text-textMuted hover:text-textDark transition-colors px-2 py-1.5 rounded-lg hover:bg-surface">
                     Reset
@@ -173,6 +179,12 @@
             </div>
           </div>
           <div class="flex gap-2">
+            <button *ngIf="t.subscriptionStatus === 'TRIAL' || t.subscriptionStatus === 'SUSPENDED'"
+                    (click)="extendTrial(t)" [disabled]="extendingId === t.id"
+                    class="px-3 py-2 rounded-xl border border-amber-300 text-xs text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-40 flex items-center gap-1">
+              <i *ngIf="extendingId === t.id" class="bi bi-arrow-repeat animate-spin"></i>
+              {{ extendingId === t.id ? '...' : '+7 days' }}
+            </button>
             <button *ngIf="isDirty(t)" (click)="reset(t)"
                     class="px-3 py-2 rounded-xl border border-borderColor text-xs text-textMuted hover:text-textDark transition-colors">
               Reset

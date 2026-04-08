@@ -1,5 +1,6 @@
 package com.example.backend.controller;
 
+import com.example.backend.repository.TenantRepository;
 import com.example.backend.service.PayFastService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/payfast")
@@ -14,6 +16,7 @@ import java.util.Map;
 public class PayFastController {
 
     private final PayFastService payFastService;
+    private final TenantRepository tenantRepository;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -21,8 +24,9 @@ public class PayFastController {
     @Value("${app.backend-url:http://localhost:8080}")
     private String backendUrl;
 
-    public PayFastController(PayFastService payFastService) {
+    public PayFastController(PayFastService payFastService, TenantRepository tenantRepository) {
         this.payFastService = payFastService;
+        this.tenantRepository = tenantRepository;
     }
 
     /**
@@ -79,11 +83,41 @@ public class PayFastController {
                 + " amount=" + amountGross);
 
         if ("COMPLETE".equalsIgnoreCase(paymentStatus)) {
-            // Payment confirmed — order was already placed optimistically on the frontend
-            // The m_payment_id can be used to look up and confirm the order if needed
+            // Subscription payment: m_payment_id = "sub-{tenantId}-{planName}"
+            if (mPaymentId != null && mPaymentId.startsWith("sub-")) {
+                activateSubscription(mPaymentId);
+            }
+            // Order payments: already handled optimistically on the frontend
         }
 
         return ResponseEntity.ok("OK");
+    }
+
+    /**
+     * Activates a store subscription when PayFast confirms payment.
+     * m_payment_id format: "sub-{tenantId}-{planName}"
+     */
+    private void activateSubscription(String mPaymentId) {
+        // Strip "sub-" prefix, then split on the last "-" to get tenantId and planName
+        String payload = mPaymentId.substring(4); // remove "sub-"
+        int lastDash = payload.lastIndexOf('-');
+        if (lastDash < 1) {
+            System.err.println("PayFast ITN: malformed subscription m_payment_id: " + mPaymentId);
+            return;
+        }
+        String tenantIdStr = payload.substring(0, lastDash);
+        String planName = payload.substring(lastDash + 1);
+        try {
+            UUID tenantId = UUID.fromString(tenantIdStr);
+            tenantRepository.findById(tenantId).ifPresentOrElse(tenant -> {
+                tenant.setSubscriptionPlan(planName);
+                tenant.setSubscriptionStatus("ACTIVE");
+                tenantRepository.save(tenant);
+                System.out.println("PayFast ITN: activated tenant " + tenant.getName() + " on plan " + planName);
+            }, () -> System.err.println("PayFast ITN: tenant not found: " + tenantIdStr));
+        } catch (IllegalArgumentException e) {
+            System.err.println("PayFast ITN: invalid tenantId in m_payment_id: " + mPaymentId);
+        }
     }
 
     /**

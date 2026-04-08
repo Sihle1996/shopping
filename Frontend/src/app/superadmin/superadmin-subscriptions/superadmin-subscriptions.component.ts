@@ -12,6 +12,7 @@ export class SuperadminSubscriptionsComponent implements OnInit {
   loading = true;
   error = false;
   savingId: string | null = null;
+  extendingId: string | null = null;
 
   // Inline edit state per tenant
   editing: Record<string, { plan: string; status: string }> = {};
@@ -80,6 +81,22 @@ export class SuperadminSubscriptionsComponent implements OnInit {
 
   reset(t: Tenant): void {
     this.editing[t.id] = { plan: t.subscriptionPlan, status: t.subscriptionStatus };
+  }
+
+  extendTrial(t: Tenant): void {
+    this.extendingId = t.id;
+    this.superadminService.extendTrial(t.id, 7).subscribe({
+      next: (updated) => {
+        const idx = this.tenants.findIndex(x => x.id === updated.id);
+        if (idx !== -1) {
+          this.tenants[idx] = updated;
+          this.editing[updated.id] = { plan: updated.subscriptionPlan, status: updated.subscriptionStatus };
+        }
+        this.extendingId = null;
+        this.toastr.success(`Trial extended by 7 days for ${updated.name}`);
+      },
+      error: () => { this.extendingId = null; this.toastr.error('Failed to extend trial'); }
+    });
   }
 
   statusBadge(status: string): BadgeVariant {
