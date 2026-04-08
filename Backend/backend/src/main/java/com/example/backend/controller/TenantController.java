@@ -13,7 +13,9 @@ import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -146,6 +148,34 @@ public class TenantController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // SUPERADMIN only - create tenant
+    @PostMapping("/api/superadmin/tenants")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    public ResponseEntity<Tenant> createTenantAsAdmin(@Valid @RequestBody Tenant tenant) {
+        if (tenant.getSlug() == null || tenant.getSlug().isBlank()) {
+            String slug = tenant.getName().toLowerCase()
+                    .replaceAll("[^a-z0-9]+", "-")
+                    .replaceAll("(^-|-$)", "");
+            tenant.setSlug(slug);
+        }
+        if (tenant.getSubscriptionStatus() == null) tenant.setSubscriptionStatus("TRIAL");
+        if (tenant.getSubscriptionPlan() == null) tenant.setSubscriptionPlan("BASIC");
+        tenant.setTrialStartedAt(LocalDateTime.now());
+        Tenant saved = tenantRepository.save(tenant);
+        return ResponseEntity.created(URI.create("/api/superadmin/tenants/" + saved.getId())).body(saved);
+    }
+
+    // SUPERADMIN only - patch subscription plan/status only
+    @PatchMapping("/api/superadmin/tenants/{id}/subscription")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    public ResponseEntity<Tenant> updateSubscription(@PathVariable UUID id, @RequestBody Map<String, String> body) {
+        return tenantRepository.findById(id).map(t -> {
+            if (body.containsKey("subscriptionPlan")) t.setSubscriptionPlan(body.get("subscriptionPlan"));
+            if (body.containsKey("subscriptionStatus")) t.setSubscriptionStatus(body.get("subscriptionStatus"));
+            return ResponseEntity.ok(tenantRepository.save(t));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     // SUPERADMIN only - platform stats
     @GetMapping("/api/superadmin/stats")
     @PreAuthorize("hasRole('SUPERADMIN')")
@@ -158,8 +188,37 @@ public class TenantController {
                 .filter(o -> o.getTotalAmount() != null)
                 .mapToDouble(o -> o.getTotalAmount())
                 .sum();
-        return ResponseEntity.ok(new PlatformStats(totalTenants, activeTenants, totalOrders, totalRevenue));
+
+        Map<String, Long> planBreakdown = allTenants.stream()
+                .collect(Collectors.groupingBy(
+                        t -> t.getSubscriptionPlan() != null ? t.getSubscriptionPlan() : "BASIC",
+                        Collectors.counting()));
+
+        Map<String, Long> statusBreakdown = allTenants.stream()
+                .collect(Collectors.groupingBy(
+                        t -> t.getSubscriptionStatus() != null ? t.getSubscriptionStatus() : "TRIAL",
+                        Collectors.counting()));
+
+        List<RecentTenant> recentTenants = allTenants.stream()
+                .filter(t -> t.getCreatedAt() != null)
+                .sorted(Comparator.comparing(Tenant::getCreatedAt).reversed())
+                .limit(5)
+                .map(t -> new RecentTenant(t.getId(), t.getName(), t.getSlug(),
+                        t.getSubscriptionPlan(), t.getSubscriptionStatus(), t.getCreatedAt()))
+                .toList();
+
+        return ResponseEntity.ok(new PlatformStats(
+                totalTenants, activeTenants, totalOrders, totalRevenue,
+                planBreakdown, statusBreakdown, recentTenants));
     }
 
-    public record PlatformStats(long totalTenants, long activeTenants, long totalOrders, double totalRevenue) {}
+    public record RecentTenant(UUID id, String name, String slug,
+                               String subscriptionPlan, String subscriptionStatus,
+                               LocalDateTime createdAt) {}
+
+    public record PlatformStats(
+            long totalTenants, long activeTenants, long totalOrders, double totalRevenue,
+            Map<String, Long> planBreakdown,
+            Map<String, Long> statusBreakdown,
+            List<RecentTenant> recentTenants) {}
 }

@@ -1,107 +1,186 @@
-<div class="px-4 pt-6 lg:px-8">
+<div class="px-4 pt-6 lg:px-8 pb-10">
   <div class="max-w-5xl mx-auto">
 
     <!-- Header -->
-    <div class="mb-8">
+    <div class="mb-6">
       <h2 class="font-heading text-2xl font-bold text-textDark">Platform Dashboard</h2>
-      <p class="text-textLight text-sm mt-1">High-level overview of all stores and activity</p>
+      <p class="text-textLight text-sm mt-1">Real-time overview of all stores and activity</p>
     </div>
 
-    <!-- Loading state -->
-    <div *ngIf="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <div *ngFor="let i of [1,2,3,4]"
-           class="bg-white rounded-2xl shadow-card p-5 animate-pulse h-24">
+    <!-- Loading skeleton -->
+    <div *ngIf="loading">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div *ngFor="let i of [1,2,3,4]" class="bg-white rounded-2xl shadow-card p-5 animate-pulse h-24"></div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="bg-white rounded-2xl shadow-card p-5 animate-pulse h-36"></div>
+        <div class="bg-white rounded-2xl shadow-card p-5 animate-pulse h-36"></div>
+        <div class="lg:row-span-2 bg-white rounded-2xl shadow-card p-5 animate-pulse h-72"></div>
       </div>
     </div>
 
     <!-- Error state -->
     <div *ngIf="error && !loading"
-         class="bg-white rounded-2xl shadow-card p-6 flex flex-col items-center text-center mb-8">
+         class="bg-white rounded-2xl shadow-card p-8 flex flex-col items-center text-center mb-6">
       <i class="bi bi-exclamation-triangle text-3xl text-danger mb-2"></i>
       <p class="text-textDark font-medium mb-1">Failed to load stats</p>
-      <p class="text-textMuted text-sm mb-4">Could not reach the platform stats endpoint.</p>
       <button (click)="loadStats()"
-              class="px-4 py-2 rounded-xl text-sm font-medium text-white"
-              style="background: var(--brand-primary, #4f46e5);">
-        Retry
-      </button>
+              class="mt-3 px-4 py-2 rounded-xl text-sm font-medium text-white"
+              style="background: var(--brand-primary, #4f46e5);">Retry</button>
     </div>
 
-    <!-- Stat Cards -->
-    <div *ngIf="!loading && !error"
-         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <ng-container *ngIf="!loading && !error">
 
-      <!-- Total Stores -->
-      <div class="bg-white rounded-2xl shadow-card p-5">
-        <div class="flex items-start justify-between">
-          <div>
-            <p class="text-textMuted text-xs uppercase tracking-wide mb-1">Total Stores</p>
-            <p class="font-numbers text-3xl font-bold text-textDark">{{ stats.totalTenants }}</p>
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-textMuted text-xs uppercase tracking-wide mb-1">Total Stores</p>
+              <p class="font-numbers text-3xl font-bold text-textDark">{{ stats.totalTenants }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                 style="background: var(--brand-primary-light, #eef2ff);">
+              <i class="bi bi-shop text-lg" style="color: var(--brand-primary, #4f46e5);"></i>
+            </div>
           </div>
-          <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
-               style="background: var(--brand-primary-light, #eef2ff);">
-            <i class="bi bi-shop text-xl" style="color: var(--brand-primary, #4f46e5);"></i>
+          <p class="text-xs text-textMuted mt-2">{{ inactiveCount }} inactive</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-textMuted text-xs uppercase tracking-wide mb-1">Active Stores</p>
+              <p class="font-numbers text-3xl font-bold text-success">{{ stats.activeTenants }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+              <i class="bi bi-check-circle text-lg text-success"></i>
+            </div>
           </div>
+          <p class="text-xs text-textMuted mt-2">
+            {{ stats.totalTenants > 0 ? ((stats.activeTenants / stats.totalTenants) * 100 | number:'1.0-0') : 0 }}% of total
+          </p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-textMuted text-xs uppercase tracking-wide mb-1">Total Orders</p>
+              <p class="font-numbers text-3xl font-bold text-textDark">{{ stats.totalOrders }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <i class="bi bi-receipt text-lg text-blue-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-textMuted text-xs uppercase tracking-wide mb-1">Total Revenue</p>
+              <p class="font-numbers text-2xl font-bold text-success">R{{ stats.totalRevenue | number:'1.2-2' }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+              <i class="bi bi-cash-stack text-lg text-success"></i>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Lower grid: Plan breakdown | Status breakdown | Recent stores -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        <!-- Plan breakdown -->
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-4">Plan Distribution</p>
+          <div class="space-y-3">
+            <div *ngFor="let entry of planEntries" class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded-full text-xs font-semibold" [ngClass]="planColor(entry.key)">
+                  {{ entry.key }}
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full"
+                       style="background: var(--brand-primary, #4f46e5);"
+                       [style.width.%]="stats.totalTenants > 0 ? (entry.value / stats.totalTenants) * 100 : 0">
+                  </div>
+                </div>
+                <span class="font-numbers text-sm font-semibold text-textDark w-4 text-right">{{ entry.value }}</span>
+              </div>
+            </div>
+            <div *ngIf="planEntries.length === 0" class="text-xs text-textMuted text-center py-2">No data</div>
+          </div>
+        </div>
+
+        <!-- Subscription status breakdown -->
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-4">Subscription Status</p>
+          <div class="space-y-3">
+            <div *ngFor="let entry of statusEntries" class="flex items-center justify-between">
+              <span class="px-2 py-0.5 rounded-full text-xs font-semibold" [ngClass]="statusColor(entry.key)">
+                {{ entry.key }}
+              </span>
+              <div class="flex items-center gap-2">
+                <div class="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full bg-success"
+                       [style.width.%]="stats.totalTenants > 0 ? (entry.value / stats.totalTenants) * 100 : 0">
+                  </div>
+                </div>
+                <span class="font-numbers text-sm font-semibold text-textDark w-4 text-right">{{ entry.value }}</span>
+              </div>
+            </div>
+            <div *ngIf="statusEntries.length === 0" class="text-xs text-textMuted text-center py-2">No data</div>
+          </div>
+        </div>
+
+        <!-- Recent stores -->
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <p class="text-xs font-semibold text-textMuted uppercase tracking-wide">Newest Stores</p>
+            <a routerLink="/superadmin/stores"
+               class="text-xs font-medium hover:opacity-80 transition-opacity"
+               style="color: var(--brand-primary, #4f46e5);">View all →</a>
+          </div>
+          <div class="space-y-3">
+            <div *ngFor="let t of stats.recentTenants"
+                 class="flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-textDark truncate">{{ t.name }}</p>
+                <p class="text-xs font-mono text-textMuted truncate">{{ t.slug }}</p>
+              </div>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                    [ngClass]="planColor(t.subscriptionPlan)">
+                {{ t.subscriptionPlan }}
+              </span>
+            </div>
+            <div *ngIf="!stats.recentTenants?.length" class="text-xs text-textMuted text-center py-2">
+              No stores yet
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="mt-4 bg-white rounded-2xl shadow-card p-5">
+        <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-4">Quick Actions</p>
+        <div class="flex flex-wrap gap-3">
+          <a routerLink="/superadmin/stores"
+             class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-opacity hover:opacity-90"
+             style="background: var(--brand-primary, #4f46e5);">
+            <i class="bi bi-shop"></i> Manage Stores
+          </a>
+          <a routerLink="/superadmin/subscriptions"
+             class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-borderColor text-textDark hover:bg-surface transition-colors">
+            <i class="bi bi-credit-card"></i> Subscriptions
+          </a>
         </div>
       </div>
 
-      <!-- Active Stores -->
-      <div class="bg-white rounded-2xl shadow-card p-5">
-        <div class="flex items-start justify-between">
-          <div>
-            <p class="text-textMuted text-xs uppercase tracking-wide mb-1">Active Stores</p>
-            <p class="font-numbers text-3xl font-bold text-success">{{ stats.activeTenants }}</p>
-          </div>
-          <div class="w-11 h-11 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
-            <i class="bi bi-check-circle text-xl text-success"></i>
-          </div>
-        </div>
-        <p class="text-xs text-textMuted mt-2">
-          {{ stats.totalTenants - stats.activeTenants }} inactive
-        </p>
-      </div>
-
-      <!-- Total Orders -->
-      <div class="bg-white rounded-2xl shadow-card p-5">
-        <div class="flex items-start justify-between">
-          <div>
-            <p class="text-textMuted text-xs uppercase tracking-wide mb-1">Total Orders</p>
-            <p class="font-numbers text-3xl font-bold text-textDark">{{ stats.totalOrders }}</p>
-          </div>
-          <div class="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <i class="bi bi-receipt text-xl text-blue-600"></i>
-          </div>
-        </div>
-      </div>
-
-      <!-- Total Revenue -->
-      <div class="bg-white rounded-2xl shadow-card p-5">
-        <div class="flex items-start justify-between">
-          <div>
-            <p class="text-textMuted text-xs uppercase tracking-wide mb-1">Total Revenue</p>
-            <p class="font-numbers text-3xl font-bold text-success">
-              R{{ stats.totalRevenue | number:'1.2-2' }}
-            </p>
-          </div>
-          <div class="w-11 h-11 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
-            <i class="bi bi-currency-dollar text-xl text-success"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Quick links -->
-    <div *ngIf="!loading && !error" class="bg-white rounded-2xl shadow-card p-6">
-      <h3 class="font-heading text-sm font-semibold text-textDark mb-4">Quick Actions</h3>
-      <div class="flex flex-wrap gap-3">
-        <a routerLink="/superadmin/stores"
-           class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-opacity hover:opacity-90"
-           style="background: var(--brand-primary, #4f46e5);">
-          <i class="bi bi-shop"></i>
-          Manage Stores
-        </a>
-      </div>
-    </div>
-
+    </ng-container>
   </div>
 </div>

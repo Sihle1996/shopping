@@ -3,15 +3,17 @@ import { RouterModule, Routes } from '@angular/router';
 import { SuperadminLayoutComponent } from './superadmin-layout/superadmin-layout.component';
 import { SuperadminDashboardComponent } from './superadmin-dashboard/superadmin-dashboard.component';
 import { SuperadminStoresComponent } from './superadmin-stores/superadmin-stores.component';
+import { SuperadminSubscriptionsComponent } from './superadmin-subscriptions/superadmin-subscriptions.component';
 
 const routes: Routes = [
   {
     path: '',
     component: SuperadminLayoutComponent,
     children: [
-      { path: 'dashboard', component: SuperadminDashboardComponent },
-      { path: 'stores',    component: SuperadminStoresComponent },
-      { path: '',          redirectTo: 'dashboard', pathMatch: 'full' }
+      { path: 'dashboard',     component: SuperadminDashboardComponent },
+      { path: 'stores',        component: SuperadminStoresComponent },
+      { path: 'subscriptions', component: SuperadminSubscriptionsComponent },
+      { path: '',              redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }
 ];

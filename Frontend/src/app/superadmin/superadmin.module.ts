@@ -9,12 +9,14 @@ import { SuperadminRoutingModule } from './superadmin-routing.module';
 import { SuperadminLayoutComponent } from './superadmin-layout/superadmin-layout.component';
 import { SuperadminDashboardComponent } from './superadmin-dashboard/superadmin-dashboard.component';
 import { SuperadminStoresComponent } from './superadmin-stores/superadmin-stores.component';
+import { SuperadminSubscriptionsComponent } from './superadmin-subscriptions/superadmin-subscriptions.component';
 
 @NgModule({
   declarations: [
     SuperadminLayoutComponent,
     SuperadminDashboardComponent,
     SuperadminStoresComponent,
+    SuperadminSubscriptionsComponent,
   ],
   imports: [
     CommonModule,

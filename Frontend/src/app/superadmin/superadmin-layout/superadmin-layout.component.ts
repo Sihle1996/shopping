@@ -11,8 +11,9 @@ export class SuperadminLayoutComponent {
   sidebarOpen = false;
 
   navLinks = [
-    { label: 'Dashboard', icon: 'bi-grid-1x2', route: '/superadmin/dashboard' },
-    { label: 'Stores',    icon: 'bi-shop',      route: '/superadmin/stores' },
+    { label: 'Dashboard',     icon: 'bi-grid-1x2',   route: '/superadmin/dashboard' },
+    { label: 'Stores',        icon: 'bi-shop',        route: '/superadmin/stores' },
+    { label: 'Subscriptions', icon: 'bi-credit-card', route: '/superadmin/subscriptions' },
   ];
 
   constructor(private auth: AuthService, private router: Router) {}
