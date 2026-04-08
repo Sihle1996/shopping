@@ -328,11 +328,6 @@
           </div>
         </div>
 
-        <!-- PayFast Redirect (hidden form auto-submitted) -->
-        <form *ngIf="showPayFast" id="payfast-form" [action]="payFastProcessUrl" method="POST" class="hidden">
-          <input *ngFor="let key of (payFastFormData | keyvalue)" type="hidden" [name]="key.key" [value]="key.value">
-        </form>
-
         <!-- PayFast Loading -->
         <div *ngIf="payFastLoading" class="bg-white rounded-2xl shadow-card p-6 animate-fade-in text-center">
           <i class="bi bi-arrow-repeat animate-spin text-primary text-2xl mb-2 block"></i>

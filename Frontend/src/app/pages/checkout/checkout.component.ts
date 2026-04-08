@@ -36,9 +36,6 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     return this.minimumOrderAmount !== null && this.totalPrice < this.minimumOrderAmount;
   }
 
-  showPayFast: boolean = false;
-  payFastProcessUrl: string = '';
-  payFastFormData: { [key: string]: string } = {};
   payFastLoading: boolean = false;
 
   // Promo code
@@ -500,17 +497,20 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       paymentId: orderId || 'order-' + Date.now()
     }, { headers: pfHeaders }).subscribe({
       next: (res) => {
-        this.payFastProcessUrl = res.processUrl;
-        this.payFastFormData = res.formData;
-        this.showPayFast = true;
         this.payFastLoading = false;
-        this.cdr.detectChanges();
-
-        // Auto-submit the form to PayFast after a short delay for rendering
-        setTimeout(() => {
-          const form = document.getElementById('payfast-form') as HTMLFormElement;
-          if (form) form.submit();
-        }, 100);
+        // Build and auto-submit form via DOM to avoid Angular URL sanitization
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = res.processUrl;
+        for (const [key, val] of Object.entries(res.formData)) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = val as string;
+          form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
       },
       error: () => {
         this.payFastLoading = false;
