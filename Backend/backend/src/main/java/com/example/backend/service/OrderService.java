@@ -454,14 +454,13 @@ public class OrderService {
                 null, // driverLon, set below
                 order.getTenant() != null ? order.getTenant().getId() : null,
                 order.getDiscountAmount() != null ? order.getDiscountAmount() : 0.0,
+                order.getDeliveryFee() != null ? order.getDeliveryFee() : 0.0,
                 order.getPromoCode(),
                 order.getDeliveryLat(),
                 order.getDeliveryLon(),
                 order.getOrderNotes(),
                 userPhone
         );
-
-        dto.setDeliveryFee(order.getDeliveryFee() != null ? order.getDeliveryFee() : 0.0);
 
         if (order.getDriver() != null) {
             User driver = order.getDriver();
