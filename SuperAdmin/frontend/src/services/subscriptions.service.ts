@@ -23,5 +23,9 @@ export const subscriptionsService = {
 
   async assignPlan(tenantId: string, planName: string): Promise<void> {
     await api.patch(`/subscriptions/stores/${tenantId}/assign-plan`, { planName })
+  },
+
+  async extendTrial(tenantId: string, days = 7): Promise<void> {
+    await api.patch(`/subscriptions/stores/${tenantId}/extend-trial`, { days })
   }
 }

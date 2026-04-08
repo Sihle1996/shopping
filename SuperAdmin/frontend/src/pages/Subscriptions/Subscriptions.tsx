@@ -283,6 +283,7 @@ export default function Subscriptions() {
   const [showCreate, setShowCreate] = useState(false)
   const [editPlan, setEditPlan] = useState<SubscriptionPlanDto | null>(null)
   const [deletePlan, setDeletePlan] = useState<SubscriptionPlanDto | null>(null)
+  const [extendingId, setExtendingId] = useState<string | null>(null)
 
   const { data: plans = [], isLoading } = useQuery({
     queryKey: ['plans'],
@@ -323,6 +324,25 @@ export default function Subscriptions() {
     },
     onError: (err: Error) => showToast(err.message || 'Failed to delete plan', 'error')
   })
+
+  const extendMutation = useMutation({
+    mutationFn: (tenantId: string) => subscriptionsService.extendTrial(tenantId, 7),
+    onSuccess: (_data, tenantId) => {
+      queryClient.invalidateQueries({ queryKey: ['subscription-health'] })
+      setExtendingId(null)
+      const trial = health?.expiringTrials.find(t => t.id === tenantId)
+      showToast(`Trial extended by 7 days${trial ? ` for ${trial.name}` : ''}`)
+    },
+    onError: () => {
+      setExtendingId(null)
+      showToast('Failed to extend trial', 'error')
+    }
+  })
+
+  const handleExtend = (tenantId: string) => {
+    setExtendingId(tenantId)
+    extendMutation.mutate(tenantId)
+  }
 
   return (
     <div className="space-y-6">
@@ -448,16 +468,25 @@ export default function Subscriptions() {
               </div>
               <div className="divide-y divide-gray-800">
                 {health.expiringTrials.map(t => (
-                  <div key={t.id} className="px-5 py-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-300 font-medium">{t.name}</p>
-                      {t.email && <p className="text-xs text-gray-600">{t.email}</p>}
+                  <div key={t.id} className="px-5 py-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm text-gray-300 font-medium truncate">{t.name}</p>
+                      {t.email && <p className="text-xs text-gray-600 truncate">{t.email}</p>}
                     </div>
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                      t.daysRemaining <= 2 ? 'bg-red-900/40 text-red-400' : 'bg-yellow-900/40 text-yellow-400'
-                    }`}>
-                      {t.daysRemaining === 0 ? 'Expires today' : `${t.daysRemaining}d left`}
-                    </span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                        t.daysRemaining <= 2 ? 'bg-red-900/40 text-red-400' : 'bg-yellow-900/40 text-yellow-400'
+                      }`}>
+                        {t.daysRemaining === 0 ? 'Expires today' : `${t.daysRemaining}d left`}
+                      </span>
+                      <button
+                        onClick={() => handleExtend(t.id)}
+                        disabled={extendingId === t.id}
+                        className="px-2.5 py-1 rounded-lg text-xs font-medium border border-yellow-700/50 text-yellow-500 hover:bg-yellow-900/30 transition-colors disabled:opacity-40"
+                      >
+                        {extendingId === t.id ? '…' : '+7d'}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

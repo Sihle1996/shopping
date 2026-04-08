@@ -96,6 +96,35 @@ public class SubscriptionsController(AppDbContext db) : ControllerBase
         return Ok(new { subscriptionPlan = tenant.SubscriptionPlan, subscriptionStatus = tenant.SubscriptionStatus });
     }
 
+    [HttpPatch("stores/{tenantId}/extend-trial")]
+    public async Task<IActionResult> ExtendTrial(Guid tenantId, [FromBody] ExtendTrialRequest request)
+    {
+        var tenant = await db.Tenants.FindAsync(tenantId);
+        if (tenant == null) return NotFound();
+
+        var days = Math.Clamp(request.Days, 1, 30);
+
+        // Shift trialStartedAt forward so the countdown resets
+        var baseDate = tenant.TrialStartedAt ?? DateTime.UtcNow.AddDays(-14);
+        tenant.TrialStartedAt = baseDate.AddDays(days);
+
+        // Restore suspended stores back to trial
+        if (tenant.SubscriptionStatus == "SUSPENDED")
+            tenant.SubscriptionStatus = "TRIAL";
+
+        tenant.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Ok(new
+        {
+            id = tenant.Id,
+            name = tenant.Name,
+            subscriptionStatus = tenant.SubscriptionStatus,
+            trialStartedAt = tenant.TrialStartedAt,
+            daysRemaining = (int)Math.Max(0, 14 - (DateTime.UtcNow - tenant.TrialStartedAt!.Value).TotalDays)
+        });
+    }
+
     private static SubscriptionPlanDto ToDto(SubscriptionPlan p) => new(
         p.Id, p.Name, p.Price, p.MaxMenuItems, p.MaxDrivers,
         p.MaxPromotions, p.MaxDeliveryRadiusKm,

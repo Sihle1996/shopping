@@ -31,3 +31,5 @@ public record CreateUpdatePlanRequest(
 );
 
 public record AssignPlanRequest(string PlanName);
+
+public record ExtendTrialRequest(int Days = 7);
