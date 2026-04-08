@@ -75,3 +75,11 @@ html, body {
 .text-primary-700 { color: var(--brand-primary) !important; }
 .hover\:text-primary:hover { color: var(--brand-primary) !important; }
 .focus\:ring-primary-400:focus { --tw-ring-color: var(--brand-primary) !important; }
+
+/* Subtle brand border tint — uses tenant's --brand-primary at low opacity */
+.brand-trim {
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 18%, #E5E7EB) !important;
+}
+.brand-trim-top {
+  border-top: 2px solid color-mix(in srgb, var(--brand-primary) 30%, #E5E7EB) !important;
+}

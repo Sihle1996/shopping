@@ -20,7 +20,7 @@ import { environment } from 'src/environments/environment';
       [class.translate-x-full]="!isOpen">
 
       <!-- Header -->
-      <div class="flex items-center justify-between px-6 py-4 border-b border-borderColor">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-borderColor brand-trim-top">
         <h3 class="font-heading text-lg font-bold text-textDark">
           Your Cart
           <span *ngIf="items.length" class="text-textMuted font-normal text-sm ml-1">({{ items.length }})</span>
