@@ -84,8 +84,8 @@ export class UserProfileComponent implements OnInit {
     return (this.role || '').replace('ROLE_', '').toLowerCase();
   }
 
-  setSection(s: Section) {
-    this.activeSection = s;
+  setSection(s: string) {
+    this.activeSection = s as Section;
   }
 
   save() {
