@@ -30,7 +30,9 @@ export class AdminMenuComponent implements OnInit {
     price: 0,
     image: '',
     category: '',
-    isAvailable: true
+    isAvailable: true,
+    stock: 0,
+    lowStockThreshold: 5
   };
 
   // ── CSV import state ────────────────────────────────────────────────────
@@ -158,7 +160,9 @@ export class AdminMenuComponent implements OnInit {
       price: 0,
       image: '',
       category: '',
-      isAvailable: true
+      isAvailable: true,
+      stock: 0,
+      lowStockThreshold: 5
     };
     this.isEditing = false;
   }

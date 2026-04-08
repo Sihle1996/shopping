@@ -525,12 +525,25 @@ public class OrderService {
             throw new IllegalStateException("Only pending orders can be cancelled");
         }
 
-        // Restore stock for each item
+        // Restore stock and reserved stock for each item, and log the cancellation
+        UUID cancelTenantId = TenantContext.getCurrentTenantId();
         for (OrderItem item : order.getOrderItems()) {
             MenuItem menuItem = item.getMenuItem();
             if (menuItem != null) {
                 menuItem.setStock(menuItem.getStock() + item.getQuantity());
+                menuItem.setReservedStock(Math.max(0, menuItem.getReservedStock() - item.getQuantity()));
                 menuItemRepository.save(menuItem);
+
+                InventoryLog log = new InventoryLog();
+                log.setMenuItem(menuItem);
+                log.setMenuItemNameSnapshot(menuItem.getName());
+                log.setStockChange(item.getQuantity());
+                log.setReservedChange(-item.getQuantity());
+                log.setType("ORDER_CANCELLED");
+                if (cancelTenantId != null) {
+                    tenantRepository.findById(cancelTenantId).ifPresent(log::setTenant);
+                }
+                inventoryLogRepository.save(log);
             }
         }
 

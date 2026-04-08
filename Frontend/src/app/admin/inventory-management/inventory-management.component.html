@@ -262,12 +262,24 @@
               <p class="text-sm font-medium text-textDark">{{ log.menuItemName }}</p>
               <p class="text-xs text-textMuted">{{ log.timestamp | date:'dd MMM yyyy, HH:mm' }}</p>
             </div>
-            <div class="text-right text-sm">
-              <span [class.text-success]="log.stockChange > 0"
-                    [class.text-danger]="log.stockChange < 0"
-                    class="font-numbers font-semibold">
-                {{ log.stockChange > 0 ? '+' : '' }}{{ log.stockChange }}
-              </span>
+            <div class="text-right text-sm space-y-0.5">
+              <div>
+                <span class="text-xs text-textMuted mr-1">stock</span>
+                <span [class.text-success]="log.stockChange > 0"
+                      [class.text-danger]="log.stockChange < 0"
+                      [class.text-textMuted]="log.stockChange === 0"
+                      class="font-numbers font-semibold">
+                  {{ log.stockChange > 0 ? '+' : '' }}{{ log.stockChange }}
+                </span>
+              </div>
+              <div *ngIf="log.reservedChange !== 0">
+                <span class="text-xs text-textMuted mr-1">reserved</span>
+                <span [class.text-blue-600]="log.reservedChange > 0"
+                      [class.text-success]="log.reservedChange < 0"
+                      class="font-numbers font-semibold text-xs">
+                  {{ log.reservedChange > 0 ? '+' : '' }}{{ log.reservedChange }}
+                </span>
+              </div>
               <p class="text-xs text-textMuted capitalize">{{ log.type?.toLowerCase()?.replace('_', ' ') }}</p>
             </div>
           </div>

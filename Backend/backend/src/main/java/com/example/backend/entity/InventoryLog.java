@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -21,7 +23,12 @@ public class InventoryLog {
 
     @ManyToOne
     @JoinColumn(name = "menu_item_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private MenuItem menuItem;
+
+    /** Snapshot of the item name at log time — preserved even if the item is later deleted. */
+    @Column(name = "menu_item_name_snapshot")
+    private String menuItemNameSnapshot;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id")

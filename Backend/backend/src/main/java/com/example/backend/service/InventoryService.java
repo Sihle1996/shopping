@@ -72,6 +72,7 @@ public class InventoryService {
 
             InventoryLog log = new InventoryLog();
             log.setMenuItem(item);
+            log.setMenuItemNameSnapshot(item.getName());
             log.setStockChange(adj.getStockChange());
             log.setReservedChange(adj.getReservedChange());
             log.setType("ADJUSTMENT");
@@ -111,17 +112,21 @@ public class InventoryService {
         } else {
             logs = inventoryLogRepository.findAll();
         }
-        return logs.stream().map(log ->
-                new InventoryLogDTO(
-                        log.getId(),
-                        log.getMenuItem().getId(),
-                        log.getMenuItem().getName(),
-                        log.getStockChange(),
-                        log.getReservedChange(),
-                        log.getType(),
-                        log.getTimestamp()
-                )
-        ).collect(Collectors.toList());
+        return logs.stream().map(log -> {
+            UUID itemId = log.getMenuItem() != null ? log.getMenuItem().getId() : null;
+            String itemName = log.getMenuItem() != null
+                    ? log.getMenuItem().getName()
+                    : (log.getMenuItemNameSnapshot() != null ? log.getMenuItemNameSnapshot() : "(deleted)");
+            return new InventoryLogDTO(
+                    log.getId(),
+                    itemId,
+                    itemName,
+                    log.getStockChange(),
+                    log.getReservedChange(),
+                    log.getType(),
+                    log.getTimestamp()
+            );
+        }).collect(Collectors.toList());
     }
 
     @Transactional
