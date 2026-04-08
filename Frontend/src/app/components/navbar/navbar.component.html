@@ -18,14 +18,31 @@
 
     <!-- Desktop Menu -->
     <ul class="hidden md:flex items-center gap-1">
-      <!-- Customer-only links -->
       <ng-container *ngIf="isCustomer">
-        <li *ngIf="isLoggedIn">
-          <a [routerLink]="cartRoute" routerLinkActive="text-primary bg-primary-50"
-             class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
-            <i class="bi bi-cart3 mr-1"></i> Cart
+
+        <!-- Loyalty points pill -->
+        <li *ngIf="isLoggedIn && loyaltyPoints > 0">
+          <a routerLink="/profile" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors">
+            <i class="bi bi-star-fill text-amber-400 text-xs"></i>
+            {{ loyaltyPoints }} pts
           </a>
         </li>
+
+        <!-- Cart with badge -->
+        <li *ngIf="isLoggedIn" class="relative">
+          <a [routerLink]="cartRoute" routerLinkActive="text-primary bg-primary-50"
+             class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors flex items-center gap-1">
+            <span class="relative">
+              <i class="bi bi-cart3 text-lg"></i>
+              <span *ngIf="cartCount > 0"
+                    class="absolute -top-2 -right-2 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                {{ cartCount > 9 ? '9+' : cartCount }}
+              </span>
+            </span>
+            <span class="ml-1">Cart</span>
+          </a>
+        </li>
+
         <li *ngIf="isLoggedIn">
           <a [routerLink]="ordersRoute" routerLinkActive="text-primary bg-primary-50"
              class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
@@ -34,7 +51,6 @@
         </li>
       </ng-container>
 
-      <!-- Auth button — only shown when browsing a store (Uber Eats model) -->
       <li class="ml-2" *ngIf="!isLoggedIn && hasStoreContext">
         <a routerLink="/login" [queryParams]="{ returnUrl: router.url }" data-testid="nav-signin"
            class="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-primary-600 transition-colors">
@@ -49,10 +65,19 @@
       </li>
     </ul>
 
-    <!-- Mobile Menu Button -->
-    <button (click)="toggleMenu()" class="md:hidden w-9 h-9 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
-      <i [class]="menuOpen ? 'bi bi-x-lg text-textDark' : 'bi bi-list text-textDark text-xl'"></i>
-    </button>
+    <!-- Mobile right side: cart badge + hamburger -->
+    <div class="md:hidden flex items-center gap-2">
+      <a *ngIf="isCustomer && isLoggedIn" [routerLink]="cartRoute" class="relative p-2">
+        <i class="bi bi-cart3 text-textDark text-xl"></i>
+        <span *ngIf="cartCount > 0"
+              class="absolute top-0 right-0 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+          {{ cartCount > 9 ? '9+' : cartCount }}
+        </span>
+      </a>
+      <button (click)="toggleMenu()" class="w-9 h-9 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
+        <i [class]="menuOpen ? 'bi bi-x-lg text-textDark' : 'bi bi-list text-textDark text-xl'"></i>
+      </button>
+    </div>
   </div>
 
   <!-- Mobile Drawer -->
@@ -73,13 +98,25 @@
       </button>
     </div>
 
+    <!-- Loyalty banner in drawer -->
+    <div *ngIf="isLoggedIn && loyaltyPoints > 0 && isCustomer"
+         class="mx-3 mt-3 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+      <i class="bi bi-star-fill text-amber-400"></i>
+      <div>
+        <p class="text-xs font-bold text-amber-700">{{ loyaltyPoints }} loyalty points</p>
+        <p class="text-[10px] text-amber-600">Worth R{{ (loyaltyPoints / 10).toFixed(2) }}</p>
+      </div>
+    </div>
+
     <!-- Drawer Links -->
-    <nav class="py-2">
-      <!-- Customer-only links -->
+    <nav class="py-2 mt-1">
       <ng-container *ngIf="isCustomer">
         <a *ngIf="isLoggedIn" [routerLink]="cartRoute" (click)="toggleMenu()"
-           class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
-          <i class="bi bi-cart3 text-base"></i> Cart
+           class="flex items-center justify-between px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
+          <span class="flex items-center gap-3"><i class="bi bi-cart3 text-base"></i> Cart</span>
+          <span *ngIf="cartCount > 0" class="w-5 h-5 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center">
+            {{ cartCount }}
+          </span>
         </a>
         <a *ngIf="isLoggedIn" [routerLink]="ordersRoute" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">

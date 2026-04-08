@@ -108,7 +108,7 @@ export class CartService {
   addToCart(
     menuItemId: string,
     quantity: number,
-    size: string,
+    size: string | null,
     selectedChoicesJson?: string | null,
     itemInfo?: { name: string; price: number; category?: string; image?: string }
   ): Observable<any> {

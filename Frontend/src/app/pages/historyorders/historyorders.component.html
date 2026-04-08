@@ -59,6 +59,18 @@
         </app-badge>
       </div>
 
+      <!-- Items preview -->
+      <div *ngIf="order.items?.length" class="flex flex-wrap gap-1 mb-3">
+        <span *ngFor="let item of order.items?.slice(0, 3)"
+              class="text-xs bg-surface text-textDark px-2 py-0.5 rounded-full border border-borderColor">
+          {{ item.quantity }}× {{ item.name }}
+        </span>
+        <span *ngIf="(order.items?.length || 0) > 3"
+              class="text-xs text-textMuted px-2 py-0.5">
+          +{{ (order.items?.length || 0) - 3 }} more
+        </span>
+      </div>
+
       <!-- Details -->
       <div class="space-y-1.5 text-sm">
         <div class="flex items-center justify-between">

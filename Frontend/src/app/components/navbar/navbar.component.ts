@@ -4,6 +4,8 @@ import { Subject } from 'rxjs';
 import { takeUntil, filter } from 'rxjs/operators';
 import { AuthService } from 'src/app/services/auth.service';
 import { TenantService } from 'src/app/services/tenant.service';
+import { CartService } from 'src/app/services/cart.service';
+import { LoyaltyService } from 'src/app/services/loyalty.service';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -20,19 +22,22 @@ export class NavbarComponent implements OnInit, OnDestroy {
   homeRoute = '/';
   hasStoreContext = false;
   isLandingPage = true;
+  cartCount = 0;
+  loyaltyPoints = 0;
 
   private destroy$ = new Subject<void>();
 
   constructor(
     private authService: AuthService,
     private tenantService: TenantService,
+    private cartService: CartService,
+    private loyaltyService: LoyaltyService,
     public router: Router
   ) {}
 
   ngOnInit() {
     this.refreshAuthState();
 
-    // Re-check auth state on every navigation (handles login/logout transitions)
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
       takeUntil(this.destroy$)
@@ -40,10 +45,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
       const url = event.urlAfterRedirects;
       this.isLandingPage = url === '/';
 
-      // Clear store context only when going back to the landing page.
-      // Do NOT clear on navigation to /login or /register — the tenant context
-      // must survive to the login request so X-Tenant-Id is sent and the backend
-      // can enforce per-store login isolation.
       if (this.isLandingPage && !this.authService.getTenantId()) {
         localStorage.removeItem('tenantId');
         localStorage.removeItem('storeName');
@@ -57,7 +58,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.refreshAuthState();
     });
 
-    // Reactive tenant updates (e.g. after saving settings)
     this.tenantService.currentTenant$
       .pipe(takeUntil(this.destroy$))
       .subscribe(tenant => {
@@ -66,6 +66,22 @@ export class NavbarComponent implements OnInit, OnDestroy {
           this.storeLogo = this.resolveLogoUrl(tenant.logoUrl);
         }
       });
+
+    // Cart count badge
+    this.cartService.cartItemCount
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(count => this.cartCount = count);
+
+    // Loyalty points — load once when logged in
+    this.loadLoyalty();
+  }
+
+  private loadLoyalty(): void {
+    if (!this.authService.isLoggedIn()) return;
+    this.loyaltyService.getBalance().pipe(takeUntil(this.destroy$)).subscribe({
+      next: b => this.loyaltyPoints = b.balance || 0,
+      error: () => {}
+    });
   }
 
   ngOnDestroy() {
@@ -77,13 +93,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.isLoggedIn = this.authService.isLoggedIn();
     this.userRole = this.authService.getUserRole();
     this.homeRoute = this.getHomeRoute();
-
-    // Load store name from localStorage as fallback
     const name = localStorage.getItem('storeName');
     if (name) this.storeName = name;
-
-    // Check if we're in a store context
     this.hasStoreContext = !!localStorage.getItem('tenantId');
+    this.loadLoyalty();
   }
 
   get cartRoute(): string {
@@ -109,7 +122,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
       case 'ROLE_ADMIN': return '/admin/dashboard';
       case 'ROLE_DRIVER': return '/driver/dashboard';
       default:
-        // If browsing a store, go back to that store
         const slug = localStorage.getItem('storeSlug');
         if (slug) return `/store/${slug}`;
         return '/';
@@ -128,17 +140,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.router.navigate(['/driver/dashboard']);
     } else {
       const slug = localStorage.getItem('storeSlug');
-      if (slug) {
-        this.router.navigate(['/store', slug]);
-      } else {
-        this.router.navigate(['/']);
-      }
+      slug ? this.router.navigate(['/store', slug]) : this.router.navigate(['/']);
     }
   }
 
-  toggleMenu() {
-    this.menuOpen = !this.menuOpen;
-  }
+  toggleMenu() { this.menuOpen = !this.menuOpen; }
 
   logout() {
     this.isLoggedIn = false;
@@ -147,6 +153,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.storeLogo = null;
     this.hasStoreContext = false;
     this.menuOpen = false;
-    this.authService.logout(); // handles all localStorage + service resets + navigation
+    this.cartCount = 0;
+    this.loyaltyPoints = 0;
+    this.authService.logout();
   }
 }
