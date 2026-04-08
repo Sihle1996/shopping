@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subject, forkJoin, of } from 'rxjs';
+import { takeUntil, catchError } from 'rxjs/operators';
 
 import { AuthService } from 'src/app/services/auth.service';
 import { AdminService } from 'src/app/services/admin.service';
@@ -211,26 +211,16 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private loadPromotions(): void {
-    this.promotionService.getFeaturedPromotion()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (p) => { this.featuredPromotion = p; },
-        error: () => {}
-      });
-
-    this.promotionService.getActivePromotions()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (list) => {
-          this.promotions = list;
-          const autoAll = list.find(p => !p.code && p.appliesTo === 'ALL' && p.discountPercent);
-          this.autoDiscount = autoAll?.discountPercent ?? 0;
-          // Fallback: if no explicitly featured promo loaded, use the first active promo as banner
-          if (!this.featuredPromotion && list.length > 0) {
-            this.featuredPromotion = list[0];
-          }
-        },
-        error: () => {}
+    forkJoin({
+      featured: this.promotionService.getFeaturedPromotion().pipe(catchError(() => of(null))),
+      active: this.promotionService.getActivePromotions().pipe(catchError(() => of([])))
+    }).pipe(takeUntil(this.destroy$))
+      .subscribe(({ featured, active }) => {
+        this.promotions = active;
+        const autoAll = active.find((p: any) => !p.code && p.appliesTo === 'ALL' && p.discountPercent);
+        this.autoDiscount = autoAll?.discountPercent ?? 0;
+        // Use explicitly featured promo if present, else fall back to first active
+        this.featuredPromotion = featured ?? (active.length > 0 ? active[0] : null);
       });
   }
 

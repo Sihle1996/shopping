@@ -87,9 +87,24 @@ export class CartService {
       quantity: item.quantity,
       totalPrice: item.totalPrice,
       image: item.image || 'assets/placeholder.png',
-      size: item.size || 'M',
-      selectedChoicesJson: item.selectedChoicesJson
+      size: item.size || undefined,
+      selectedChoicesJson: item.selectedChoicesJson,
+      itemNotes: item.itemNotes
     }));
+  }
+
+  private patchCartItem(serverItem: any): void {
+    const mapped = this.mapCartItems([serverItem])[0];
+    const current = [...this.cartItems.value];
+    const idx = current.findIndex(i => i.id === mapped.id);
+    if (idx >= 0) {
+      current[idx] = mapped;
+    } else {
+      current.push(mapped);
+    }
+    this.cartItems.next(current);
+    this.updateTotalPrice();
+    this.cartItemCount.next(current.length);
   }
 
   private updateTotalPrice(): void {
@@ -154,8 +169,8 @@ export class CartService {
     if (selectedChoicesJson) body.selectedChoicesJson = selectedChoicesJson;
     if (itemNotes && itemNotes.trim()) body.itemNotes = itemNotes.trim();
 
-    return this.http.post(`${this.apiUrl}/add`, body, { headers: this.getAuthHeaders() }).pipe(
-      tap(() => this.refreshCart())
+    return this.http.post<any>(`${this.apiUrl}/add`, body, { headers: this.getAuthHeaders() }).pipe(
+      tap(serverItem => this.patchCartItem(serverItem))
     );
   }
 
@@ -170,8 +185,8 @@ export class CartService {
       this.saveLocalCart(cart);
       return of(null);
     }
-    return this.http.put(`${this.apiUrl}/update/${cartItemId}`, { quantity }, { headers: this.getAuthHeaders() }).pipe(
-      tap(() => this.refreshCart())
+    return this.http.put<any>(`${this.apiUrl}/update/${cartItemId}`, { quantity }, { headers: this.getAuthHeaders() }).pipe(
+      tap(serverItem => this.patchCartItem(serverItem))
     );
   }
 
@@ -182,12 +197,13 @@ export class CartService {
       return of(null);
     }
     return this.http.delete(`${this.apiUrl}/delete/${cartItemId}`, { headers: this.getAuthHeaders() }).pipe(
-      tap(() => this.refreshCart())
+      tap(() => {
+        const current = this.cartItems.value.filter(i => i.id !== cartItemId);
+        this.cartItems.next(current);
+        this.updateTotalPrice();
+        this.cartItemCount.next(current.length);
+      })
     );
-  }
-
-  private refreshCart(): void {
-    this.getCartItems().subscribe();
   }
 
   saveOrder(order: any): Observable<any> {
