@@ -13,7 +13,6 @@ import { DriverProfileComponent } from './driver/driver-profile/driver-profile.c
 import { DriverGuard } from './guards/driver.guard';
 import { AddressBookComponent } from './pages/address-book/address-book.component';
 import { UserProfileComponent } from './pages/user-profile/user-profile.component';
-import { SuperadminGuard } from './guards/superadmin.guard';
 import { RegisterRestaurantComponent } from './pages/register-restaurant/register-restaurant.component';
 import { StoreListComponent } from './pages/store-list/store-list.component';
 import { StoreComponent } from './pages/store/store.component';
@@ -59,13 +58,7 @@ const routes: Routes = [
   { path: 'profile', component: UserProfileComponent, canActivate: [UserGuard] },
   { path: 'track', component: TrackOrderComponent },
 
-  {
-    path: 'superadmin',
-    loadChildren: () => import('./superadmin/superadmin.module').then(m => m.SuperadminModule),
-    canActivate: [SuperadminGuard]
-  },
-
-  { path: '**', redirectTo: '' },
+{ path: '**', redirectTo: '' },
 ];
 
 @NgModule({
