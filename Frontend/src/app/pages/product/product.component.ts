@@ -25,6 +25,10 @@ export class ProductComponent implements OnInit {
   modifierGroups: any[] = [];
   modifierSelections: { [groupId: string]: string[] } = {};
   modifierLoading = false;
+  itemNotes = '';
+  reviews: any[] = [];
+  avgRating = 0;
+  totalReviews = 0;
 
   private addedBannerTimer: any;
   private slug: string | null = null;
@@ -49,6 +53,20 @@ export class ProductComponent implements OnInit {
     });
     this.promotionService.getActivePromotions().subscribe({
       next: list => this.activePromotions = list,
+      error: () => {}
+    });
+    this.loadReviews();
+  }
+
+  private loadReviews(): void {
+    const tenantId = localStorage.getItem('tenantId');
+    const headers: any = tenantId ? { 'X-Tenant-Id': tenantId } : {};
+    this.http.get<any>(`${environment.apiUrl}/api/reviews`, { headers }).subscribe({
+      next: res => {
+        this.reviews = (res.reviews ?? res ?? []).slice(0, 4);
+        this.avgRating = res.averageRating ?? 0;
+        this.totalReviews = res.totalReviews ?? this.reviews.length;
+      },
       error: () => {}
     });
   }
@@ -173,7 +191,8 @@ export class ProductComponent implements OnInit {
     this.cartService.addToCart(
       this.product.id, this.quantity, null,
       choices.length ? JSON.stringify(choices) : null,
-      { name: this.product.name, price: this.unitPrice, category: this.product.category, image: this.product.image }
+      { name: this.product.name, price: this.unitPrice, category: this.product.category, image: this.product.image },
+      this.itemNotes || null
     ).subscribe({
       next: () => {
         this.isAddingToCart = false;

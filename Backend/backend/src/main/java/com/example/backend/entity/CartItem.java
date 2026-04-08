@@ -31,4 +31,8 @@ public class CartItem {
     /** JSON array snapshot of selected modifier choices, e.g. [{groupName,choiceLabel,priceModifier}] */
     @Column(columnDefinition = "TEXT")
     private String selectedChoicesJson;
+
+    /** Optional special instructions for this item, e.g. "no onions" */
+    @Column(columnDefinition = "TEXT")
+    private String itemNotes;
 }

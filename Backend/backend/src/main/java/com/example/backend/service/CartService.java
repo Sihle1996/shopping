@@ -29,10 +29,14 @@ public class CartService {
     private final UserRepository userRepository;
 
     public CartItemDTO addItemToCart(UUID userId, UUID menuItemId, Integer quantity) {
-        return addItemToCart(userId, menuItemId, quantity, null);
+        return addItemToCart(userId, menuItemId, quantity, null, null);
     }
 
     public CartItemDTO addItemToCart(UUID userId, UUID menuItemId, Integer quantity, String selectedChoicesJson) {
+        return addItemToCart(userId, menuItemId, quantity, selectedChoicesJson, null);
+    }
+
+    public CartItemDTO addItemToCart(UUID userId, UUID menuItemId, Integer quantity, String selectedChoicesJson, String itemNotes) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -66,6 +70,9 @@ public class CartService {
         cartItem.setQuantity(newTotalQty);
         if (selectedChoicesJson != null) {
             cartItem.setSelectedChoicesJson(selectedChoicesJson);
+        }
+        if (itemNotes != null) {
+            cartItem.setItemNotes(itemNotes.isBlank() ? null : itemNotes.trim());
         }
         double unitPrice = menuItem.getPrice() + sumModifiers(cartItem.getSelectedChoicesJson());
         cartItem.setTotalPrice(unitPrice * cartItem.getQuantity());
@@ -155,6 +162,7 @@ public class CartService {
         dto.setMenuItemCategory(cartItem.getMenuItem().getCategory());
         dto.setSelectedChoicesJson(cartItem.getSelectedChoicesJson());
         dto.setOptionGroups(cartItem.getMenuItem().getOptionGroups());
+        dto.setItemNotes(cartItem.getItemNotes());
         return dto;
     }
 }

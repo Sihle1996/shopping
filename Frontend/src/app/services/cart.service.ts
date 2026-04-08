@@ -16,6 +16,7 @@ export interface CartItem {
   image?: string;
   size?: string;
   selectedChoicesJson?: string;
+  itemNotes?: string;
 }
 
 @Injectable({
@@ -110,7 +111,8 @@ export class CartService {
     quantity: number,
     size: string | null,
     selectedChoicesJson?: string | null,
-    itemInfo?: { name: string; price: number; category?: string; image?: string }
+    itemInfo?: { name: string; price: number; category?: string; image?: string },
+    itemNotes?: string | null
   ): Observable<any> {
     if (!this.authService.isLoggedIn()) {
       const cart = this.getLocalCart();
@@ -125,6 +127,7 @@ export class CartService {
         existing.quantity += quantity;
         existing.menuItemPrice = effectiveUnitPrice;
         existing.totalPrice = effectiveUnitPrice * existing.quantity;
+        if (itemNotes) existing.itemNotes = itemNotes;
       } else {
         const id = typeof crypto !== 'undefined' && crypto.randomUUID
           ? crypto.randomUUID()
@@ -139,7 +142,8 @@ export class CartService {
           totalPrice: effectiveUnitPrice * quantity,
           image: itemInfo?.image || 'assets/placeholder.png',
           size: size ?? undefined,
-          selectedChoicesJson: selectedChoicesJson || undefined
+          selectedChoicesJson: selectedChoicesJson || undefined,
+          itemNotes: itemNotes || undefined
         });
       }
       this.saveLocalCart(cart);
@@ -148,6 +152,7 @@ export class CartService {
 
     const body: any = { menuItemId, quantity, size };
     if (selectedChoicesJson) body.selectedChoicesJson = selectedChoicesJson;
+    if (itemNotes && itemNotes.trim()) body.itemNotes = itemNotes.trim();
 
     return this.http.post(`${this.apiUrl}/add`, body, { headers: this.getAuthHeaders() }).pipe(
       tap(() => this.refreshCart())

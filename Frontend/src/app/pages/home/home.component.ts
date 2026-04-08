@@ -62,6 +62,8 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   reviews: any[] = [];
   avgRating = 0;
+  totalReviews = 0;
+  estimatedDeliveryMinutes = 30;
 
   private destroy$ = new Subject<void>();
 
@@ -165,7 +167,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.isAdmin = this.authService.getUserRole() === 'ROLE_ADMIN';
     this.isLoggedIn = this.authService.isLoggedIn();
     const tenant = this.tenantService.getCurrentTenant();
-    if (tenant) this.storeIsOpen = tenant.isOpen !== false;
+    if (tenant) {
+      this.storeIsOpen = tenant.isOpen !== false;
+      this.estimatedDeliveryMinutes = tenant.estimatedDeliveryMinutes || 30;
+    }
     this.fetchMenu();
     this.loadPromotions();
     this.subscribeToCart();
@@ -179,6 +184,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.reviews = res.reviews ?? res ?? [];
         this.avgRating = res.averageRating ?? 0;
+        this.totalReviews = res.totalReviews ?? this.reviews.length;
       },
       error: () => {}
     });

@@ -9,6 +9,7 @@ interface OrderSummary {
   deliveryFee?: number;
   address: string;
   loyaltyEarned: number;
+  estimatedDeliveryMinutes?: number;
 }
 
 @Component({

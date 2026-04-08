@@ -31,7 +31,9 @@
       <!-- Details -->
       <div class="flex-1 min-w-0">
         <h4 class="font-semibold text-textDark truncate">{{ item.menuItemName }}</h4>
-        <p class="text-textMuted text-sm mt-0.5">Size: {{ item.size }}</p>
+        <p *ngIf="item.itemNotes" class="text-xs text-textMuted mt-0.5 italic truncate">
+          <i class="bi bi-pencil-fill text-[10px] mr-1"></i>{{ item.itemNotes }}
+        </p>
         <p class="font-numbers font-bold text-primary mt-1">
           R{{ (item.menuItemPrice * item.quantity).toFixed(2) }}
         </p>

@@ -33,6 +33,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
 
   storeIsOpen: boolean = true;
   minimumOrderAmount: number | null = null;
+  estimatedDeliveryMinutes: number = 30;
   get belowMinimum(): boolean {
     return this.minimumOrderAmount !== null && this.totalPrice < this.minimumOrderAmount;
   }
@@ -111,6 +112,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
             this.storeIsOpen = t.isOpen !== false;
             this.minimumOrderAmount = t.minimumOrderAmount ?? null;
             this.deliveryFee = Number(t.deliveryFeeBase) || 0;
+            this.estimatedDeliveryMinutes = Number(t.estimatedDeliveryMinutes) || 30;
           },
           error: () => {}
         });
@@ -472,8 +474,11 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
             orderId: res?.id,
             items: orderData.items,
             total: this.totalPrice,
+            subtotal: this.subtotal,
+            deliveryFee: this.deliveryFee,
             address: orderData.deliveryAddress,
-            loyaltyEarned: Math.floor(this.totalPrice)
+            loyaltyEarned: Math.floor(this.totalPrice),
+            estimatedDeliveryMinutes: this.estimatedDeliveryMinutes
           };
           localStorage.setItem('lastOrderSummary', JSON.stringify(summary));
 

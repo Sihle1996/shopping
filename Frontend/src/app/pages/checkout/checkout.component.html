@@ -333,6 +333,12 @@
               <span class="font-numbers text-primary">R{{ totalPrice.toFixed(2) }}</span>
             </div>
           </div>
+
+          <!-- ETA -->
+          <div class="mt-4 flex items-center gap-2 bg-primary-50 rounded-xl px-3 py-2.5 border border-primary-100">
+            <i class="bi bi-clock text-primary text-sm flex-shrink-0"></i>
+            <span class="text-xs text-primary-700 font-medium">Estimated delivery: ~{{ estimatedDeliveryMinutes }} min</span>
+          </div>
         </div>
 
         <!-- PayFast Loading -->

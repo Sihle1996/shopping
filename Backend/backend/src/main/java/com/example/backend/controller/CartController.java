@@ -28,8 +28,10 @@ public class CartController {
         Integer quantity = Integer.valueOf(payload.get("quantity").toString());
         String selectedChoicesJson = payload.containsKey("selectedChoicesJson")
                 ? (String) payload.get("selectedChoicesJson") : null;
+        String itemNotes = payload.containsKey("itemNotes")
+                ? (String) payload.get("itemNotes") : null;
         try {
-            return ResponseEntity.ok(cartService.addItemToCart(userId, menuItemId, quantity, selectedChoicesJson));
+            return ResponseEntity.ok(cartService.addItemToCart(userId, menuItemId, quantity, selectedChoicesJson, itemNotes));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

@@ -19,4 +19,6 @@ public class CartItemDTO {
     private String selectedChoicesJson;
     /** Option groups available for this item (for re-displaying selections) */
     private List<MenuItemOptionGroup> optionGroups;
+    /** Optional special instructions for this item */
+    private String itemNotes;
 }
