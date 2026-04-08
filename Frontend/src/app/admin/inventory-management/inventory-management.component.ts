@@ -11,6 +11,7 @@ import { SubscriptionService } from 'src/app/services/subscription.service';
 export class InventoryManagementComponent implements OnInit {
   inventory: any[] = [];
   auditLog: any[] = [];
+  auditLogLimit = 20;
   searchTerm = '';
   lowStockOnly = false;
   showAudit = false;
@@ -119,8 +120,9 @@ export class InventoryManagementComponent implements OnInit {
 
   toggleAudit(): void {
     this.showAudit = !this.showAudit;
-    if (this.showAudit && !this.auditLog.length) {
-      this.loadAudit();
+    if (this.showAudit) {
+      this.auditLogLimit = 20;
+      if (!this.auditLog.length) this.loadAudit();
     }
   }
 

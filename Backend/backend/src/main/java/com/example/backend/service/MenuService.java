@@ -3,6 +3,7 @@ package com.example.backend.service;
 import com.example.backend.entity.MenuItem;
 import com.example.backend.entity.Tenant;
 import com.example.backend.repository.CartItemRepository;
+import com.example.backend.repository.InventoryLogRepository;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.TenantRepository;
 import com.example.backend.tenant.TenantContext;
@@ -22,6 +23,7 @@ public class MenuService {
     private final MenuItemRepository menuItemRepository;
     private final TenantRepository tenantRepository;
     private final CartItemRepository cartItemRepository;
+    private final InventoryLogRepository inventoryLogRepository;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
 
     public MenuItem saveMenuItem(MenuItem menuItem) {
@@ -63,6 +65,7 @@ public class MenuService {
                 : menuItemRepository.findById(id)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Menu item not found"));
         cartItemRepository.deleteByMenuItem(menuItem);
+        inventoryLogRepository.nullifyMenuItemReference(menuItem);
         menuItemRepository.delete(menuItem);
     }
 
