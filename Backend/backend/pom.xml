@@ -124,12 +124,7 @@
 			<version>1.38.0</version>
 		</dependency>
 
-		<!-- ✅ PayPal SDK -->
-		<dependency>
-			<groupId>com.paypal.sdk</groupId>
-			<artifactId>rest-api-sdk</artifactId>
-			<version>1.14.0</version>
-		</dependency>
+		<!-- PayFast uses plain HTTP + MD5 signatures — no external SDK needed -->
 
 		<!-- ✅ Testing Dependencies -->
 		<dependency>

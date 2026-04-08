@@ -78,7 +78,7 @@ public class AdminSubscriptionController {
         return ResponseEntity.ok(response);
     }
 
-    // USD prices for PayPal sandbox — update to real ZAR gateway in production
+    // ZAR prices for PayFast
     private static final Map<String, Double> PLAN_PRICES_USD = Map.of(
         "BASIC", 16.00,
         "PRO", 38.00,
@@ -125,7 +125,7 @@ public class AdminSubscriptionController {
             return ResponseEntity.badRequest().body(Map.of("error", "Can only upgrade to a higher plan"));
         }
 
-        // Payment was captured client-side by PayPal JS SDK — paymentId logged for audit
+        // Payment was captured via PayFast redirect — paymentId logged for audit
         String paymentId = body.getOrDefault("paymentId", "n/a");
 
         tenant.setSubscriptionPlan(planName);

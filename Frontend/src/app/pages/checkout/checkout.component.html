@@ -282,7 +282,7 @@
 
       </div>
 
-      <!-- ── RIGHT: Order Summary + PayPal (sticky on desktop) ── -->
+      <!-- ── RIGHT: Order Summary + Payment (sticky on desktop) ── -->
       <div class="space-y-4 lg:sticky lg:top-20">
 
         <!-- Order Summary Card -->
@@ -328,16 +328,15 @@
           </div>
         </div>
 
-        <!-- PayPal Section -->
-        <div *ngIf="showPayPal" class="bg-white rounded-2xl shadow-card p-6 animate-fade-in">
-          <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
-            <i class="bi bi-credit-card text-primary"></i> Payment
-          </h2>
-          <div class="flex items-center justify-between mb-4 bg-primary-50 rounded-xl px-4 py-3">
-            <span class="text-sm text-textDark">Amount due</span>
-            <span class="font-numbers font-bold text-lg text-primary">R{{ totalPrice.toFixed(2) }}</span>
-          </div>
-          <div id="paypal-button-container"></div>
+        <!-- PayFast Redirect (hidden form auto-submitted) -->
+        <form *ngIf="showPayFast" id="payfast-form" [action]="payFastProcessUrl" method="POST" class="hidden">
+          <input *ngFor="let key of (payFastFormData | keyvalue)" type="hidden" [name]="key.key" [value]="key.value">
+        </form>
+
+        <!-- PayFast Loading -->
+        <div *ngIf="payFastLoading" class="bg-white rounded-2xl shadow-card p-6 animate-fade-in text-center">
+          <i class="bi bi-arrow-repeat animate-spin text-primary text-2xl mb-2 block"></i>
+          <p class="text-sm text-textMuted">Redirecting to PayFast for secure payment...</p>
         </div>
 
       </div>

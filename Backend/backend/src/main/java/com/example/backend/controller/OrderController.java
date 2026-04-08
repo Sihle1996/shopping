@@ -20,7 +20,7 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    // ✅ Place an Order from PayPal Checkout (supports both authenticated and guest users)
+    // Place an Order from checkout (supports both authenticated and guest users)
     @PostMapping("/place")
     public ResponseEntity<?> placeOrder(@AuthenticationPrincipal User authenticatedUser,
                                         @RequestBody OrderRequestDTO request) {

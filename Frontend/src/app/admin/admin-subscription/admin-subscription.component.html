@@ -285,7 +285,7 @@
             </div>
           </div>
 
-          <!-- Upgrade CTA — self-service PayPal -->
+          <!-- Upgrade CTA — self-service PayFast -->
           <div *ngIf="!upgradeSuccess && upgradablePlans.length > 0"
                class="bg-gradient-to-br from-primary to-primary-600 rounded-2xl p-6 text-white">
             <div class="flex items-start gap-3 mb-5">
@@ -294,7 +294,7 @@
               </div>
               <div>
                 <p class="font-semibold text-base">Ready to scale?</p>
-                <p class="text-sm text-white/80 mt-0.5">Upgrade instantly — pay securely with PayPal.</p>
+                <p class="text-sm text-white/80 mt-0.5">Upgrade instantly — pay securely with PayFast.</p>
               </div>
             </div>
 
@@ -307,7 +307,7 @@
                         ? 'bg-white/30 text-white border-2 border-white'
                         : 'bg-white text-primary hover:bg-primary-50'">
                 <span *ngIf="upgradingPlan !== plan.name">
-                  Upgrade to {{ plan.name }} — ${{ plan.priceUsd }}/mo
+                  Upgrade to {{ plan.name }} — R{{ plan.priceZar || plan.priceUsd }}/mo
                 </span>
                 <span *ngIf="upgradingPlan === plan.name">
                   <i class="bi bi-x-circle mr-1"></i> Cancel {{ plan.name }} upgrade
@@ -315,12 +315,15 @@
               </button>
             </div>
 
-            <!-- PayPal button containers (one per upgradable plan) -->
-            <div *ngFor="let plan of upgradablePlans">
-              <div [id]="'paypal-sub-' + plan.name"
-                   *ngIf="upgradingPlan === plan.name"
-                   class="mt-2 rounded-xl overflow-hidden bg-white p-2">
-              </div>
+            <!-- PayFast confirmation for selected plan -->
+            <div *ngIf="upgradingPlan" class="mt-2 rounded-xl overflow-hidden bg-white p-4 text-center">
+              <p class="text-sm text-textDark mb-3">You will be redirected to PayFast to complete the payment.</p>
+              <button (click)="confirmUpgrade(upgradingPlan!)"
+                      [disabled]="payFastLoading"
+                      class="w-full py-2.5 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-600 transition-colors disabled:opacity-50">
+                <span *ngIf="!payFastLoading">Pay with PayFast</span>
+                <span *ngIf="payFastLoading"><i class="bi bi-arrow-repeat animate-spin mr-1"></i> Redirecting...</span>
+              </button>
             </div>
 
             <p *ngIf="upgradeError" class="mt-2 text-xs text-red-200 text-center">{{ upgradeError }}</p>

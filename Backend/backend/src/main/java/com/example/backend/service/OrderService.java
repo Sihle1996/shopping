@@ -22,7 +22,6 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import com.example.backend.service.LoyaltyService;
-import com.paypal.base.rest.PayPalRESTException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
@@ -45,7 +44,7 @@ public class OrderService {
     private final PromotionService promotionService;
     private final EmailService emailService;
     private final LoyaltyService loyaltyService;
-    private final PayPalService payPalService;
+    private final PayFastService payFastService;
 
     private void checkLowStock(MenuItem menuItem) {
         if (menuItem.getStock() >= 0 && menuItem.getStock() <= menuItem.getLowStockThreshold()) {
@@ -515,14 +514,10 @@ public class OrderService {
         order.setStatus("Cancelled");
         orderRepository.save(order);
 
-        // Attempt PayPal refund if payment ID is present
+        // PayFast refunds are handled manually via the PayFast merchant dashboard
         if (order.getPaymentId() != null && !order.getPaymentId().isBlank()) {
-            try {
-                payPalService.refundPayment(order.getPaymentId());
-            } catch (PayPalRESTException e) {
-                // Refund failure is logged but does not block cancellation
-                System.err.println("PayPal refund failed for order " + orderId + ": " + e.getMessage());
-            }
+            System.out.println("Order " + orderId + " cancelled — PayFast payment " + order.getPaymentId()
+                    + " should be refunded via the PayFast merchant dashboard.");
         }
 
         return convertToOrderDTO(order);

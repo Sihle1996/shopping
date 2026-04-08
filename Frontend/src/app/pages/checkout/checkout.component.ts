@@ -19,8 +19,6 @@ import { environment } from 'src/environments/environment';
 import { AddressService, UserAddress } from 'src/app/services/address.service';
 import { LoyaltyService, LoyaltyBalance } from 'src/app/services/loyalty.service';
 
-declare var paypal: any;
-
 @Component({
   selector: 'app-checkout',
   templateUrl: './checkout.component.html',
@@ -38,7 +36,10 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     return this.minimumOrderAmount !== null && this.totalPrice < this.minimumOrderAmount;
   }
 
-  showPayPal: boolean = false;
+  showPayFast: boolean = false;
+  payFastProcessUrl: string = '';
+  payFastFormData: { [key: string]: string } = {};
+  payFastLoading: boolean = false;
 
   // Promo code
   promoCode: string = '';
@@ -429,91 +430,92 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       this.cartItems = items;
       this.subtotal = items.reduce((sum, item) => sum + (item.totalPrice ?? item.menuItemPrice * item.quantity), 0);
       this.recalcDiscount();
-      this.showPayPal = true;
-      this.cdr.detectChanges();
 
-      this.loadPayPalScript().then(() => {
-        const container = document.getElementById('paypal-button-container');
-        if (!container) return;
-        container.innerHTML = '';
+      // Place the order first, then redirect to PayFast for payment
+      const orderData: any = {
+        userId: this.isLoggedIn ? this.authService.getUserId() : null,
+        guestEmail: !this.isLoggedIn ? this.guestEmail.trim() : null,
+        guestPhone: !this.isLoggedIn ? (this.guestPhone.trim() || this.deliveryDetails.phone) : null,
+        deliveryAddress: `${d.address}, ${d.city}, ${d.zip}, South Africa`,
+        deliveryLat: this.selectedLat,
+        deliveryLon: this.selectedLon,
+        items: this.cartItems.map(item => ({
+          productId: item.menuItemId,
+          name: item.menuItemName,
+          price: item.menuItemPrice,
+          quantity: item.quantity,
+          size: item.size,
+          selectedChoices: (item as any).selectedChoicesJson
+            ? JSON.parse((item as any).selectedChoicesJson)
+            : null
+        })),
+        total: this.subtotal,
+        promoCode: this.appliedPromo?.code?.trim() || null,
+        orderNotes: this.orderNotes?.trim() || null,
+        loyaltyPointsRedeemed: this.loyaltyPointsToRedeem || 0,
+        paymentId: '',
+        payerId: '',
+        status: 'PENDING'
+      };
 
-        (window as any)['paypal'].Buttons({
-          createOrder: (_data: any, actions: any) => {
-            return actions.order.create({
-              purchase_units: [{ amount: { value: this.totalPrice.toFixed(2) } }]
-            });
-          },
-          onApprove: async (_data: any, actions: any) => {
-            const details = await actions.order.capture();
+      const headers: any = { 'Content-Type': 'application/json' };
+      const token = this.authService.getToken();
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const tenantId = localStorage.getItem('tenantId');
+      if (tenantId) headers['X-Tenant-Id'] = tenantId;
 
-            const orderData: any = {
-              userId: this.isLoggedIn ? this.authService.getUserId() : null,
-              guestEmail: !this.isLoggedIn ? this.guestEmail.trim() : null,
-              guestPhone: !this.isLoggedIn ? (this.guestPhone.trim() || this.deliveryDetails.phone) : null,
-              deliveryAddress: `${d.address}, ${d.city}, ${d.zip}, South Africa`,
-              deliveryLat: this.selectedLat,
-              deliveryLon: this.selectedLon,
-              items: this.cartItems.map(item => ({
-                productId: item.menuItemId,
-                name: item.menuItemName,
-                price: item.menuItemPrice,
-                quantity: item.quantity,
-                size: item.size,
-                selectedChoices: (item as any).selectedChoicesJson
-                  ? JSON.parse((item as any).selectedChoicesJson)
-                  : null
-              })),
-              total: this.subtotal,
-              promoCode: this.appliedPromo?.code?.trim() || null,
-              orderNotes: this.orderNotes?.trim() || null,
-              loyaltyPointsRedeemed: this.loyaltyPointsToRedeem || 0,
-              paymentId: details.id,
-              payerId: details.payer.payer_id,
-              status: details.status
-            };
+      // Place order first
+      this.http.post<any>(`${environment.apiUrl}/api/orders/place`, orderData, { headers }).subscribe({
+        next: (res) => {
+          this.cartService.clearCart();
+          // Save summary for thank-you page
+          const summary = {
+            orderId: res?.id,
+            items: orderData.items,
+            total: this.totalPrice,
+            address: orderData.deliveryAddress,
+            loyaltyEarned: Math.floor(this.totalPrice)
+          };
+          localStorage.setItem('lastOrderSummary', JSON.stringify(summary));
 
-            const headers: any = { 'Content-Type': 'application/json' };
-            const token = this.authService.getToken();
-            if (token) headers['Authorization'] = `Bearer ${token}`;
-            const tenantId = localStorage.getItem('tenantId');
-            if (tenantId) headers['X-Tenant-Id'] = tenantId;
-
-            this.http.post<any>(`${environment.apiUrl}/api/orders/place`, orderData, { headers }).subscribe({
-              next: (res) => {
-                this.cartService.clearCart();
-                this.toastr.success('Order placed successfully!');
-                const slug = localStorage.getItem('storeSlug');
-                // Save summary for thank-you page
-                const summary = {
-                  orderId: res?.id,
-                  items: orderData.items,
-                  total: this.totalPrice,
-                  address: orderData.deliveryAddress,
-                  loyaltyEarned: Math.floor(this.totalPrice)
-                };
-                localStorage.setItem('lastOrderSummary', JSON.stringify(summary));
-                this.router.navigate(slug ? ['/store', slug, 'thank-you'] : ['/thank-you']);
-              },
-              error: () => this.toastr.error('Failed to place order. Please try again.')
-            });
-          },
-          onError: () => this.toastr.error('Payment failed. Please try again.')
-        }).render('#paypal-button-container');
-      }).catch(() => this.toastr.error('Could not load PayPal. Check your connection.'));
+          // Now initiate PayFast payment
+          this.initiatePayFast(res?.id, this.totalPrice);
+        },
+        error: (err) => this.toastr.error(err?.error?.error || 'Failed to place order. Please try again.')
+      });
     });
   }
 
-  private loadPayPalScript(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if ((window as any)['paypal']) { resolve(); return; }
-      const existing = document.getElementById('paypal-sdk');
-      if (existing) { existing.addEventListener('load', () => resolve()); return; }
-      const script = document.createElement('script');
-      script.id = 'paypal-sdk';
-      script.src = 'https://www.paypal.com/sdk/js?client-id=AQu3J8gnpoX5_Zy-JvKacc3L4kxMnLillZicsDvZePl0R5GG4RpX7xgENhm_6GotQiNTrFxDAYnGGTwR&currency=USD';
-      script.onload = () => resolve();
-      script.onerror = () => reject();
-      document.body.appendChild(script);
+  private initiatePayFast(orderId: string, total: number): void {
+    this.payFastLoading = true;
+    const tenantId = localStorage.getItem('tenantId');
+    const slug = localStorage.getItem('storeSlug');
+    const pfHeaders: any = { 'Content-Type': 'application/json' };
+    if (tenantId) pfHeaders['X-Tenant-Id'] = tenantId;
+    if (slug) pfHeaders['X-Store-Slug'] = slug;
+
+    this.http.post<any>(`${environment.apiUrl}/api/payfast/initiate`, {
+      total: total.toFixed(2),
+      itemName: 'Food Order #' + (orderId?.substring(0, 8) || ''),
+      paymentId: orderId || 'order-' + Date.now()
+    }, { headers: pfHeaders }).subscribe({
+      next: (res) => {
+        this.payFastProcessUrl = res.processUrl;
+        this.payFastFormData = res.formData;
+        this.showPayFast = true;
+        this.payFastLoading = false;
+        this.cdr.detectChanges();
+
+        // Auto-submit the form to PayFast after a short delay for rendering
+        setTimeout(() => {
+          const form = document.getElementById('payfast-form') as HTMLFormElement;
+          if (form) form.submit();
+        }, 100);
+      },
+      error: () => {
+        this.payFastLoading = false;
+        this.toastr.error('Could not initiate payment. Please try again.');
+      }
     });
   }
 }

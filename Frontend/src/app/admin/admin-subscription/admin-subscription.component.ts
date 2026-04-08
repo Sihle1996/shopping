@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { SubscriptionService, SubscriptionInfo } from '../../services/subscription.service';
 import { ToastrService } from 'ngx-toastr';
-
-declare var paypal: any;
+import { HttpClient } from '@angular/common/http';
+import { environment } from 'src/environments/environment';
 
 interface PlanOption {
   name: string;
   priceUsd: number;
+  priceZar?: number;
   isUpgrade: boolean;
 }
 
@@ -20,14 +21,15 @@ export class AdminSubscriptionComponent implements OnInit {
   plans: PlanOption[] = [];
 
   upgradingPlan: string | null = null;
-  paypalRendered = false;
+  payFastLoading = false;
   upgradeError = '';
   upgradeSuccess = false;
   upgradeSuccessPlan = '';
 
   constructor(
     private subscriptionService: SubscriptionService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private http: HttpClient
   ) {}
 
   ngOnInit() {
@@ -67,71 +69,49 @@ export class AdminSubscriptionComponent implements OnInit {
   selectPlan(planName: string) {
     if (this.upgradingPlan === planName) {
       this.upgradingPlan = null;
-      this.paypalRendered = false;
       return;
     }
     this.upgradingPlan = planName;
-    this.paypalRendered = false;
     this.upgradeError = '';
-    this.loadPayPalScript().then(() => {
-      setTimeout(() => this.renderPayPalButtons(planName), 50);
-    }).catch(() => {
-      this.upgradeError = 'Could not load PayPal. Check your connection.';
-    });
   }
 
-  private renderPayPalButtons(planName: string) {
+  confirmUpgrade(planName: string) {
     const plan = this.plans.find(p => p.name === planName);
     if (!plan) return;
 
-    const containerId = `paypal-sub-${planName}`;
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    container.innerHTML = '';
-    this.paypalRendered = true;
+    this.payFastLoading = true;
+    this.upgradeError = '';
 
-    (window as any)['paypal'].Buttons({
-      createOrder: (_data: any, actions: any) => {
-        return actions.order.create({
-          purchase_units: [{
-            description: `${planName} Plan - Monthly Subscription`,
-            amount: { value: plan.priceUsd.toFixed(2) }
-          }]
-        });
+    const amount = plan.priceZar ?? plan.priceUsd;
+    const tenantId = localStorage.getItem('tenantId');
+    const headers: any = { 'Content-Type': 'application/json' };
+    if (tenantId) headers['X-Tenant-Id'] = tenantId;
+
+    this.http.post<any>(`${environment.apiUrl}/api/payfast/initiate`, {
+      total: amount.toFixed(2),
+      itemName: `${planName} Plan Subscription`,
+      paymentId: `sub-${planName}-${Date.now()}`
+    }, { headers }).subscribe({
+      next: (res) => {
+        this.payFastLoading = false;
+        // Build and auto-submit form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = res.processUrl;
+        for (const [key, val] of Object.entries(res.formData)) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = val as string;
+          form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
       },
-      onApprove: (data: any, actions: any) => {
-        return actions.order.capture().then((details: any) => {
-          this.subscriptionService.upgradePlan(planName, details.id).subscribe({
-            next: () => {
-              this.upgradingPlan = null;
-              this.upgradeSuccess = true;
-              this.upgradeSuccessPlan = planName;
-              this.toastr.success(`Upgraded to ${planName}!`);
-              this.loadData();
-            },
-            error: () => {
-              this.upgradeError = 'Payment received but upgrade failed. Contact support.';
-            }
-          });
-        });
-      },
-      onError: () => {
-        this.upgradeError = 'Payment failed. Please try again.';
+      error: () => {
+        this.payFastLoading = false;
+        this.upgradeError = 'Could not initiate payment. Please try again.';
       }
-    }).render(`#${containerId}`);
-  }
-
-  private loadPayPalScript(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if ((window as any)['paypal']) { resolve(); return; }
-      const existing = document.getElementById('paypal-sdk');
-      if (existing) { existing.addEventListener('load', () => resolve()); return; }
-      const script = document.createElement('script');
-      script.id = 'paypal-sdk';
-      script.src = 'https://www.paypal.com/sdk/js?client-id=AQu3J8gnpoX5_Zy-JvKacc3L4kxMnLillZicsDvZePl0R5GG4RpX7xgENhm_6GotQiNTrFxDAYnGGTwR&currency=USD';
-      script.onload = () => resolve();
-      script.onerror = () => reject();
-      document.body.appendChild(script);
     });
   }
 }
