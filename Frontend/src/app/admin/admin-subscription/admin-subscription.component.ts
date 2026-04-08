@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SubscriptionService, SubscriptionInfo } from '../../services/subscription.service';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
@@ -29,11 +30,56 @@ export class AdminSubscriptionComponent implements OnInit {
   constructor(
     private subscriptionService: SubscriptionService,
     private toastr: ToastrService,
-    private http: HttpClient
+    private http: HttpClient,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit() {
-    this.loadData();
+    const payment = this.route.snapshot.queryParamMap.get('payment');
+    const plan    = this.route.snapshot.queryParamMap.get('plan');
+
+    // Clear query params immediately so a page refresh doesn't re-trigger
+    this.router.navigate([], { replaceUrl: true, queryParams: {} });
+
+    if (payment === 'success' && plan) {
+      this.finalizeUpgrade(plan);
+    } else if (payment === 'cancelled') {
+      this.toastr.warning('Payment was cancelled');
+      this.loadData();
+    } else {
+      this.loadData();
+    }
+  }
+
+  /**
+   * Called after returning from PayFast. Activates the subscription on the
+   * backend as a fallback for environments where the ITN can't reach localhost.
+   * In production the ITN fires first; a duplicate call is harmless (returns 400
+   * "already on this plan" which we swallow).
+   */
+  private finalizeUpgrade(planName: string) {
+    const tenantId = localStorage.getItem('tenantId');
+    const headers: any = { 'Content-Type': 'application/json' };
+    if (tenantId) headers['X-Tenant-Id'] = tenantId;
+
+    this.http.post<any>(
+      `${environment.apiUrl}/api/admin/subscription/upgrade`,
+      { planName },
+      { headers }
+    ).subscribe({
+      next: () => {
+        this.upgradeSuccess = true;
+        this.upgradeSuccessPlan = planName;
+        this.loadData();
+      },
+      error: () => {
+        // ITN may have already activated it — reload to reflect current state
+        this.upgradeSuccess = true;
+        this.upgradeSuccessPlan = planName;
+        this.loadData();
+      }
+    });
   }
 
   private loadData() {

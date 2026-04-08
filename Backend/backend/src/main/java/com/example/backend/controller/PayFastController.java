@@ -41,12 +41,22 @@ public class PayFastController {
         String paymentId = request.getOrDefault("paymentId", "order-" + System.currentTimeMillis());
 
         // Build return/cancel/notify URLs
-        String basePath = (storeSlug != null && !storeSlug.isEmpty())
-                ? frontendUrl + "/store/" + storeSlug
-                : frontendUrl;
-
-        String returnUrl = basePath + "/thank-you?pf_payment_id=" + paymentId;
-        String cancelUrl = basePath + "/checkout?payment=cancelled";
+        String returnUrl, cancelUrl;
+        if (paymentId.startsWith("sub-")) {
+            // Subscription upgrade — send admin back to their subscription page
+            String payload = paymentId.substring(4); // strip "sub-"
+            int lastDash = payload.lastIndexOf('-');
+            String planName = lastDash >= 0 ? payload.substring(lastDash + 1) : "";
+            returnUrl = frontendUrl + "/admin/subscription?payment=success&plan=" + planName;
+            cancelUrl = frontendUrl + "/admin/subscription?payment=cancelled";
+        } else {
+            // Food order — send customer to thank-you page
+            String basePath = (storeSlug != null && !storeSlug.isEmpty())
+                    ? frontendUrl + "/store/" + storeSlug
+                    : frontendUrl;
+            returnUrl = basePath + "/thank-you?pf_payment_id=" + paymentId;
+            cancelUrl = basePath + "/checkout?payment=cancelled";
+        }
         String notifyUrl = backendUrl + "/api/payfast/notify";
 
         Map<String, String> formData = payFastService.buildPaymentData(
