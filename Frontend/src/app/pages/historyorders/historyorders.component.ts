@@ -199,7 +199,13 @@ export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewCheck
   }
 
   goToMenu(): void {
-    this.router.navigate(['/']);
+    const slug = localStorage.getItem('storeSlug');
+    slug ? this.router.navigate(['/store', slug]) : this.router.navigate(['/']);
+  }
+
+  goBack(): void {
+    const slug = localStorage.getItem('storeSlug');
+    slug ? this.router.navigate(['/store', slug]) : this.router.navigate(['/']);
   }
 
   getStatusBadgeVariant(status: string): BadgeVariant {

@@ -1,6 +1,14 @@
 <div class="min-h-screen bg-surface py-6 px-4 lg:py-10 lg:px-8">
   <div class="max-w-5xl mx-auto animate-fade-in">
 
+    <!-- Back navigation -->
+    <div class="mb-4">
+      <button (click)="goBack()"
+              class="inline-flex items-center gap-1.5 text-sm text-textMuted hover:text-textDark transition-colors">
+        <i class="bi bi-arrow-left"></i> Back to cart
+      </button>
+    </div>
+
     <!-- Store closed banner -->
     <div *ngIf="!storeIsOpen"
          class="mb-6 bg-red-50 border border-red-200 rounded-2xl px-5 py-4 flex items-center gap-3 text-red-700">

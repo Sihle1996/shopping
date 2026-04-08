@@ -1,6 +1,10 @@
 <div class="min-h-screen bg-surface pb-24 max-w-7xl mx-auto">
   <!-- Header -->
   <div class="px-4 pt-6 pb-4 lg:px-8">
+    <button (click)="goBack()"
+            class="inline-flex items-center gap-1.5 text-xs text-textMuted hover:text-textDark transition-colors mb-3">
+      <i class="bi bi-arrow-left text-xs"></i> Back to menu
+    </button>
     <h2 class="font-heading text-2xl font-bold text-textDark mb-1">Order History</h2>
     <p class="text-textLight text-sm">Track your past orders</p>
   </div>

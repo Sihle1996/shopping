@@ -140,7 +140,18 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.router.navigate(['/driver/dashboard']);
     } else {
       const slug = localStorage.getItem('storeSlug');
-      slug ? this.router.navigate(['/store', slug]) : this.router.navigate(['/']);
+      if (slug) {
+        const storeRoot = `/store/${slug}`;
+        const current = this.router.url.split('?')[0].replace(/\/$/, '');
+        // Already at the store home — go up to the store list
+        if (current === storeRoot) {
+          this.router.navigate(['/stores']);
+        } else {
+          this.router.navigate(['/store', slug]);
+        }
+      } else {
+        this.router.navigate(['/']);
+      }
     }
   }
 

@@ -6,6 +6,7 @@ import {
   ViewChild,
   ChangeDetectorRef
 } from '@angular/core';
+import { Location } from '@angular/common';
 import { CartService } from 'src/app/services/cart.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { GeocodingService } from 'src/app/services/geocoding.service';
@@ -97,8 +98,14 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
     private addressService: AddressService,
-    private loyaltyService: LoyaltyService
+    private loyaltyService: LoyaltyService,
+    private location: Location
   ) {}
+
+  goBack(): void {
+    const slug = localStorage.getItem('storeSlug');
+    slug ? this.router.navigate(['/store', slug, 'cart']) : this.location.back();
+  }
 
   ngOnInit(): void {
     this.isLoggedIn = this.authService.isLoggedIn();
