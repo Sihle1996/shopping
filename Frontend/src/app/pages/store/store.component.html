@@ -24,7 +24,7 @@
 
 <!-- Store info strip (ETA + cuisine + hours) -->
 <div *ngIf="!notFound && tenant && (tenant.estimatedDeliveryMinutes || tenant.cuisineType || tenant.openingHours)"
-     class="brand-surface border-b brand-border-light px-4 py-2.5 text-xs text-textMuted">
+     class="bg-white border-b border-borderColor px-4 py-2 text-xs text-textMuted">
   <div class="max-w-7xl mx-auto flex flex-wrap items-center gap-3">
     <span *ngIf="tenant.cuisineType" class="flex items-center gap-1">
       <i class="bi bi-egg-fried text-primary"></i>{{ tenant.cuisineType }}

@@ -75,33 +75,3 @@ html, body {
 .text-primary-700 { color: var(--brand-primary) !important; }
 .hover\:text-primary:hover { color: var(--brand-primary) !important; }
 .focus\:ring-primary-400:focus { --tw-ring-color: var(--brand-primary) !important; }
-
-/*
- * Store-branded navbar — activated when .navbar-branded is applied.
- * Uses the tenant's --brand-primary for a colored header.
- */
-.navbar-branded {
-  background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover)) !important;
-  border-bottom: none !important;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
-}
-
-/*
- * Store-scoped brand tints — applied inside store pages via CSS vars.
- * These utility classes reference the brand so they adapt per-store.
- */
-.brand-surface {
-  background-color: color-mix(in srgb, var(--brand-primary) 4%, white) !important;
-}
-.brand-border-light {
-  border-color: color-mix(in srgb, var(--brand-primary) 15%, white) !important;
-}
-.brand-border-hover:hover {
-  border-color: color-mix(in srgb, var(--brand-primary) 35%, white) !important;
-}
-.brand-gradient-hero {
-  background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover)) !important;
-}
-.brand-gradient-soft {
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--brand-primary) 6%, white), transparent) !important;
-}

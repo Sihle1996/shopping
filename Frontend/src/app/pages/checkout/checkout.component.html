@@ -19,12 +19,12 @@
     </div>
 
     <!-- Header -->
-    <div class="brand-gradient-hero rounded-2xl px-6 py-6 mb-8 text-center shadow-sm">
-      <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
+    <div class="text-center mb-8">
+      <div class="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-md">
         <i class="bi bi-truck text-white text-2xl"></i>
       </div>
-      <h1 class="font-heading text-2xl font-bold text-white">Checkout</h1>
-      <p class="text-white/70 text-sm mt-1">Complete your order</p>
+      <h1 class="font-heading text-2xl font-bold text-textDark">Checkout</h1>
+      <p class="text-textLight text-sm mt-1">Complete your order</p>
     </div>
 
     <!-- Two-column grid on desktop, single column on mobile -->
@@ -34,7 +34,7 @@
       <div class="space-y-4">
 
         <!-- Delivery Details Card -->
-        <div class="bg-white rounded-2xl brand-border-light border shadow-card p-6">
+        <div class="bg-white rounded-2xl shadow-card p-6">
           <div class="flex items-center justify-between mb-4">
             <h2 class="font-heading text-sm font-semibold text-textDark flex items-center gap-2">
               <i class="bi bi-geo-alt text-primary"></i> Delivery Details
@@ -197,7 +197,7 @@
         </div>
 
         <!-- Promo Code Card -->
-        <div class="bg-white rounded-2xl brand-border-light border shadow-card p-6">
+        <div class="bg-white rounded-2xl shadow-card p-6">
           <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
             <i class="bi bi-tag text-primary"></i> Promo Code
           </h2>
@@ -238,7 +238,7 @@
 
         <!-- Loyalty Points Card -->
         <div *ngIf="isLoggedIn && loyaltyBalance && loyaltyBalance.balance >= 100"
-             class="bg-white rounded-2xl brand-border-light border shadow-card p-6">
+             class="bg-white rounded-2xl shadow-card p-6">
           <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
             <i class="bi bi-gift text-amber-500"></i> Loyalty Points
             <span class="ml-auto text-xs font-normal text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
@@ -286,7 +286,7 @@
       <div class="space-y-4 lg:sticky lg:top-20">
 
         <!-- Order Summary Card -->
-        <div class="bg-white rounded-2xl brand-border-light border shadow-card p-6">
+        <div class="bg-white rounded-2xl shadow-card p-6">
           <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
             <i class="bi bi-receipt text-primary"></i> Order Summary
           </h2>

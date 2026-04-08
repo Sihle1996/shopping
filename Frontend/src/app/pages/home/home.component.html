@@ -2,12 +2,13 @@
 
   <!-- Hero Section -->
   <div class="px-4 pt-6 pb-2 lg:px-8">
-    <div class="brand-gradient-hero rounded-2xl px-5 py-5 mb-6 shadow-sm">
-      <p class="text-white/80 text-sm">Discover</p>
-      <h2 class="font-heading text-2xl md:text-3xl font-bold text-white">
-        Delicious Food 🍔
-      </h2>
-      <p class="text-white/60 text-xs mt-1">Fresh meals delivered to your door</p>
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <p class="text-textLight text-sm">Discover</p>
+        <h2 class="font-heading text-2xl md:text-3xl font-bold text-textDark">
+          Delicious Food 🍔
+        </h2>
+      </div>
     </div>
 
     <!-- Store closed banner -->
@@ -96,7 +97,7 @@
 
 
 <!-- Customer Reviews Section -->
-  <section *ngIf="reviews.length > 0" class="px-4 lg:px-8 py-6 brand-gradient-soft rounded-t-3xl mt-4">
+  <section *ngIf="reviews.length > 0" class="px-4 lg:px-8 py-6 border-t border-borderColor mt-4">
     <div class="flex items-center justify-between mb-4">
       <h2 class="font-heading text-lg font-bold text-textDark">Customer Reviews</h2>
       <span class="text-sm text-textMuted">
