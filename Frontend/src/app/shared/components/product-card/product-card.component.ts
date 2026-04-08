@@ -17,7 +17,7 @@ export interface ProductCardItem {
   selector: 'app-product-card',
   template: `
     <div
-      class="group bg-white rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover
+      class="group bg-white rounded-2xl overflow-hidden border border-primary-100 shadow-card hover:shadow-lg hover:border-primary-300
              transition-all duration-300 cursor-pointer animate-fade-in"
       data-testid="product-card"
       (click)="cardClick.emit(item)">

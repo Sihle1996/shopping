@@ -37,7 +37,7 @@ export class CategoryChipsComponent {
   getChipClasses(name: string): string {
     const base = 'flex-shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap active:scale-95 cursor-pointer';
     const active = 'bg-primary text-white shadow-sm';
-    const inactive = 'bg-white text-textDark hover:bg-primary-50 shadow-card';
+    const inactive = 'bg-white text-textDark hover:bg-primary-50 border border-primary-100 shadow-card';
     return `${base} ${this.selected === name ? active : inactive}`;
   }
 }

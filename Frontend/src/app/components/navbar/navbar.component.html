@@ -1,18 +1,18 @@
-<nav class="bg-white border-b border-borderColor py-3 px-4 lg:px-8 fixed w-full z-50 top-0" data-testid="navbar">
+<nav class="bg-gradient-to-r from-primary to-primary-600 py-3 px-4 lg:px-8 fixed w-full z-50 top-0 shadow-md" data-testid="navbar">
   <div class="max-w-7xl mx-auto flex justify-between items-center">
 
     <!-- Logo + Store Name -->
     <a (click)="goHome()" class="flex items-center gap-2 cursor-pointer">
-      <img *ngIf="storeLogo" [src]="storeLogo" class="w-8 h-8 rounded-lg object-cover" />
-      <div *ngIf="!storeLogo" class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+      <img *ngIf="storeLogo" [src]="storeLogo" class="w-8 h-8 rounded-lg object-cover ring-2 ring-white/30" />
+      <div *ngIf="!storeLogo" class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
         <i class="bi bi-fire text-white text-sm"></i>
       </div>
       <div class="flex flex-col">
-        <span class="font-heading text-lg font-bold text-textDark leading-tight">
+        <span class="font-heading text-lg font-bold text-white leading-tight">
           {{ storeName || 'FastFood' }}
         </span>
-        <span *ngIf="storeName && isAdmin" class="text-[10px] text-textMuted leading-tight">Admin Panel</span>
-        <span *ngIf="storeName && !isAdmin" class="text-[10px] text-textMuted leading-tight">Powered by FastFood</span>
+        <span *ngIf="storeName && isAdmin" class="text-[10px] text-white/70 leading-tight">Admin Panel</span>
+        <span *ngIf="storeName && !isAdmin" class="text-[10px] text-white/70 leading-tight">Powered by FastFood</span>
       </div>
     </a>
 
@@ -21,14 +21,14 @@
       <!-- Customer-only links -->
       <ng-container *ngIf="isCustomer">
         <li *ngIf="isLoggedIn">
-          <a [routerLink]="cartRoute" routerLinkActive="text-primary bg-primary-50"
-             class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
+          <a [routerLink]="cartRoute" routerLinkActive="bg-white/20"
+             class="px-3 py-2 rounded-lg text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors">
             <i class="bi bi-cart3 mr-1"></i> Cart
           </a>
         </li>
         <li *ngIf="isLoggedIn">
-          <a [routerLink]="ordersRoute" routerLinkActive="text-primary bg-primary-50"
-             class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
+          <a [routerLink]="ordersRoute" routerLinkActive="bg-white/20"
+             class="px-3 py-2 rounded-lg text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors">
             <i class="bi bi-receipt mr-1"></i> Orders
           </a>
         </li>
@@ -37,21 +37,21 @@
       <!-- Auth button — only shown when browsing a store (Uber Eats model) -->
       <li class="ml-2" *ngIf="!isLoggedIn && hasStoreContext">
         <a routerLink="/login" [queryParams]="{ returnUrl: router.url }" data-testid="nav-signin"
-           class="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-primary-600 transition-colors">
+           class="px-4 py-2 rounded-lg text-sm font-semibold bg-white text-primary hover:bg-white/90 transition-colors">
           Sign In
         </a>
       </li>
       <li class="ml-2" *ngIf="isLoggedIn">
         <button (click)="logout()" data-testid="nav-logout"
-                class="px-4 py-2 rounded-lg text-sm font-medium text-textLight hover:text-danger hover:bg-red-50 transition-colors">
+                class="px-4 py-2 rounded-lg text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors">
           Logout
         </button>
       </li>
     </ul>
 
     <!-- Mobile Menu Button -->
-    <button (click)="toggleMenu()" class="md:hidden w-9 h-9 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
-      <i [class]="menuOpen ? 'bi bi-x-lg text-textDark' : 'bi bi-list text-textDark text-xl'"></i>
+    <button (click)="toggleMenu()" class="md:hidden w-9 h-9 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors">
+      <i [class]="menuOpen ? 'bi bi-x-lg text-white' : 'bi bi-list text-white text-xl'"></i>
     </button>
   </div>
 
