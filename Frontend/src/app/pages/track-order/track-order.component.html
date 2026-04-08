@@ -1,0 +1,124 @@
+<div class="min-h-screen bg-surface py-10 px-4 flex flex-col items-center">
+  <div class="w-full max-w-md">
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <div class="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
+        <i class="bi bi-search text-primary text-2xl"></i>
+      </div>
+      <h1 class="font-heading text-2xl font-bold text-textDark">Track Your Order</h1>
+      <p class="text-textMuted text-sm mt-1">Enter your order ID to check the status</p>
+    </div>
+
+    <!-- Search card -->
+    <div class="bg-white rounded-2xl shadow-card p-6 mb-4">
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs font-medium text-textMuted block mb-1">Order ID</label>
+          <input type="text" [(ngModel)]="orderId" (keyup.enter)="track()"
+                 placeholder="e.g. a1b2c3d4-..."
+                 class="w-full px-4 py-3 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-textMuted block mb-1">
+            Email address <span class="text-textMuted font-normal">(required for guest orders)</span>
+          </label>
+          <input type="email" [(ngModel)]="email" (keyup.enter)="track()"
+                 placeholder="your@email.com"
+                 class="w-full px-4 py-3 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
+        </div>
+        <button (click)="track()" [disabled]="!orderId.trim() || loading"
+                class="w-full py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+          <i class="bi bi-arrow-repeat animate-spin" *ngIf="loading"></i>
+          <i class="bi bi-search" *ngIf="!loading"></i>
+          {{ loading ? 'Searching...' : 'Track Order' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Login required -->
+    <div *ngIf="requiresLogin" class="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-center">
+      <i class="bi bi-lock-fill text-blue-400 text-2xl mb-2 block"></i>
+      <p class="text-sm font-semibold text-blue-700">This order requires login to view</p>
+      <p class="text-xs text-blue-600 mt-1 mb-3">Please sign in to access your order history.</p>
+      <a routerLink="/login" class="text-xs text-primary hover:underline font-medium">Sign in →</a>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error && !requiresLogin" class="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
+      <i class="bi bi-exclamation-circle text-red-400 text-lg flex-shrink-0"></i>
+      <p class="text-sm text-red-700">{{ error }}</p>
+    </div>
+
+    <!-- Result -->
+    <div *ngIf="result" class="bg-white rounded-2xl shadow-card p-6 space-y-4">
+
+      <!-- Order ID + status badge -->
+      <div class="flex items-center justify-between">
+        <span class="font-mono text-sm font-semibold text-textDark">#{{ result.id | slice:0:8 | uppercase }}</span>
+        <span class="text-xs font-bold px-3 py-1 rounded-full"
+              [ngClass]="{
+                'bg-yellow-100 text-yellow-700': result.status === 'Pending',
+                'bg-blue-100 text-blue-700': result.status === 'Preparing',
+                'bg-purple-100 text-purple-700': result.status === 'Out for Delivery',
+                'bg-green-100 text-green-700': result.status === 'Delivered',
+                'bg-red-100 text-red-700': result.status === 'Cancelled' || result.status === 'Rejected'
+              }">
+          {{ result.status }}
+        </span>
+      </div>
+
+      <!-- Progress bar -->
+      <div *ngIf="stepIndex >= 0" class="space-y-2">
+        <div class="flex justify-between">
+          <div *ngFor="let step of statusSteps; let i = index"
+               class="flex-1 flex flex-col items-center gap-1">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                 [ngClass]="i <= stepIndex ? 'bg-primary text-white' : 'bg-gray-200 text-textMuted'">
+              <i *ngIf="i < stepIndex" class="bi bi-check text-xs"></i>
+              <span *ngIf="i >= stepIndex">{{ i + 1 }}</span>
+            </div>
+            <span class="text-[9px] text-center text-textMuted leading-tight hidden sm:block">{{ step }}</span>
+          </div>
+        </div>
+        <div class="relative h-1.5 bg-gray-200 rounded-full mt-1">
+          <div class="absolute h-full bg-primary rounded-full transition-all duration-500"
+               [style.width.%]="stepIndex < 0 ? 0 : ((stepIndex) / (statusSteps.length - 1)) * 100"></div>
+        </div>
+      </div>
+
+      <div class="h-px bg-borderColor"></div>
+
+      <!-- Items -->
+      <div class="space-y-1">
+        <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-2">Items</p>
+        <div *ngFor="let item of result.items" class="flex justify-between text-xs text-textDark">
+          <span>{{ item.name }}</span>
+          <span class="text-textMuted">×{{ item.quantity }}</span>
+        </div>
+      </div>
+
+      <div class="h-px bg-borderColor"></div>
+
+      <!-- Address -->
+      <div class="flex items-start gap-2">
+        <i class="bi bi-geo-alt text-textMuted text-xs mt-0.5 flex-shrink-0"></i>
+        <span class="text-xs text-textMuted">{{ result.deliveryAddress }}</span>
+      </div>
+
+      <!-- Total -->
+      <div class="space-y-1">
+        <div *ngIf="result.deliveryFee > 0" class="flex justify-between text-xs text-textMuted">
+          <span>Delivery</span>
+          <span>R{{ result.deliveryFee.toFixed(2) }}</span>
+        </div>
+        <div class="flex justify-between text-sm font-bold text-textDark">
+          <span>Total</span>
+          <span class="font-numbers text-primary">R{{ result.totalAmount.toFixed(2) }}</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>

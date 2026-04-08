@@ -5,6 +5,10 @@ import { DeliveryStop } from '../driver-map/driver-map.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
+// Tiny inlined beep (single 440Hz tone, ~0.3s)
+const BEEP_WAV = 'data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAA' +
+  'ABAAEAQB8AAEAfAAABAAgAZGF0YTtvT18A';
+
 interface DriverOrder {
   id: string;
   status: string;
@@ -35,6 +39,10 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
   earnings: { deliveredCount: number; totalEarnings: number } | null = null;
   profileIncomplete = false;
   showAllCompleted = false;
+
+  lastUpdatedSeconds = 0;
+  private pollInterval: any;
+  private secondsInterval: any;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -52,11 +60,18 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
     this.driverService.getProfile().pipe(takeUntil(this.destroy$)).subscribe({
       next: p => this.profileIncomplete = !p.fullName || !p.phone
     });
+
+    // Auto-refresh every 30s
+    this.pollInterval = setInterval(() => this.silentRefresh(), 30000);
+    // Update "last updated" counter every second
+    this.secondsInterval = setInterval(() => this.lastUpdatedSeconds++, 1000);
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    clearInterval(this.pollInterval);
+    clearInterval(this.secondsInterval);
   }
 
   loadOrders(): void {
@@ -72,8 +87,32 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
           lon: o.deliveryLon
         }));
         this.isLoading = false;
+        this.lastUpdatedSeconds = 0;
       },
       error: () => this.isLoading = false
+    });
+  }
+
+  private silentRefresh(): void {
+    const prevActiveCount = this.activeOrders.length;
+    this.driverService.getAssignedOrders().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res) => {
+        const newActiveCount = res.filter(o => o.status !== 'Delivered').length;
+        if (newActiveCount > prevActiveCount) {
+          this.toastr.info('New order assigned!', '', { timeOut: 6000 });
+          try { new Audio(BEEP_WAV).play(); } catch (_) {}
+        }
+        this.orders = res;
+        this.deliveryStops = this.activeOrders.map(o => ({
+          id: o.id,
+          address: o.deliveryAddress,
+          label: `Order #${o.id.substring(0, 8)}`,
+          lat: o.deliveryLat,
+          lon: o.deliveryLon
+        }));
+        this.lastUpdatedSeconds = 0;
+      },
+      error: () => {}
     });
   }
 
@@ -87,6 +126,11 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
 
   get currentDelivery(): DriverOrder | null {
     return this.activeOrders[0] || null;
+  }
+
+  get lastUpdatedLabel(): string {
+    if (this.lastUpdatedSeconds < 60) return `${this.lastUpdatedSeconds}s ago`;
+    return `${Math.floor(this.lastUpdatedSeconds / 60)}m ago`;
   }
 
   confirmDeliver(id: string): void {

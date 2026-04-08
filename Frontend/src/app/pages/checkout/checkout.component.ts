@@ -28,7 +28,8 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   cartItems: any[] = [];
   subtotal: number = 0;
   discount: number = 0;
-  get totalPrice(): number { return Math.max(0, this.subtotal - this.discount - this.loyaltyDiscount); }
+  deliveryFee: number = 0;
+  get totalPrice(): number { return Math.max(0, this.subtotal - this.discount - this.loyaltyDiscount + this.deliveryFee); }
 
   storeIsOpen: boolean = true;
   minimumOrderAmount: number | null = null;
@@ -109,6 +110,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
           next: (t) => {
             this.storeIsOpen = t.isOpen !== false;
             this.minimumOrderAmount = t.minimumOrderAmount ?? null;
+            this.deliveryFee = Number(t.deliveryFeeBase) || 0;
           },
           error: () => {}
         });

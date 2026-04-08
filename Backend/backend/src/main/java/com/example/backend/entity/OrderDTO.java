@@ -30,6 +30,7 @@ public class OrderDTO {
     private Double driverLon;
     private UUID tenantId;
     private Double discountAmount;
+    private Double deliveryFee;
     private String promoCode;
     private Double deliveryLat;
     private Double deliveryLon;

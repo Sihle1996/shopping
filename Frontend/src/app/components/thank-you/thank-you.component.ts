@@ -5,6 +5,8 @@ interface OrderSummary {
   orderId?: string;
   items: Array<{ name: string; quantity: number }>;
   total: number;
+  subtotal?: number;
+  deliveryFee?: number;
   address: string;
   loyaltyEarned: number;
 }

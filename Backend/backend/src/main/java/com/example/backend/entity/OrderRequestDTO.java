@@ -22,4 +22,5 @@ public class OrderRequestDTO {
     private String guestEmail;
     private String guestPhone;
     private int loyaltyPointsRedeemed;
+    private Double deliveryFee;
 }

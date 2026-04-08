@@ -28,6 +28,13 @@
       <span class="text-xs text-textDark text-right">{{ itemsSummary }}</span>
     </div>
 
+    <!-- Delivery fee -->
+    <div *ngIf="summary.deliveryFee && summary.deliveryFee > 0"
+         class="flex items-center justify-between">
+      <span class="text-xs text-textMuted flex items-center gap-1"><i class="bi bi-truck text-xs"></i> Delivery</span>
+      <span class="font-numbers text-xs text-textDark">R{{ summary.deliveryFee.toFixed(2) }}</span>
+    </div>
+
     <!-- Total -->
     <div class="flex items-center justify-between border-t border-borderColor pt-3">
       <span class="text-xs text-textMuted">Total paid</span>
@@ -50,9 +57,17 @@
     </div>
   </div>
 
-  <p class="text-xs text-textMuted mb-6 text-center">
+  <p class="text-xs text-textMuted mb-3 text-center">
     <i class="bi bi-bell mr-1"></i>We'll notify you when your order status changes.
   </p>
+
+  <!-- Track link (especially useful for guests) -->
+  <a *ngIf="summary?.orderId"
+     [routerLink]="['/track']"
+     [queryParams]="{ id: summary!.orderId }"
+     class="text-xs text-primary hover:underline mb-6 flex items-center gap-1">
+    <i class="bi bi-search"></i> Track this order
+  </a>
 
   <div class="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
     <button (click)="goToOrders()"

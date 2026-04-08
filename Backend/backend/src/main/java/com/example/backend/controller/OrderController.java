@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.entity.OrderDTO;
 import com.example.backend.entity.OrderRequestDTO;
+import com.example.backend.repository.OrderRepository;
 import com.example.backend.service.OrderService;
 import com.example.backend.user.User;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -19,6 +21,7 @@ import java.util.UUID;
 public class OrderController {
 
     private final OrderService orderService;
+    private final OrderRepository orderRepository;
 
     // Place an Order from checkout (supports both authenticated and guest users)
     @PostMapping("/place")
@@ -69,6 +72,36 @@ public class OrderController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body("An error occurred while fetching the order.");
         }
+    }
+
+    // ✅ Public order tracking (guest-friendly — requires email for guest orders)
+    @GetMapping("/track/{orderId}")
+    public ResponseEntity<?> trackOrder(@PathVariable UUID orderId,
+                                         @RequestParam(required = false) String email) {
+        var order = orderRepository.findById(orderId).orElse(null);
+        if (order == null) return ResponseEntity.notFound().build();
+
+        // Registered-user orders are not accessible publicly — use order history
+        if (order.getGuestEmail() == null) {
+            return ResponseEntity.status(403).body(Map.of("error", "This order requires login to view"));
+        }
+
+        // Guest orders require the guest's email for verification
+        if (email == null || !email.equalsIgnoreCase(order.getGuestEmail())) {
+            return ResponseEntity.status(403).body(Map.of("error", "Email address does not match"));
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", order.getId());
+        result.put("status", order.getStatus());
+        result.put("orderDate", order.getOrderDate());
+        result.put("deliveryAddress", order.getDeliveryAddress());
+        result.put("totalAmount", order.getTotalAmount());
+        result.put("deliveryFee", order.getDeliveryFee() != null ? order.getDeliveryFee() : 0.0);
+        result.put("items", order.getOrderItems().stream().map(i ->
+            Map.of("name", i.getName(), "quantity", i.getQuantity())
+        ).toList());
+        return ResponseEntity.ok(result);
     }
 
     // ✅ Cancel a pending order (customer)

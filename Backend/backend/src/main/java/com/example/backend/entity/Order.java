@@ -51,6 +51,7 @@ public class Order {
     private String payerId;
 
     private Double platformFee;
+    private Double deliveryFee;
     private Double discountAmount;
     private String promoCode;
     private Double deliveryLat;

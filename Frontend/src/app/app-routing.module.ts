@@ -21,6 +21,7 @@ import { HomeComponent } from './pages/home/home.component';
 import { TenantResolver } from './resolvers/tenant.resolver';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 import { LandingComponent } from './pages/landing/landing.component';
+import { TrackOrderComponent } from './pages/track-order/track-order.component';
 
 const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -56,6 +57,7 @@ const routes: Routes = [
   { path: 'driver/profile', component: DriverProfileComponent, canActivate: [DriverGuard] },
   { path: 'profile/addresses', component: AddressBookComponent, canActivate: [UserGuard] },
   { path: 'profile', component: UserProfileComponent, canActivate: [UserGuard] },
+  { path: 'track', component: TrackOrderComponent },
 
   {
     path: 'superadmin',
@@ -67,7 +69,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes)], 
   exports: [RouterModule]
 })
 export class AppRoutingModule { }

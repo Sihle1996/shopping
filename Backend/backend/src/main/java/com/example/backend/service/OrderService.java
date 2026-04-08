@@ -203,6 +203,12 @@ public class OrderService {
                     }
                 }
                 order.setTenant(tenant);
+                // Set delivery fee from tenant's configured base fee (server-authoritative)
+                if (tenant.getDeliveryFeeBase() != null) {
+                    order.setDeliveryFee(tenant.getDeliveryFeeBase().doubleValue());
+                } else {
+                    order.setDeliveryFee(0.0);
+                }
                 if (tenant.getPlatformCommissionPercent() != null) {
                     double fee = BigDecimal.valueOf(totalAmount)
                             .multiply(tenant.getPlatformCommissionPercent())
@@ -454,6 +460,8 @@ public class OrderService {
                 order.getOrderNotes(),
                 userPhone
         );
+
+        dto.setDeliveryFee(order.getDeliveryFee() != null ? order.getDeliveryFee() : 0.0);
 
         if (order.getDriver() != null) {
             User driver = order.getDriver();

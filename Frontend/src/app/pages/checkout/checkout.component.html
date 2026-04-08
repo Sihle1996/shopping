@@ -321,6 +321,13 @@
               </span>
               <span class="font-numbers font-semibold">-R{{ loyaltyDiscount.toFixed(2) }}</span>
             </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-textMuted flex items-center gap-1">
+                <i class="bi bi-truck text-xs"></i> Delivery
+              </span>
+              <span *ngIf="deliveryFee > 0" class="font-numbers font-semibold text-textDark">R{{ deliveryFee.toFixed(2) }}</span>
+              <span *ngIf="deliveryFee === 0" class="font-numbers font-semibold text-green-600">Free</span>
+            </div>
             <div class="flex justify-between text-base font-bold text-textDark pt-1 border-t border-borderColor">
               <span>Total</span>
               <span class="font-numbers text-primary">R{{ totalPrice.toFixed(2) }}</span>
