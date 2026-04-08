@@ -1,9 +1,9 @@
-<div class="min-h-screen bg-gradient-to-b from-primary-100 via-surface to-surface flex items-center justify-center p-4">
+<div class="min-h-screen bg-surface flex items-center justify-center p-4">
   <div class="w-full max-w-md animate-fade-in">
 
     <!-- Logo / Brand -->
     <div class="text-center mb-8">
-      <div class="w-16 h-16 bg-gradient-to-br from-primary to-primary-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+      <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
         <i class="bi bi-fire text-white text-2xl"></i>
       </div>
       <h1 class="font-heading text-2xl font-bold text-textDark">Welcome Back</h1>
@@ -22,7 +22,7 @@
     </div>
 
     <!-- Card -->
-    <div class="bg-white rounded-2xl border border-primary-100 shadow-lg p-8">
+    <div class="bg-white rounded-2xl shadow-card p-8">
       <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="space-y-5" data-testid="login-form">
 
         <!-- Email -->

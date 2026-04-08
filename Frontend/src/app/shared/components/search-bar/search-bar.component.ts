@@ -14,7 +14,7 @@ import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
         [placeholder]="placeholder"
         [value]="value"
         (input)="onInput($event)"
-        class="w-full pl-11 pr-10 py-3 bg-white rounded-full border border-primary-200
+        class="w-full pl-11 pr-10 py-3 bg-white rounded-full border border-borderColor
                text-textDark placeholder-textMuted text-sm
                focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent
                transition-shadow shadow-card hover:shadow-card-hover" />

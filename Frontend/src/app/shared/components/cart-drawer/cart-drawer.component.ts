@@ -20,15 +20,15 @@ import { environment } from 'src/environments/environment';
       [class.translate-x-full]="!isOpen">
 
       <!-- Header -->
-      <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-primary to-primary-600">
-        <h3 class="font-heading text-lg font-bold text-white">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-borderColor">
+        <h3 class="font-heading text-lg font-bold text-textDark">
           Your Cart
-          <span *ngIf="items.length" class="text-white/70 font-normal text-sm ml-1">({{ items.length }})</span>
+          <span *ngIf="items.length" class="text-textMuted font-normal text-sm ml-1">({{ items.length }})</span>
         </h3>
         <button
           (click)="close.emit()"
-          class="w-9 h-9 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
-          <i class="bi bi-x-lg text-white"></i>
+          class="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors">
+          <i class="bi bi-x-lg text-textDark"></i>
         </button>
       </div>
 
