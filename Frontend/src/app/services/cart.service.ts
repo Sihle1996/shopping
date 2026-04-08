@@ -138,7 +138,7 @@ export class CartService {
           quantity,
           totalPrice: effectiveUnitPrice * quantity,
           image: itemInfo?.image || 'assets/placeholder.png',
-          size,
+          size: size ?? undefined,
           selectedChoicesJson: selectedChoicesJson || undefined
         });
       }
