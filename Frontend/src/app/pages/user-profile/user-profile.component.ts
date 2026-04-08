@@ -1,8 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { environment } from 'src/environments/environment';
 import { ToastrService } from 'ngx-toastr';
+import { AuthService } from 'src/app/services/auth.service';
+
+type Section = 'personal' | 'security' | 'privacy';
 
 @Component({
   selector: 'app-user-profile',
@@ -14,12 +18,34 @@ export class UserProfileComponent implements OnInit {
   loading = true;
   saving = false;
   changingPassword = false;
+  deletingAccount = false;
+  showDeleteConfirm = false;
   email = '';
   role = '';
+  joinedAt = '';
+  activeSection: Section = 'personal';
 
-  constructor(private fb: FormBuilder, private http: HttpClient, private toastr: ToastrService) {
-    this.form = this.fb.group({ fullName: [''], phone: [''] });
-    this.passwordForm = this.fb.group({ currentPassword: [''], newPassword: [''], confirmPassword: [''] });
+  private readonly AVATAR_COLORS = [
+    'bg-violet-500', 'bg-blue-500', 'bg-emerald-500', 'bg-orange-500',
+    'bg-pink-500', 'bg-teal-500', 'bg-rose-500', 'bg-indigo-500'
+  ];
+
+  constructor(
+    private fb: FormBuilder,
+    private http: HttpClient,
+    private toastr: ToastrService,
+    private authService: AuthService,
+    private router: Router
+  ) {
+    this.form = this.fb.group({
+      fullName: [''],
+      phone: ['']
+    });
+    this.passwordForm = this.fb.group({
+      currentPassword: ['', Validators.required],
+      newPassword: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', Validators.required]
+    });
   }
 
   ngOnInit() {
@@ -27,11 +53,39 @@ export class UserProfileComponent implements OnInit {
       next: p => {
         this.email = p.email;
         this.role = p.role;
+        this.joinedAt = p.createdAt || '';
         this.form.patchValue({ fullName: p.fullName, phone: p.phone });
         this.loading = false;
       },
       error: () => { this.loading = false; this.toastr.error('Failed to load profile'); }
     });
+  }
+
+  get initials(): string {
+    const name = (this.form.get('fullName')?.value || '').trim();
+    if (name) {
+      const parts = name.split(/\s+/).filter(Boolean);
+      if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+      return name.substring(0, 2).toUpperCase();
+    }
+    return this.email ? this.email.substring(0, 2).toUpperCase() : '??';
+  }
+
+  get avatarColor(): string {
+    const str = this.email || 'user';
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return this.AVATAR_COLORS[Math.abs(hash) % this.AVATAR_COLORS.length];
+  }
+
+  get displayRole(): string {
+    return (this.role || '').replace('ROLE_', '').toLowerCase();
+  }
+
+  setSection(s: Section) {
+    this.activeSection = s;
   }
 
   save() {
@@ -44,9 +98,9 @@ export class UserProfileComponent implements OnInit {
 
   changePassword() {
     const { currentPassword, newPassword, confirmPassword } = this.passwordForm.value;
-    if (!currentPassword || !newPassword) { this.toastr.warning('Please fill in all password fields'); return; }
+    if (!currentPassword || !newPassword) { this.toastr.warning('Please fill in all fields'); return; }
     if (newPassword !== confirmPassword) { this.toastr.warning('New passwords do not match'); return; }
-    if (newPassword.length < 6) { this.toastr.warning('New password must be at least 6 characters'); return; }
+    if (newPassword.length < 6) { this.toastr.warning('Password must be at least 6 characters'); return; }
     this.changingPassword = true;
     this.http.put<any>(`${environment.apiUrl}/api/change-password`, { currentPassword, newPassword }).subscribe({
       next: () => {
@@ -57,6 +111,26 @@ export class UserProfileComponent implements OnInit {
       error: (err) => {
         this.changingPassword = false;
         this.toastr.error(err?.error || 'Failed to change password');
+      }
+    });
+  }
+
+  confirmDeleteAccount() {
+    this.showDeleteConfirm = true;
+  }
+
+  deleteAccount() {
+    this.deletingAccount = true;
+    this.http.delete(`${environment.apiUrl}/api/me`).subscribe({
+      next: () => {
+        this.authService.logout();
+        this.router.navigate(['/']);
+        this.toastr.success('Account deleted');
+      },
+      error: () => {
+        this.deletingAccount = false;
+        this.showDeleteConfirm = false;
+        this.toastr.error('Failed to delete account');
       }
     });
   }

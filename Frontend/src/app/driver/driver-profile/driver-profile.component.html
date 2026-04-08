@@ -30,6 +30,20 @@
       <!-- ── LEFT: stats sidebar ── -->
       <div class="space-y-4">
 
+        <!-- Initials avatar card -->
+        <div class="bg-white rounded-2xl border border-borderColor p-5 shadow-card flex flex-col items-center text-center gap-2">
+          <div class="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-3xl font-bold"
+               [ngClass]="avatarColor">
+            {{ initials }}
+          </div>
+          <p class="font-semibold text-textDark text-sm mt-1">
+            {{ form.get('fullName')?.value || 'Driver' }}
+          </p>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary">
+            <i class="bi bi-bicycle mr-1"></i> Driver
+          </span>
+        </div>
+
         <!-- Earnings card -->
         <div *ngIf="earnings" class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-5 text-white shadow-card">
           <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center mb-3">

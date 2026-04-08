@@ -14,6 +14,11 @@ export class DriverProfileComponent implements OnInit {
   toast = '';
   toastType: 'success' | 'error' = 'success';
 
+  private readonly AVATAR_COLORS = [
+    'bg-violet-500', 'bg-blue-500', 'bg-emerald-500', 'bg-orange-500',
+    'bg-pink-500', 'bg-teal-500', 'bg-rose-500', 'bg-indigo-500'
+  ];
+
   constructor(private fb: FormBuilder, private driverService: DriverService) {
     this.form = this.fb.group({
       fullName: [''],
@@ -21,6 +26,21 @@ export class DriverProfileComponent implements OnInit {
       vehicleType: [''],
       vehiclePlate: ['']
     });
+  }
+
+  get initials(): string {
+    const name = (this.form.get('fullName')?.value || '').trim();
+    if (!name) return 'DR';
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+  }
+
+  get avatarColor(): string {
+    const name = (this.form.get('fullName')?.value || 'driver').trim();
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return this.AVATAR_COLORS[Math.abs(hash) % this.AVATAR_COLORS.length];
   }
 
   ngOnInit() {

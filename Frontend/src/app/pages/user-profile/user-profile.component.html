@@ -8,86 +8,223 @@
     </div>
   </div>
 
-  <div class="max-w-3xl mx-auto px-4 lg:px-8 pt-6 space-y-4">
+  <div class="max-w-3xl mx-auto px-4 lg:px-8 pt-6 space-y-5">
 
-    <!-- Loading -->
-    <div *ngIf="loading" class="space-y-3">
-      <div *ngFor="let i of [1,2,3]" class="h-14 bg-white rounded-xl animate-pulse shadow-card"></div>
+    <!-- Loading skeleton -->
+    <div *ngIf="loading" class="space-y-4">
+      <div class="h-28 bg-white rounded-2xl animate-pulse shadow-card"></div>
+      <div class="flex gap-2">
+        <div *ngFor="let i of [1,2,3]" class="h-9 flex-1 bg-white rounded-xl animate-pulse shadow-card"></div>
+      </div>
+      <div class="h-48 bg-white rounded-2xl animate-pulse shadow-card"></div>
     </div>
 
     <ng-container *ngIf="!loading">
 
-      <!-- Account info (read-only) -->
-      <div class="bg-white rounded-2xl border border-borderColor p-5 shadow-card">
-        <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-3">Account</p>
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <i class="bi bi-person text-primary text-lg"></i>
-          </div>
-          <div>
-            <p class="text-sm font-semibold text-textDark">{{ email }}</p>
-            <p class="text-xs text-textMuted capitalize">{{ role?.replace('ROLE_','') | lowercase }}</p>
-          </div>
+      <!-- Avatar card -->
+      <div class="bg-white rounded-2xl border border-borderColor p-5 shadow-card flex items-center gap-4">
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 text-white text-2xl font-bold"
+             [ngClass]="avatarColor">
+          {{ initials }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-textDark truncate">
+            {{ form.get('fullName')?.value || email }}
+          </p>
+          <p class="text-xs text-textMuted mt-0.5">{{ email }}</p>
+          <span class="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary capitalize">
+            {{ displayRole }}
+          </span>
+        </div>
+        <div *ngIf="joinedAt" class="hidden sm:block text-right flex-shrink-0">
+          <p class="text-xs text-textMuted">Member since</p>
+          <p class="text-xs font-medium text-textDark mt-0.5">{{ joinedAt | date:'MMM yyyy' }}</p>
         </div>
       </div>
 
-      <!-- Personal info form -->
-      <form [formGroup]="form" (ngSubmit)="save()">
-        <div class="bg-white rounded-2xl border border-borderColor p-5 shadow-card space-y-4">
-          <p class="text-xs font-semibold text-textMuted uppercase tracking-wide">Personal Info</p>
+      <!-- Section tabs -->
+      <div class="flex gap-2 bg-white rounded-2xl border border-borderColor p-1.5 shadow-card">
+        <button *ngFor="let tab of [{id:'personal', icon:'bi-person', label:'Personal'},
+                                    {id:'security', icon:'bi-shield-lock', label:'Security'},
+                                    {id:'privacy',  icon:'bi-eye-slash', label:'Privacy'}]"
+                (click)="setSection(tab.id)"
+                class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium transition-all"
+                [ngClass]="activeSection === tab.id
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-textMuted hover:text-textDark hover:bg-surface'">
+          <i class="bi {{ tab.icon }} text-sm"></i>
+          <span class="hidden sm:inline">{{ tab.label }}</span>
+        </button>
+      </div>
+
+      <!-- ── Personal Info ── -->
+      <form *ngIf="activeSection === 'personal'" [formGroup]="form" (ngSubmit)="save()">
+        <div class="bg-white rounded-2xl border border-borderColor p-5 shadow-card space-y-5">
+
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold text-textDark">Personal Information</p>
+              <p class="text-xs text-textMuted mt-0.5">Update your name and contact details</p>
+            </div>
+            <i class="bi bi-person-circle text-2xl text-primary/30"></i>
+          </div>
+
           <div class="grid sm:grid-cols-2 gap-4">
             <div>
               <label class="text-xs font-medium text-textMuted block mb-1">Full Name</label>
               <input formControlName="fullName" type="text" placeholder="Your name"
-                     class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
+                     class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                            focus:outline-none focus:ring-2 focus:ring-primary-400" />
             </div>
             <div>
               <label class="text-xs font-medium text-textMuted block mb-1">Phone</label>
               <input formControlName="phone" type="tel" placeholder="+27..."
-                     class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
+                     class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                            focus:outline-none focus:ring-2 focus:ring-primary-400" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="text-xs font-medium text-textMuted block mb-1">Email address</label>
+              <div class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textMuted flex items-center gap-2">
+                <i class="bi bi-lock text-xs"></i>
+                {{ email }}
+              </div>
+              <p class="text-xs text-textMuted mt-1">Email cannot be changed</p>
             </div>
           </div>
-          <div class="flex gap-3 pt-1">
+
+          <div class="flex flex-col sm:flex-row gap-3 pt-1">
             <button type="submit" [disabled]="saving"
-                    class="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary-600 text-white text-sm font-semibold transition-colors disabled:opacity-50">
+                    class="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary-600 text-white text-sm font-semibold
+                           transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              <i class="bi bi-check-lg"></i>
               {{ saving ? 'Saving...' : 'Save Changes' }}
             </button>
             <a routerLink="/profile/addresses"
-               class="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-borderColor text-sm text-textDark hover:bg-gray-50 transition-colors">
+               class="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-borderColor
+                      text-sm text-textDark hover:bg-gray-50 transition-colors">
               <i class="bi bi-geo-alt"></i> Addresses
             </a>
           </div>
         </div>
       </form>
 
-      <!-- Change password -->
-      <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
-        <div class="bg-white rounded-2xl border border-borderColor p-5 shadow-card space-y-4">
-          <p class="text-xs font-semibold text-textMuted uppercase tracking-wide">Change Password</p>
-          <div>
-            <label class="text-xs font-medium text-textMuted block mb-1">Current Password</label>
-            <input formControlName="currentPassword" type="password" placeholder="••••••••"
-                   class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
-          </div>
-          <div class="grid sm:grid-cols-2 gap-4">
+      <!-- ── Security ── -->
+      <div *ngIf="activeSection === 'security'" class="space-y-4">
+
+        <div class="bg-white rounded-2xl border border-borderColor p-5 shadow-card">
+          <div class="flex items-center justify-between mb-5">
             <div>
-              <label class="text-xs font-medium text-textMuted block mb-1">New Password</label>
-              <input formControlName="newPassword" type="password" placeholder="••••••••"
-                     class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
+              <p class="text-sm font-semibold text-textDark">Change Password</p>
+              <p class="text-xs text-textMuted mt-0.5">Use a strong password you don't use elsewhere</p>
             </div>
+            <i class="bi bi-shield-check text-2xl text-primary/30"></i>
+          </div>
+
+          <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="space-y-4">
             <div>
-              <label class="text-xs font-medium text-textMuted block mb-1">Confirm New Password</label>
-              <input formControlName="confirmPassword" type="password" placeholder="••••••••"
-                     class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
+              <label class="text-xs font-medium text-textMuted block mb-1">Current Password</label>
+              <input formControlName="currentPassword" type="password" placeholder="••••••••"
+                     class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                            focus:outline-none focus:ring-2 focus:ring-primary-400" />
+            </div>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-medium text-textMuted block mb-1">New Password</label>
+                <input formControlName="newPassword" type="password" placeholder="••••••••"
+                       class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                              focus:outline-none focus:ring-2 focus:ring-primary-400" />
+              </div>
+              <div>
+                <label class="text-xs font-medium text-textMuted block mb-1">Confirm New Password</label>
+                <input formControlName="confirmPassword" type="password" placeholder="••••••••"
+                       class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                              focus:outline-none focus:ring-2 focus:ring-primary-400" />
+              </div>
+            </div>
+            <button type="submit" [disabled]="changingPassword"
+                    class="w-full py-2.5 rounded-xl bg-primary hover:bg-primary-600 text-white text-sm font-semibold
+                           transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              <i class="bi bi-lock"></i>
+              {{ changingPassword ? 'Updating...' : 'Update Password' }}
+            </button>
+          </form>
+        </div>
+
+        <!-- Login info -->
+        <div class="bg-white rounded-2xl border border-borderColor p-5 shadow-card">
+          <p class="text-sm font-semibold text-textDark mb-3">Login Details</p>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between py-2 border-b border-borderColor">
+              <div class="flex items-center gap-2 text-sm text-textDark">
+                <i class="bi bi-envelope text-textMuted text-sm"></i> Email
+              </div>
+              <span class="text-sm text-textMuted">{{ email }}</span>
+            </div>
+            <div class="flex items-center justify-between py-2">
+              <div class="flex items-center gap-2 text-sm text-textDark">
+                <i class="bi bi-key text-textMuted text-sm"></i> Password
+              </div>
+              <span class="text-sm text-textMuted">••••••••</span>
             </div>
           </div>
-          <button type="submit" [disabled]="changingPassword"
-                  class="w-full py-2.5 rounded-xl border border-borderColor text-sm font-semibold text-textDark hover:bg-gray-50 transition-colors disabled:opacity-50">
-            {{ changingPassword ? 'Changing...' : 'Change Password' }}
+        </div>
+
+      </div>
+
+      <!-- ── Privacy ── -->
+      <div *ngIf="activeSection === 'privacy'" class="space-y-4">
+
+        <div class="bg-white rounded-2xl border border-borderColor p-5 shadow-card">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <p class="text-sm font-semibold text-textDark">Data & Privacy</p>
+              <p class="text-xs text-textMuted mt-0.5">Control how your data is used</p>
+            </div>
+            <i class="bi bi-shield text-2xl text-primary/30"></i>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-surface border border-borderColor">
+              <i class="bi bi-person-check text-primary mt-0.5"></i>
+              <div>
+                <p class="text-sm font-medium text-textDark">Your profile data</p>
+                <p class="text-xs text-textMuted mt-0.5">Name and phone are only visible to the store you order from. Your email is never shared.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-surface border border-borderColor">
+              <i class="bi bi-cart text-primary mt-0.5"></i>
+              <div>
+                <p class="text-sm font-medium text-textDark">Order history</p>
+                <p class="text-xs text-textMuted mt-0.5">Your order history is kept to let you reorder and track deliveries.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Danger zone -->
+        <div class="bg-white rounded-2xl border border-red-200 p-5 shadow-card">
+          <p class="text-sm font-semibold text-danger mb-1">Danger Zone</p>
+          <p class="text-xs text-textMuted mb-4">Permanently delete your account and all associated data. This cannot be undone.</p>
+          <button (click)="confirmDeleteAccount()"
+                  class="px-4 py-2.5 rounded-xl border border-red-300 text-sm font-semibold text-danger
+                         hover:bg-red-50 transition-colors flex items-center gap-2">
+            <i class="bi bi-trash3"></i> Delete My Account
           </button>
         </div>
-      </form>
+
+      </div>
 
     </ng-container>
   </div>
 </div>
+
+<!-- Delete account confirmation modal -->
+<app-confirm-modal
+  [isOpen]="showDeleteConfirm"
+  title="Delete Account"
+  message="This will permanently delete your account, order history, and all personal data. This action cannot be undone."
+  confirmLabel="Delete My Account"
+  variant="danger"
+  (confirmed)="deleteAccount()"
+  (cancelled)="showDeleteConfirm = false">
+</app-confirm-modal>
