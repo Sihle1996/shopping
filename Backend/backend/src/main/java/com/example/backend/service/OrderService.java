@@ -118,13 +118,22 @@ public class OrderService {
                 .setScale(2, RoundingMode.HALF_UP)
                 .doubleValue();
 
+        // Build a productId → category map from the already-resolved menu items
+        java.util.Map<UUID, String> productCategoryMap = new java.util.HashMap<>();
+        for (OrderItem orderItem : orderItems) {
+            if (orderItem.getMenuItem() != null && orderItem.getMenuItem().getId() != null) {
+                String cat = orderItem.getMenuItem().getCategory();
+                productCategoryMap.put(orderItem.getMenuItem().getId(), cat != null ? cat : "");
+            }
+        }
+
         // Apply promotion discount server-side
         double discountAmount = 0.0;
         String appliedPromoCode = null;
 
         java.util.Optional<Promotion> promoOpt = (request.getPromoCode() != null && !request.getPromoCode().isBlank())
                 ? promotionService.validateCode(request.getPromoCode())
-                : promotionService.findAutoAppliedAllPromo();
+                : promotionService.findBestAutoAppliedPromo();
 
         if (promoOpt.isPresent()) {
             Promotion promo = promoOpt.get();
@@ -139,8 +148,15 @@ public class OrderService {
                             discountAmount += item.getPrice() * item.getQuantity() * pct;
                         }
                     }
-                } else if (promo.getAppliesTo() == Promotion.AppliesTo.CATEGORY) {
-                    discountAmount = subtotal * pct;
+                } else if (promo.getAppliesTo() == Promotion.AppliesTo.CATEGORY
+                        && promo.getTargetCategoryName() != null) {
+                    String targetCat = promo.getTargetCategoryName().toLowerCase();
+                    for (OrderItemDTO item : request.getItems()) {
+                        String itemCat = productCategoryMap.getOrDefault(item.getProductId(), "").toLowerCase();
+                        if (itemCat.equals(targetCat)) {
+                            discountAmount += item.getPrice() * item.getQuantity() * pct;
+                        }
+                    }
                 }
                 discountAmount = BigDecimal.valueOf(discountAmount).setScale(2, RoundingMode.HALF_UP).doubleValue();
                 appliedPromoCode = promo.getCode() != null ? promo.getCode().trim() : promo.getTitle();

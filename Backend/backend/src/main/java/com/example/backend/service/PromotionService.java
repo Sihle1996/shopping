@@ -52,7 +52,7 @@ public class PromotionService {
         UUID tenantId = TenantContext.getCurrentTenantId();
         Optional<Promotion> opt = (tenantId != null)
                 ? promotionRepository.findFeaturedByTenantId(now, tenantId)
-                : promotionRepository.findFirstByFeaturedTrueAndActiveTrueAndStartAtBeforeAndEndAtAfter(now, now);
+                : promotionRepository.findFirstFeaturedActive(now);
         opt.ifPresent(p -> enrichPromotions(List.of(p)));
         return opt;
     }
@@ -66,11 +66,40 @@ public class PromotionService {
         return promotionRepository.findByCodeAndActiveTrue(code.trim());
     }
 
+    /**
+     * @deprecated use findBestAutoAppliedPromo() which handles ALL, PRODUCT and CATEGORY no-code promos
+     */
     public Optional<Promotion> findAutoAppliedAllPromo() {
         return getActivePromotions().stream()
                 .filter(p -> p.getCode() == null || p.getCode().isBlank())
                 .filter(p -> p.getAppliesTo() == Promotion.AppliesTo.ALL)
                 .filter(p -> p.getDiscountPercent() != null)
                 .findFirst();
+    }
+
+    /**
+     * Returns the best auto-applied (no-code) promotion for this tenant.
+     * Preference order: ALL > PRODUCT > CATEGORY, then by highest discountPercent.
+     */
+    public Optional<Promotion> findBestAutoAppliedPromo() {
+        List<Promotion> candidates = getActivePromotions().stream()
+                .filter(p -> p.getCode() == null || p.getCode().isBlank())
+                .filter(p -> p.getDiscountPercent() != null)
+                .toList();
+        if (candidates.isEmpty()) return Optional.empty();
+        // Prefer ALL scope, then pick highest discount percent within scope
+        return candidates.stream()
+                .max(java.util.Comparator
+                        .comparingInt((Promotion p) -> scopePriority(p.getAppliesTo()))
+                        .thenComparingDouble(p -> p.getDiscountPercent().doubleValue()));
+    }
+
+    private int scopePriority(Promotion.AppliesTo scope) {
+        if (scope == null) return 0;
+        return switch (scope) {
+            case ALL -> 3;
+            case PRODUCT -> 2;
+            case CATEGORY -> 1;
+        };
     }
 }

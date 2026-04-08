@@ -214,7 +214,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.promotionService.getFeaturedPromotion()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (p) => this.featuredPromotion = p,
+        next: (p) => { this.featuredPromotion = p; },
         error: () => {}
       });
 
@@ -225,6 +225,10 @@ export class HomeComponent implements OnInit, OnDestroy {
           this.promotions = list;
           const autoAll = list.find(p => !p.code && p.appliesTo === 'ALL' && p.discountPercent);
           this.autoDiscount = autoAll?.discountPercent ?? 0;
+          // Fallback: if no explicitly featured promo loaded, use the first active promo as banner
+          if (!this.featuredPromotion && list.length > 0) {
+            this.featuredPromotion = list[0];
+          }
         },
         error: () => {}
       });

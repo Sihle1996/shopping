@@ -294,14 +294,23 @@ export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewCheck
       this.cartService.addToCart(
         item.productId,
         item.quantity,
-        item.size || 'Regular',
+        item.size || null,
         item.selectedChoices ? JSON.stringify(item.selectedChoices) : undefined
       )
     );
     let done = 0;
     adds.forEach(obs => obs.subscribe({
-      next: () => { done++; if (done === adds.length) { this.reorderingId = null; this.toastr.success('Items added to cart'); } },
-      error: () => { this.reorderingId = null; this.toastr.error('Could not reorder some items'); }
+      next: () => {
+        done++;
+        if (done === adds.length) {
+          this.reorderingId = null;
+          this.toastr.success('Items added to cart at current prices');
+          if (order.promoCode) {
+            this.toastr.info(`Note: previous promotion "${order.promoCode}" may no longer apply`, '', { timeOut: 5000 });
+          }
+        }
+      },
+      error: () => { this.reorderingId = null; this.toastr.error('Could not reorder some items — they may be out of stock'); }
     }));
   }
 
