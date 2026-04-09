@@ -22,21 +22,6 @@
   </div>
 </div>
 
-<!-- Store info strip (ETA + cuisine + hours) -->
-<div *ngIf="!notFound && tenant && (tenant.estimatedDeliveryMinutes || tenant.cuisineType || tenant.openingHours)"
-     class="bg-white border-b border-borderColor px-4 py-2 text-xs text-textMuted">
-  <div class="max-w-7xl mx-auto flex flex-wrap items-center gap-3">
-    <span *ngIf="tenant.cuisineType" class="flex items-center gap-1">
-      <i class="bi bi-egg-fried text-primary"></i>{{ tenant.cuisineType }}
-    </span>
-    <span *ngIf="tenant.estimatedDeliveryMinutes" class="flex items-center gap-1">
-      <i class="bi bi-clock text-primary"></i>~{{ tenant.estimatedDeliveryMinutes }} min delivery
-    </span>
-    <span *ngIf="tenant.openingHours" class="flex items-center gap-1">
-      <i class="bi bi-calendar3 text-primary"></i>{{ tenant.openingHours }}
-    </span>
-  </div>
-</div>
 
 <!-- Child route outlet — always present so Angular can activate child routes.
      Each child component handles its own loading state. -->
