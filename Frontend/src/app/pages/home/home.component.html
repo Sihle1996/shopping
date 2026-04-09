@@ -8,8 +8,8 @@
     </a>
   </div>
 
-  <!-- Hero Section -->
-  <div class="px-4 pt-3 pb-2 lg:px-8">
+  <!-- Hero / Search — full width above the two-column layout -->
+  <div class="px-4 pt-3 pb-4 lg:px-8">
     <div class="flex items-center justify-between mb-6">
       <div>
         <p class="text-textLight text-sm">Discover</p>
@@ -36,128 +36,163 @@
     </div>
 
     <!-- Featured Promotion Banner -->
-    <div class="mb-6" *ngIf="isFeaturedPromoValid && featuredPromotion as fp">
+    <div class="mb-5" *ngIf="isFeaturedPromoValid && featuredPromotion as fp">
       <app-promotion-banner [promotion]="fp"></app-promotion-banner>
     </div>
 
     <!-- Search Bar -->
-    <div class="mb-6 max-w-2xl">
+    <div class="max-w-2xl">
       <app-search-bar
         placeholder="Search for burgers, pizza, drinks..."
         [value]="searchQuery"
         (search)="onSearch($event)">
       </app-search-bar>
     </div>
-
-    <!-- Category Chips -->
-    <div class="mb-6">
-      <app-category-chips
-        [categories]="categories"
-        [selected]="selectedCategory"
-        (selectedChange)="filterByCategory($event)">
-      </app-category-chips>
-    </div>
-
-    <!-- Section Header -->
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-heading text-lg font-semibold text-textDark">
-        {{ selectedCategory === 'All' ? 'Popular' : selectedCategory }}
-        <span class="text-textMuted font-normal text-sm ml-1">({{ filteredMenuItems.length }})</span>
-      </h3>
-      <select
-        [(ngModel)]="selectedSort"
-        (change)="sortMenu()"
-        class="text-sm border border-borderColor rounded-lg px-3 py-2 bg-white text-textDark
-               focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent cursor-pointer">
-        <option value="default">Sort by</option>
-        <option value="priceLowHigh">Price: Low → High</option>
-        <option value="priceHighLow">Price: High → Low</option>
-      </select>
-    </div>
   </div>
 
-  <!-- Promotions Grid -->
-  <div class="px-4 lg:px-8 mb-6" *ngIf="visiblePromotions.length && selectedCategory === 'All' && !searchQuery">
-    <h3 class="font-heading text-lg font-semibold text-textDark mb-3">
-      <i class="bi bi-tag text-primary mr-1"></i> Promotions
-    </h3>
-    <app-promotion-grid [promotions]="visiblePromotions"></app-promotion-grid>
-  </div>
+  <!-- ── Two-column layout: sidebar | content ────────────────────────────── -->
+  <div class="flex gap-6 px-4 lg:px-8 flex-1 items-start mt-4">
 
-  <!-- Product Grid -->
-  <div class="flex-1 px-4 lg:px-8">
+    <!-- LEFT SIDEBAR: desktop only -->
+    <aside class="hidden lg:flex flex-col w-44 flex-shrink-0 sticky top-6">
+      <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-2 px-3">Menu</p>
+      <nav class="space-y-0.5">
 
-    <!-- Skeleton grid while loading -->
-    <div *ngIf="isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      <div *ngFor="let _ of [1,2,3,4,5,6,7,8]"
-           class="bg-white rounded-2xl overflow-hidden shadow-card animate-pulse">
-        <div class="aspect-[4/3] bg-gray-200"></div>
-        <div class="p-4 space-y-2.5">
-          <div class="h-3.5 bg-gray-200 rounded-full w-1/4"></div>
-          <div class="h-4 bg-gray-200 rounded-full w-3/4"></div>
-          <div class="h-3 bg-gray-200 rounded-full w-full"></div>
-          <div class="h-3 bg-gray-200 rounded-full w-2/3"></div>
-          <div class="flex justify-between items-center pt-1">
-            <div class="h-5 bg-gray-200 rounded-full w-1/4"></div>
-            <div class="w-9 h-9 bg-gray-200 rounded-full"></div>
+        <!-- All -->
+        <button (click)="filterByCategory('All')"
+                class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                [class.text-white]="selectedCategory === 'All'"
+                [class.text-textDark]="selectedCategory !== 'All'"
+                [class.hover:bg-white]="selectedCategory !== 'All'"
+                [class.hover:shadow-sm]="selectedCategory !== 'All'"
+                [style.background]="selectedCategory === 'All' ? 'var(--brand-primary)' : ''">
+          All Items
+        </button>
+
+        <!-- Per-category -->
+        <button *ngFor="let cat of categories"
+                (click)="filterByCategory(cat)"
+                class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                [class.text-white]="selectedCategory === cat"
+                [class.text-textDark]="selectedCategory !== cat"
+                [class.hover:bg-white]="selectedCategory !== cat"
+                [class.hover:shadow-sm]="selectedCategory !== cat"
+                [style.background]="selectedCategory === cat ? 'var(--brand-primary)' : ''">
+          {{ cat }}
+        </button>
+
+      </nav>
+    </aside>
+
+    <!-- RIGHT: Main content -->
+    <div class="flex-1 min-w-0">
+
+      <!-- Mobile: category chips (hidden on desktop) -->
+      <div class="mb-5 lg:hidden">
+        <app-category-chips
+          [categories]="categories"
+          [selected]="selectedCategory"
+          (selectedChange)="filterByCategory($event)">
+        </app-category-chips>
+      </div>
+
+      <!-- Section header + sort -->
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-heading text-lg font-semibold text-textDark">
+          {{ selectedCategory === 'All' ? 'Popular' : selectedCategory }}
+          <span class="text-textMuted font-normal text-sm ml-1">({{ filteredMenuItems.length }})</span>
+        </h3>
+        <select
+          [(ngModel)]="selectedSort"
+          (change)="sortMenu()"
+          class="text-sm border border-borderColor rounded-lg px-3 py-2 bg-white text-textDark
+                 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent cursor-pointer">
+          <option value="default">Sort by</option>
+          <option value="priceLowHigh">Price: Low → High</option>
+          <option value="priceHighLow">Price: High → Low</option>
+        </select>
+      </div>
+
+      <!-- Promotions -->
+      <div class="mb-6" *ngIf="visiblePromotions.length && selectedCategory === 'All' && !searchQuery">
+        <h3 class="font-heading text-lg font-semibold text-textDark mb-3">
+          <i class="bi bi-tag text-primary mr-1"></i> Promotions
+        </h3>
+        <app-promotion-grid [promotions]="visiblePromotions"></app-promotion-grid>
+      </div>
+
+      <!-- Skeleton grid while loading -->
+      <div *ngIf="isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div *ngFor="let _ of [1,2,3,4,5,6]"
+             class="bg-white rounded-2xl overflow-hidden shadow-card animate-pulse">
+          <div class="aspect-[4/3] bg-gray-200"></div>
+          <div class="p-4 space-y-2.5">
+            <div class="h-3.5 bg-gray-200 rounded-full w-1/4"></div>
+            <div class="h-4 bg-gray-200 rounded-full w-3/4"></div>
+            <div class="h-3 bg-gray-200 rounded-full w-full"></div>
+            <div class="h-3 bg-gray-200 rounded-full w-2/3"></div>
+            <div class="flex justify-between items-center pt-1">
+              <div class="h-5 bg-gray-200 rounded-full w-1/4"></div>
+              <div class="w-9 h-9 bg-gray-200 rounded-full"></div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Empty state -->
-    <app-empty-state
-      *ngIf="filteredMenuItems.length === 0 && !isLoading"
-      icon="bi bi-search"
-      title="No items found"
-      message="Try adjusting your search or category filter"
-      actionLabel="Clear Filters"
-      (action)="clearFilters()">
-    </app-empty-state>
+      <!-- Empty state -->
+      <app-empty-state
+        *ngIf="filteredMenuItems.length === 0 && !isLoading"
+        icon="bi bi-search"
+        title="No items found"
+        message="Try adjusting your search or category filter"
+        actionLabel="Clear Filters"
+        (action)="clearFilters()">
+      </app-empty-state>
 
-    <!-- Grid -->
-    <div *ngIf="!isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" data-testid="menu-grid">
-      <app-product-card
-        *ngFor="let item of filteredMenuItems; trackBy: trackById"
-        [attr.data-testid]="'product-card-' + item.id"
-        [item]="item"
-        [showFavorite]="isLoggedIn"
-        [showAddToCart]="storeIsOpen"
-        [discountPercent]="getDiscountForItem(item)"
-        (cardClick)="goToProductDetails($event)"
-        (addToCart)="quickAddToCart($event)"
-        (favorite)="toggleFavorite($event)">
-      </app-product-card>
-    </div>
-  </div>
-
-
-<!-- Customer Reviews Section -->
-  <section *ngIf="reviews.length > 0" class="px-4 lg:px-8 py-6 border-t border-borderColor mt-4">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="font-heading text-lg font-bold text-textDark">Customer Reviews</h2>
-      <span class="text-sm text-textMuted">
-        <i class="bi bi-star-fill text-amber-400 mr-1"></i>
-        {{ avgRating | number:'1.1-1' }} ({{ reviews.length }})
-      </span>
-    </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div *ngFor="let r of reviews.slice(0, 6)"
-           class="bg-white rounded-2xl border border-borderColor p-4 shadow-sm">
-        <div class="flex items-center gap-1 mb-2">
-          <i *ngFor="let s of [1,2,3,4,5]"
-             class="bi text-sm"
-             [class.bi-star-fill]="s <= r.rating"
-             [class.bi-star]="s > r.rating"
-             [ngClass]="s <= r.rating ? 'text-amber-400' : 'text-gray-300'"></i>
-        </div>
-        <p *ngIf="r.comment" class="text-textDark text-sm leading-relaxed line-clamp-3">{{ r.comment }}</p>
-        <p class="text-textMuted text-xs mt-2">{{ r.createdAt | date:'mediumDate' }}</p>
+      <!-- Product grid -->
+      <div *ngIf="!isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" data-testid="menu-grid">
+        <app-product-card
+          *ngFor="let item of filteredMenuItems; trackBy: trackById"
+          [attr.data-testid]="'product-card-' + item.id"
+          [item]="item"
+          [showFavorite]="isLoggedIn"
+          [showAddToCart]="storeIsOpen"
+          [discountPercent]="getDiscountForItem(item)"
+          (cardClick)="goToProductDetails($event)"
+          (addToCart)="quickAddToCart($event)"
+          (favorite)="toggleFavorite($event)">
+        </app-product-card>
       </div>
-    </div>
-  </section>
 
-<!-- Add to Cart confirmation (mobile) -->
+      <!-- Customer Reviews -->
+      <section *ngIf="reviews.length > 0" class="py-6 border-t border-borderColor mt-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-heading text-lg font-bold text-textDark">Customer Reviews</h2>
+          <span class="text-sm text-textMuted">
+            <i class="bi bi-star-fill text-amber-400 mr-1"></i>
+            {{ avgRating | number:'1.1-1' }} ({{ reviews.length }})
+          </span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div *ngFor="let r of reviews.slice(0, 6)"
+               class="bg-white rounded-2xl border border-borderColor p-4 shadow-sm">
+            <div class="flex items-center gap-1 mb-2">
+              <i *ngFor="let s of [1,2,3,4,5]"
+                 class="bi text-sm"
+                 [class.bi-star-fill]="s <= r.rating"
+                 [class.bi-star]="s > r.rating"
+                 [ngClass]="s <= r.rating ? 'text-amber-400' : 'text-gray-300'"></i>
+            </div>
+            <p *ngIf="r.comment" class="text-textDark text-sm leading-relaxed line-clamp-3">{{ r.comment }}</p>
+            <p class="text-textMuted text-xs mt-2">{{ r.createdAt | date:'mediumDate' }}</p>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /right column -->
+  </div><!-- /two-column layout -->
+
+  <!-- Add to Cart confirmation (mobile) -->
   <div *ngIf="cartAddedName"
        class="fixed bottom-16 left-4 right-4 z-50 md:hidden animate-fade-in">
     <div class="bg-gray-900 text-white rounded-2xl px-4 py-3 flex items-center justify-between shadow-lg">
@@ -173,7 +208,7 @@
     </div>
   </div>
 
-<!-- Out of Stock Modal -->
+  <!-- Out of Stock Modal -->
   <app-confirm-modal
     [isOpen]="showOutOfStockModal"
     title="Item Unavailable"
@@ -196,6 +231,7 @@
     (removeItem)="removeCartItem($event)"
     (updateQuantity)="updateCartItemQuantity($event)">
   </app-cart-drawer>
+
 </div>
 
 <!-- Modifier selection modal -->
