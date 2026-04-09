@@ -48,7 +48,7 @@
   </app-empty-state>
 
   <!-- Orders list -->
-  <div class="px-4 lg:px-8 space-y-4 lg:max-w-3xl">
+  <div class="px-4 lg:px-8 space-y-4">
     <div *ngFor="let order of paginatedOrders; trackBy: trackById"
          class="bg-white rounded-2xl brand-trim shadow-card p-5 animate-fade-in">
 
@@ -169,7 +169,7 @@
 
   <!-- Loyalty balance banner -->
   <div *ngIf="loyaltyBalance && loyaltyBalance.balance > 0"
-       class="mx-4 lg:mx-8 mt-4 px-5 py-4 rounded-2xl bg-gradient-to-r from-primary-50 to-primary-100 border border-primary-200 flex items-center justify-between lg:max-w-3xl">
+       class="mx-4 lg:mx-8 mt-4 px-5 py-4 rounded-2xl bg-gradient-to-r from-primary-50 to-primary-100 border border-primary-200 flex items-center justify-between">
     <div>
       <p class="text-sm font-bold text-primary-700">
         <i class="bi bi-gift-fill mr-1.5"></i>{{ loyaltyBalance.balance }} Loyalty Points
