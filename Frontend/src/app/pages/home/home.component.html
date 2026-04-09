@@ -57,30 +57,16 @@
     <aside class="hidden lg:flex flex-col w-44 flex-shrink-0 sticky top-6">
       <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-2 px-3">Menu</p>
       <nav class="space-y-0.5">
-
-        <!-- All -->
-        <button (click)="filterByCategory('All')"
-                class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
-                [class.text-white]="selectedCategory === 'All'"
-                [class.text-textDark]="selectedCategory !== 'All'"
-                [class.hover:bg-white]="selectedCategory !== 'All'"
-                [class.hover:shadow-sm]="selectedCategory !== 'All'"
-                [style.background]="selectedCategory === 'All' ? 'var(--brand-primary)' : ''">
-          All Items
-        </button>
-
-        <!-- Per-category -->
         <button *ngFor="let cat of categories"
-                (click)="filterByCategory(cat)"
+                (click)="filterByCategory(cat.name)"
                 class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
-                [class.text-white]="selectedCategory === cat"
-                [class.text-textDark]="selectedCategory !== cat"
-                [class.hover:bg-white]="selectedCategory !== cat"
-                [class.hover:shadow-sm]="selectedCategory !== cat"
-                [style.background]="selectedCategory === cat ? 'var(--brand-primary)' : ''">
-          {{ cat }}
+                [class.text-white]="selectedCategory === cat.name"
+                [class.text-textDark]="selectedCategory !== cat.name"
+                [class.hover:bg-white]="selectedCategory !== cat.name"
+                [class.hover:shadow-sm]="selectedCategory !== cat.name"
+                [style.background]="selectedCategory === cat.name ? 'var(--brand-primary)' : ''">
+          {{ cat.name === 'All' ? 'All Items' : cat.name }}
         </button>
-
       </nav>
     </aside>
 
