@@ -41,7 +41,7 @@
     </div>
 
     <!-- Search Bar -->
-    <div class="mb-6">
+    <div class="mb-6 max-w-2xl">
       <app-search-bar
         placeholder="Search for burgers, pizza, drinks..."
         [value]="searchQuery"
@@ -88,7 +88,7 @@
   <div class="flex-1 px-4 lg:px-8">
 
     <!-- Skeleton grid while loading -->
-    <div *ngIf="isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+    <div *ngIf="isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
       <div *ngFor="let _ of [1,2,3,4,5,6,7,8]"
            class="bg-white rounded-2xl overflow-hidden shadow-card animate-pulse">
         <div class="aspect-[4/3] bg-gray-200"></div>
@@ -116,7 +116,7 @@
     </app-empty-state>
 
     <!-- Grid -->
-    <div *ngIf="!isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" data-testid="menu-grid">
+    <div *ngIf="!isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" data-testid="menu-grid">
       <app-product-card
         *ngFor="let item of filteredMenuItems; trackBy: trackById"
         [attr.data-testid]="'product-card-' + item.id"
