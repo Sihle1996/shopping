@@ -25,6 +25,7 @@ import com.example.backend.service.LoyaltyService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -521,6 +522,36 @@ public class OrderService {
         return getAllOrders().stream()
                 .filter(o -> "Pending".equals(o.getStatus()))
                 .count();
+    }
+
+    public long getTodayOrders() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        Instant startOfDay = LocalDate.now(ZoneId.of("Africa/Johannesburg"))
+                .atStartOfDay(ZoneId.of("Africa/Johannesburg")).toInstant();
+        List<Order> orders = tenantId != null
+                ? orderRepository.findByOrderDateBetweenAndTenant_Id(startOfDay, Instant.now(), tenantId)
+                : orderRepository.findByOrderDateBetween(startOfDay, Instant.now());
+        return orders.size();
+    }
+
+    public double getTodayRevenue() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        Instant startOfDay = LocalDate.now(ZoneId.of("Africa/Johannesburg"))
+                .atStartOfDay(ZoneId.of("Africa/Johannesburg")).toInstant();
+        List<Order> orders = tenantId != null
+                ? orderRepository.findByOrderDateBetweenAndTenant_Id(startOfDay, Instant.now(), tenantId)
+                : orderRepository.findByOrderDateBetween(startOfDay, Instant.now());
+        return orders.stream()
+                .filter(o -> "Delivered".equals(o.getStatus()))
+                .mapToDouble(Order::getTotalAmount).sum();
+    }
+
+    public List<OrderDTO> getRecentOrders(int limit) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        List<Order> orders = tenantId != null
+                ? orderRepository.findByTenant_IdOrderByOrderDateDesc(tenantId)
+                : orderRepository.findAll(Sort.by(Sort.Direction.DESC, "orderDate"));
+        return orders.stream().limit(limit).map(this::convertToOrderDTO).toList();
     }
 
     @Transactional

@@ -55,6 +55,8 @@ public class AdminOrderController {
             stats.put("totalOrders", orderService.getTotalOrders());
             stats.put("totalRevenue", orderService.getTotalRevenue());
             stats.put("pendingOrders", orderService.getPendingOrdersCount());
+            stats.put("todayOrders", orderService.getTodayOrders());
+            stats.put("todayRevenue", orderService.getTodayRevenue());
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             log.error("Error fetching stats", e);
@@ -137,6 +139,17 @@ public class AdminOrderController {
         } catch (Exception e) {
             log.error("Error deleting order {}", orderId, e);
             return ResponseEntity.status(500).body("An error occurred while deleting the order.");
+        }
+    }
+
+    @GetMapping("/recent")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getRecentOrders() {
+        try {
+            return ResponseEntity.ok(orderService.getRecentOrders(5));
+        } catch (Exception e) {
+            log.error("Error fetching recent orders", e);
+            return ResponseEntity.status(500).body("Error fetching recent orders");
         }
     }
 

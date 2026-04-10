@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -34,5 +35,19 @@ public class AdminSettingsController {
 
         Tenant updated = tenantService.updateTenant(tenantId, updates);
         return ResponseEntity.ok(updated);
+    }
+
+    @PatchMapping("/toggle-open")
+    public ResponseEntity<?> toggleStoreOpen() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return ResponseEntity.badRequest().build();
+        return tenantService.getTenantById(tenantId)
+                .map(tenant -> {
+                    boolean newState = !Boolean.TRUE.equals(tenant.getIsOpen());
+                    tenant.setIsOpen(newState);
+                    tenantService.updateTenant(tenantId, tenant);
+                    return ResponseEntity.ok(Map.of("isOpen", newState));
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }

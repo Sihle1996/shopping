@@ -9,71 +9,169 @@
         <h1 class="font-heading text-2xl font-bold text-textDark">Dashboard</h1>
         <p class="text-textLight text-sm mt-1">Overview of your store performance</p>
       </div>
-      <div *ngIf="hasAnalytics" class="flex items-center gap-2">
-        <input type="date" [(ngModel)]="startDate" (change)="loadAnalytics()"
-               class="px-3 py-2 rounded-xl border border-borderColor bg-white text-sm text-textDark
-                      focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
-        <span class="text-textMuted text-sm">to</span>
-        <input type="date" [(ngModel)]="endDate" (change)="loadAnalytics()"
-               class="px-3 py-2 rounded-xl border border-borderColor bg-white text-sm text-textDark
-                      focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+
+      <div class="flex items-center gap-3 flex-wrap">
+        <!-- Store open/close toggle -->
+        <button (click)="toggleStore()" [disabled]="toggleLoading || settingsLoading"
+                class="flex items-center gap-2.5 px-4 py-2 rounded-xl font-semibold text-sm transition-all disabled:opacity-60"
+                [ngClass]="isStoreOpen
+                  ? 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100'
+                  : 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'">
+          <!-- pill switch -->
+          <span class="relative inline-flex w-9 h-5 rounded-full transition-colors flex-shrink-0"
+                [ngClass]="isStoreOpen ? 'bg-green-500' : 'bg-gray-300'">
+            <span class="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform"
+                  [ngClass]="isStoreOpen ? 'translate-x-4' : 'translate-x-0.5'"></span>
+          </span>
+          <span *ngIf="!toggleLoading">{{ isStoreOpen ? 'Store Open' : 'Store Closed' }}</span>
+          <span *ngIf="toggleLoading" class="flex items-center gap-1">
+            <i class="bi bi-arrow-repeat animate-spin"></i> Updating...
+          </span>
+        </button>
+
+        <!-- Date range (PRO/ENTERPRISE only) -->
+        <div *ngIf="hasAnalytics" class="flex items-center gap-2">
+          <input type="date" [(ngModel)]="startDate" (change)="loadAnalytics()"
+                 class="px-3 py-2 rounded-xl border border-borderColor bg-white text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+          <span class="text-textMuted text-sm">to</span>
+          <input type="date" [(ngModel)]="endDate" (change)="loadAnalytics()"
+                 class="px-3 py-2 rounded-xl border border-borderColor bg-white text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+        </div>
       </div>
     </div>
 
-    <!-- KPI Cards (always visible) -->
+    <!-- Today's KPI Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+
+      <!-- Today's Orders -->
       <div class="bg-white rounded-2xl shadow-card p-5">
-        <div class="flex items-center gap-3">
+        <p class="text-textMuted text-xs mb-3">Today's Orders</p>
+        <div class="flex items-end justify-between">
+          <div>
+            <p *ngIf="!statsLoading" class="font-numbers text-3xl font-bold text-textDark">{{ todayOrders }}</p>
+            <div *ngIf="statsLoading" class="h-8 w-12 bg-gray-100 rounded animate-pulse"></div>
+            <p class="text-xs text-textMuted mt-1">{{ totalOrders }} all-time</p>
+          </div>
           <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center">
             <i class="bi bi-receipt text-primary text-lg"></i>
           </div>
-          <div>
-            <p class="text-textMuted text-xs">Total Orders</p>
-            <p *ngIf="!statsLoading" class="font-numbers text-2xl font-bold text-textDark">{{ totalOrders }}</p>
-            <div *ngIf="statsLoading" class="h-7 w-16 bg-gray-100 rounded animate-pulse mt-1"></div>
-          </div>
         </div>
       </div>
+
+      <!-- Today's Revenue -->
       <div class="bg-white rounded-2xl shadow-card p-5">
-        <div class="flex items-center gap-3">
+        <p class="text-textMuted text-xs mb-3">Today's Revenue</p>
+        <div class="flex items-end justify-between">
+          <div>
+            <p *ngIf="!statsLoading" class="font-numbers text-3xl font-bold text-success">R{{ todayRevenue | number:'1.2-2' }}</p>
+            <div *ngIf="statsLoading" class="h-8 w-24 bg-gray-100 rounded animate-pulse"></div>
+            <p class="text-xs text-textMuted mt-1">R{{ totalRevenue | number:'1.0-0' }} all-time</p>
+          </div>
           <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
             <i class="bi bi-cash-coin text-success text-lg"></i>
           </div>
-          <div>
-            <p class="text-textMuted text-xs">Total Revenue</p>
-            <p *ngIf="!statsLoading" class="font-numbers text-2xl font-bold text-success">R{{ totalRevenue | number:'1.2-2' }}</p>
-            <div *ngIf="statsLoading" class="h-7 w-24 bg-gray-100 rounded animate-pulse mt-1"></div>
-          </div>
         </div>
       </div>
+
+      <!-- Pending Orders -->
       <div class="bg-white rounded-2xl shadow-card p-5">
-        <div class="flex items-center gap-3">
+        <p class="text-textMuted text-xs mb-3">Pending Orders</p>
+        <div class="flex items-end justify-between">
+          <div>
+            <p *ngIf="!statsLoading" class="font-numbers text-3xl font-bold text-warning">{{ pendingOrders }}</p>
+            <div *ngIf="statsLoading" class="h-8 w-10 bg-gray-100 rounded animate-pulse"></div>
+            <p class="text-xs text-textMuted mt-1">Need attention</p>
+          </div>
           <div class="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center">
             <i class="bi bi-clock text-warning text-lg"></i>
           </div>
-          <div>
-            <p class="text-textMuted text-xs">Pending Orders</p>
-            <p *ngIf="!statsLoading" class="font-numbers text-2xl font-bold text-warning">{{ pendingOrders }}</p>
-            <div *ngIf="statsLoading" class="h-7 w-12 bg-gray-100 rounded animate-pulse mt-1"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Live Orders Feed (always visible) -->
+    <div class="bg-white rounded-2xl shadow-card overflow-hidden mb-8">
+      <div class="px-5 py-4 border-b border-borderColor flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+          <h3 class="font-heading text-sm font-semibold text-textDark">Live Orders</h3>
+        </div>
+        <a routerLink="/admin/orders"
+           class="text-xs text-primary font-semibold hover:underline flex items-center gap-1">
+          View all <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Skeleton loading -->
+      <div *ngIf="recentOrdersLoading" class="divide-y divide-borderColor">
+        <div *ngFor="let i of [1,2,3,4,5]" class="px-5 py-3.5 flex items-center gap-4 animate-pulse">
+          <div class="h-6 w-20 bg-gray-100 rounded-full"></div>
+          <div class="h-4 w-20 bg-gray-100 rounded flex-1"></div>
+          <div class="h-4 w-24 bg-gray-100 rounded hidden sm:block"></div>
+          <div class="h-4 w-16 bg-gray-100 rounded"></div>
+        </div>
+      </div>
+
+      <!-- Orders list -->
+      <div *ngIf="!recentOrdersLoading">
+        <div *ngIf="recentOrders.length === 0" class="px-5 py-10 text-center text-textMuted text-sm">
+          <i class="bi bi-inbox text-3xl text-gray-300 block mb-2"></i>
+          No orders yet today
+        </div>
+
+        <div *ngFor="let order of recentOrders"
+             class="px-5 py-3.5 flex items-center gap-4 border-b border-borderColor last:border-0 hover:bg-surface transition-colors">
+
+          <!-- Status badge -->
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold flex-shrink-0"
+                [ngClass]="statusClass(order.status)">
+            <i class="bi text-[10px]" [ngClass]="statusIcon(order.status)"></i>
+            {{ order.status }}
+          </span>
+
+          <!-- Order ID + customer -->
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-textDark">#{{ order.id.substring(0, 8).toUpperCase() }}</p>
+            <p class="text-xs text-textMuted truncate">{{ order.userEmail || 'Guest' }}</p>
           </div>
+
+          <!-- Amount -->
+          <p class="font-numbers text-sm font-semibold text-textDark flex-shrink-0">
+            R{{ order.totalAmount | number:'1.2-2' }}
+          </p>
+
+          <!-- Time -->
+          <p class="text-xs text-textMuted flex-shrink-0 hidden sm:block">
+            {{ order.orderDate | date:'h:mm a' }}
+          </p>
+
+          <!-- Go to orders arrow -->
+          <a [routerLink]="['/admin/orders']"
+             class="text-textMuted hover:text-primary flex-shrink-0">
+            <i class="bi bi-chevron-right text-xs"></i>
+          </a>
+
         </div>
       </div>
     </div>
 
-    <!-- Analytics upgrade prompt (BASIC plan) -->
-    <div *ngIf="!hasAnalytics" class="mb-6 rounded-2xl border-2 border-dashed border-primary-200 bg-primary-50 p-8 text-center">
-      <div class="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-        <i class="bi bi-graph-up text-primary text-2xl"></i>
+    <!-- Analytics upgrade prompt (BASIC — compact) -->
+    <div *ngIf="!hasAnalytics"
+         class="mb-8 rounded-2xl border border-borderColor bg-white p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+      <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center flex-shrink-0">
+        <i class="bi bi-graph-up text-primary"></i>
       </div>
-      <h3 class="font-heading font-semibold text-textDark mb-1">Analytics available on PRO &amp; ENTERPRISE</h3>
-      <p class="text-textMuted text-sm mb-4 max-w-sm mx-auto">
-        Upgrade to unlock sales trends, top products, average order value, and delivery performance charts.
-      </p>
+      <div class="flex-1">
+        <p class="font-semibold text-sm text-textDark">Unlock analytics on PRO & ENTERPRISE</p>
+        <p class="text-xs text-textMuted mt-0.5">Sales trends, top products, AOV, on-time delivery and more.</p>
+      </div>
       <a routerLink="/admin/subscription"
-         class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary-600 transition-colors">
-        <i class="bi bi-arrow-up-circle"></i> Upgrade Plan
+         class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-xl hover:bg-primary-600 transition-colors flex-shrink-0">
+        <i class="bi bi-arrow-up-circle"></i> Upgrade
       </a>
-      <p class="text-xs text-textMuted mt-2">Currently on <strong>{{ subscriptionPlan }}</strong> plan</p>
     </div>
 
     <!-- Charts + metrics (PRO/ENTERPRISE only) -->
@@ -91,7 +189,7 @@
         </div>
       </div>
 
-      <!-- Sales trend + Top products charts -->
+      <!-- Sales trends + Top products -->
       <div *ngIf="!analyticsLoading" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div class="bg-white rounded-2xl shadow-card p-5">
           <h3 class="font-heading text-sm font-semibold text-textDark mb-1">Sales Trends</h3>
@@ -159,7 +257,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let p of topProducts" class="border-b border-borderColor last:border-0 hover:bg-surface transition-colors">
+            <tr *ngFor="let p of topProducts"
+                class="border-b border-borderColor last:border-0 hover:bg-surface transition-colors">
               <td class="px-5 py-3 text-sm font-medium text-textDark">{{ p.name }}</td>
               <td class="px-5 py-3 text-sm font-numbers font-semibold text-textDark text-right">{{ p.quantity }}</td>
             </tr>

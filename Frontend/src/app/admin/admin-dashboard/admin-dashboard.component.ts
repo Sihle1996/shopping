@@ -43,18 +43,34 @@ export class AdminDashboardComponent implements OnInit {
   startDate!: string;
   endDate!: string;
 
+  // All-time stats
   totalOrders = 0;
   totalRevenue = 0;
   pendingOrders = 0;
+
+  // Today's stats
+  todayOrders = 0;
+  todayRevenue = 0;
+
+  // Analytics (PRO/ENTERPRISE)
   aov = 0;
   onTime = 0;
   cancellations = 0;
   topProducts: any[] = [];
 
+  // Store toggle
+  isStoreOpen = false;
+  toggleLoading = false;
+
+  // Recent orders (live feed)
+  recentOrders: any[] = [];
+  recentOrdersLoading = true;
+
   hasAnalytics = false;
   subscriptionPlan = '';
   statsLoading = true;
   analyticsLoading = true;
+  settingsLoading = true;
 
   salesChartOptions: Partial<SalesChartOptions> = this.buildSalesChartOptions([], []);
   productsChartOptions: Partial<ProductsChartOptions> = this.buildProductsChartOptions([], []);
@@ -70,13 +86,42 @@ export class AdminDashboardComponent implements OnInit {
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
     this.startDate = start.toISOString().substring(0, 10);
     this.endDate = now.toISOString().substring(0, 10);
+
     this.loadStats();
+    this.loadStoreSettings();
+    this.loadRecentOrders();
 
     this.subscriptionService.load().subscribe(info => {
       this.hasAnalytics = info.features.hasAnalytics;
       this.subscriptionPlan = info.plan;
       if (this.hasAnalytics) this.loadAnalytics();
       else this.analyticsLoading = false;
+    });
+  }
+
+  private loadStoreSettings(): void {
+    this.adminService.getStoreSettings().subscribe({
+      next: settings => {
+        this.isStoreOpen = settings.isOpen ?? false;
+        this.settingsLoading = false;
+      },
+      error: () => { this.settingsLoading = false; }
+    });
+  }
+
+  private loadRecentOrders(): void {
+    this.recentOrdersLoading = true;
+    this.adminService.getRecentOrders().subscribe({
+      next: orders => { this.recentOrders = orders; this.recentOrdersLoading = false; },
+      error: () => { this.recentOrdersLoading = false; }
+    });
+  }
+
+  toggleStore(): void {
+    this.toggleLoading = true;
+    this.adminService.toggleStoreOpen().subscribe({
+      next: res => { this.isStoreOpen = res.isOpen; this.toggleLoading = false; },
+      error: () => { this.toggleLoading = false; }
     });
   }
 
@@ -117,8 +162,36 @@ export class AdminDashboardComponent implements OnInit {
       this.totalOrders = stats.totalOrders || 0;
       this.totalRevenue = stats.totalRevenue || 0;
       this.pendingOrders = stats.pendingOrders || 0;
+      this.todayOrders = stats.todayOrders || 0;
+      this.todayRevenue = stats.todayRevenue || 0;
       this.statsLoading = false;
     });
+  }
+
+  statusClass(status: string): string {
+    switch (status) {
+      case 'Pending':          return 'bg-yellow-100 text-yellow-700';
+      case 'Confirmed':        return 'bg-blue-100 text-blue-700';
+      case 'Preparing':        return 'bg-orange-100 text-orange-700';
+      case 'Out for Delivery': return 'bg-purple-100 text-purple-700';
+      case 'Delivered':        return 'bg-green-100 text-green-700';
+      case 'Cancelled':        return 'bg-red-100 text-red-500';
+      case 'Rejected':         return 'bg-gray-100 text-gray-500';
+      default:                 return 'bg-gray-100 text-gray-600';
+    }
+  }
+
+  statusIcon(status: string): string {
+    switch (status) {
+      case 'Pending':          return 'bi-clock';
+      case 'Confirmed':        return 'bi-check';
+      case 'Preparing':        return 'bi-fire';
+      case 'Out for Delivery': return 'bi-truck';
+      case 'Delivered':        return 'bi-check-circle-fill';
+      case 'Cancelled':        return 'bi-x-circle';
+      case 'Rejected':         return 'bi-slash-circle';
+      default:                 return 'bi-circle';
+    }
   }
 
   private buildSalesChartOptions(labels: string[], values: number[]): Partial<SalesChartOptions> {

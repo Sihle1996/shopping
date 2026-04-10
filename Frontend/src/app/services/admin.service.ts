@@ -52,6 +52,24 @@ orders$ = this.ordersSubject.asObservable();
     });
   }
 
+  getRecentOrders(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/orders/recent`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  getStoreSettings(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/settings`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  toggleStoreOpen(): Observable<{ isOpen: boolean }> {
+    return this.http.patch<{ isOpen: boolean }>(`${this.baseUrl}/settings/toggle-open`, null, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
   loadOrders(): Observable<any[]> {
     return this.http
       .get<any[]>(`${this.baseUrl}/orders`, { headers: this.getAuthHeaders() })
