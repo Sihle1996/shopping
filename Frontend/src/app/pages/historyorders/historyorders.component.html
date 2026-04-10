@@ -37,15 +37,23 @@
     </div>
   </div>
 
-  <!-- Empty state -->
+  <!-- Empty state: no orders at all -->
   <app-empty-state
-    *ngIf="!loading && filteredOrders.length === 0 && !errorMessage"
+    *ngIf="!loading && orders.length === 0 && !errorMessage"
     icon="bi bi-receipt"
     title="No orders yet"
     message="Once you place an order, it will appear here"
     actionLabel="Browse Menu"
     (action)="goToMenu()">
   </app-empty-state>
+
+  <!-- Empty state: has orders but filter has none -->
+  <div *ngIf="!loading && orders.length > 0 && filteredOrders.length === 0 && !errorMessage"
+       class="flex flex-col items-center justify-center py-16 px-4 text-center">
+    <i class="bi bi-funnel text-4xl text-gray-300 mb-3"></i>
+    <p class="font-semibold text-textDark text-sm">No {{ selectedStatus }} orders</p>
+    <p class="text-xs text-textMuted mt-1">Try a different filter</p>
+  </div>
 
   <!-- Orders list -->
   <div class="px-4 lg:px-8 space-y-4">
@@ -167,8 +175,8 @@
     </div>
   </div>
 
-  <!-- Loyalty balance banner -->
-  <div *ngIf="loyaltyBalance && loyaltyBalance.balance > 0"
+  <!-- Loyalty balance banner (All tab only) -->
+  <div *ngIf="loyaltyBalance && loyaltyBalance.balance > 0 && selectedStatus === 'All'"
        class="mx-4 lg:mx-8 mt-4 px-5 py-4 rounded-2xl bg-gradient-to-r from-primary-50 to-primary-100 border border-primary-200 flex items-center justify-between">
     <div>
       <p class="text-sm font-bold text-primary-700">

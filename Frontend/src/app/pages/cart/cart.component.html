@@ -1,10 +1,11 @@
 <div class="min-h-screen bg-surface flex flex-col pb-32 max-w-7xl mx-auto">
   <!-- Header -->
   <div class="px-4 pt-6 pb-4 lg:px-8">
-    <div class="flex items-center gap-3 mb-2">
-      <button (click)="goBack()" class="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors">
-        <i class="bi bi-arrow-left text-textDark text-lg"></i>
-      </button>
+    <button (click)="goBack()"
+            class="inline-flex items-center gap-1.5 text-xs text-textMuted hover:text-textDark transition-colors mb-3">
+      <i class="bi bi-arrow-left text-xs"></i> Back to menu
+    </button>
+    <div class="flex items-center gap-2">
       <h2 class="font-heading text-2xl font-bold text-textDark">Your Cart</h2>
       <span *ngIf="cartItems.length" class="text-textMuted text-sm">({{ cartItems.length }} items)</span>
     </div>

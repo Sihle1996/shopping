@@ -110,7 +110,8 @@ export class CartComponent implements OnInit {
   }
 
   goBack(): void {
-    this.location.back();
+    const slug = localStorage.getItem('storeSlug');
+    this.router.navigate(slug ? ['/store', slug] : ['/stores']);
   }
 
   goToMenu(): void {
