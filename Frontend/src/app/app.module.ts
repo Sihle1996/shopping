@@ -1,3 +1,4 @@
+import { NgApexchartsModule } from 'ng-apexcharts';
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
@@ -61,6 +62,7 @@ import { TrackOrderComponent } from './pages/track-order/track-order.component';
     BrowserAnimationsModule,
     FormsModule,
     ReactiveFormsModule,
+    NgApexchartsModule,
     AdminDashboardModule,
     SharedModule,
     AppRoutingModule,

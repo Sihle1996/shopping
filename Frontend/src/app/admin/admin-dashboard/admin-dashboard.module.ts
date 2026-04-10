@@ -1,3 +1,4 @@
+import { NgApexchartsModule } from 'ng-apexcharts';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -45,7 +46,7 @@ import { AdminReviewsComponent } from '../admin-reviews/admin-reviews.component'
     AdminUsersComponent,
     AdminReviewsComponent,
   ],
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, SharedModule, AdminRoutingModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, SharedModule, AdminRoutingModule, NgApexchartsModule],
   exports: [AdminDashboardComponent, AdminFooterComponent],
 })
 export class AdminDashboardModule {}

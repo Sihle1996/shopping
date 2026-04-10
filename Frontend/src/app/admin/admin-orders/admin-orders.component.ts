@@ -66,8 +66,8 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   private searchSubject = new Subject<string>();
   private searchSub?: Subscription;
 
-  sortBy: keyof Order = 'id';
-  sortDirection: 'asc' | 'desc' = 'asc';
+  sortBy: keyof Order = 'orderDate';
+  sortDirection: 'asc' | 'desc' = 'desc';
 
   currentPage = 1;
   pageSize = 5;

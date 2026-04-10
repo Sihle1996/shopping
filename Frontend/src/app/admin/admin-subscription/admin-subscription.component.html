@@ -93,6 +93,7 @@
             <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>3 drivers</li>
             <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>3 promotions</li>
             <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>10 km radius</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Scheduled promotions</li>
             <li class="flex items-center gap-2 text-textMuted"><i class="bi bi-x-circle text-gray-300 text-xs"></i>Analytics</li>
             <li class="flex items-center gap-2 text-textMuted"><i class="bi bi-x-circle text-gray-300 text-xs"></i>Custom branding</li>
             <li class="flex items-center gap-2 text-textMuted"><i class="bi bi-x-circle text-gray-300 text-xs"></i>Inventory export</li>
@@ -120,6 +121,7 @@
             <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>10 drivers</li>
             <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>20 promotions</li>
             <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>25 km radius</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Scheduled promotions</li>
             <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Analytics</li>
             <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Custom branding</li>
             <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Inventory export</li>
@@ -147,9 +149,12 @@
             <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Unlimited drivers</li>
             <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Unlimited promotions</li>
             <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>50 km radius</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Scheduled promotions</li>
             <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Analytics</li>
             <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Custom branding</li>
             <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Inventory export</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-amber-500 text-xs"></i><span class="font-semibold">Priority Support</span></li>
+            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-amber-500 text-xs"></i><span class="font-semibold">Dedicated Account Manager</span></li>
           </ul>
           <div class="pt-4 border-t border-borderColor text-center">
           </div>
@@ -331,9 +336,19 @@
           <!-- Top plan badge -->
           <div *ngIf="info.plan === 'ENTERPRISE'"
                class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 text-white text-center">
-            <i class="bi bi-award-fill text-primary text-3xl mb-2 block"></i>
+            <i class="bi bi-award-fill text-amber-400 text-3xl mb-2 block"></i>
             <p class="font-semibold">You're on the top plan</p>
             <p class="text-sm text-gray-400 mt-1">Full access to all features.</p>
+            <div class="mt-4 space-y-2 text-left">
+              <div class="flex items-center gap-2 text-sm">
+                <i class="bi bi-headset text-amber-400"></i>
+                <span class="text-gray-200">Priority Support</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm">
+                <i class="bi bi-person-badge text-amber-400"></i>
+                <span class="text-gray-200">Dedicated Account Manager</span>
+              </div>
+            </div>
           </div>
 
         </div>

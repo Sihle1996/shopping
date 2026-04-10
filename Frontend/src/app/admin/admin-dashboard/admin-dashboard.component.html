@@ -29,18 +29,20 @@
           </div>
           <div>
             <p class="text-textMuted text-xs">Total Orders</p>
-            <p class="font-numbers text-2xl font-bold text-textDark">{{ totalOrders }}</p>
+            <p *ngIf="!statsLoading" class="font-numbers text-2xl font-bold text-textDark">{{ totalOrders }}</p>
+            <div *ngIf="statsLoading" class="h-7 w-16 bg-gray-100 rounded animate-pulse mt-1"></div>
           </div>
         </div>
       </div>
       <div class="bg-white rounded-2xl shadow-card p-5">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-            <i class="bi bi-currency-dollar text-success text-lg"></i>
+            <i class="bi bi-cash-coin text-success text-lg"></i>
           </div>
           <div>
             <p class="text-textMuted text-xs">Total Revenue</p>
-            <p class="font-numbers text-2xl font-bold text-success">R{{ totalRevenue | number:'1.2-2' }}</p>
+            <p *ngIf="!statsLoading" class="font-numbers text-2xl font-bold text-success">R{{ totalRevenue | number:'1.2-2' }}</p>
+            <div *ngIf="statsLoading" class="h-7 w-24 bg-gray-100 rounded animate-pulse mt-1"></div>
           </div>
         </div>
       </div>
@@ -51,7 +53,8 @@
           </div>
           <div>
             <p class="text-textMuted text-xs">Pending Orders</p>
-            <p class="font-numbers text-2xl font-bold text-warning">{{ pendingOrders }}</p>
+            <p *ngIf="!statsLoading" class="font-numbers text-2xl font-bold text-warning">{{ pendingOrders }}</p>
+            <div *ngIf="statsLoading" class="h-7 w-12 bg-gray-100 rounded animate-pulse mt-1"></div>
           </div>
         </div>
       </div>
@@ -76,46 +79,74 @@
     <!-- Charts + metrics (PRO/ENTERPRISE only) -->
     <ng-container *ngIf="hasAnalytics">
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <!-- Loading skeleton for charts -->
+      <div *ngIf="analyticsLoading" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div class="bg-white rounded-2xl shadow-card p-5">
-          <h3 class="font-heading text-sm font-semibold text-textDark mb-4">Sales Trends</h3>
-          <div class="relative h-64">
-            <canvas #salesChartCanvas class="w-full h-full"></canvas>
-            <div *ngIf="salesEmpty"
-                 class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 rounded-xl">
-              <i class="bi bi-bar-chart text-3xl text-gray-300 mb-2"></i>
-              <p class="text-textMuted text-sm">{{ salesError ? 'Failed to load sales data' : 'No sales data for this period' }}</p>
-            </div>
-          </div>
+          <div class="h-4 w-28 bg-gray-100 rounded animate-pulse mb-4"></div>
+          <div class="h-64 bg-gray-50 rounded-xl animate-pulse"></div>
         </div>
         <div class="bg-white rounded-2xl shadow-card p-5">
-          <h3 class="font-heading text-sm font-semibold text-textDark mb-4">Top Products</h3>
-          <div class="relative h-64">
-            <canvas #productsChartCanvas class="w-full h-full"></canvas>
-            <div *ngIf="productsEmpty"
-                 class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 rounded-xl">
-              <i class="bi bi-box-seam text-3xl text-gray-300 mb-2"></i>
-              <p class="text-textMuted text-sm">{{ productsError ? 'Failed to load products data' : 'No products data for this period' }}</p>
-            </div>
-          </div>
+          <div class="h-4 w-28 bg-gray-100 rounded animate-pulse mb-4"></div>
+          <div class="h-64 bg-gray-50 rounded-xl animate-pulse"></div>
         </div>
       </div>
 
+      <!-- Sales trend + Top products charts -->
+      <div *ngIf="!analyticsLoading" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <h3 class="font-heading text-sm font-semibold text-textDark mb-1">Sales Trends</h3>
+          <p class="text-xs text-textMuted mb-3">Revenue over selected period</p>
+          <apx-chart
+            [series]="salesChartOptions.series!"
+            [chart]="salesChartOptions.chart!"
+            [xaxis]="salesChartOptions.xaxis!"
+            [yaxis]="salesChartOptions.yaxis!"
+            [fill]="salesChartOptions.fill!"
+            [stroke]="salesChartOptions.stroke!"
+            [dataLabels]="salesChartOptions.dataLabels!"
+            [tooltip]="salesChartOptions.tooltip!"
+            [grid]="salesChartOptions.grid!"
+            [noData]="salesChartOptions.noData!">
+          </apx-chart>
+        </div>
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <h3 class="font-heading text-sm font-semibold text-textDark mb-1">Top Products</h3>
+          <p class="text-xs text-textMuted mb-3">By number of orders</p>
+          <apx-chart
+            [series]="productsChartOptions.series!"
+            [chart]="productsChartOptions.chart!"
+            [xaxis]="productsChartOptions.xaxis!"
+            [yaxis]="productsChartOptions.yaxis!"
+            [plotOptions]="productsChartOptions.plotOptions!"
+            [dataLabels]="productsChartOptions.dataLabels!"
+            [tooltip]="productsChartOptions.tooltip!"
+            [grid]="productsChartOptions.grid!"
+            [colors]="productsChartOptions.colors!"
+            [noData]="productsChartOptions.noData!">
+          </apx-chart>
+        </div>
+      </div>
+
+      <!-- Secondary metrics -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div class="bg-white rounded-2xl shadow-card p-5">
           <p class="text-textMuted text-xs mb-1">Avg Order Value</p>
-          <p class="font-numbers text-xl font-bold text-textDark">R{{ aov | number:'1.2-2' }}</p>
+          <p *ngIf="!analyticsLoading" class="font-numbers text-xl font-bold text-textDark">R{{ aov | number:'1.2-2' }}</p>
+          <div *ngIf="analyticsLoading" class="h-6 w-20 bg-gray-100 rounded animate-pulse mt-1"></div>
         </div>
         <div class="bg-white rounded-2xl shadow-card p-5">
           <p class="text-textMuted text-xs mb-1">On-time Delivery</p>
-          <p class="font-numbers text-xl font-bold text-success">{{ onTime | number:'1.0-0' }}%</p>
+          <p *ngIf="!analyticsLoading" class="font-numbers text-xl font-bold text-success">{{ onTime | number:'1.0-0' }}%</p>
+          <div *ngIf="analyticsLoading" class="h-6 w-16 bg-gray-100 rounded animate-pulse mt-1"></div>
         </div>
         <div class="bg-white rounded-2xl shadow-card p-5">
           <p class="text-textMuted text-xs mb-1">Cancellation Rate</p>
-          <p class="font-numbers text-xl font-bold text-danger">{{ cancellations | number:'1.0-0' }}%</p>
+          <p *ngIf="!analyticsLoading" class="font-numbers text-xl font-bold text-danger">{{ cancellations | number:'1.0-0' }}%</p>
+          <div *ngIf="analyticsLoading" class="h-6 w-16 bg-gray-100 rounded animate-pulse mt-1"></div>
         </div>
       </div>
 
+      <!-- Top products table -->
       <div *ngIf="topProducts.length" class="bg-white rounded-2xl shadow-card overflow-hidden mb-8">
         <div class="px-5 py-4 border-b border-borderColor">
           <h3 class="font-heading text-sm font-semibold text-textDark">Top Selling Products</h3>

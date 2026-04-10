@@ -178,9 +178,12 @@ export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewCheck
 
   applyFilter(): void {
     this.currentPage = 1;
-    this.filteredOrders = this.selectedStatus === 'All'
-      ? this.orders
+    const base = this.selectedStatus === 'All'
+      ? this.orders.slice()
       : this.orders.filter(order => order.status === this.selectedStatus);
+    this.filteredOrders = base.sort((a, b) =>
+      new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
+    );
   }
 
   get paginatedOrders(): OrderDTO[] {
