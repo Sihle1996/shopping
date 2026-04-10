@@ -123,7 +123,8 @@
         </div>
 
         <div *ngFor="let order of recentOrders"
-             class="px-5 py-3.5 flex items-center gap-4 border-b border-borderColor last:border-0 hover:bg-surface transition-colors">
+             [routerLink]="['/admin/orders']" [queryParams]="{ orderId: order.id }"
+             class="px-5 py-3.5 flex items-center gap-4 border-b border-borderColor last:border-0 hover:bg-surface transition-colors cursor-pointer">
 
           <!-- Status badge -->
           <span class="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold flex-shrink-0 w-32"
@@ -148,11 +149,8 @@
             {{ order.orderDate | date:'h:mm a' }}
           </p>
 
-          <!-- Go to orders arrow -->
-          <a [routerLink]="['/admin/orders']"
-             class="text-textMuted hover:text-primary flex-shrink-0">
-            <i class="bi bi-chevron-right text-xs"></i>
-          </a>
+          <!-- Chevron -->
+          <i class="bi bi-chevron-right text-xs text-textMuted flex-shrink-0"></i>
 
         </div>
       </div>

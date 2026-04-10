@@ -1,10 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { AdminService } from 'src/app/services/admin.service';
 
 /** Strict status unions */
-type Status = 'Pending' | 'Preparing' | 'Out for Delivery' | 'Delivered';
+type Status = 'Pending' | 'Preparing' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
 type StatusFilter = Status | 'All';
 
 interface OrderItem {
@@ -56,9 +57,10 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     { value: 'Preparing',        label: 'Preparing' },
     { value: 'Out for Delivery', label: 'Out for Delivery' },
     { value: 'Delivered',        label: 'Delivered' },
+    { value: 'Cancelled',        label: 'Cancelled' },
   ] as const;
 
-  orderStatuses: Status[] = ['Pending', 'Preparing', 'Out for Delivery', 'Delivered'];
+  orderStatuses: Status[] = ['Pending', 'Preparing', 'Out for Delivery', 'Delivered', 'Cancelled'];
 
   filterStatus: StatusFilter = 'All';
 
@@ -73,7 +75,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   pageSize = 5;
   totalPages = 0;
 
-  constructor(private adminSerivce: AdminService) {}
+  constructor(private adminSerivce: AdminService, private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit(): void {
     this.fetchOrders(1);
@@ -84,6 +86,10 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
         this.searchTerm = q;
         this.fetchOrders(1);
       });
+  }
+
+  private get deepLinkOrderId(): string | null {
+    return this.route.snapshot.queryParamMap.get('orderId');
   }
 
   ngOnDestroy(): void {
@@ -101,6 +107,17 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
           this.totalPages = res.totalPages ?? 0;
           this.currentPage = page;
           this.loading = false;
+
+          // Auto-open drawer if navigated from live orders feed
+          const targetId = this.deepLinkOrderId;
+          if (targetId) {
+            const match = this.orders.find(o => o.id === targetId);
+            if (match) {
+              this.openDrawer(match);
+            }
+            // Clear the query param so a refresh doesn't re-open
+            this.router.navigate([], { replaceUrl: true, queryParams: {} });
+          }
         },
         error: () => {
           this.errorMessage = 'Failed to load orders.';
@@ -224,6 +241,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
       'bg-blue-100 text-blue-800': s === 'Preparing',
       'bg-purple-100 text-purple-800': s === 'Out for Delivery',
       'bg-emerald-100 text-emerald-800': s === 'Delivered',
+      'bg-red-100 text-red-600': s === 'Cancelled',
     };
   }
   statusDot(s: string) {
@@ -232,6 +250,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
       'bg-blue-500': s === 'Preparing',
       'bg-purple-500': s === 'Out for Delivery',
       'bg-emerald-500': s === 'Delivered',
+      'bg-red-500': s === 'Cancelled',
     };
   }
 
