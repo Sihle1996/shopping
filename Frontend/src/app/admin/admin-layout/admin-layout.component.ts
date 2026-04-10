@@ -21,6 +21,7 @@ export class AdminLayoutComponent implements OnInit {
     { route: '/admin/settings', label: 'Settings', icon: 'bi bi-gear', exact: false },
     { route: '/admin/subscription', label: 'Plan', icon: 'bi bi-credit-card-2-front', exact: false },
     { route: '/admin/users', label: 'Users', icon: 'bi bi-people', exact: false },
+    { route: '/admin/reviews', label: 'Reviews', icon: 'bi bi-star', exact: false },
   ];
 
   constructor(
