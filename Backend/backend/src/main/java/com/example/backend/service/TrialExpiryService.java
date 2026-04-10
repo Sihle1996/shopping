@@ -18,10 +18,31 @@ public class TrialExpiryService {
     private final TenantRepository tenantRepository;
     private final EmailService emailService;
 
-    /** Runs daily at 08:00 to expire/warn trial tenants */
+    /** Runs daily at 08:00 to expire/warn trial tenants and process cancellations */
     @Scheduled(cron = "0 0 8 * * *")
     public void processTrials() {
         LocalDateTime now = LocalDateTime.now();
+
+        // Downgrade cancelled subscriptions whose billing period has ended
+        List<Tenant> cancelledExpired = tenantRepository
+                .findBySubscriptionCancelledAtIsNotNullAndBillingPeriodEndBefore(now);
+        for (Tenant tenant : cancelledExpired) {
+            String previousPlan = tenant.getSubscriptionPlan();
+            tenant.setSubscriptionPlan("BASIC");
+            tenant.setSubscriptionCancelledAt(null);
+            tenant.setBillingPeriodEnd(null);
+            tenantRepository.save(tenant);
+            log.info("Subscription cancelled, downgraded to BASIC: {} ({})", tenant.getName(), tenant.getId());
+            if (tenant.getEmail() != null) {
+                emailService.sendRaw(tenant.getEmail(),
+                    "Your " + previousPlan + " subscription has ended",
+                    "<p>Hi <strong>" + tenant.getName() + "</strong>,</p>" +
+                    "<p>Your <strong>" + previousPlan + "</strong> subscription has ended and your account " +
+                    "has moved to the <strong>BASIC</strong> plan.</p>" +
+                    "<p>You can upgrade again at any time from your <a href=\"https://fastfood.app/admin/subscription\">subscription settings</a>.</p>"
+                );
+            }
+        }
 
         // Expire tenants whose trial started more than 14 days ago
         List<Tenant> expired = tenantRepository.findTrialTenantsStartedBefore(now.minusDays(14));

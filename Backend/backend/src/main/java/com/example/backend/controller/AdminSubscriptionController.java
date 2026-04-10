@@ -59,7 +59,9 @@ public class AdminSubscriptionController {
         Map<String, Object> response = new HashMap<>();
         response.put("plan", tenant.getSubscriptionPlan());
         response.put("status", tenant.getSubscriptionStatus());
-        response.put("trialDaysRemaining", trialDaysRemaining); // null-safe with HashMap
+        response.put("trialDaysRemaining", trialDaysRemaining);
+        response.put("cancelledAt", tenant.getSubscriptionCancelledAt());
+        response.put("billingPeriodEnd", tenant.getBillingPeriodEnd());
         response.put("usage", Map.of(
             "menuItems", menuItems,
             "maxMenuItems", plan.getMaxMenuItems(),
@@ -129,6 +131,8 @@ public class AdminSubscriptionController {
 
         tenant.setSubscriptionPlan(planName);
         tenant.setSubscriptionStatus("ACTIVE");
+        tenant.setBillingPeriodEnd(LocalDateTime.now().plusDays(30));
+        tenant.setSubscriptionCancelledAt(null);
         tenantRepository.save(tenant);
 
         return ResponseEntity.ok(Map.of(
@@ -136,5 +140,60 @@ public class AdminSubscriptionController {
             "plan", planName,
             "status", "ACTIVE"
         ));
+    }
+
+    @PostMapping("/cancel")
+    public ResponseEntity<?> cancelSubscription() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return ResponseEntity.badRequest().build();
+        var tenant = tenantRepository.findById(tenantId).orElse(null);
+        if (tenant == null) return ResponseEntity.notFound().build();
+
+        if ("BASIC".equals(tenant.getSubscriptionPlan()) || "TRIAL".equals(tenant.getSubscriptionStatus())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Nothing to cancel on a BASIC or TRIAL plan"));
+        }
+        if (tenant.getSubscriptionCancelledAt() != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Subscription already scheduled for cancellation"));
+        }
+
+        // Billing period ends 30 days from upgrade; if not tracked, use now + 30
+        if (tenant.getBillingPeriodEnd() == null) {
+            tenant.setBillingPeriodEnd(LocalDateTime.now().plusDays(30));
+        }
+        tenant.setSubscriptionCancelledAt(LocalDateTime.now());
+        tenantRepository.save(tenant);
+
+        if (tenant.getEmail() != null) {
+            emailService.sendRaw(tenant.getEmail(),
+                "Your subscription cancellation has been scheduled",
+                "<p>Hi <strong>" + tenant.getName() + "</strong>,</p>" +
+                "<p>We've received your cancellation request. Your <strong>" + tenant.getSubscriptionPlan() +
+                "</strong> plan will remain active until <strong>" + tenant.getBillingPeriodEnd().toLocalDate() +
+                "</strong>, after which your account will move to the BASIC plan.</p>" +
+                "<p>Changed your mind? You can undo this from your subscription settings before that date.</p>"
+            );
+        }
+
+        return ResponseEntity.ok(Map.of(
+            "message", "Cancellation scheduled",
+            "billingPeriodEnd", tenant.getBillingPeriodEnd().toString()
+        ));
+    }
+
+    @PostMapping("/cancel/undo")
+    public ResponseEntity<?> undoCancellation() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return ResponseEntity.badRequest().build();
+        var tenant = tenantRepository.findById(tenantId).orElse(null);
+        if (tenant == null) return ResponseEntity.notFound().build();
+
+        if (tenant.getSubscriptionCancelledAt() == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "No pending cancellation to undo"));
+        }
+
+        tenant.setSubscriptionCancelledAt(null);
+        tenantRepository.save(tenant);
+
+        return ResponseEntity.ok(Map.of("message", "Cancellation reversed. Your plan remains active."));
     }
 }

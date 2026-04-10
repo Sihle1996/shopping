@@ -24,6 +24,8 @@ export interface SubscriptionInfo {
   plan: string;
   status: string;
   trialDaysRemaining: number | null;
+  cancelledAt: string | null;
+  billingPeriodEnd: string | null;
   usage: SubscriptionUsage;
   features: SubscriptionFeatures;
 }
@@ -52,6 +54,14 @@ export class SubscriptionService {
 
   upgradePlan(planName: string, paymentId: string): Observable<{ message: string; plan: string; status: string }> {
     return this.http.post<any>(`${this.apiUrl}/api/admin/subscription/upgrade`, { planName, paymentId });
+  }
+
+  cancelPlan(): Observable<{ message: string; billingPeriodEnd: string }> {
+    return this.http.post<any>(`${this.apiUrl}/api/admin/subscription/cancel`, {});
+  }
+
+  undoCancellation(): Observable<{ message: string }> {
+    return this.http.post<any>(`${this.apiUrl}/api/admin/subscription/cancel/undo`, {});
   }
 
   canAccess(feature: 'analytics' | 'customBranding' | 'inventoryExport'): boolean {

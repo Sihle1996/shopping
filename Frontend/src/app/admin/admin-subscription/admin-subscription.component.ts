@@ -26,6 +26,10 @@ export class AdminSubscriptionComponent implements OnInit {
   upgradeSuccess = false;
   upgradeSuccessPlan = '';
 
+  cancelLoading = false;
+  cancelError = '';
+  cancelConfirming = false;
+
   constructor(
     private subscriptionService: SubscriptionService,
     private toastr: ToastrService,
@@ -109,6 +113,33 @@ export class AdminSubscriptionComponent implements OnInit {
 
   get upgradablePlans(): PlanOption[] {
     return this.plans.filter(p => p.isUpgrade);
+  }
+
+  confirmCancel() {
+    this.cancelLoading = true;
+    this.cancelError = '';
+    this.subscriptionService.cancelPlan().subscribe({
+      next: () => {
+        this.cancelConfirming = false;
+        this.cancelLoading = false;
+        this.loadData();
+      },
+      error: (err) => {
+        this.cancelError = err?.error?.error || 'Could not cancel. Please try again.';
+        this.cancelLoading = false;
+      }
+    });
+  }
+
+  undoCancel() {
+    this.cancelLoading = true;
+    this.subscriptionService.undoCancellation().subscribe({
+      next: () => {
+        this.cancelLoading = false;
+        this.loadData();
+      },
+      error: () => { this.cancelLoading = false; }
+    });
   }
 
   selectPlan(planName: string) {

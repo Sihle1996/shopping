@@ -66,6 +66,8 @@ public class Tenant {
     private boolean active = true;
 
     private LocalDateTime trialStartedAt;
+    private LocalDateTime billingPeriodEnd;
+    private LocalDateTime subscriptionCancelledAt;
 
     @Column(nullable = false)
     @Builder.Default
