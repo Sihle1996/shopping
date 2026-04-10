@@ -29,6 +29,7 @@ export class AdminSubscriptionComponent implements OnInit {
   cancelLoading = false;
   cancelError = '';
   cancelConfirming = false;
+  selectedDowngradePlan: string | null = null;
 
   constructor(
     private subscriptionService: SubscriptionService,
@@ -115,13 +116,20 @@ export class AdminSubscriptionComponent implements OnInit {
     return this.plans.filter(p => p.isUpgrade);
   }
 
+  chooseCancelTarget(plan: string) {
+    this.selectedDowngradePlan = plan;
+    this.cancelConfirming = true;
+    this.cancelError = '';
+  }
+
   confirmCancel() {
     this.cancelLoading = true;
     this.cancelError = '';
-    this.subscriptionService.cancelPlan().subscribe({
+    this.subscriptionService.cancelPlan(this.selectedDowngradePlan || 'BASIC').subscribe({
       next: () => {
         this.cancelConfirming = false;
         this.cancelLoading = false;
+        this.selectedDowngradePlan = null;
         this.loadData();
       },
       error: (err) => {

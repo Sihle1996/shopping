@@ -339,19 +339,19 @@
             <!-- Confirm prompt -->
             <div *ngIf="cancelConfirming"
                  class="bg-red-50 border border-red-200 rounded-2xl p-5">
-              <p class="font-semibold text-red-700 text-sm mb-1">Cancel your subscription?</p>
+              <p class="font-semibold text-red-700 text-sm mb-1">Downgrade to {{ selectedDowngradePlan }}?</p>
               <p class="text-xs text-red-600 mb-4">
                 Your <strong>{{ info.plan }}</strong> plan stays active until
                 <strong>{{ info.billingPeriodEnd | date:'d MMM y' }}</strong>,
-                then drops to BASIC.
+                then moves to <strong>{{ selectedDowngradePlan }}</strong>.
               </p>
               <div class="flex gap-2">
                 <button (click)="confirmCancel()" [disabled]="cancelLoading"
                         class="flex-1 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors disabled:opacity-50">
-                  <span *ngIf="!cancelLoading">Yes, cancel</span>
-                  <span *ngIf="cancelLoading"><i class="bi bi-arrow-repeat animate-spin mr-1"></i> Cancelling...</span>
+                  <span *ngIf="!cancelLoading">Yes, downgrade</span>
+                  <span *ngIf="cancelLoading"><i class="bi bi-arrow-repeat animate-spin mr-1"></i> Processing...</span>
                 </button>
-                <button (click)="cancelConfirming = false"
+                <button (click)="cancelConfirming = false; selectedDowngradePlan = null"
                         class="flex-1 py-2 rounded-xl border border-borderColor text-sm text-textDark hover:bg-surface transition-colors">
                   Keep plan
                 </button>
@@ -359,8 +359,20 @@
               <p *ngIf="cancelError" class="text-xs text-red-500 mt-2 text-center">{{ cancelError }}</p>
             </div>
 
-            <!-- Cancel trigger -->
-            <button *ngIf="!cancelConfirming" (click)="cancelConfirming = true"
+            <!-- Enterprise: choose downgrade target -->
+            <div *ngIf="!cancelConfirming && info.plan === 'ENTERPRISE'" class="space-y-2">
+              <button (click)="chooseCancelTarget('PRO')"
+                      class="w-full py-2.5 rounded-xl border border-borderColor text-sm text-textMuted hover:text-amber-600 hover:border-amber-300 transition-colors">
+                Downgrade to PRO — R699/mo
+              </button>
+              <button (click)="chooseCancelTarget('BASIC')"
+                      class="w-full py-1.5 text-xs text-textMuted hover:text-red-500 transition-colors hover:underline underline-offset-2">
+                Cancel to BASIC (R299/mo)
+              </button>
+            </div>
+
+            <!-- PRO: single cancel button (→ BASIC) -->
+            <button *ngIf="!cancelConfirming && info.plan === 'PRO'" (click)="chooseCancelTarget('BASIC')"
                     class="w-full py-2.5 rounded-xl border border-borderColor text-sm text-textMuted hover:text-red-500 hover:border-red-200 transition-colors">
               Cancel subscription
             </button>
@@ -372,11 +384,11 @@
             <div class="flex items-start gap-3">
               <i class="bi bi-clock-history text-orange-500 text-lg flex-shrink-0 mt-0.5"></i>
               <div class="flex-1">
-                <p class="font-semibold text-orange-700 text-sm">Cancellation scheduled</p>
+                <p class="font-semibold text-orange-700 text-sm">Downgrade scheduled</p>
                 <p class="text-xs text-orange-600 mt-0.5">
                   Your <strong>{{ info.plan }}</strong> plan is active until
                   <strong>{{ info.billingPeriodEnd | date:'d MMM y' }}</strong>,
-                  then moves to BASIC.
+                  then moves to <strong>{{ info.scheduledDowngradePlan || 'BASIC' }}</strong>.
                 </p>
               </div>
             </div>

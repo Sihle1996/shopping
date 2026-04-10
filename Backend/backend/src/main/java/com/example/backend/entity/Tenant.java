@@ -68,6 +68,7 @@ public class Tenant {
     private LocalDateTime trialStartedAt;
     private LocalDateTime billingPeriodEnd;
     private LocalDateTime subscriptionCancelledAt;
+    private String scheduledDowngradePlan;
 
     @Column(nullable = false)
     @Builder.Default

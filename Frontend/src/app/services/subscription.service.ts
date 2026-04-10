@@ -26,6 +26,7 @@ export interface SubscriptionInfo {
   trialDaysRemaining: number | null;
   cancelledAt: string | null;
   billingPeriodEnd: string | null;
+  scheduledDowngradePlan: string | null;
   usage: SubscriptionUsage;
   features: SubscriptionFeatures;
 }
@@ -56,8 +57,8 @@ export class SubscriptionService {
     return this.http.post<any>(`${this.apiUrl}/api/admin/subscription/upgrade`, { planName, paymentId });
   }
 
-  cancelPlan(): Observable<{ message: string; billingPeriodEnd: string }> {
-    return this.http.post<any>(`${this.apiUrl}/api/admin/subscription/cancel`, {});
+  cancelPlan(targetPlan: string = 'BASIC'): Observable<{ message: string; billingPeriodEnd: string }> {
+    return this.http.post<any>(`${this.apiUrl}/api/admin/subscription/cancel`, { targetPlan });
   }
 
   undoCancellation(): Observable<{ message: string }> {
