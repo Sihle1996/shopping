@@ -1,5 +1,5 @@
 <section class="min-h-screen bg-surface">
-  <div class="px-4 pt-6 pb-28 lg:px-8">
+  <div class="px-4 pt-6 pb-24 lg:px-8">
 
     <!-- Title -->
     <header class="mb-6">
@@ -59,11 +59,11 @@
     <div class="sticky top-0 z-10 mb-4 bg-white rounded-2xl shadow-card p-3">
       <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <!-- Status filter -->
-        <div class="inline-flex w-full md:w-auto rounded-xl bg-surface p-1">
+        <div class="flex overflow-x-auto rounded-xl bg-surface p-1 gap-0.5 md:w-auto">
           <button *ngFor="let s of statuses"
                   type="button"
                   (click)="setStatusFilter(s.value)"
-                  class="flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all"
+                  class="flex-shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-all"
                   [ngClass]="filterStatus === s.value
                     ? 'bg-primary text-white shadow-sm'
                     : 'text-textLight hover:text-textDark hover:bg-white'">

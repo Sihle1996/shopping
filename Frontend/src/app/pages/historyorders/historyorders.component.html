@@ -10,8 +10,8 @@
   </div>
 
   <!-- Filter -->
-  <div class="px-4 lg:px-8 mb-6">
-    <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+  <div class="px-4 lg:px-8 mb-6 overflow-x-auto">
+    <div class="flex gap-2 pb-1">
       <button *ngFor="let status of allStatuses"
               (click)="selectedStatus = status; applyFilter()"
               [class]="getStatusChipClasses(status)">

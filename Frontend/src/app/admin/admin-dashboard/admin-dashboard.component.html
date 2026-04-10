@@ -1,6 +1,6 @@
 <app-admin-notifications></app-admin-notifications>
 
-<div class="px-4 pt-6 pb-28 lg:px-8 lg:pb-8">
+<div class="px-4 pt-6 pb-24 lg:px-8 lg:pb-8">
   <div class="w-full">
 
     <!-- Header -->
@@ -124,30 +124,26 @@
 
         <div *ngFor="let order of recentOrders"
              [routerLink]="['/admin/orders']" [queryParams]="{ orderId: order.id }"
-             class="px-5 py-3.5 flex items-center gap-4 border-b border-borderColor last:border-0 hover:bg-surface transition-colors cursor-pointer">
+             class="px-4 py-3.5 flex items-center gap-3 border-b border-borderColor last:border-0 hover:bg-surface transition-colors cursor-pointer">
 
-          <!-- Status badge -->
-          <span class="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold flex-shrink-0 w-32"
+          <!-- Status badge — icon only on mobile, full text on sm+ -->
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold flex-shrink-0"
                 [ngClass]="statusClass(order.status)">
             <i class="bi text-[10px]" [ngClass]="statusIcon(order.status)"></i>
-            {{ order.status }}
+            <span class="hidden sm:inline">{{ order.status }}</span>
           </span>
 
-          <!-- Order ID + customer -->
+          <!-- Two-line middle: ID+amount / email+time -->
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-textDark">#{{ order.id.substring(0, 8).toUpperCase() }}</p>
-            <p class="text-xs text-textMuted truncate">{{ order.userEmail || 'Guest' }}</p>
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-sm font-semibold text-textDark truncate">#{{ order.id.substring(0, 8).toUpperCase() }}</p>
+              <p class="font-numbers text-sm font-semibold text-textDark flex-shrink-0">R{{ order.totalAmount | number:'1.2-2' }}</p>
+            </div>
+            <div class="flex items-center justify-between gap-2 mt-0.5">
+              <p class="text-xs text-textMuted truncate">{{ order.userEmail || 'Guest' }}</p>
+              <p class="text-xs text-textMuted flex-shrink-0">{{ order.orderDate | date:'h:mm a' }}</p>
+            </div>
           </div>
-
-          <!-- Amount -->
-          <p class="font-numbers text-sm font-semibold text-textDark flex-shrink-0">
-            R{{ order.totalAmount | number:'1.2-2' }}
-          </p>
-
-          <!-- Time -->
-          <p class="text-xs text-textMuted flex-shrink-0 hidden sm:block">
-            {{ order.orderDate | date:'h:mm a' }}
-          </p>
 
           <!-- Chevron -->
           <i class="bi bi-chevron-right text-xs text-textMuted flex-shrink-0"></i>

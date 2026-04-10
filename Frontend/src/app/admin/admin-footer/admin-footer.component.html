@@ -25,29 +25,5 @@
       <span class="text-[10px] font-medium">Drivers</span>
     </a>
 
-    <button (click)="moreOpen = !moreOpen"
-            class="flex flex-col items-center gap-0.5 px-3 py-1 transition-colors"
-            [ngClass]="moreOpen ? 'text-primary' : 'text-textMuted hover:text-primary'">
-      <i class="bi bi-grid-3x3-gap text-xl"></i>
-      <span class="text-[10px] font-medium">More</span>
-    </button>
   </nav>
 </footer>
-
-<!-- More sheet backdrop -->
-<div *ngIf="moreOpen" class="lg:hidden fixed inset-0 z-40 bg-black/30" (click)="moreOpen = false"></div>
-
-<!-- More sheet -->
-<div class="lg:hidden fixed bottom-[57px] left-0 w-full z-50 bg-white border-t border-borderColor shadow-float transition-transform duration-200"
-     [ngClass]="moreOpen ? 'translate-y-0' : 'translate-y-full pointer-events-none'">
-  <div class="grid grid-cols-4 gap-0 max-w-lg mx-auto py-3 px-2">
-    <a *ngFor="let item of moreItems"
-       [routerLink]="item.route"
-       routerLinkActive="text-primary"
-       (click)="moreOpen = false"
-       class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl text-textMuted hover:text-primary hover:bg-surface transition-colors">
-      <i [class]="item.icon + ' text-xl'"></i>
-      <span class="text-[10px] font-medium text-center leading-tight">{{ item.label }}</span>
-    </a>
-  </div>
-</div>

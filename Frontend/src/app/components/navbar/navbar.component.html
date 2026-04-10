@@ -133,6 +133,35 @@
         </a>
       </ng-container>
 
+      <!-- Admin: extra pages not in bottom nav -->
+      <ng-container *ngIf="isAdmin">
+        <p class="px-5 pt-2 pb-1 text-[10px] font-semibold text-textMuted uppercase tracking-wide">More</p>
+        <a routerLink="/admin/inventory" routerLinkActive="text-primary bg-primary-50" (click)="toggleMenu()"
+           class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
+          <i class="bi bi-box-seam text-base"></i> Inventory
+        </a>
+        <a routerLink="/admin/promotions" routerLinkActive="text-primary bg-primary-50" (click)="toggleMenu()"
+           class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
+          <i class="bi bi-tag text-base"></i> Promos
+        </a>
+        <a routerLink="/admin/settings" routerLinkActive="text-primary bg-primary-50" (click)="toggleMenu()"
+           class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
+          <i class="bi bi-gear text-base"></i> Settings
+        </a>
+        <a routerLink="/admin/subscription" routerLinkActive="text-primary bg-primary-50" (click)="toggleMenu()"
+           class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
+          <i class="bi bi-credit-card-2-front text-base"></i> Plan
+        </a>
+        <a routerLink="/admin/users" routerLinkActive="text-primary bg-primary-50" (click)="toggleMenu()"
+           class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
+          <i class="bi bi-people text-base"></i> Users
+        </a>
+        <a routerLink="/admin/reviews" routerLinkActive="text-primary bg-primary-50" (click)="toggleMenu()"
+           class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
+          <i class="bi bi-star text-base"></i> Reviews
+        </a>
+      </ng-container>
+
       <div class="border-t border-borderColor my-2"></div>
 
       <a *ngIf="!isLoggedIn && hasStoreContext" routerLink="/login" [queryParams]="{ returnUrl: router.url }" (click)="toggleMenu()"
