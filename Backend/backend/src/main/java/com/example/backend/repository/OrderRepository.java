@@ -17,15 +17,15 @@ import java.util.UUID;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, UUID> {
-    List<Order> findByUserId(UUID userId);
-    List<Order> findByStatus(String status);
-    List<Order> findByStatusAndTenant_Id(String status, UUID tenantId);
+    List<Order> findByUserIdOrderByOrderDateDesc(UUID userId);
+    List<Order> findByStatusOrderByOrderDateDesc(String status);
+    List<Order> findByStatusAndTenant_IdOrderByOrderDateDesc(String status, UUID tenantId);
     List<Order> findByDriver(User driver);
     List<Order> findByOrderDateBetween(Instant start, Instant end);
     Page<Order> findByUserEmailContainingIgnoreCase(String email, Pageable pageable);
     Page<Order> findByTenant_Id(UUID tenantId, Pageable pageable);
     Page<Order> findByUserEmailContainingIgnoreCaseAndTenant_Id(String email, UUID tenantId, Pageable pageable);
-    List<Order> findByUserIdAndTenant_Id(UUID userId, UUID tenantId);
+    List<Order> findByUserIdAndTenant_IdOrderByOrderDateDesc(UUID userId, UUID tenantId);
 
     @Query("SELECT new com.example.backend.entity.TopProductDTO(oi.menuItem.name, SUM(oi.quantity)) " +
            "FROM Order o JOIN o.orderItems oi " +
@@ -35,6 +35,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     List<TopProductDTO> findTopProducts(@Param("start") Instant start, @Param("end") Instant end,
                                         @Param("tenantId") UUID tenantId, Pageable pageable);
 
+    List<Order> findByTenant_IdOrderByOrderDateDesc(UUID tenantId);
     List<Order> findByTenant_Id(UUID tenantId);
     java.util.Optional<Order> findByIdAndTenant_Id(UUID id, UUID tenantId);
     List<Order> findByOrderDateBetweenAndTenant_Id(Instant start, Instant end, UUID tenantId);

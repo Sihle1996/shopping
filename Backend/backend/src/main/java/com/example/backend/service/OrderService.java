@@ -266,8 +266,8 @@ public class OrderService {
     public List<OrderDTO> getOrdersByUser(UUID userId) {
         UUID tenantId = TenantContext.getCurrentTenantId();
         List<Order> orders = (tenantId != null)
-                ? orderRepository.findByUserIdAndTenant_Id(userId, tenantId)
-                : orderRepository.findByUserId(userId);
+                ? orderRepository.findByUserIdAndTenant_IdOrderByOrderDateDesc(userId, tenantId)
+                : orderRepository.findByUserIdOrderByOrderDateDesc(userId);
         return orders.stream().map(this::convertToOrderDTO).toList();
     }
 
@@ -275,9 +275,9 @@ public class OrderService {
         UUID tenantId = TenantContext.getCurrentTenantId();
         List<Order> orders;
         if (tenantId != null) {
-            orders = orderRepository.findByTenant_Id(tenantId);
+            orders = orderRepository.findByTenant_IdOrderByOrderDateDesc(tenantId);
         } else {
-            orders = orderRepository.findAll();
+            orders = orderRepository.findAll(Sort.by(Sort.Direction.DESC, "orderDate"));
         }
         return orders.stream().map(this::convertToOrderDTO).toList();
     }
@@ -303,14 +303,14 @@ public class OrderService {
     public List<OrderDTO> getOrdersByStatus(String status) {
         UUID tenantId = TenantContext.getCurrentTenantId();
         List<Order> orders = (tenantId != null)
-                ? orderRepository.findByStatusAndTenant_Id(status, tenantId)
-                : orderRepository.findByStatus(status);
+                ? orderRepository.findByStatusAndTenant_IdOrderByOrderDateDesc(status, tenantId)
+                : orderRepository.findByStatusOrderByOrderDateDesc(status);
         return orders.stream().map(this::convertToOrderDTO).toList();
     }
 
     public Page<OrderDTO> getPaginatedOrders(int page, int size, String sortBy) {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        PageRequest pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "orderDate"));
         Page<Order> orders = (tenantId != null)
                 ? orderRepository.findByTenant_Id(tenantId, pageable)
                 : orderRepository.findAll(pageable);
@@ -319,7 +319,7 @@ public class OrderService {
 
     public Page<OrderDTO> searchOrders(String query, int page, int size) {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        PageRequest pageable = PageRequest.of(page, size, Sort.by("orderDate"));
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "orderDate"));
         Page<Order> orders;
         if (tenantId != null) {
             orders = (query == null || query.isBlank())
