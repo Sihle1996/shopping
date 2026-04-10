@@ -12,23 +12,19 @@
   <div class="flex gap-6 px-4 lg:px-8 flex-1 items-start pt-4">
 
     <!-- LEFT SIDEBAR: desktop only, sticky -->
-    <aside class="hidden lg:flex flex-col w-48 flex-shrink-0 sticky top-[72px]">
-      <p class="text-[11px] font-bold text-textMuted uppercase tracking-widest mb-3 px-3">Menu</p>
+    <aside class="hidden lg:flex flex-col w-44 flex-shrink-0 sticky top-[72px] pt-[80px]">
+      <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-2 px-3">Menu</p>
       <nav class="space-y-0.5">
         <button *ngFor="let cat of categories"
                 (click)="filterByCategory(cat.name)"
-                class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 flex items-center justify-between group"
-                [ngClass]="selectedCategory === cat.name
-                  ? 'text-primary border-l-[3px] border-primary pl-[9px]'
-                  : 'text-textDark border-l-[3px] border-transparent hover:bg-white hover:shadow-sm'"
-                [style.background]="selectedCategory === cat.name ? 'var(--brand-primary-light)' : ''">
+                class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-between"
+                [class.text-white]="selectedCategory === cat.name"
+                [class.text-textDark]="selectedCategory !== cat.name"
+                [class.hover:bg-white]="selectedCategory !== cat.name"
+                [class.hover:shadow-sm]="selectedCategory !== cat.name"
+                [style.background]="selectedCategory === cat.name ? 'var(--brand-primary)' : ''">
           <span>{{ cat.name === 'All' ? 'All Items' : cat.name }}</span>
-          <span class="text-xs font-numbers rounded-full px-1.5 py-0.5 leading-none transition-colors"
-                [ngClass]="selectedCategory === cat.name
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-textMuted group-hover:bg-gray-200'">
-            {{ categoryItemCount(cat.name) }}
-          </span>
+          <span class="text-xs font-numbers opacity-70">{{ categoryItemCount(cat.name) }}</span>
         </button>
       </nav>
     </aside>
