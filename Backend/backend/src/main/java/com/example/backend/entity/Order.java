@@ -54,6 +54,7 @@ public class Order {
     private Double deliveryFee;
     private Double discountAmount;
     private String promoCode;
+    private Integer loyaltyPointsRedeemed;
     private Double deliveryLat;
     private Double deliveryLon;
 

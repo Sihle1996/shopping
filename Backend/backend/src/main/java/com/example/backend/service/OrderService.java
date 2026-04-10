@@ -192,6 +192,9 @@ public class OrderService {
         order.setTotalAmount(totalAmount);
         order.setDiscountAmount(discountAmount);
         order.setPromoCode(appliedPromoCode);
+        if (request.getLoyaltyPointsRedeemed() > 0) {
+            order.setLoyaltyPointsRedeemed(request.getLoyaltyPointsRedeemed());
+        }
         order.setOrderDate(Instant.now());
         order.setStatus("Pending");
         order.setDeliveryAddress(request.getDeliveryAddress());
@@ -240,10 +243,7 @@ public class OrderService {
         }
 
         Order saved = orderRepository.save(order);
-        // Award loyalty points to authenticated customers
-        if (user != null) {
-            loyaltyService.awardPoints(user, saved);
-        }
+        // Loyalty points are awarded on delivery, not on placement
         OrderDTO dto = convertToOrderDTO(saved);
 
         if (user != null) {
@@ -367,6 +367,10 @@ public class OrderService {
                     inventoryLogRepository.save(log);
                 }
             }
+            // Refund any redeemed loyalty points
+            if (order.getUser() != null) {
+                loyaltyService.refundPoints(order.getUser(), order);
+            }
         }
 
         order.setStatus(status);
@@ -379,6 +383,10 @@ public class OrderService {
         }
 
         if ("Delivered".equals(status)) {
+            // Award loyalty points now that delivery is confirmed
+            if (updated.getUser() != null) {
+                loyaltyService.awardPoints(updated.getUser(), updated);
+            }
             String storeName = updated.getTenant() != null ? updated.getTenant().getName() : "Our Store";
             String email = updated.getUser() != null ? updated.getUser().getEmail() : updated.getGuestEmail();
             if (email != null && !email.isBlank()) {
@@ -504,7 +512,9 @@ public class OrderService {
         } else {
             orders = orderRepository.findAll();
         }
-        return orders.stream().mapToDouble(Order::getTotalAmount).sum();
+        return orders.stream()
+                .filter(o -> "Delivered".equals(o.getStatus()))
+                .mapToDouble(Order::getTotalAmount).sum();
     }
 
     public long getPendingOrdersCount() {
@@ -549,6 +559,9 @@ public class OrderService {
 
         order.setStatus("Cancelled");
         orderRepository.save(order);
+
+        // Refund any redeemed loyalty points
+        loyaltyService.refundPoints(order.getUser(), order);
 
         // PayFast refunds are handled manually via the PayFast merchant dashboard
         if (order.getPaymentId() != null && !order.getPaymentId().isBlank()) {

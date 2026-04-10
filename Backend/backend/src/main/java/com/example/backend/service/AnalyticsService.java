@@ -35,6 +35,7 @@ public class AnalyticsService {
         List<Order> orders = getOrdersInRange(start, end);
         Map<LocalDate, Double> map = new TreeMap<>();
         for (Order order : orders) {
+            if (!"Delivered".equals(order.getStatus())) continue;
             LocalDate date = LocalDate.ofInstant(order.getOrderDate(), ZoneId.systemDefault());
             map.merge(date, order.getTotalAmount(), Double::sum);
         }
@@ -50,7 +51,9 @@ public class AnalyticsService {
     }
 
     public double getAverageOrderValue(Instant start, Instant end) {
-        List<Order> orders = getOrdersInRange(start, end);
+        List<Order> orders = getOrdersInRange(start, end).stream()
+                .filter(o -> "Delivered".equals(o.getStatus()))
+                .toList();
         if (orders.isEmpty()) return 0;
         double total = orders.stream().mapToDouble(Order::getTotalAmount).sum();
         return total / orders.size();

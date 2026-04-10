@@ -103,4 +103,24 @@ public class LoyaltyService {
                 .map(LoyaltyAccount::getBalance)
                 .orElse(0);
     }
+
+    /** Refunds redeemed points back to the customer when an order is cancelled */
+    @Transactional
+    public void refundPoints(User user, Order order) {
+        if (user == null || order.getLoyaltyPointsRedeemed() == null || order.getLoyaltyPointsRedeemed() <= 0) return;
+        if (order.getTenant() == null) return;
+
+        int points = order.getLoyaltyPointsRedeemed();
+        LoyaltyAccount acc = getOrCreate(user, order.getTenant());
+        acc.setBalance(acc.getBalance() + points);
+        accountRepo.save(acc);
+
+        LoyaltyTransaction tx = new LoyaltyTransaction();
+        tx.setAccount(acc);
+        tx.setOrder(order);
+        tx.setPoints(points);
+        tx.setType("REFUNDED");
+        tx.setDescription("Refunded " + points + " pts — order cancelled");
+        txRepo.save(tx);
+    }
 }
