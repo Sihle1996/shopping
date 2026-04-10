@@ -4,7 +4,7 @@
 
     <!-- Logo + Store Name -->
     <a (click)="goHome()" class="flex items-center gap-2 cursor-pointer"
-       [ngClass]="isAdmin ? 'w-64 pl-4' : ''"
+       [ngClass]="isAdmin ? 'w-64 pl-4' : ''">
       <img *ngIf="storeLogo" [src]="storeLogo" class="w-8 h-8 rounded-lg object-cover" />
       <div *ngIf="!storeLogo" class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
         <i class="bi bi-fire text-white text-sm"></i>
