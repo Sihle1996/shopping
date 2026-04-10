@@ -46,7 +46,7 @@ export class SubscriptionService {
     this.infoSubject.next(null);
   }
 
-  getPlans(): Observable<{ name: string; priceUsd: number; isUpgrade: boolean }[]> {
+  getPlans(): Observable<{ name: string; priceZar: number; isUpgrade: boolean }[]> {
     return this.http.get<any[]>(`${this.apiUrl}/api/admin/subscription/plans`);
   }
 
