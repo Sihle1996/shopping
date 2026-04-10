@@ -305,6 +305,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
+  categoryItemCount(catName: string): number {
+    if (catName === 'All') return this.menuItems.length;
+    return this.menuItems.filter(i => (i as any).category === catName).length;
+  }
+
   sortMenu(): void {
     this.applyFilters();
   }
