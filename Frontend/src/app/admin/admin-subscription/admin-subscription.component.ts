@@ -7,8 +7,7 @@ import { environment } from 'src/environments/environment';
 
 interface PlanOption {
   name: string;
-  priceUsd: number;
-  priceZar?: number;
+  priceZar: number;
   isUpgrade: boolean;
 }
 
@@ -128,7 +127,7 @@ export class AdminSubscriptionComponent implements OnInit {
     this.payFastLoading = true;
     this.upgradeError = '';
 
-    const amount = plan.priceZar ?? plan.priceUsd;
+    const amount = plan.priceZar;
     const tenantId = localStorage.getItem('tenantId');
     const headers: any = { 'Content-Type': 'application/json' };
     if (tenantId) headers['X-Tenant-Id'] = tenantId;

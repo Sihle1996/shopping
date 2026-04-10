@@ -72,17 +72,16 @@ public class AdminSubscriptionController {
             "hasAnalytics", plan.isHasAnalytics(),
             "hasCustomBranding", plan.isHasCustomBranding(),
             "hasInventoryExport", plan.isHasInventoryExport(),
-            "maxDeliveryRadiusKm", plan.getMaxDeliveryRadiusKm(),
-            "commissionPercent", plan.getCommissionPercent()
+            "maxDeliveryRadiusKm", plan.getMaxDeliveryRadiusKm()
         ));
         return ResponseEntity.ok(response);
     }
 
     // ZAR prices for PayFast
-    private static final Map<String, Double> PLAN_PRICES_USD = Map.of(
-        "BASIC", 16.00,
-        "PRO", 38.00,
-        "ENTERPRISE", 81.00
+    private static final Map<String, Double> PLAN_PRICES_ZAR = Map.of(
+        "BASIC", 299.00,
+        "PRO", 699.00,
+        "ENTERPRISE", 1499.00
     );
     private static final List<String> PLAN_ORDER = List.of("TRIAL", "BASIC", "PRO", "ENTERPRISE");
 
@@ -101,7 +100,7 @@ public class AdminSubscriptionController {
             int planIdx = PLAN_ORDER.indexOf(planName);
             Map<String, Object> p = new HashMap<>();
             p.put("name", planName);
-            p.put("priceUsd", PLAN_PRICES_USD.get(planName));
+            p.put("priceZar", PLAN_PRICES_ZAR.get(planName));
             p.put("isUpgrade", planIdx > currentIdx);
             plans.add(p);
         }
@@ -116,7 +115,7 @@ public class AdminSubscriptionController {
         if (tenant == null) return ResponseEntity.notFound().build();
 
         String planName = body.get("planName");
-        if (planName == null || !PLAN_PRICES_USD.containsKey(planName)) {
+        if (planName == null || !PLAN_PRICES_ZAR.containsKey(planName)) {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid plan name"));
         }
 

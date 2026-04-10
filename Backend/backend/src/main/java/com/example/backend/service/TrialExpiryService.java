@@ -100,9 +100,9 @@ public class TrialExpiryService {
                "<p>You're halfway through your 14-day trial. 7 days to go!</p>" +
                "<p>Ready to keep your store running after the trial? Upgrading takes less than a minute.</p>" +
                "<ul>" +
-               "<li><strong>BASIC</strong> — R288/month, up to 30 menu items</li>" +
-               "<li><strong>PRO</strong> — R684/month, up to 100 items + promotions</li>" +
-               "<li><strong>ENTERPRISE</strong> — R1,458/month, unlimited everything</li>" +
+               "<li><strong>BASIC</strong> — R299/month, up to 30 menu items</li>" +
+               "<li><strong>PRO</strong> — R699/month, up to 100 items + promotions</li>" +
+               "<li><strong>ENTERPRISE</strong> — R1,499/month, unlimited everything</li>" +
                "</ul>" +
                "<p><a href=\"https://fastfood.app/admin/subscription\">Upgrade now →</a></p>";
     }
