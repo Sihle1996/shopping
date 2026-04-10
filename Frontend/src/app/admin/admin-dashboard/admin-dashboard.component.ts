@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import {
   ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis,
   ApexDataLabels, ApexTooltip, ApexFill, ApexStroke,
-  ApexPlotOptions, ApexGrid
+  ApexPlotOptions, ApexGrid, ApexNoData
 } from 'ng-apexcharts';
 import { AnalyticsService } from './analytics.service';
 import { AdminService } from 'src/app/services/admin.service';
@@ -18,6 +18,7 @@ export type SalesChartOptions = {
   dataLabels: ApexDataLabels;
   tooltip: ApexTooltip;
   grid: ApexGrid;
+  noData: ApexNoData;
 };
 
 export type ProductsChartOptions = {
@@ -29,6 +30,7 @@ export type ProductsChartOptions = {
   dataLabels: ApexDataLabels;
   tooltip: ApexTooltip;
   grid: ApexGrid;
+  noData: ApexNoData;
   colors: string[];
 };
 
@@ -129,7 +131,8 @@ export class AdminDashboardComponent implements OnInit {
       stroke: { curve: 'smooth', width: 2 },
       dataLabels: { enabled: false },
       tooltip: { y: { formatter: (v: number) => `R${v.toFixed(2)}` } },
-      grid: { borderColor: '#f1f5f9', strokeDashArray: 4 }
+      grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
+      noData: { text: 'No sales data for this period', style: { color: '#94a3b8' } }
     };
   }
 
@@ -143,6 +146,7 @@ export class AdminDashboardComponent implements OnInit {
       dataLabels: { enabled: true, style: { fontSize: '11px' } },
       tooltip: { y: { formatter: (v: number) => `${v} orders` } },
       grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
+      noData: { text: 'No product data for this period', style: { color: '#94a3b8' } },
       colors: ['#10b981']
     };
   }
