@@ -14,213 +14,266 @@
 
   <div *ngIf="product" class="animate-fade-in">
 
-    <!-- Hero Image -->
-    <div class="relative">
-      <div class="aspect-[4/3] sm:aspect-[16/9] lg:aspect-[21/9] overflow-hidden bg-gray-100">
+    <!-- Mobile: full-width hero (hidden on desktop) -->
+    <div class="relative lg:hidden">
+      <div class="aspect-[4/3] sm:aspect-[16/9] overflow-hidden bg-gray-100">
         <img [src]="getImageUrl(product.image)" [alt]="product.name"
              class="w-full h-full object-cover" />
         <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
       </div>
-
-      <!-- Back -->
       <button (click)="goBack()"
               class="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-sm
                      flex items-center justify-center hover:bg-white transition-colors">
         <i class="bi bi-arrow-left text-textDark text-lg"></i>
       </button>
-
-      <!-- Favourite -->
       <button (click)="toggleFavourite()"
               class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-sm
                      flex items-center justify-center hover:bg-white transition-colors">
         <i class="text-lg transition-colors"
            [class]="isFavourite ? 'bi bi-heart-fill text-red-500' : 'bi bi-heart text-textMuted'"></i>
       </button>
-
-      <!-- Discount badge -->
       <div *ngIf="autoDiscountPercent > 0"
            class="absolute bottom-4 left-4 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full shadow">
         {{ autoDiscountPercent }}% OFF
       </div>
     </div>
 
-    <div class="max-w-lg mx-auto px-4 -mt-5 relative z-10 space-y-4">
+    <!-- Desktop: two-column layout -->
+    <div class="max-w-6xl mx-auto px-4 lg:px-8">
 
-      <!-- Product info -->
-      <div class="bg-white rounded-2xl shadow-card p-6">
+      <!-- Desktop back button -->
+      <div class="hidden lg:block pt-6 pb-4">
+        <button (click)="goBack()"
+                class="inline-flex items-center gap-1.5 text-sm text-textMuted hover:text-textDark transition-colors">
+          <i class="bi bi-arrow-left text-sm"></i> Back to menu
+        </button>
+      </div>
 
-        <div class="mb-4">
-          <div class="flex items-center justify-between">
-            <app-badge variant="primary" size="sm">{{ product.category }}</app-badge>
-            <span *ngIf="avgRating > 0"
-                  class="flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
-              <i class="bi bi-star-fill text-amber-400 text-xs"></i>
-              {{ avgRating | number:'1.1-1' }}
-              <span class="text-textMuted font-normal">({{ totalReviews }})</span>
-            </span>
-          </div>
-          <h1 class="font-heading text-2xl font-bold text-textDark mt-2">{{ product.name }}</h1>
-          <p class="text-textLight text-sm mt-2 leading-relaxed">{{ product.description }}</p>
-        </div>
+      <div class="lg:grid lg:grid-cols-2 lg:gap-10 lg:items-start">
 
-        <!-- Out of stock -->
-        <div *ngIf="!product.isAvailable"
-             class="flex items-center gap-3 rounded-xl bg-red-50 border border-red-200 px-4 py-3 mb-4">
-          <i class="bi bi-x-circle-fill text-danger text-lg flex-shrink-0"></i>
-          <div>
-            <p class="text-sm font-semibold text-danger">Out of Stock</p>
-            <p class="text-xs text-red-500 mt-0.5">This item is currently unavailable</p>
-          </div>
-        </div>
-
-        <!-- Modifier loading -->
-        <div *ngIf="modifierLoading" class="space-y-3 mb-4">
-          <div class="h-4 bg-gray-100 rounded animate-pulse w-1/3"></div>
-          <div class="flex gap-2">
-            <div class="h-9 w-24 bg-gray-100 rounded-xl animate-pulse"></div>
-            <div class="h-9 w-24 bg-gray-100 rounded-xl animate-pulse"></div>
-          </div>
-        </div>
-
-        <!-- Modifier groups -->
-        <div *ngFor="let group of modifierGroups" class="mb-5">
-          <div class="flex items-center justify-between mb-2">
-            <p class="text-sm font-semibold text-textDark">
-              {{ group.name }}
-              <span *ngIf="group.required" class="text-red-500 ml-1 text-xs">*Required</span>
-            </p>
-            <span class="text-xs text-textMuted">{{ group.type === 'RADIO' ? 'Choose one' : 'Choose any' }}</span>
-          </div>
-
-          <!-- RADIO -->
-          <div *ngIf="group.type === 'RADIO'" class="flex flex-wrap gap-2">
-            <button *ngFor="let choice of group.choices"
-                    (click)="toggleChoice(group, choice.id)"
-                    class="px-4 py-2 rounded-xl text-sm font-medium border-2 transition-all"
-                    [ngClass]="isChoiceSelected(group.id, choice.id)
-                      ? 'border-primary bg-primary text-white shadow-sm'
-                      : 'border-borderColor bg-white text-textDark hover:border-primary hover:text-primary'">
-              {{ choice.label }}
-              <span *ngIf="choice.priceModifier > 0" class="ml-1 opacity-80">+R{{ choice.priceModifier.toFixed(2) }}</span>
+        <!-- LEFT: Image (desktop only full column, mobile hidden) -->
+        <div class="hidden lg:block sticky top-[72px]">
+          <div class="relative rounded-2xl overflow-hidden bg-gray-100 aspect-square shadow-card">
+            <img [src]="getImageUrl(product.image)" [alt]="product.name"
+                 class="w-full h-full object-cover" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+            <button (click)="toggleFavourite()"
+                    class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-sm
+                           flex items-center justify-center hover:bg-white transition-colors">
+              <i class="text-lg transition-colors"
+                 [class]="isFavourite ? 'bi bi-heart-fill text-red-500' : 'bi bi-heart text-textMuted'"></i>
             </button>
+            <div *ngIf="autoDiscountPercent > 0"
+                 class="absolute bottom-4 left-4 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full shadow">
+              {{ autoDiscountPercent }}% OFF
+            </div>
           </div>
 
-          <!-- CHECKBOX -->
-          <div *ngIf="group.type !== 'RADIO'" class="space-y-2">
-            <label *ngFor="let choice of group.choices"
-                   (click)="toggleChoice(group, choice.id)"
-                   class="flex items-center justify-between px-4 py-3 rounded-xl border-2 cursor-pointer transition-all"
-                   [ngClass]="isChoiceSelected(group.id, choice.id)
-                     ? 'border-primary bg-primary/5'
-                     : 'border-borderColor hover:border-primary/50'">
-              <div class="flex items-center gap-3">
-                <div class="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors"
-                     [ngClass]="isChoiceSelected(group.id, choice.id) ? 'border-primary bg-primary' : 'border-gray-300'">
-                  <i *ngIf="isChoiceSelected(group.id, choice.id)" class="bi bi-check text-white text-xs"></i>
+          <!-- Related items — desktop only, below image -->
+          <div *ngIf="relatedItems.length > 0" class="mt-6 bg-white rounded-2xl shadow-card p-5">
+            <h3 class="font-heading text-sm font-bold text-textDark mb-3 flex items-center gap-2">
+              <i class="bi bi-grid text-primary"></i>
+              More from {{ product.category }}
+            </h3>
+            <div class="grid grid-cols-2 gap-3">
+              <div *ngFor="let item of relatedItems"
+                   (click)="goToRelated(item.id)"
+                   class="cursor-pointer rounded-xl border border-borderColor overflow-hidden hover:border-primary hover:shadow-sm transition-all group">
+                <div class="aspect-[4/3] overflow-hidden bg-gray-100">
+                  <img [src]="getImageUrl(item.image)" [alt]="item.name"
+                       class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 </div>
-                <span class="text-sm text-textDark">{{ choice.label }}</span>
+                <div class="p-2.5">
+                  <p class="text-xs font-semibold text-textDark truncate group-hover:text-primary transition-colors">
+                    {{ item.name }}
+                  </p>
+                  <p class="font-numbers text-sm font-bold text-primary mt-0.5">R{{ item.price.toFixed(2) }}</p>
+                </div>
               </div>
-              <span *ngIf="choice.priceModifier > 0" class="text-xs font-semibold text-textMuted">+R{{ choice.priceModifier.toFixed(2) }}</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Quantity -->
-        <div class="flex items-center justify-between py-4 border-t border-borderColor">
-          <p class="text-sm font-semibold text-textDark">Quantity</p>
-          <app-quantity-selector [quantity]="quantity" (quantityChange)="quantity = $event">
-          </app-quantity-selector>
-        </div>
-
-        <!-- Special Instructions -->
-        <div class="pb-4">
-          <label class="text-sm font-semibold text-textDark block mb-1.5">
-            Special Instructions <span class="text-textMuted font-normal text-xs">(optional)</span>
-          </label>
-          <textarea
-            [(ngModel)]="itemNotes"
-            rows="2"
-            maxlength="200"
-            placeholder="e.g. No onions, extra sauce, well done…"
-            class="w-full px-3 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark resize-none focus:outline-none focus:ring-2 focus:ring-primary-400 placeholder:text-textMuted">
-          </textarea>
-          <p class="text-[10px] text-textMuted text-right mt-0.5">{{ itemNotes.length }}/200</p>
-        </div>
-
-        <!-- Price + CTA -->
-        <div class="flex items-end justify-between pt-2">
-          <div>
-            <p class="text-xs text-textMuted mb-1">Total</p>
-            <p *ngIf="autoDiscountPercent" class="font-numbers text-sm text-textLight line-through leading-none">
-              R{{ lineTotal.toFixed(2) }}
-            </p>
-            <p class="font-numbers text-2xl font-bold leading-tight"
-               [class.text-primary]="product.isAvailable"
-               [class.text-textMuted]="!product.isAvailable">
-              R{{ discountedTotal.toFixed(2) }}
-            </p>
-            <p *ngIf="autoDiscountPercent" class="text-xs font-medium text-primary mt-0.5">
-              {{ autoDiscountPercent }}% off applied
-            </p>
-          </div>
-          <app-button
-            variant="primary" size="lg" iconLeft="bi bi-cart-plus"
-            [loading]="isAddingToCart"
-            [disabled]="!product.isAvailable || !requiredSatisfied"
-            (clicked)="addToCart()">
-            {{ product.isAvailable ? 'Add to Cart' : 'Unavailable' }}
-          </app-button>
-        </div>
-      </div>
-
-      <!-- Related Items -->
-      <div *ngIf="relatedItems.length > 0" class="bg-white rounded-2xl shadow-card p-6">
-        <h3 class="font-heading text-base font-bold text-textDark mb-4 flex items-center gap-2">
-          <i class="bi bi-grid text-primary"></i>
-          More from {{ product.category }}
-        </h3>
-        <div class="grid grid-cols-2 gap-3">
-          <div *ngFor="let item of relatedItems"
-               (click)="goToRelated(item.id)"
-               class="cursor-pointer rounded-xl border border-borderColor overflow-hidden hover:border-primary hover:shadow-sm transition-all group">
-            <div class="aspect-[4/3] overflow-hidden bg-gray-100">
-              <img [src]="getImageUrl(item.image)" [alt]="item.name"
-                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-            </div>
-            <div class="p-2.5">
-              <p class="text-xs font-semibold text-textDark truncate group-hover:text-primary transition-colors">
-                {{ item.name }}
-              </p>
-              <p class="font-numbers text-sm font-bold text-primary mt-0.5">R{{ item.price.toFixed(2) }}</p>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Customer Reviews -->
-      <div *ngIf="reviews.length > 0" class="bg-white rounded-2xl shadow-card p-6">
-        <h3 class="font-heading text-base font-bold text-textDark mb-1 flex items-center gap-2">
-          <i class="bi bi-star-half text-amber-400"></i> Customer Reviews
-        </h3>
-        <p class="text-xs text-textMuted mb-4">
-          {{ avgRating | number:'1.1-1' }} avg · {{ totalReviews }} review{{ totalReviews === 1 ? '' : 's' }}
-        </p>
-        <div class="space-y-3">
-          <div *ngFor="let r of reviews"
-               class="border border-borderColor rounded-xl p-3 bg-surface">
-            <div class="flex items-center gap-1 mb-1">
-              <i *ngFor="let s of [1,2,3,4,5]"
-                 class="bi text-xs"
-                 [class.bi-star-fill]="s <= r.rating"
-                 [class.bi-star]="s > r.rating"
-                 [ngClass]="s <= r.rating ? 'text-amber-400' : 'text-gray-300'"></i>
-              <span class="text-[10px] text-textMuted ml-1">{{ r.createdAt | date:'mediumDate' }}</span>
+        <!-- RIGHT: Product details -->
+        <div class="-mt-5 relative z-10 lg:mt-0 space-y-4 lg:pb-10">
+
+          <!-- Product info card -->
+          <div class="bg-white rounded-2xl shadow-card p-6">
+
+            <div class="mb-4">
+              <div class="flex items-center justify-between">
+                <app-badge variant="primary" size="sm">{{ product.category }}</app-badge>
+                <span *ngIf="avgRating > 0"
+                      class="flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+                  <i class="bi bi-star-fill text-amber-400 text-xs"></i>
+                  {{ avgRating | number:'1.1-1' }}
+                  <span class="text-textMuted font-normal">({{ totalReviews }})</span>
+                </span>
+              </div>
+              <h1 class="font-heading text-2xl font-bold text-textDark mt-2">{{ product.name }}</h1>
+              <p class="text-textLight text-sm mt-2 leading-relaxed">{{ product.description }}</p>
             </div>
-            <p *ngIf="r.comment" class="text-sm text-textDark leading-relaxed">{{ r.comment }}</p>
+
+            <!-- Out of stock -->
+            <div *ngIf="!product.isAvailable"
+                 class="flex items-center gap-3 rounded-xl bg-red-50 border border-red-200 px-4 py-3 mb-4">
+              <i class="bi bi-x-circle-fill text-danger text-lg flex-shrink-0"></i>
+              <div>
+                <p class="text-sm font-semibold text-danger">Out of Stock</p>
+                <p class="text-xs text-red-500 mt-0.5">This item is currently unavailable</p>
+              </div>
+            </div>
+
+            <!-- Modifier loading -->
+            <div *ngIf="modifierLoading" class="space-y-3 mb-4">
+              <div class="h-4 bg-gray-100 rounded animate-pulse w-1/3"></div>
+              <div class="flex gap-2">
+                <div class="h-9 w-24 bg-gray-100 rounded-xl animate-pulse"></div>
+                <div class="h-9 w-24 bg-gray-100 rounded-xl animate-pulse"></div>
+              </div>
+            </div>
+
+            <!-- Modifier groups -->
+            <div *ngFor="let group of modifierGroups" class="mb-5">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-sm font-semibold text-textDark">
+                  {{ group.name }}
+                  <span *ngIf="group.required" class="text-red-500 ml-1 text-xs">*Required</span>
+                </p>
+                <span class="text-xs text-textMuted">{{ group.type === 'RADIO' ? 'Choose one' : 'Choose any' }}</span>
+              </div>
+
+              <!-- RADIO -->
+              <div *ngIf="group.type === 'RADIO'" class="flex flex-wrap gap-2">
+                <button *ngFor="let choice of group.choices"
+                        (click)="toggleChoice(group, choice.id)"
+                        class="px-4 py-2 rounded-xl text-sm font-medium border-2 transition-all"
+                        [ngClass]="isChoiceSelected(group.id, choice.id)
+                          ? 'border-primary bg-primary text-white shadow-sm'
+                          : 'border-borderColor bg-white text-textDark hover:border-primary hover:text-primary'">
+                  {{ choice.label }}
+                  <span *ngIf="choice.priceModifier > 0" class="ml-1 opacity-80">+R{{ choice.priceModifier.toFixed(2) }}</span>
+                </button>
+              </div>
+
+              <!-- CHECKBOX -->
+              <div *ngIf="group.type !== 'RADIO'" class="space-y-2">
+                <label *ngFor="let choice of group.choices"
+                       (click)="toggleChoice(group, choice.id)"
+                       class="flex items-center justify-between px-4 py-3 rounded-xl border-2 cursor-pointer transition-all"
+                       [ngClass]="isChoiceSelected(group.id, choice.id)
+                         ? 'border-primary bg-primary/5'
+                         : 'border-borderColor hover:border-primary/50'">
+                  <div class="flex items-center gap-3">
+                    <div class="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors"
+                         [ngClass]="isChoiceSelected(group.id, choice.id) ? 'border-primary bg-primary' : 'border-gray-300'">
+                      <i *ngIf="isChoiceSelected(group.id, choice.id)" class="bi bi-check text-white text-xs"></i>
+                    </div>
+                    <span class="text-sm text-textDark">{{ choice.label }}</span>
+                  </div>
+                  <span *ngIf="choice.priceModifier > 0" class="text-xs font-semibold text-textMuted">+R{{ choice.priceModifier.toFixed(2) }}</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Quantity -->
+            <div class="flex items-center justify-between py-4 border-t border-borderColor">
+              <p class="text-sm font-semibold text-textDark">Quantity</p>
+              <app-quantity-selector [quantity]="quantity" (quantityChange)="quantity = $event">
+              </app-quantity-selector>
+            </div>
+
+            <!-- Special Instructions -->
+            <div class="pb-4">
+              <label class="text-sm font-semibold text-textDark block mb-1.5">
+                Special Instructions <span class="text-textMuted font-normal text-xs">(optional)</span>
+              </label>
+              <textarea
+                [(ngModel)]="itemNotes"
+                rows="2"
+                maxlength="200"
+                placeholder="e.g. No onions, extra sauce, well done…"
+                class="w-full px-3 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark resize-none focus:outline-none focus:ring-2 focus:ring-primary-400 placeholder:text-textMuted">
+              </textarea>
+              <p class="text-[10px] text-textMuted text-right mt-0.5">{{ itemNotes.length }}/200</p>
+            </div>
+
+            <!-- Price + CTA -->
+            <div class="flex items-end justify-between pt-2">
+              <div>
+                <p class="text-xs text-textMuted mb-1">Total</p>
+                <p *ngIf="autoDiscountPercent" class="font-numbers text-sm text-textLight line-through leading-none">
+                  R{{ lineTotal.toFixed(2) }}
+                </p>
+                <p class="font-numbers text-2xl font-bold leading-tight"
+                   [class.text-primary]="product.isAvailable"
+                   [class.text-textMuted]="!product.isAvailable">
+                  R{{ discountedTotal.toFixed(2) }}
+                </p>
+                <p *ngIf="autoDiscountPercent" class="text-xs font-medium text-primary mt-0.5">
+                  {{ autoDiscountPercent }}% off applied
+                </p>
+              </div>
+              <app-button
+                variant="primary" size="lg" iconLeft="bi bi-cart-plus"
+                [loading]="isAddingToCart"
+                [disabled]="!product.isAvailable || !requiredSatisfied"
+                (clicked)="addToCart()">
+                {{ product.isAvailable ? 'Add to Cart' : 'Unavailable' }}
+              </app-button>
+            </div>
           </div>
+
+          <!-- Mobile: Related Items -->
+          <div *ngIf="relatedItems.length > 0" class="lg:hidden bg-white rounded-2xl shadow-card p-6">
+            <h3 class="font-heading text-base font-bold text-textDark mb-4 flex items-center gap-2">
+              <i class="bi bi-grid text-primary"></i>
+              More from {{ product.category }}
+            </h3>
+            <div class="grid grid-cols-2 gap-3">
+              <div *ngFor="let item of relatedItems"
+                   (click)="goToRelated(item.id)"
+                   class="cursor-pointer rounded-xl border border-borderColor overflow-hidden hover:border-primary hover:shadow-sm transition-all group">
+                <div class="aspect-[4/3] overflow-hidden bg-gray-100">
+                  <img [src]="getImageUrl(item.image)" [alt]="item.name"
+                       class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                </div>
+                <div class="p-2.5">
+                  <p class="text-xs font-semibold text-textDark truncate group-hover:text-primary transition-colors">
+                    {{ item.name }}
+                  </p>
+                  <p class="font-numbers text-sm font-bold text-primary mt-0.5">R{{ item.price.toFixed(2) }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Customer Reviews -->
+          <div *ngIf="reviews.length > 0" class="bg-white rounded-2xl shadow-card p-6">
+            <h3 class="font-heading text-base font-bold text-textDark mb-1 flex items-center gap-2">
+              <i class="bi bi-star-half text-amber-400"></i> Customer Reviews
+            </h3>
+            <p class="text-xs text-textMuted mb-4">
+              {{ avgRating | number:'1.1-1' }} avg · {{ totalReviews }} review{{ totalReviews === 1 ? '' : 's' }}
+            </p>
+            <div class="space-y-3">
+              <div *ngFor="let r of reviews"
+                   class="border border-borderColor rounded-xl p-3 bg-surface">
+                <div class="flex items-center gap-1 mb-1">
+                  <i *ngFor="let s of [1,2,3,4,5]"
+                     class="bi text-xs"
+                     [class.bi-star-fill]="s <= r.rating"
+                     [class.bi-star]="s > r.rating"
+                     [ngClass]="s <= r.rating ? 'text-amber-400' : 'text-gray-300'"></i>
+                  <span class="text-[10px] text-textMuted ml-1">{{ r.createdAt | date:'mediumDate' }}</span>
+                </div>
+                <p *ngIf="r.comment" class="text-sm text-textDark leading-relaxed">{{ r.comment }}</p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
-
     </div>
   </div>
 </div>
