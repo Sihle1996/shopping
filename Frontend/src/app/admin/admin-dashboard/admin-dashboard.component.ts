@@ -80,7 +80,11 @@ export class AdminDashboardComponent implements OnInit {
   setupCategories: any[] = [];
   setupDrivers: any[] = [];
   setupSettings: any = null;
-  onboardingDismissed = localStorage.getItem('onboardingDone') === 'true';
+  onboardingDismissed = localStorage.getItem(`onboardingDone_${localStorage.getItem('tenantId') || ''}`) === 'true';
+
+  private get onboardingKey(): string {
+    return `onboardingDone_${localStorage.getItem('tenantId') || ''}`;
+  }
 
   salesChartOptions: Partial<SalesChartOptions> = this.buildSalesChartOptions([], []);
   productsChartOptions: Partial<ProductsChartOptions> = this.buildProductsChartOptions([], []);
@@ -121,6 +125,7 @@ export class AdminDashboardComponent implements OnInit {
         this.isStoreOpen = settings.isOpen ?? false;
         this.setupSettings = settings;
         this.settingsLoading = false;
+        this.maybeAutoSpotlight();
       },
       error: () => { this.settingsLoading = false; }
     });
@@ -148,7 +153,7 @@ export class AdminDashboardComponent implements OnInit {
 
   dismissOnboarding(): void {
     this.onboardingDismissed = true;
-    localStorage.setItem('onboardingDone', 'true');
+    localStorage.setItem(this.onboardingKey, 'true');
   }
 
   goToStep(step: any): void {
@@ -166,6 +171,12 @@ export class AdminDashboardComponent implements OnInit {
   private spotlightElement(elementId: string, title: string, description: string): void {
     const d = driver({ animate: true, overlayOpacity: 0.35 });
     d.highlight({ element: '#' + elementId, popover: { title, description, side: 'bottom', align: 'start' } });
+  }
+
+  private maybeAutoSpotlight(): void {
+    if (this.onboardingDismissed || this.setupComplete) return;
+    // Spotlight the checklist card on first visit so new owners notice it
+    setTimeout(() => this.spotlightElement('onboarding-card', 'Welcome! Let\'s get you set up', 'Follow these steps to go live in minutes. Click each step to be guided directly to the right place.'), 800);
   }
 
   private loadRecentOrders(): void {
