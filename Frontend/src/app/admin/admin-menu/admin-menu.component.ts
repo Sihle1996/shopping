@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { driver } from 'driver.js';
@@ -12,7 +12,7 @@ import { environment } from 'src/environments/environment';
   templateUrl: './admin-menu.component.html',
   styleUrls: ['./admin-menu.component.scss']
 })
-export class AdminMenuComponent implements OnInit {
+export class AdminMenuComponent implements OnInit, OnDestroy {
   menuItems: any[] = [];
   showForm = false;
   isEditing = false;
@@ -40,6 +40,11 @@ export class AdminMenuComponent implements OnInit {
   // ── CSV import state ────────────────────────────────────────────────────
   importLoading = false;
   importResult: string | null = null;
+  private activeDriver: any = null;
+
+  ngOnDestroy(): void {
+    try { this.activeDriver?.destroy(); } catch { /* ignore */ }
+  }
 
   // ── Option groups state ─────────────────────────────────────────────────
   expandedOptionsItemId: string | null = null;
@@ -77,12 +82,23 @@ export class AdminMenuComponent implements OnInit {
     const tour = this.route.snapshot.queryParamMap.get('tour');
     if (tour === 'add-item') {
       setTimeout(() => {
-        const d = driver({ animate: true, overlayOpacity: 0.35 });
-        d.highlight({
-          element: '#add-menu-item-btn',
-          popover: { title: 'Add Your First Item', description: 'Click here to add your first menu item and start building your menu', side: 'bottom', align: 'end' }
-        });
-      }, 500);
+        const el = document.getElementById('add-menu-item-btn');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          const d = driver({
+            animate: true,
+            overlayOpacity: 0.4,
+            allowClose: true,
+            overlayClickBehavior: 'close',
+            onDestroyStarted: () => { d.destroy(); this.activeDriver = null; }
+          });
+          this.activeDriver = d;
+          d.highlight({
+            element: '#add-menu-item-btn',
+            popover: { title: 'Add Your First Item', description: 'Click here to add your first menu item and start building your menu', side: 'bottom', align: 'end', showButtons: ['close'] }
+          });
+        }, 400);
+      }, 300);
     }
     this.adminService.getCategories().subscribe({
       next: (cats) => {

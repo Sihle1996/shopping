@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis,
@@ -41,7 +41,7 @@ export type ProductsChartOptions = {
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.scss']
 })
-export class AdminDashboardComponent implements OnInit {
+export class AdminDashboardComponent implements OnInit, OnDestroy {
   startDate!: string;
   endDate!: string;
 
@@ -81,6 +81,8 @@ export class AdminDashboardComponent implements OnInit {
   setupDrivers: any[] = [];
   setupSettings: any = null;
   onboardingDismissed = localStorage.getItem(`onboardingDone_${localStorage.getItem('tenantId') || ''}`) === 'true';
+  cardJustArrived = false;
+  private activeDriver: any = null;
 
   private get onboardingKey(): string {
     return `onboardingDone_${localStorage.getItem('tenantId') || ''}`;
@@ -157,26 +159,53 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   goToStep(step: any): void {
+    this.destroyDriver(); // always clear any active overlay before navigating
     if (step.proLocked) {
       this.router.navigate(['/admin/subscription']);
       return;
     }
     if (step.tourParam === 'store-toggle') {
-      this.spotlightElement('store-toggle-btn', 'Open Your Store', 'Toggle this switch to start accepting orders from customers');
+      setTimeout(() => this.spotlightElement('store-toggle-btn', 'Open Your Store', 'Toggle this switch to start accepting orders from customers'), 50);
       return;
     }
     this.router.navigate([step.route], { queryParams: { tour: step.tourParam } });
   }
 
+  private destroyDriver(): void {
+    try { this.activeDriver?.destroy(); } catch { /* ignore */ }
+    this.activeDriver = null;
+  }
+
   private spotlightElement(elementId: string, title: string, description: string): void {
-    const d = driver({ animate: true, overlayOpacity: 0.35 });
-    d.highlight({ element: '#' + elementId, popover: { title, description, side: 'bottom', align: 'start' } });
+    this.destroyDriver();
+    const el = document.getElementById(elementId);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const d = driver({
+      animate: true,
+      overlayOpacity: 0.4,
+      allowClose: true,
+      overlayClickBehavior: 'close',
+      onDestroyStarted: () => { d.destroy(); this.activeDriver = null; }
+    });
+    this.activeDriver = d;
+    setTimeout(() => {
+      d.highlight({ element: '#' + elementId, popover: { title, description, side: 'bottom', align: 'start', showButtons: ['close'] } });
+    }, 350);
   }
 
   private maybeAutoSpotlight(): void {
     if (this.onboardingDismissed || this.setupComplete) return;
-    // Spotlight the checklist card on first visit so new owners notice it
-    setTimeout(() => this.spotlightElement('onboarding-card', 'Welcome! Let\'s get you set up', 'Follow these steps to go live in minutes. Click each step to be guided directly to the right place.'), 800);
+    // No overlay — just scroll the card into view and pulse it with CSS
+    setTimeout(() => {
+      const el = document.getElementById('onboarding-card');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      this.cardJustArrived = true;
+      setTimeout(() => this.cardJustArrived = false, 3000);
+    }, 600);
+  }
+
+  ngOnDestroy(): void {
+    this.destroyDriver();
   }
 
   private loadRecentOrders(): void {

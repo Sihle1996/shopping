@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { driver } from 'driver.js';
@@ -32,7 +32,7 @@ interface TenantSettings {
   templateUrl: './admin-settings.component.html',
   styleUrls: ['./admin-settings.component.scss']
 })
-export class AdminSettingsComponent implements OnInit {
+export class AdminSettingsComponent implements OnInit, OnDestroy {
   settings: TenantSettings = {
     id: '',
     name: '',
@@ -96,9 +96,16 @@ export class AdminSettingsComponent implements OnInit {
     if (!el) return;
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => {
-      const d = driver({ animate: true, overlayOpacity: 0.35 });
-      d.highlight({ element: '#' + id, popover: { title, description: desc, side: 'bottom', align: 'start' } });
-    }, 350);
+      const d = driver({
+        animate: true,
+        overlayOpacity: 0.4,
+        allowClose: true,
+        overlayClickBehavior: 'close',
+        onDestroyStarted: () => { d.destroy(); this.activeDriver = null; }
+      });
+      this.activeDriver = d;
+      d.highlight({ element: '#' + id, popover: { title, description: desc, side: 'bottom', align: 'start', showButtons: ['close'] } });
+    }, 650);
   }
 
   private getHeaders(): HttpHeaders {
@@ -155,6 +162,12 @@ export class AdminSettingsComponent implements OnInit {
     return this.settings.logoUrl.startsWith('http')
       ? this.settings.logoUrl
       : `${environment.apiUrl}${this.settings.logoUrl}`;
+  }
+
+  private activeDriver: any = null;
+
+  ngOnDestroy(): void {
+    try { this.activeDriver?.destroy(); } catch { /* ignore */ }
   }
 
   categoryLoadError = false;

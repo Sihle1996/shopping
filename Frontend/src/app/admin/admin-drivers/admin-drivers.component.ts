@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { driver } from 'driver.js';
 import { AdminService } from 'src/app/services/admin.service';
@@ -8,7 +8,7 @@ import { AdminService } from 'src/app/services/admin.service';
   templateUrl: './admin-drivers.component.html',
   styleUrls: ['./admin-drivers.component.scss']
 })
-export class AdminDriversComponent implements OnInit {
+export class AdminDriversComponent implements OnInit, OnDestroy {
   newDriver = { email: '', password: '' };
   drivers: any[] = [];
   loading = false;
@@ -16,6 +16,11 @@ export class AdminDriversComponent implements OnInit {
   deletingId: string | null = null;
   toast: string | null = null;
   toastType: 'success' | 'error' = 'success';
+  private activeDriver: any = null;
+
+  ngOnDestroy(): void {
+    try { this.activeDriver?.destroy(); } catch { /* ignore */ }
+  }
 
   constructor(private adminService: AdminService, private route: ActivatedRoute) {}
 
@@ -24,12 +29,23 @@ export class AdminDriversComponent implements OnInit {
     const tour = this.route.snapshot.queryParamMap.get('tour');
     if (tour === 'add-driver') {
       setTimeout(() => {
-        const d = driver({ animate: true, overlayOpacity: 0.35 });
-        d.highlight({
-          element: '#add-driver-form',
-          popover: { title: 'Add a Driver', description: 'Enter your driver\'s email and a password to create their account', side: 'bottom', align: 'start' }
-        });
-      }, 500);
+        const el = document.getElementById('add-driver-form');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          const d = driver({
+            animate: true,
+            overlayOpacity: 0.4,
+            allowClose: true,
+            overlayClickBehavior: 'close',
+            onDestroyStarted: () => { d.destroy(); this.activeDriver = null; }
+          });
+          this.activeDriver = d;
+          d.highlight({
+            element: '#add-driver-form',
+            popover: { title: 'Add a Driver', description: 'Enter your driver\'s email and a password to create their account', side: 'bottom', align: 'start', showButtons: ['close'] }
+          });
+        }, 400);
+      }, 300);
     }
   }
 
