@@ -72,7 +72,7 @@ public class Tenant {
 
     @Column(nullable = false)
     @Builder.Default
-    private Boolean isOpen = true;
+    private Boolean isOpen = false;
 
     @Column(precision = 10, scale = 2)
     private BigDecimal minimumOrderAmount;

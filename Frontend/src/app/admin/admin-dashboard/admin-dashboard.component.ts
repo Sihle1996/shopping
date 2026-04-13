@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import confetti from 'canvas-confetti';
 import {
   ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis,
   ApexDataLabels, ApexTooltip, ApexFill, ApexStroke,
@@ -35,6 +36,16 @@ export type ProductsChartOptions = {
   noData: ApexNoData;
   colors: string[];
 };
+
+interface SetupStep {
+  label: string;
+  done: boolean;
+  route: string | null;
+  tourParam: string;
+  actionLabel: string;
+  proLocked: boolean;
+  prereqLocked: boolean;
+}
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -135,16 +146,28 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   // ── Onboarding checklist ──────────────────────────────────────────────────
 
-  get setupSteps() {
+  /** Computed directly from raw data — no dependency on setupSteps to avoid circular inference */
+  get canOpenStore(): boolean {
+    const s = this.setupSettings;
+    const storeInfoDone  = !!(s?.phone);
+    const logoDone       = !!(s?.logoUrl) || !this.hasCustomBranding;
+    const deliveryDone   = (s?.deliveryFeeBase ?? 0) > 0;
+    const categoryDone   = this.setupCategories.length > 0;
+    const menuItemDone   = this.setupMenuItems.length > 0;
+    const driverDone     = this.setupDrivers.length > 0;
+    return storeInfoDone && logoDone && deliveryDone && categoryDone && menuItemDone && driverDone;
+  }
+
+  get setupSteps(): SetupStep[] {
     const s = this.setupSettings;
     return [
-      { label: 'Add your store info',      done: !!(s?.phone),                    route: '/admin/settings', tourParam: 'store-info',   actionLabel: 'Set up',     proLocked: false },
-      { label: 'Upload a logo',            done: !!(s?.logoUrl),                   route: '/admin/settings', tourParam: 'logo',         actionLabel: 'Set up',     proLocked: !this.hasCustomBranding },
-      { label: 'Set delivery fee',         done: (s?.deliveryFeeBase ?? 0) > 0,    route: '/admin/settings', tourParam: 'delivery',     actionLabel: 'Set up',     proLocked: false },
-      { label: 'Add a menu category',      done: this.setupCategories.length > 0,  route: '/admin/settings', tourParam: 'category',     actionLabel: 'Set up',     proLocked: false },
-      { label: 'Add your first menu item', done: this.setupMenuItems.length > 0,   route: '/admin/menu',     tourParam: 'add-item',     actionLabel: 'Add item',   proLocked: false },
-      { label: 'Add a delivery driver',    done: this.setupDrivers.length > 0,     route: '/admin/drivers',  tourParam: 'add-driver',   actionLabel: 'Add driver', proLocked: false },
-      { label: 'Open your store',          done: !!(s?.isOpen),                    route: null,              tourParam: 'store-toggle', actionLabel: 'Open now',   proLocked: false },
+      { label: 'Add your store info',      done: !!(s?.phone),                    route: '/admin/settings', tourParam: 'store-info',   actionLabel: 'Set up',     proLocked: false,                    prereqLocked: false },
+      { label: 'Upload a logo',            done: !!(s?.logoUrl),                   route: '/admin/settings', tourParam: 'logo',         actionLabel: 'Set up',     proLocked: !this.hasCustomBranding,  prereqLocked: false },
+      { label: 'Set delivery fee',         done: (s?.deliveryFeeBase ?? 0) > 0,    route: '/admin/settings', tourParam: 'delivery',     actionLabel: 'Set up',     proLocked: false,                    prereqLocked: false },
+      { label: 'Add a menu category',      done: this.setupCategories.length > 0,  route: '/admin/settings', tourParam: 'category',     actionLabel: 'Set up',     proLocked: false,                    prereqLocked: false },
+      { label: 'Add your first menu item', done: this.setupMenuItems.length > 0,   route: '/admin/menu',     tourParam: 'add-item',     actionLabel: 'Add item',   proLocked: false,                    prereqLocked: false },
+      { label: 'Add a delivery driver',    done: this.setupDrivers.length > 0,     route: '/admin/drivers',  tourParam: 'add-driver',   actionLabel: 'Add driver', proLocked: false,                    prereqLocked: false },
+      { label: 'Open your store',          done: !!(s?.isOpen),                    route: null,              tourParam: 'store-toggle', actionLabel: 'Open now',   proLocked: false,                    prereqLocked: !this.canOpenStore },
     ];
   }
 
@@ -159,11 +182,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   goToStep(step: any): void {
-    this.destroyDriver(); // always clear any active overlay before navigating
+    this.destroyDriver();
     if (step.proLocked) {
       this.router.navigate(['/admin/subscription']);
       return;
     }
+    if (step.prereqLocked) return; // not yet unlocked — ignore click
     if (step.tourParam === 'store-toggle') {
       setTimeout(() => this.spotlightElement('store-toggle-btn', 'Open Your Store', 'Toggle this switch to start accepting orders from customers'), 50);
       return;
@@ -185,7 +209,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       overlayOpacity: 0.4,
       allowClose: true,
       overlayClickBehavior: 'close',
-      onDestroyStarted: () => { d.destroy(); this.activeDriver = null; }
+      onDestroyed: () => { this.activeDriver = null; }
     });
     this.activeDriver = d;
     setTimeout(() => {
@@ -195,13 +219,25 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   private maybeAutoSpotlight(): void {
     if (this.onboardingDismissed || this.setupComplete) return;
-    // No overlay — just scroll the card into view and pulse it with CSS
     setTimeout(() => {
       const el = document.getElementById('onboarding-card');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       this.cardJustArrived = true;
       setTimeout(() => this.cardJustArrived = false, 3000);
     }, 600);
+  }
+
+  private fireConfetti(): void {
+    const colors = ['#FF6F00', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#ffffff'];
+    const end = Date.now() + 3500;
+    const burst = () => {
+      confetti({ particleCount: 4, angle: 60,  spread: 60, origin: { x: 0, y: 0.8 }, colors, zIndex: 9999 });
+      confetti({ particleCount: 4, angle: 120, spread: 60, origin: { x: 1, y: 0.8 }, colors, zIndex: 9999 });
+      if (Date.now() < end) requestAnimationFrame(burst);
+    };
+    // Opening burst
+    confetti({ particleCount: 80, spread: 100, origin: { y: 0.55 }, colors, zIndex: 9999 });
+    setTimeout(burst, 200);
   }
 
   ngOnDestroy(): void {
@@ -219,7 +255,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   toggleStore(): void {
     this.toggleLoading = true;
     this.adminService.toggleStoreOpen().subscribe({
-      next: res => { this.isStoreOpen = res.isOpen; this.toggleLoading = false; },
+      next: res => {
+        this.isStoreOpen = res.isOpen;
+        if (this.setupSettings) this.setupSettings.isOpen = res.isOpen;
+        this.toggleLoading = false;
+        if (res.isOpen && this.setupComplete) this.fireConfetti();
+      },
       error: () => { this.toggleLoading = false; }
     });
   }

@@ -90,7 +90,7 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
             overlayOpacity: 0.4,
             allowClose: true,
             overlayClickBehavior: 'close',
-            onDestroyStarted: () => { d.destroy(); this.activeDriver = null; }
+            onDestroyed: () => { this.activeDriver = null; }
           });
           this.activeDriver = d;
           d.highlight({
