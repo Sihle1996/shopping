@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/menu")
@@ -65,6 +66,18 @@ public class AdminMenuController {
     @PostMapping("/bulk")
     public List<MenuItem> createBulkMenuItems(@RequestBody List<MenuItem> menuItems) {
         return menuService.saveAllMenuItems(menuItems);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/bulk-price")
+    public ResponseEntity<?> bulkUpdatePrices(@RequestBody Map<String, Object> body) {
+        @SuppressWarnings("unchecked")
+        List<String> rawIds = (List<String>) body.get("ids");
+        String type = (String) body.getOrDefault("type", "PERCENT");
+        double value = ((Number) body.get("value")).doubleValue();
+        List<UUID> ids = rawIds.stream().map(UUID::fromString).collect(Collectors.toList());
+        int updated = menuService.bulkAdjustPrices(ids, type, value);
+        return ResponseEntity.ok(Map.of("updated", updated));
     }
 
     /**

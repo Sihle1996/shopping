@@ -87,6 +87,24 @@ public class MenuService {
         return menuItemRepository.saveAll(menuItems);
     }
 
+    @Transactional
+    public int bulkAdjustPrices(List<UUID> ids, String type, double value) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tenant context");
+        List<MenuItem> items = menuItemRepository.findByIdInAndTenant_Id(ids, tenantId);
+        for (MenuItem item : items) {
+            double newPrice;
+            if ("PERCENT".equalsIgnoreCase(type)) {
+                newPrice = item.getPrice() * (1 + value / 100.0);
+            } else {
+                newPrice = item.getPrice() + value;
+            }
+            item.setPrice(Math.max(0, newPrice));
+        }
+        menuItemRepository.saveAll(items);
+        return items.size();
+    }
+
     private void setTenantOnEntity(MenuItem item) {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null && item.getTenant() == null) {

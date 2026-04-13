@@ -17,6 +17,13 @@
           {{ importLoading ? 'Importing...' : 'Import CSV' }}
         </app-button>
         <app-button
+          [variant]="bulkMode ? 'ghost' : 'outline'"
+          size="md"
+          [iconLeft]="bulkMode ? 'bi bi-x-lg' : 'bi bi-pencil-square'"
+          (clicked)="toggleBulkMode()">
+          {{ bulkMode ? 'Cancel' : 'Bulk Edit' }}
+        </app-button>
+        <app-button
           [variant]="showForm ? 'ghost' : 'primary'"
           size="md"
           [iconLeft]="showForm ? 'bi bi-x-lg' : 'bi bi-plus-lg'"
@@ -128,12 +135,31 @@
     <!-- Menu Items Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
       <div *ngFor="let item of filteredMenu"
-           class="bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-card-hover transition-shadow animate-fade-in">
-        <div class="aspect-[16/10] overflow-hidden bg-gray-100">
+           class="bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-card-hover transition-shadow animate-fade-in"
+           [class.ring-2]="selectedIds.has(item.id)"
+           [class.ring-primary]="selectedIds.has(item.id)">
+
+        <!-- Bulk select overlay -->
+        <div *ngIf="bulkMode" (click)="toggleSelect(item.id)"
+             class="relative cursor-pointer">
+          <div class="aspect-[16/10] overflow-hidden bg-gray-100">
+            <img [src]="getImageUrl(item)" [alt]="item.name"
+                 class="w-full h-full object-cover" [class.opacity-60]="selectedIds.has(item.id)" />
+          </div>
+          <div class="absolute top-2 left-2">
+            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors"
+                 [ngClass]="selectedIds.has(item.id) ? 'bg-primary border-primary' : 'bg-white border-gray-300'">
+              <i *ngIf="selectedIds.has(item.id)" class="bi bi-check text-white text-[10px]"></i>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="!bulkMode" class="aspect-[16/10] overflow-hidden bg-gray-100">
           <img [src]="getImageUrl(item)" [alt]="item.name"
                class="w-full h-full object-cover" />
         </div>
-        <div class="p-4">
+
+        <div class="p-4" [class.cursor-pointer]="bulkMode" (click)="bulkMode ? toggleSelect(item.id) : null">
           <div class="flex items-start justify-between mb-2">
             <div>
               <h4 class="font-semibold text-textDark text-sm">{{ item.name }}</h4>
@@ -141,7 +167,7 @@
             </div>
             <span class="font-numbers font-bold text-primary text-sm">R{{ item.price.toFixed(2) }}</span>
           </div>
-          <div class="flex gap-2 mt-3 flex-wrap">
+          <div *ngIf="!bulkMode" class="flex gap-2 mt-3 flex-wrap">
             <app-button variant="outline" size="sm" iconLeft="bi bi-pencil" (clicked)="editItem(item)">
               Edit
             </app-button>
@@ -260,6 +286,39 @@
       title="No items found"
       message="Try adjusting your search or filter, or add a new menu item">
     </app-empty-state>
+  </div>
+</div>
+
+<!-- Bulk price action bar -->
+<div *ngIf="bulkMode"
+     class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-borderColor shadow-xl px-4 py-3 flex flex-wrap items-center gap-3">
+  <div class="flex items-center gap-2 flex-1 min-w-0">
+    <span class="text-sm font-semibold text-textDark">
+      {{ selectedIds.size }} item{{ selectedIds.size !== 1 ? 's' : '' }} selected
+    </span>
+    <button (click)="selectAll()"
+            class="text-xs text-primary hover:underline font-medium">Select all</button>
+    <button *ngIf="selectedIds.size > 0" (click)="clearBulkSelection()"
+            class="text-xs text-textMuted hover:underline">Clear</button>
+  </div>
+  <div class="flex items-center gap-2 flex-wrap">
+    <select [(ngModel)]="bulkAdjType"
+            class="px-3 py-2 rounded-xl border border-borderColor bg-white text-sm text-textDark
+                   focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent">
+      <option value="PERCENT">% change</option>
+      <option value="FLAT">Flat +/- (R)</option>
+    </select>
+    <input type="number" [(ngModel)]="bulkAdjValue"
+           placeholder="{{ bulkAdjType === 'PERCENT' ? 'e.g. 10 or -5' : 'e.g. 5 or -2' }}"
+           class="w-36 px-3 py-2 rounded-xl border border-borderColor bg-white text-sm text-textDark
+                  focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+    <button (click)="applyBulkPrice()"
+            [disabled]="selectedIds.size === 0 || !bulkAdjValue || bulkSaving"
+            class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600
+                   transition-colors disabled:opacity-50 flex items-center gap-1.5">
+      <i class="bi bi-arrow-repeat animate-spin" *ngIf="bulkSaving"></i>
+      {{ bulkSaving ? 'Saving…' : 'Apply' }}
+    </button>
   </div>
 </div>
 

@@ -24,6 +24,13 @@ public interface PromotionRepository extends JpaRepository<Promotion, UUID> {
     @Query("SELECT p FROM Promotion p WHERE p.featured = true AND p.active = true AND p.startAt <= :now AND p.endAt >= :now AND p.tenant.id = :tenantId ORDER BY p.startAt DESC")
     Optional<Promotion> findFeaturedByTenantId(@Param("now") OffsetDateTime now, @Param("tenantId") UUID tenantId);
 
+    // Scheduler queries — find promotions whose window has opened but aren't active yet
+    List<Promotion> findByActiveFalseAndStartAtLessThanEqualAndEndAtGreaterThanEqual(
+            OffsetDateTime startBound, OffsetDateTime endBound);
+
+    // Scheduler queries — find active promotions whose window has closed
+    List<Promotion> findByActiveTrueAndEndAtLessThan(OffsetDateTime now);
+
     Optional<Promotion> findByCodeAndActiveTrue(String code);
 
     List<Promotion> findByTenant_Id(UUID tenantId);

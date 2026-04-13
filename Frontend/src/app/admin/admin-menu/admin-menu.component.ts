@@ -42,6 +42,13 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
   importResult: string | null = null;
   private activeDriver: any = null;
 
+  // ── Bulk price edit state ────────────────────────────────────────────────
+  bulkMode = false;
+  selectedIds = new Set<string>();
+  bulkAdjType: 'PERCENT' | 'FLAT' = 'PERCENT';
+  bulkAdjValue = 0;
+  bulkSaving = false;
+
   ngOnDestroy(): void {
     try { this.activeDriver?.destroy(); } catch { /* ignore */ }
   }
@@ -241,6 +248,50 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
         this.importLoading = false;
         this.toastr.error('CSV import failed');
         event.target.value = '';
+      }
+    });
+  }
+
+  // ── Bulk price edit ────────────────────────────────────────────────────────
+
+  toggleBulkMode(): void {
+    this.bulkMode = !this.bulkMode;
+    if (!this.bulkMode) this.clearBulkSelection();
+  }
+
+  toggleSelect(id: string): void {
+    if (this.selectedIds.has(id)) this.selectedIds.delete(id);
+    else this.selectedIds.add(id);
+  }
+
+  selectAll(): void {
+    this.filteredMenu.forEach(item => this.selectedIds.add(item.id));
+  }
+
+  clearBulkSelection(): void {
+    this.selectedIds.clear();
+    this.bulkAdjValue = 0;
+    this.bulkAdjType = 'PERCENT';
+  }
+
+  applyBulkPrice(): void {
+    if (this.selectedIds.size === 0 || !this.bulkAdjValue) return;
+    this.bulkSaving = true;
+    const body = { ids: Array.from(this.selectedIds), type: this.bulkAdjType, value: this.bulkAdjValue };
+    this.http.patch(
+      `${environment.apiUrl}/api/admin/menu/bulk-price`,
+      body,
+      { headers: this.authHeaders }
+    ).subscribe({
+      next: () => {
+        this.toastr.success(`${this.selectedIds.size} item(s) updated`);
+        this.bulkSaving = false;
+        this.clearBulkSelection();
+        this.fetchMenuItems();
+      },
+      error: () => {
+        this.toastr.error('Bulk price update failed');
+        this.bulkSaving = false;
       }
     });
   }
