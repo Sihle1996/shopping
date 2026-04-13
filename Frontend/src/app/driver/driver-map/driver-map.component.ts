@@ -115,10 +115,12 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
   private map: mapboxgl.Map | null = null;
   private driverMarker: mapboxgl.Marker | null = null;
+  private driverMarkerEl: HTMLElement | null = null;
   private stopMarkers: mapboxgl.Marker[] = [];
   private watchId: number | null = null;
   private driverCoords: [number, number] | null = null;
   private prevCoords: [number, number] | null = null;
+  private currentBearing = 0;
   private isFollowing = true;
   private initialFitDone = false;
   private routeSteps: any[] = [];
@@ -328,41 +330,88 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
   private startTracking(): void {
     this.watchId = navigator.geolocation.watchPosition((pos) => {
       const newCoords: [number, number] = [pos.coords.longitude, pos.coords.latitude];
-      let bearing: number | null = null;
-      if (this.prevCoords) bearing = this.calcBearing(this.prevCoords, newCoords);
-      this.prevCoords = [...newCoords];
+      const speed = pos.coords.speed ?? 0; // m/s
+
+      // Bearing priority:
+      // 1. Native GPS/compass heading (most accurate, no jitter at low speed)
+      // 2. Computed from two positions (fallback, only when moved >5 m)
+      let rawBearing: number | null = null;
+      if (speed > 0.5 && pos.coords.heading != null && isFinite(pos.coords.heading)) {
+        rawBearing = pos.coords.heading;
+      } else if (this.prevCoords && this.distBetween(this.prevCoords, newCoords) > 0.005) {
+        rawBearing = this.calcBearing(this.prevCoords, newCoords);
+      }
+
+      if (rawBearing !== null) {
+        this.currentBearing = this.smoothBearing(this.currentBearing, rawBearing);
+        this.rotateDriverMarker(this.currentBearing);
+      }
+
+      this.prevCoords = [...newCoords] as [number, number];
       const firstFix = !this.driverCoords;
       this.driverCoords = newCoords;
 
-      // Geocoding may have finished before GPS — trigger route fetch now that coords are available
       if (firstFix && this.optimizedStops.length > 0 && !this.eta) {
         this.optimizedStops.length > 1 ? this.fetchOptimizedRoute() : this.fetchSingleRoute();
       }
 
-      if (this.driverMarker) { this.driverMarker.setLngLat(newCoords); }
-      else {
-        const el = document.createElement('div');
-        el.innerHTML = `<div style="width:48px;height:48px;position:relative;display:flex;align-items:center;justify-content:center">
-          <div style="position:absolute;width:48px;height:48px;background:#3B82F6;border-radius:50%;opacity:0.2;animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite"></div>
-          <div style="width:30px;height:30px;background:#2563EB;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);z-index:1;display:flex;align-items:center;justify-content:center">
-            <svg width="14" height="14" fill="white" viewBox="0 0 16 16"><path d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z" transform="rotate(180 8 8)"/></svg>
-          </div>
-        </div>`;
-        this.driverMarker = new mapboxgl.Marker(el).setLngLat(newCoords).addTo(this.map!);
+      if (this.driverMarker) {
+        this.driverMarker.setLngLat(newCoords);
+      } else {
+        this.driverMarkerEl = this.createDriverMarkerEl();
+        this.driverMarker = new mapboxgl.Marker(this.driverMarkerEl).setLngLat(newCoords).addTo(this.map!);
       }
 
       if (!this.initialFitDone) { this.fitAllBounds(); this.initialFitDone = true; }
+
       const now = Date.now();
-      if (this.isFollowing && this.map && (now - this.lastEaseTo) > 1000) {
+      if (this.isFollowing && this.map && (now - this.lastEaseTo) > 800) {
         this.lastEaseTo = now;
-        const opts: any = { center: newCoords, zoom: 17.5, pitch: 65, duration: 1000, essential: true };
-        if (bearing !== null) opts.bearing = bearing;
-        this.map.easeTo(opts);
+        this.map.easeTo({
+          center: newCoords,
+          bearing: this.currentBearing,
+          zoom: 17.5,
+          pitch: 65,
+          duration: 900,
+          essential: true
+        });
       }
+
       this.checkArrivals(newCoords);
       this.updateVoiceNavigation();
-      this.sendLocationUpdate(newCoords, pos.coords.speed ?? 0);
-    }, () => {}, { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 });
+      this.sendLocationUpdate(newCoords, speed);
+    }, () => {}, { enableHighAccuracy: true, timeout: 8000, maximumAge: 2000 });
+  }
+
+  /** Navigation-style arrow marker — points north (0°) by default, CSS rotates it. */
+  private createDriverMarkerEl(): HTMLElement {
+    const el = document.createElement('div');
+    el.style.cssText = 'width:52px;height:52px;position:relative;display:flex;align-items:center;justify-content:center';
+    el.innerHTML = `
+      <div style="position:absolute;width:52px;height:52px;background:#3B82F6;border-radius:50%;opacity:0.18;animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite"></div>
+      <div class="driver-arrow" style="position:relative;display:flex;align-items:center;justify-content:center;transition:transform 0.5s ease-out">
+        <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="19" cy="19" r="18" fill="#2563EB" stroke="white" stroke-width="2.5"/>
+          <!-- Arrow pointing UP = north = 0° bearing -->
+          <path d="M19 7 L26 28 L19 23 L12 28 Z" fill="white"/>
+        </svg>
+      </div>`;
+    return el;
+  }
+
+  /** Rotate the arrow inside the marker to face the given bearing. */
+  private rotateDriverMarker(bearing: number): void {
+    if (!this.driverMarkerEl) return;
+    const arrow = this.driverMarkerEl.querySelector('.driver-arrow') as HTMLElement | null;
+    if (arrow) arrow.style.transform = `rotate(${bearing}deg)`;
+  }
+
+  /** Low-pass filter — takes the shortest arc around the 0/360 seam. */
+  private smoothBearing(current: number, target: number): number {
+    let diff = target - current;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+    return (current + diff * 0.35 + 360) % 360;
   }
 
   private checkArrivals(coords: [number, number]): void {
@@ -446,7 +495,15 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
   recenterMap(): void {
     this.isFollowing = true;
-    if (this.map && this.driverCoords) this.map.flyTo({ center: this.driverCoords, zoom: 17.5, pitch: 65, duration: 1200 });
+    if (this.map && this.driverCoords) {
+      this.map.flyTo({
+        center: this.driverCoords,
+        bearing: this.currentBearing,
+        zoom: 17.5,
+        pitch: 65,
+        duration: 1200
+      });
+    }
   }
 
   private connectLocationSocket(): void {
