@@ -9,7 +9,7 @@ import {
 import { Location } from '@angular/common';
 import { CartService } from 'src/app/services/cart.service';
 import { AuthService } from 'src/app/services/auth.service';
-import { GeocodingService } from 'src/app/services/geocoding.service';
+import { GeocodingService, AddressSuggestion } from 'src/app/services/geocoding.service';
 import { PromotionService, Promotion } from 'src/app/services/promotion.service';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -58,13 +58,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   private selectedLat: number | null = null;
   private selectedLon: number | null = null;
 
-  addressSuggestions: {
-    label: string;
-    street?: string;
-    city?: string;
-    zip?: string;
-    country?: string;
-  }[] = [];
+  addressSuggestions: AddressSuggestion[] = [];
 
   addressControl = new FormControl();
 
@@ -77,6 +71,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
 
   deliveryDetails = {
     fullName: '',
+    unit: '',       // optional: floor, unit, building name (for businesses)
     address: '',
     city: '',
     zip: '',
@@ -142,13 +137,14 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   }
 
   fillFromSaved(a: UserAddress): void {
+    this.deliveryDetails.unit = '';
     this.deliveryDetails.address = a.street;
     this.deliveryDetails.city = a.city;
     this.deliveryDetails.zip = a.postalCode ?? '';
     this.addressControl.setValue(a.street, { emitEvent: false });
     if (a.latitude && a.longitude) {
-      (this as any).selectedLat = a.latitude;
-      (this as any).selectedLon = a.longitude;
+      this.selectedLat = a.latitude;
+      this.selectedLon = a.longitude;
     }
     this.showAddressPicker = false;
   }
@@ -370,15 +366,20 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     });
   }
 
-  selectAddress(suggestion: any) {
-    // Store exact coordinates from the autocomplete result — no re-geocoding needed
+  selectAddress(suggestion: AddressSuggestion): void {
     this.selectedLat = suggestion.lat;
     this.selectedLon = suggestion.lon;
 
-    this.deliveryDetails.address = suggestion.label;
+    if (suggestion.isPoi) {
+      // Business/POI: put business name in unit field, street address in address field
+      this.deliveryDetails.unit = suggestion.name;
+      this.deliveryDetails.address = suggestion.street || suggestion.label;
+    } else {
+      this.deliveryDetails.address = suggestion.street || suggestion.label;
+    }
     this.deliveryDetails.city = suggestion.city || '';
     this.deliveryDetails.zip = suggestion.zip || '';
-    this.addressControl.setValue(suggestion.label, { emitEvent: false });
+    this.addressControl.setValue(this.deliveryDetails.address, { emitEvent: false });
     this.addressSuggestions = [];
   }
 
@@ -444,7 +445,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
         userId: this.isLoggedIn ? this.authService.getUserId() : null,
         guestEmail: !this.isLoggedIn ? this.guestEmail.trim() : null,
         guestPhone: !this.isLoggedIn ? (this.guestPhone.trim() || this.deliveryDetails.phone) : null,
-        deliveryAddress: `${d.address}, ${d.city}, ${d.zip}, South Africa`,
+        deliveryAddress: [d.unit?.trim(), d.address, d.city, d.zip, 'South Africa'].filter(Boolean).join(', '),
         deliveryLat: this.selectedLat,
         deliveryLon: this.selectedLon,
         items: this.cartItems.map(item => ({

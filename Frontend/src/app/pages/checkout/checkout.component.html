@@ -100,10 +100,27 @@
               </div>
             </div>
 
+            <!-- Unit / Building (optional — for business addresses) -->
+            <div>
+              <label class="block text-xs font-medium text-textDark mb-1.5">
+                Unit / Floor / Building <span class="text-textMuted font-normal">(optional)</span>
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <i class="bi bi-building text-textMuted text-sm"></i>
+                </div>
+                <input type="text" [(ngModel)]="deliveryDetails.unit" name="unit"
+                       class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                              placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
+                              focus:border-transparent transition-shadow"
+                       placeholder="e.g. Unit 5, 2nd Floor, Sandton City" />
+              </div>
+            </div>
+
             <!-- Street Address with Autocomplete -->
             <div class="relative">
               <div class="flex items-center justify-between mb-1.5">
-                <label class="block text-xs font-medium text-textDark">Street Address</label>
+                <label class="block text-xs font-medium text-textDark">Street Address <span class="text-danger">*</span></label>
                 <button type="button" (click)="useMyLocation()"
                         [disabled]="locating"
                         class="flex items-center gap-1 text-xs font-medium transition-colors"
@@ -115,7 +132,7 @@
               </div>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <i class="bi bi-geo-alt text-textMuted text-sm"></i>
+                  <i class="bi bi-search text-textMuted text-sm"></i>
                 </div>
                 <input type="text" [formControl]="addressControl"
                        [(ngModel)]="deliveryDetails.address" name="address" required
@@ -123,15 +140,21 @@
                        class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
                               placeholder-textMuted text-sm focus:outline-none focus:ring-2 focus:ring-primary-400
                               focus:border-transparent transition-shadow"
-                       placeholder="Start typing your address..." />
+                       placeholder="Search street, suburb, or business name..." />
               </div>
+              <!-- Suggestion dropdown -->
               <ul *ngIf="addressSuggestions.length > 0"
-                  class="absolute z-50 bg-white border border-borderColor rounded-xl shadow-float w-full max-h-48 overflow-auto mt-1">
-                <li *ngFor="let suggestion of addressSuggestions"
-                    (click)="selectAddress(suggestion)"
-                    class="px-4 py-3 hover:bg-surface cursor-pointer text-sm text-textDark
+                  class="absolute z-50 bg-white border border-borderColor rounded-xl shadow-float w-full max-h-56 overflow-auto mt-1">
+                <li *ngFor="let s of addressSuggestions"
+                    (click)="selectAddress(s)"
+                    class="flex items-start gap-3 px-4 py-3 hover:bg-surface cursor-pointer
                            border-b border-borderColor last:border-0 transition-colors">
-                  <i class="bi bi-geo-alt text-primary mr-2"></i>{{ suggestion.label }}
+                  <i class="bi flex-shrink-0 mt-0.5 text-sm"
+                     [ngClass]="s.isPoi ? 'bi-building text-blue-500' : 'bi-geo-alt text-primary'"></i>
+                  <div class="min-w-0">
+                    <p class="text-sm text-textDark truncate">{{ s.name }}</p>
+                    <p class="text-xs text-textMuted truncate">{{ s.label }}</p>
+                  </div>
                 </li>
               </ul>
             </div>
