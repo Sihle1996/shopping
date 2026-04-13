@@ -2,17 +2,31 @@
   <div class="w-full">
 
     <!-- Header -->
-    <div class="mb-6">
-      <h1 class="font-heading text-2xl font-bold text-textDark">Promotions</h1>
-      <p class="text-textLight text-sm mt-1">Create time-limited discounts for your store</p>
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="font-heading text-2xl font-bold text-textDark">Promotions</h1>
+        <p class="text-textLight text-sm mt-1">Create time-limited discounts for your store</p>
+      </div>
+      <button *ngIf="!formOpen"
+              (click)="openForm()"
+              class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors"
+              style="background: var(--brand-primary)">
+        <i class="bi bi-plus-lg"></i> New Promotion
+      </button>
     </div>
 
-    <!-- Create / Edit Form -->
-    <div class="bg-white rounded-2xl shadow-card p-6 mb-8">
-      <h3 class="font-heading text-base font-semibold text-textDark mb-5 flex items-center gap-2">
-        <i class="bi bi-tag text-primary"></i>
-        {{ editingId ? 'Edit Promotion' : 'New Promotion' }}
-      </h3>
+    <!-- Create / Edit Form (collapsible) -->
+    <div *ngIf="formOpen" class="bg-white rounded-2xl shadow-card p-6 mb-8">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-heading text-base font-semibold text-textDark flex items-center gap-2">
+          <i class="bi bi-tag text-primary"></i>
+          {{ editingId ? 'Edit Promotion' : 'New Promotion' }}
+        </h3>
+        <button type="button" (click)="resetForm()"
+                class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-textMuted">
+          <i class="bi bi-x-lg text-sm"></i>
+        </button>
+      </div>
 
       <form [formGroup]="form" (ngSubmit)="submit()">
 
@@ -44,7 +58,6 @@
 
           <div>
             <label class="block text-xs font-medium text-textDark mb-1">Banner Image</label>
-            <!-- Preview -->
             <div *ngIf="imagePreviewUrl" class="mb-2 rounded-xl overflow-hidden h-24 bg-surface border border-borderColor">
               <img [src]="imagePreviewUrl" alt="Banner preview" class="w-full h-full object-cover" />
             </div>
@@ -83,7 +96,7 @@
             </select>
           </div>
 
-          <!-- Category dropdown — shown when CATEGORY selected -->
+          <!-- Category dropdown -->
           <div *ngIf="selectedAppliesTo === 'CATEGORY'">
             <label class="block text-xs font-medium text-textDark mb-1">Category <span class="text-danger">*</span></label>
             <select formControlName="targetCategoryId"
@@ -95,7 +108,7 @@
             <p class="text-[10px] text-textMuted mt-1">Only categories with at least one in-stock item are listed</p>
           </div>
 
-          <!-- Product dropdown — shown when PRODUCT selected -->
+          <!-- Single product dropdown -->
           <div *ngIf="selectedAppliesTo === 'PRODUCT'">
             <label class="block text-xs font-medium text-textDark mb-1">Product <span class="text-danger">*</span></label>
             <select formControlName="targetProductId"
@@ -104,7 +117,6 @@
               <option [ngValue]="null">Select a product</option>
               <option *ngFor="let item of availableMenuItems" [value]="item.id">{{ item.name }}</option>
             </select>
-            <p class="text-[10px] text-textMuted mt-1">Only in-stock products are listed. Out-of-stock items cannot be promoted.</p>
           </div>
 
           <div>
@@ -113,6 +125,59 @@
                    class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark uppercase
                           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
             <p class="text-[10px] text-textMuted mt-1">If blank, discount applies automatically at checkout</p>
+          </div>
+        </div>
+
+        <!-- Multi-product picker -->
+        <div *ngIf="selectedAppliesTo === 'MULTI_PRODUCT'" class="mb-6">
+          <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-3">
+            Select Products
+            <span class="ml-2 normal-case font-normal text-primary">({{ selectedProductIds.length }} selected)</span>
+          </p>
+
+          <!-- Search -->
+          <div class="relative mb-3">
+            <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-textMuted text-sm"></i>
+            <input type="text" [(ngModel)]="productSearch" [ngModelOptions]="{standalone: true}"
+                   placeholder="Search products..."
+                   class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+          </div>
+
+          <!-- Selected chips -->
+          <div *ngIf="selectedProductIds.length > 0" class="flex flex-wrap gap-2 mb-3">
+            <span *ngFor="let id of selectedProductIds"
+                  class="inline-flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full text-xs font-medium text-white"
+                  style="background: var(--brand-primary)">
+              {{ getProductNameById(id) }}
+              <button type="button" (click)="toggleProductSelection(id)"
+                      class="w-4 h-4 flex items-center justify-center rounded-full bg-white/30 hover:bg-white/50 transition-colors">
+                <i class="bi bi-x text-[10px]"></i>
+              </button>
+            </span>
+          </div>
+
+          <!-- Product list -->
+          <div class="border border-borderColor rounded-xl overflow-hidden max-h-56 overflow-y-auto">
+            <label *ngFor="let item of filteredMenuItemsForPicker"
+                   class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-surface transition-colors border-b border-borderColor last:border-0"
+                   [class.bg-primary-50]="isProductSelected(item.id)">
+              <div class="w-5 h-5 rounded flex items-center justify-center border-2 flex-shrink-0 transition-colors"
+                   [class.border-primary]="isProductSelected(item.id)"
+                   [class.bg-primary]="isProductSelected(item.id)"
+                   [class.border-gray-300]="!isProductSelected(item.id)"
+                   (click)="toggleProductSelection(item.id)">
+                <i *ngIf="isProductSelected(item.id)" class="bi bi-check text-white text-[10px]"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-textDark truncate">{{ item.name }}</p>
+                <p class="text-[10px] text-textMuted">{{ item.category }} · R{{ item.price | number:'1.2-2' }}</p>
+              </div>
+            </label>
+            <div *ngIf="filteredMenuItemsForPicker.length === 0"
+                 class="px-4 py-6 text-center text-xs text-textMuted">
+              No products match your search
+            </div>
           </div>
         </div>
 
@@ -136,8 +201,6 @@
         <!-- Section: Visibility -->
         <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-3">Visibility</p>
         <div class="flex items-center gap-6 mb-6">
-
-          <!-- Active toggle -->
           <div class="flex items-center gap-2.5">
             <button type="button"
                     (click)="form.get('active')!.setValue(!form.get('active')!.value)"
@@ -149,8 +212,6 @@
             </button>
             <span class="text-sm font-medium text-textDark">Active</span>
           </div>
-
-          <!-- Featured toggle -->
           <div class="flex items-center gap-2.5">
             <button type="button"
                     (click)="form.get('featured')!.setValue(!form.get('featured')!.value)"
@@ -163,10 +224,9 @@
             <span class="text-sm font-medium text-textDark">Featured</span>
             <span class="text-[10px] text-textMuted">(shows as banner on store page)</span>
           </div>
-
         </div>
 
-        <!-- Plan limit / feature error -->
+        <!-- Error -->
         <div *ngIf="submitError"
              class="mb-4 flex items-start gap-3 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
           <i class="bi bi-exclamation-circle text-danger mt-0.5 flex-shrink-0"></i>
@@ -175,8 +235,7 @@
             <a routerLink="/admin/subscription"
                class="text-xs text-primary underline mt-0.5 inline-block">View your plan</a>
           </div>
-          <button type="button" (click)="submitError = null"
-                  class="text-textMuted hover:text-textDark flex-shrink-0">
+          <button type="button" (click)="submitError = null" class="text-textMuted hover:text-textDark flex-shrink-0">
             <i class="bi bi-x"></i>
           </button>
         </div>
@@ -186,9 +245,7 @@
           <app-button variant="primary" size="md" type="submit" [disabled]="form.invalid">
             {{ editingId ? 'Update Promotion' : 'Create Promotion' }}
           </app-button>
-          <app-button *ngIf="editingId" variant="ghost" size="md" (clicked)="resetForm()">
-            Cancel
-          </app-button>
+          <app-button variant="ghost" size="md" (clicked)="resetForm()">Cancel</app-button>
         </div>
       </form>
     </div>
@@ -202,6 +259,22 @@
         </app-button>
       </div>
 
+      <!-- Status filter tabs -->
+      <div class="flex overflow-x-auto border-b border-borderColor px-5 gap-0">
+        <button *ngFor="let tab of statusTabs"
+                (click)="statusFilter = tab"
+                class="flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors"
+                [ngClass]="statusFilter === tab
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-textMuted hover:text-textDark'">
+          {{ tab }}
+          <span class="text-xs px-1.5 py-0.5 rounded-full font-numbers"
+                [ngClass]="statusFilter === tab ? 'bg-primary-100 text-primary' : 'bg-surface text-textMuted'">
+            {{ statusCounts[tab] }}
+          </span>
+        </button>
+      </div>
+
       <!-- Loading -->
       <div *ngIf="loading" class="p-12 flex items-center justify-center">
         <div class="flex flex-col items-center gap-3 text-textMuted">
@@ -211,16 +284,20 @@
       </div>
 
       <!-- Empty -->
-      <div *ngIf="!loading && promotions.length === 0"
+      <div *ngIf="!loading && filteredPromotions.length === 0"
            class="p-12 flex flex-col items-center gap-3 text-textMuted">
         <i class="bi bi-tag text-4xl"></i>
-        <p class="text-sm font-medium">No promotions yet</p>
-        <p class="text-xs text-center">Create your first promotion above to start offering discounts</p>
+        <p class="text-sm font-medium">
+          {{ promotions.length === 0 ? 'No promotions yet' : 'No ' + statusFilter.toLowerCase() + ' promotions' }}
+        </p>
+        <p *ngIf="promotions.length === 0" class="text-xs text-center">
+          Click "New Promotion" above to create your first discount
+        </p>
       </div>
 
       <!-- Cards grid -->
-      <div *ngIf="!loading && promotions.length > 0" class="p-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <div *ngFor="let p of promotions"
+      <div *ngIf="!loading && filteredPromotions.length > 0" class="p-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div *ngFor="let p of filteredPromotions"
              class="border border-borderColor rounded-2xl overflow-hidden hover:shadow-card transition-shadow">
 
           <!-- Banner image -->
@@ -240,27 +317,20 @@
                 <h4 class="text-sm font-bold text-textDark truncate">{{ p.title }}</h4>
                 <p *ngIf="p.badgeText" class="text-xs text-textMuted mt-0.5">{{ p.badgeText }}</p>
               </div>
-              <!-- Status badge -->
-              <app-badge [variant]="getStatusVariant(p)" size="sm">
-                {{ getStatus(p) }}
-              </app-badge>
+              <app-badge [variant]="getStatusVariant(p)" size="sm">{{ getStatus(p) }}</app-badge>
             </div>
 
             <!-- Description -->
             <p *ngIf="p.description" class="text-xs text-textLight mb-3 line-clamp-2">{{ p.description }}</p>
 
             <!-- Stats row -->
-            <div class="flex items-center gap-3 mb-3 flex-wrap">
-              <!-- Discount -->
+            <div class="flex items-center gap-2 mb-3 flex-wrap">
               <span class="inline-flex items-center gap-1 bg-green-50 text-green-700 text-xs font-bold px-2 py-1 rounded-lg">
                 <i class="bi bi-percent"></i>{{ p.discountPercent ?? 0 }}% off
               </span>
-              <!-- Scope -->
               <span class="inline-flex items-center gap-1 bg-surface text-textMuted text-xs px-2 py-1 rounded-lg">
-                <i class="bi bi-bullseye"></i>
-                {{ p.appliesTo === 'ALL' ? 'All items' : p.appliesTo === 'PRODUCT' ? 'Product' : 'Category' }}
+                <i class="bi bi-bullseye"></i>{{ scopeLabel(p) }}
               </span>
-              <!-- Code -->
               <span *ngIf="p.code" class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-xs font-mono font-bold px-2 py-1 rounded-lg">
                 <i class="bi bi-upc"></i>{{ p.code }}
               </span>
@@ -269,10 +339,22 @@
               </span>
             </div>
 
+            <!-- Multi-product items list -->
+            <div *ngIf="p.appliesTo === 'MULTI_PRODUCT' && p.targetProducts?.length" class="flex flex-wrap gap-1 mb-3">
+              <span *ngFor="let tp of p.targetProducts?.slice(0, 4)"
+                    class="text-[10px] bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full border border-primary-200">
+                {{ tp.name }}
+              </span>
+              <span *ngIf="(p.targetProducts?.length ?? 0) > 4"
+                    class="text-[10px] text-textMuted px-2 py-0.5">
+                +{{ (p.targetProducts?.length ?? 0) - 4 }} more
+              </span>
+            </div>
+
             <!-- Schedule -->
             <p class="text-[11px] text-textMuted mb-3 flex items-center gap-1">
               <i class="bi bi-calendar3"></i>
-              {{ p.startAt | date:'dd MMM yyyy, HH:mm' }} — {{ p.endAt | date:'dd MMM yyyy, HH:mm' }}
+              {{ p.startAt | date:'dd MMM yyyy' }} — {{ p.endAt | date:'dd MMM yyyy' }}
             </p>
 
             <!-- Featured badge -->
@@ -288,19 +370,15 @@
               </button>
               <button (click)="toggleActive(p)"
                       class="flex-1 text-xs font-medium transition-colors py-1.5 rounded-lg"
-                      [class.text-textMuted]="p.active"
-                      [class.hover:bg-surface]="p.active"
-                      [class.text-success]="!p.active"
-                      [class.hover:bg-green-50]="!p.active">
+                      [class.text-textMuted]="p.active" [class.hover:bg-surface]="p.active"
+                      [class.text-success]="!p.active" [class.hover:bg-green-50]="!p.active">
                 <i class="bi mr-1" [class.bi-pause-circle]="p.active" [class.bi-play-circle]="!p.active"></i>
                 {{ p.active ? 'Pause' : 'Activate' }}
               </button>
               <button (click)="toggleFeatured(p)"
                       class="flex-1 text-xs font-medium transition-colors py-1.5 rounded-lg"
-                      [class.text-amber-500]="!p.featured"
-                      [class.hover:bg-amber-50]="!p.featured"
-                      [class.text-textMuted]="p.featured"
-                      [class.hover:bg-surface]="p.featured">
+                      [class.text-amber-500]="!p.featured" [class.hover:bg-amber-50]="!p.featured"
+                      [class.text-textMuted]="p.featured" [class.hover:bg-surface]="p.featured">
                 <i class="bi mr-1" [class.bi-star]="!p.featured" [class.bi-star-fill]="p.featured"></i>
                 {{ p.featured ? 'Unfeature' : 'Feature' }}
               </button>

@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -28,10 +29,11 @@ public class PromotionRequest {
     private OffsetDateTime endAt;
 
     @NotNull
-    private Promotion.AppliesTo appliesTo; // ALL, CATEGORY, PRODUCT
+    private Promotion.AppliesTo appliesTo; // ALL, CATEGORY, PRODUCT, MULTI_PRODUCT
 
     private UUID targetCategoryId;
     private UUID targetProductId;
+    private List<UUID> targetProductIds;
     private String code;
 
     private boolean active = true;

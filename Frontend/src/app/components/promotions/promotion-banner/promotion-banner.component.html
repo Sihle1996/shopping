@@ -50,6 +50,11 @@
           Auto-applied at checkout
         </span>
       </div>
+
+      <!-- Countdown pill — only when ending within 24h -->
+      <div *ngIf="showCountdown" class="mt-2 inline-flex items-center gap-1 bg-red-500/80 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+        <i class="bi bi-alarm-fill text-[9px]"></i> Ends in {{ countdown }}
+      </div>
     </div>
 
     <!-- Discount bubble -->

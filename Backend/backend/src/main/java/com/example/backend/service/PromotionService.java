@@ -98,6 +98,7 @@ public class PromotionService {
         if (scope == null) return 0;
         return switch (scope) {
             case ALL -> 3;
+            case MULTI_PRODUCT -> 2;
             case PRODUCT -> 2;
             case CATEGORY -> 1;
         };

@@ -2,7 +2,9 @@ package com.example.backend.controller;
 
 import com.example.backend.dto.PromotionDTO;
 import com.example.backend.dto.PromotionRequest;
+import com.example.backend.entity.MenuItem;
 import com.example.backend.model.Promotion;
+import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.PromotionRepository;
 import com.example.backend.repository.TenantRepository;
 import com.example.backend.service.SubscriptionEnforcementService;
@@ -14,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,6 +27,7 @@ public class AdminPromotionController {
 
     private final PromotionRepository promotionRepository;
     private final TenantRepository tenantRepository;
+    private final MenuItemRepository menuItemRepository;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
 
     @GetMapping
@@ -101,6 +105,13 @@ public class AdminPromotionController {
         target.setCode(req.getCode() != null ? req.getCode().trim().toUpperCase() : null);
         target.setActive(req.isActive());
         target.setFeatured(req.isFeatured());
+        // Multi-product list
+        if (req.getTargetProductIds() != null && !req.getTargetProductIds().isEmpty()) {
+            List<MenuItem> products = menuItemRepository.findAllById(req.getTargetProductIds());
+            target.setTargetProducts(products);
+        } else {
+            target.setTargetProducts(new ArrayList<>());
+        }
         return target;
     }
 }

@@ -158,6 +158,16 @@ public class OrderService {
                             discountAmount += item.getPrice() * item.getQuantity() * pct;
                         }
                     }
+                } else if (promo.getAppliesTo() == Promotion.AppliesTo.MULTI_PRODUCT
+                        && promo.getTargetProducts() != null && !promo.getTargetProducts().isEmpty()) {
+                    java.util.Set<UUID> targetIds = promo.getTargetProducts().stream()
+                            .map(com.example.backend.entity.MenuItem::getId)
+                            .collect(java.util.stream.Collectors.toSet());
+                    for (OrderItemDTO item : request.getItems()) {
+                        if (targetIds.contains(item.getProductId())) {
+                            discountAmount += item.getPrice() * item.getQuantity() * pct;
+                        }
+                    }
                 }
                 discountAmount = BigDecimal.valueOf(discountAmount).setScale(2, RoundingMode.HALF_UP).doubleValue();
                 appliedPromoCode = promo.getCode() != null ? promo.getCode().trim() : promo.getTitle();

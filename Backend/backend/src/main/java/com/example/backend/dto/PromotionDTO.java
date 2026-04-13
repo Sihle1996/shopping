@@ -4,6 +4,8 @@ import com.example.backend.model.Promotion;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -21,9 +23,16 @@ public class PromotionDTO {
     private String targetCategoryName;
     private UUID targetProductId;
     private String targetProductName;
+    private List<ProductRef> targetProducts = new ArrayList<>();
     private String code;
     private boolean active;
     private boolean featured;
+
+    @Data
+    public static class ProductRef {
+        private UUID id;
+        private String name;
+    }
 
     public static PromotionDTO from(Promotion p) {
         PromotionDTO dto = new PromotionDTO();
@@ -43,6 +52,14 @@ public class PromotionDTO {
         dto.setCode(p.getCode());
         dto.setActive(p.isActive());
         dto.setFeatured(p.isFeatured());
+        if (p.getTargetProducts() != null) {
+            dto.setTargetProducts(p.getTargetProducts().stream().map(m -> {
+                ProductRef ref = new ProductRef();
+                ref.setId(m.getId());
+                ref.setName(m.getName());
+                return ref;
+            }).toList());
+        }
         return dto;
     }
 }

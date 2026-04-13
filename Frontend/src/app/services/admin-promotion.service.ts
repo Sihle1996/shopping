@@ -12,9 +12,10 @@ export interface PromotionRequest {
   discountPercent?: number;
   startAt: string; // ISO string
   endAt: string;   // ISO string
-  appliesTo: 'ALL' | 'CATEGORY' | 'PRODUCT';
-  targetCategoryId?: number | null;
-  targetProductId?: number | null;
+  appliesTo: 'ALL' | 'CATEGORY' | 'PRODUCT' | 'MULTI_PRODUCT';
+  targetCategoryId?: string | null;
+  targetProductId?: string | null;
+  targetProductIds?: string[];
   code?: string | null;
   active: boolean;
   featured: boolean;

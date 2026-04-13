@@ -1,5 +1,6 @@
 package com.example.backend.model;
 
+import com.example.backend.entity.MenuItem;
 import com.example.backend.entity.Tenant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -10,6 +11,8 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -48,6 +51,14 @@ public class Promotion {
     private UUID targetCategoryId;
     private UUID targetProductId;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "promotion_products",
+        joinColumns = @JoinColumn(name = "promotion_id"),
+        inverseJoinColumns = @JoinColumn(name = "product_id")
+    )
+    private List<MenuItem> targetProducts = new ArrayList<>();
+
     private String code;
 
     /** Populated at query time — not stored in DB */
@@ -71,6 +82,7 @@ public class Promotion {
     public enum AppliesTo {
         ALL,
         CATEGORY,
-        PRODUCT
+        PRODUCT,
+        MULTI_PRODUCT
     }
 }

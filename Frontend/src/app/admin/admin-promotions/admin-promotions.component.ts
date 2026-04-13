@@ -5,6 +5,8 @@ import { AdminService } from 'src/app/services/admin.service';
 import { Promotion, getPromoStatus, PromoStatus } from 'src/app/services/promotion.service';
 import { environment } from 'src/environments/environment';
 
+type StatusFilter = 'All' | 'Active' | 'Scheduled' | 'Expired';
+
 @Component({
   selector: 'app-admin-promotions',
   templateUrl: './admin-promotions.component.html',
@@ -16,16 +18,25 @@ export class AdminPromotionsComponent implements OnInit {
   editingId: string | null = null;
   loading = false;
   submitError: string | null = null;
+  formOpen = false;
 
   showDeleteConfirm = false;
   deleteTarget: Promotion | null = null;
   imageUploading = false;
   imagePreviewUrl: string = '';
 
+  statusFilter: StatusFilter = 'All';
+  statusTabs: StatusFilter[] = ['All', 'Active', 'Scheduled', 'Expired'];
+
+  // Multi-product selection
+  selectedProductIds: string[] = [];
+  productSearch = '';
+
   appliesToOptions = [
-    { value: 'ALL', label: 'All Products' },
-    { value: 'CATEGORY', label: 'Category' },
-    { value: 'PRODUCT', label: 'Product' },
+    { value: 'ALL',           label: 'All Products' },
+    { value: 'CATEGORY',      label: 'Category' },
+    { value: 'PRODUCT',       label: 'Single Product' },
+    { value: 'MULTI_PRODUCT', label: 'Multiple Products' },
   ];
 
   categories: any[] = [];
@@ -35,12 +46,17 @@ export class AdminPromotionsComponent implements OnInit {
     return this.form?.get('appliesTo')?.value;
   }
 
-  /** Only available (in-stock) products shown in PRODUCT promo dropdown */
   get availableMenuItems(): any[] {
     return this.menuItems.filter(i => i.isAvailable !== false);
   }
 
-  /** Only categories that have at least one in-stock item */
+  get filteredMenuItemsForPicker(): any[] {
+    const q = this.productSearch.toLowerCase();
+    return this.availableMenuItems.filter(i =>
+      !q || i.name.toLowerCase().includes(q) || (i.category ?? '').toLowerCase().includes(q)
+    );
+  }
+
   get availableCategories(): any[] {
     return this.categories.filter(cat => {
       const catItems = this.menuItems.filter(i =>
@@ -48,6 +64,20 @@ export class AdminPromotionsComponent implements OnInit {
       );
       return catItems.some(i => i.isAvailable !== false);
     });
+  }
+
+  get filteredPromotions(): Promotion[] {
+    if (this.statusFilter === 'All') return this.promotions;
+    return this.promotions.filter(p => getPromoStatus(p) === this.statusFilter);
+  }
+
+  get statusCounts(): Record<StatusFilter, number> {
+    return {
+      All:       this.promotions.length,
+      Active:    this.promotions.filter(p => getPromoStatus(p) === 'Active').length,
+      Scheduled: this.promotions.filter(p => getPromoStatus(p) === 'Scheduled').length,
+      Expired:   this.promotions.filter(p => getPromoStatus(p) === 'Expired').length,
+    };
   }
 
   constructor(
@@ -85,15 +115,22 @@ export class AdminPromotionsComponent implements OnInit {
     });
   }
 
+  openForm(): void {
+    this.formOpen = true;
+  }
+
   submit(): void {
     if (this.form.invalid) return;
+    if (this.selectedAppliesTo === 'MULTI_PRODUCT' && this.selectedProductIds.length === 0) {
+      this.submitError = 'Please select at least one product.';
+      return;
+    }
     const raw = this.form.value;
 
-    // datetime-local gives local time "2026-03-28T19:58" — append local UTC offset
     const toIso = (dt: string): string => {
       if (!dt || dt.length !== 16) return dt;
       const d = new Date(dt);
-      const off = -d.getTimezoneOffset(); // minutes ahead of UTC
+      const off = -d.getTimezoneOffset();
       const sign = off >= 0 ? '+' : '-';
       const hh = String(Math.floor(Math.abs(off) / 60)).padStart(2, '0');
       const mm = String(Math.abs(off) % 60).padStart(2, '0');
@@ -104,6 +141,7 @@ export class AdminPromotionsComponent implements OnInit {
       ...raw,
       startAt: toIso(raw.startAt),
       endAt: toIso(raw.endAt),
+      targetProductIds: this.selectedAppliesTo === 'MULTI_PRODUCT' ? this.selectedProductIds : [],
     };
 
     const op = this.editingId
@@ -127,7 +165,9 @@ export class AdminPromotionsComponent implements OnInit {
 
   edit(p: Promotion): void {
     this.editingId = p.id;
+    this.formOpen = true;
     this.imagePreviewUrl = p.imageUrl || '';
+    this.selectedProductIds = p.targetProducts?.map(tp => tp.id) ?? [];
     this.form.patchValue({
       title: p.title,
       description: p.description,
@@ -147,9 +187,25 @@ export class AdminPromotionsComponent implements OnInit {
 
   resetForm(): void {
     this.editingId = null;
+    this.formOpen = false;
     this.imagePreviewUrl = '';
     this.submitError = null;
+    this.selectedProductIds = [];
+    this.productSearch = '';
     this.form.reset({ appliesTo: 'ALL', active: true, featured: false });
+  }
+
+  toggleProductSelection(id: string): void {
+    const idx = this.selectedProductIds.indexOf(id);
+    if (idx >= 0) {
+      this.selectedProductIds = this.selectedProductIds.filter(i => i !== id);
+    } else {
+      this.selectedProductIds = [...this.selectedProductIds, id];
+    }
+  }
+
+  isProductSelected(id: string): boolean {
+    return this.selectedProductIds.includes(id);
   }
 
   confirmDelete(p: Promotion): void {
@@ -177,29 +233,19 @@ export class AdminPromotionsComponent implements OnInit {
     this.api.setFeatured(p.id, !p.featured).subscribe({ next: () => this.refresh() });
   }
 
-  getStatus(p: Promotion): PromoStatus {
-    return getPromoStatus(p);
-  }
+  getStatus(p: Promotion): PromoStatus { return getPromoStatus(p); }
 
   onImageSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
-
-    // Show local preview immediately
     const reader = new FileReader();
     reader.onload = (e) => { this.imagePreviewUrl = e.target?.result as string; };
     reader.readAsDataURL(file);
-
     this.imageUploading = true;
     const formData = new FormData();
     formData.append('file', file);
     this.adminService.uploadImage(formData).subscribe({
-      next: (url: string) => {
-        this.form.patchValue({ imageUrl: url });
-        // Keep the local base64 preview — don't replace with server URL
-        // which may require auth or be a relative path
-        this.imageUploading = false;
-      },
+      next: (url: string) => { this.form.patchValue({ imageUrl: url }); this.imageUploading = false; },
       error: () => { this.imageUploading = false; }
     });
   }
@@ -215,5 +261,17 @@ export class AdminPromotionsComponent implements OnInit {
     if (s === 'Active') return 'success';
     if (s === 'Scheduled') return 'warning';
     return 'neutral';
+  }
+
+  getProductNameById(id: string): string {
+    return this.availableMenuItems.find(i => i.id === id)?.name ?? id.substring(0, 8);
+  }
+
+  scopeLabel(p: Promotion): string {
+    if (p.appliesTo === 'ALL') return 'All items';
+    if (p.appliesTo === 'CATEGORY') return p.targetCategoryName || 'Category';
+    if (p.appliesTo === 'PRODUCT') return p.targetProductName || 'Product';
+    if (p.appliesTo === 'MULTI_PRODUCT') return `${p.targetProducts?.length ?? 0} products`;
+    return p.appliesTo;
   }
 }
