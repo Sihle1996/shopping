@@ -187,7 +187,7 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.clearStopMarkers();
         this.addStopMarkers();
         if (this.driverCoords && !this.eta) {
-          this.optimizedStops.length > 1 ? this.fetchOptimizedRoute() : this.fetchSingleRoute();
+          this.fetchRoute();
         }
         this.fitAllBounds();
       } else if (!this.geocodingInProgress) {
@@ -229,7 +229,7 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.clearStopMarkers();
         this.addStopMarkers();
         if (this.driverCoords && !this.eta) {
-          this.optimizedStops.length > 1 ? this.fetchOptimizedRoute() : this.fetchSingleRoute();
+          this.fetchRoute();
         }
         this.fitAllBounds();
       }
@@ -255,23 +255,36 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
   private clearStopMarkers(): void { this.stopMarkers.forEach(m => m.remove()); this.stopMarkers = []; }
 
-  private fetchOptimizedRoute(): void {
+  /** Unified route fetcher — Directions API handles 1–25 waypoints on all Mapbox plans. */
+  private fetchRoute(): void {
     if (!this.driverCoords || !this.optimizedStops.length) return;
     if (this.routeSub) { this.routeSub.unsubscribe(); this.routeSub = null; }
-    const coords = [`${this.driverCoords[0]},${this.driverCoords[1]}`, ...this.optimizedStops.map(s => `${s.coords[0]},${s.coords[1]}`)].join(';');
-    const url = `https://api.mapbox.com/optimized-trips/v1/mapbox/driving/${coords}?source=first&roundtrip=false&geometries=geojson&overview=full&steps=true&access_token=${environment.mapboxToken}`;
+
+    const waypoints = [
+      `${this.driverCoords[0]},${this.driverCoords[1]}`,
+      ...this.optimizedStops.map(s => `${s.coords[0]},${s.coords[1]}`)
+    ].join(';');
+    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${waypoints}` +
+      `?geometries=geojson&overview=full&steps=true&access_token=${environment.mapboxToken}`;
 
     this.routeSub = this.http.get<any>(url).pipe(takeUntil(this.destroy$)).subscribe({
       next: (res) => {
-        if (!res.trips?.length) return;
-        const trip = res.trips[0];
-        const durationMin = Math.round(trip.duration / 60);
+        if (!res.routes?.length) {
+          this.eta = 'No route';
+          return;
+        }
+        const route = res.routes[0];
+        const durationMin = Math.round(route.duration / 60);
         this.eta = durationMin < 60 ? `${durationMin} min` : `${Math.floor(durationMin / 60)}h ${durationMin % 60}m`;
-        this.distance = `${(trip.distance / 1000).toFixed(1)} km`;
-        this.routeSteps = trip.legs?.flatMap((leg: any) => leg.steps || []) || [];
+        this.distance = `${(route.distance / 1000).toFixed(1)} km`;
+        this.routeSteps = route.legs?.flatMap((leg: any) => leg.steps || []) || [];
         if (this.routeSteps.length) this.nextInstruction = this.routeSteps[0].maneuver?.instruction || null;
-        this.drawMultiLegRoute(trip);
-        this.speak(`Route optimized. ${this.optimizedStops.length} stops, ${this.distance}, ${this.eta}.`);
+        this.drawMultiLegRoute({ geometry: route.geometry, legs: route.legs });
+        const stopWord = this.optimizedStops.length > 1 ? `${this.optimizedStops.length} stops` : '1 stop';
+        this.speak(`Route loaded. ${stopWord}, ${this.distance}, ${this.eta}.`);
+      },
+      error: () => {
+        this.eta = 'Route unavailable';
       }
     });
   }
@@ -303,29 +316,6 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
     });
   }
 
-  private fetchSingleRoute(): void {
-    if (!this.driverCoords || !this.optimizedStops.length) return;
-    if (this.routeSub) { this.routeSub.unsubscribe(); this.routeSub = null; }
-    const start = `${this.driverCoords[0]},${this.driverCoords[1]}`;
-    const end = `${this.optimizedStops[0].coords[0]},${this.optimizedStops[0].coords[1]}`;
-    this.routeSub = this.http.get<any>(`https://api.mapbox.com/directions/v5/mapbox/driving/${start};${end}?geometries=geojson&overview=full&steps=true&access_token=${environment.mapboxToken}`).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (res) => {
-        if (!res.routes?.length) return;
-        const route = res.routes[0];
-        const durationMin = Math.round(route.duration / 60);
-        this.eta = durationMin < 60 ? `${durationMin} min` : `${Math.floor(durationMin / 60)}h ${durationMin % 60}m`;
-        this.distance = `${(route.distance / 1000).toFixed(1)} km`;
-        this.routeSteps = route.legs?.[0]?.steps || [];
-        if (this.routeSteps.length) this.nextInstruction = this.routeSteps[0].maneuver?.instruction || null;
-        if (this.map!.getSource('route')) { (this.map!.getSource('route') as mapboxgl.GeoJSONSource).setData(route.geometry); }
-        else {
-          this.map!.addSource('route', { type: 'geojson', data: route.geometry });
-          this.map!.addLayer({ id: 'route-outline', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#1E40AF', 'line-width': 8, 'line-opacity': 0.3 } });
-          this.map!.addLayer({ id: 'route', type: 'line', source: 'route', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#3B82F6', 'line-width': 5, 'line-opacity': 0.9 } });
-        }
-      }
-    });
-  }
 
   private startTracking(): void {
     this.watchId = navigator.geolocation.watchPosition((pos) => {
@@ -352,7 +342,7 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
       this.driverCoords = newCoords;
 
       if (firstFix && this.optimizedStops.length > 0 && !this.eta) {
-        this.optimizedStops.length > 1 ? this.fetchOptimizedRoute() : this.fetchSingleRoute();
+        this.fetchRoute();
       }
 
       if (this.driverMarker) {
