@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis,
   ApexDataLabels, ApexTooltip, ApexFill, ApexStroke,
   ApexPlotOptions, ApexGrid, ApexNoData
 } from 'ng-apexcharts';
+import { driver } from 'driver.js';
 import { AnalyticsService } from './analytics.service';
 import { AdminService } from 'src/app/services/admin.service';
 import { SubscriptionService } from 'src/app/services/subscription.service';
@@ -67,10 +69,18 @@ export class AdminDashboardComponent implements OnInit {
   recentOrdersLoading = true;
 
   hasAnalytics = false;
+  hasCustomBranding = false;
   subscriptionPlan = '';
   statsLoading = true;
   analyticsLoading = true;
   settingsLoading = true;
+
+  // Onboarding checklist
+  setupMenuItems: any[] = [];
+  setupCategories: any[] = [];
+  setupDrivers: any[] = [];
+  setupSettings: any = null;
+  onboardingDismissed = localStorage.getItem('onboardingDone') === 'true';
 
   salesChartOptions: Partial<SalesChartOptions> = this.buildSalesChartOptions([], []);
   productsChartOptions: Partial<ProductsChartOptions> = this.buildProductsChartOptions([], []);
@@ -78,7 +88,8 @@ export class AdminDashboardComponent implements OnInit {
   constructor(
     private analyticsService: AnalyticsService,
     private adminService: AdminService,
-    private subscriptionService: SubscriptionService
+    private subscriptionService: SubscriptionService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -90,9 +101,14 @@ export class AdminDashboardComponent implements OnInit {
     this.loadStats();
     this.loadStoreSettings();
     this.loadRecentOrders();
+    this.adminService.menuItems$.subscribe(items => this.setupMenuItems = items);
+    this.adminService.loadMenuItems().subscribe({ error: () => {} });
+    this.adminService.getCategories().subscribe({ next: cats => this.setupCategories = cats, error: () => {} });
+    this.adminService.getDrivers().subscribe({ next: d => this.setupDrivers = d, error: () => {} });
 
     this.subscriptionService.load().subscribe(info => {
       this.hasAnalytics = info.features.hasAnalytics;
+      this.hasCustomBranding = info.features.hasCustomBranding;
       this.subscriptionPlan = info.plan;
       if (this.hasAnalytics) this.loadAnalytics();
       else this.analyticsLoading = false;
@@ -103,10 +119,53 @@ export class AdminDashboardComponent implements OnInit {
     this.adminService.getStoreSettings().subscribe({
       next: settings => {
         this.isStoreOpen = settings.isOpen ?? false;
+        this.setupSettings = settings;
         this.settingsLoading = false;
       },
       error: () => { this.settingsLoading = false; }
     });
+  }
+
+  // ── Onboarding checklist ──────────────────────────────────────────────────
+
+  get setupSteps() {
+    const s = this.setupSettings;
+    return [
+      { label: 'Add your store info',      done: !!(s?.phone),                    route: '/admin/settings', tourParam: 'store-info',   actionLabel: 'Set up',     proLocked: false },
+      { label: 'Upload a logo',            done: !!(s?.logoUrl),                   route: '/admin/settings', tourParam: 'logo',         actionLabel: 'Set up',     proLocked: !this.hasCustomBranding },
+      { label: 'Set delivery fee',         done: (s?.deliveryFeeBase ?? 0) > 0,    route: '/admin/settings', tourParam: 'delivery',     actionLabel: 'Set up',     proLocked: false },
+      { label: 'Add a menu category',      done: this.setupCategories.length > 0,  route: '/admin/settings', tourParam: 'category',     actionLabel: 'Set up',     proLocked: false },
+      { label: 'Add your first menu item', done: this.setupMenuItems.length > 0,   route: '/admin/menu',     tourParam: 'add-item',     actionLabel: 'Add item',   proLocked: false },
+      { label: 'Add a delivery driver',    done: this.setupDrivers.length > 0,     route: '/admin/drivers',  tourParam: 'add-driver',   actionLabel: 'Add driver', proLocked: false },
+      { label: 'Open your store',          done: !!(s?.isOpen),                    route: null,              tourParam: 'store-toggle', actionLabel: 'Open now',   proLocked: false },
+    ];
+  }
+
+  get setupDoneCount() { return this.setupSteps.filter(s => s.done).length; }
+  get setupProgress()  { return Math.round((this.setupDoneCount / this.setupSteps.length) * 100); }
+  get setupComplete()  { return this.setupDoneCount === this.setupSteps.length; }
+  get showOnboarding() { return !this.onboardingDismissed; }
+
+  dismissOnboarding(): void {
+    this.onboardingDismissed = true;
+    localStorage.setItem('onboardingDone', 'true');
+  }
+
+  goToStep(step: any): void {
+    if (step.proLocked) {
+      this.router.navigate(['/admin/subscription']);
+      return;
+    }
+    if (step.tourParam === 'store-toggle') {
+      this.spotlightElement('store-toggle-btn', 'Open Your Store', 'Toggle this switch to start accepting orders from customers');
+      return;
+    }
+    this.router.navigate([step.route], { queryParams: { tour: step.tourParam } });
+  }
+
+  private spotlightElement(elementId: string, title: string, description: string): void {
+    const d = driver({ animate: true, overlayOpacity: 0.35 });
+    d.highlight({ element: '#' + elementId, popover: { title, description, side: 'bottom', align: 'start' } });
   }
 
   private loadRecentOrders(): void {

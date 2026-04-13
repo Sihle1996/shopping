@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
+import { driver } from 'driver.js';
 import { AuthService } from 'src/app/services/auth.service';
 import { TenantService } from 'src/app/services/tenant.service';
 import { AdminService } from 'src/app/services/admin.service';
@@ -65,7 +67,8 @@ export class AdminSettingsComponent implements OnInit {
     private tenantService: TenantService,
     private adminService: AdminService,
     private subscriptionService: SubscriptionService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -75,6 +78,27 @@ export class AdminSettingsComponent implements OnInit {
       this.hasCustomBranding = info.features.hasCustomBranding;
       this.subscriptionPlan = info.plan;
     });
+    const tour = this.route.snapshot.queryParamMap.get('tour');
+    if (tour) { setTimeout(() => this.runTour(tour!), 600); }
+  }
+
+  private runTour(param: string): void {
+    const map: Record<string, [string, string, string]> = {
+      'store-info': ['store-info-section', 'Store Information',  'Fill in your phone number and address here'],
+      'logo':       ['logo-upload-section', 'Upload Your Logo',  'Click "Choose File" to upload your restaurant logo'],
+      'delivery':   ['delivery-section',    'Delivery Settings', 'Set your delivery fee and radius to start receiving orders'],
+      'category':   ['category-section',    'Menu Categories',   "Add your first category — you'll need it to add menu items"],
+    };
+    const entry = map[param];
+    if (!entry) return;
+    const [id, title, desc] = entry;
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => {
+      const d = driver({ animate: true, overlayOpacity: 0.35 });
+      d.highlight({ element: '#' + id, popover: { title, description: desc, side: 'bottom', align: 'start' } });
+    }, 350);
   }
 
   private getHeaders(): HttpHeaders {

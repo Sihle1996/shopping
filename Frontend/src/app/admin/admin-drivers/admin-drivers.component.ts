@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { driver } from 'driver.js';
 import { AdminService } from 'src/app/services/admin.service';
 
 @Component({
@@ -15,10 +17,20 @@ export class AdminDriversComponent implements OnInit {
   toast: string | null = null;
   toastType: 'success' | 'error' = 'success';
 
-  constructor(private adminService: AdminService) {}
+  constructor(private adminService: AdminService, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.loadDrivers();
+    const tour = this.route.snapshot.queryParamMap.get('tour');
+    if (tour === 'add-driver') {
+      setTimeout(() => {
+        const d = driver({ animate: true, overlayOpacity: 0.35 });
+        d.highlight({
+          element: '#add-driver-form',
+          popover: { title: 'Add a Driver', description: 'Enter your driver\'s email and a password to create their account', side: 'bottom', align: 'start' }
+        });
+      }, 500);
+    }
   }
 
   loadDrivers(): void {

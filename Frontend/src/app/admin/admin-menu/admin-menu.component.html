@@ -7,7 +7,7 @@
         <h1 class="font-heading text-2xl font-bold text-textDark">Menu Management</h1>
         <p class="text-textLight text-sm mt-1">Add, edit, and manage your menu items</p>
       </div>
-      <div class="flex items-center gap-2">
+      <div id="add-menu-item-btn" class="flex items-center gap-2">
         <!-- Hidden CSV file input -->
         <input id="csvImportInput" type="file" accept=".csv" class="hidden"
                (change)="onCsvSelected($event)" />

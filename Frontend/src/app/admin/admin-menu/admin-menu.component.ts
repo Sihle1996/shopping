@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
+import { driver } from 'driver.js';
 import { AdminService } from 'src/app/services/admin.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
@@ -63,7 +65,8 @@ export class AdminMenuComponent implements OnInit {
     private adminService: AdminService,
     private toastr: ToastrService,
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -71,6 +74,16 @@ export class AdminMenuComponent implements OnInit {
       this.menuItems = data;
     });
     this.fetchMenuItems();
+    const tour = this.route.snapshot.queryParamMap.get('tour');
+    if (tour === 'add-item') {
+      setTimeout(() => {
+        const d = driver({ animate: true, overlayOpacity: 0.35 });
+        d.highlight({
+          element: '#add-menu-item-btn',
+          popover: { title: 'Add Your First Item', description: 'Click here to add your first menu item and start building your menu', side: 'bottom', align: 'end' }
+        });
+      }, 500);
+    }
     this.adminService.getCategories().subscribe({
       next: (cats) => {
         this.categories = cats;
