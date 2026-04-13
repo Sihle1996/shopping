@@ -71,12 +71,15 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
 
   deliveryDetails = {
     fullName: '',
-    unit: '',       // optional: floor, unit, building name (for businesses)
     address: '',
     city: '',
     zip: '',
     phone: ''
   };
+
+  // Structured building/office fields — shown when showBuilding is true
+  showBuilding = false;
+  building = { name: '', block: '', floor: '' };
 
   @ViewChild('addressInput') addressInputRef!: ElementRef;
 
@@ -137,7 +140,8 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   }
 
   fillFromSaved(a: UserAddress): void {
-    this.deliveryDetails.unit = '';
+    this.showBuilding = false;
+    this.building = { name: '', block: '', floor: '' };
     this.deliveryDetails.address = a.street;
     this.deliveryDetails.city = a.city;
     this.deliveryDetails.zip = a.postalCode ?? '';
@@ -369,18 +373,17 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   selectAddress(suggestion: AddressSuggestion): void {
     this.selectedLat = suggestion.lat;
     this.selectedLon = suggestion.lon;
-
-    if (suggestion.isPoi) {
-      // Business/POI: put business name in unit field, street address in address field
-      this.deliveryDetails.unit = suggestion.name;
-      this.deliveryDetails.address = suggestion.street || suggestion.label;
-    } else {
-      this.deliveryDetails.address = suggestion.street || suggestion.label;
-    }
+    this.deliveryDetails.address = suggestion.street || suggestion.label;
     this.deliveryDetails.city = suggestion.city || '';
     this.deliveryDetails.zip = suggestion.zip || '';
     this.addressControl.setValue(this.deliveryDetails.address, { emitEvent: false });
     this.addressSuggestions = [];
+
+    // For POIs auto-expand building section and pre-fill the name
+    if (suggestion.isPoi) {
+      this.showBuilding = true;
+      if (!this.building.name) this.building.name = suggestion.name;
+    }
   }
 
   cleanAddressLabel(label: string): string {
@@ -445,7 +448,15 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
         userId: this.isLoggedIn ? this.authService.getUserId() : null,
         guestEmail: !this.isLoggedIn ? this.guestEmail.trim() : null,
         guestPhone: !this.isLoggedIn ? (this.guestPhone.trim() || this.deliveryDetails.phone) : null,
-        deliveryAddress: [d.unit?.trim(), d.address, d.city, d.zip, 'South Africa'].filter(Boolean).join(', '),
+        deliveryAddress: [
+          this.building.name?.trim(),
+          this.building.block?.trim(),
+          this.building.floor?.trim(),
+          d.address,
+          d.city,
+          d.zip,
+          'South Africa'
+        ].filter(Boolean).join(', '),
         deliveryLat: this.selectedLat,
         deliveryLon: this.selectedLon,
         items: this.cartItems.map(item => ({
