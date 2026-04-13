@@ -1,18 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Tenant } from 'src/app/services/tenant.service';
+import { Tenant, TenantService } from 'src/app/services/tenant.service';
 
 @Component({
   selector: 'app-store',
   templateUrl: './store.component.html',
   styleUrls: ['./store.component.scss']
 })
-export class StoreComponent implements OnInit {
+export class StoreComponent implements OnInit, OnDestroy {
   tenant: Tenant | null = null;
   isLoading = false;
   notFound = false;
 
-  constructor(private route: ActivatedRoute, public router: Router) {}
+  constructor(
+    private route: ActivatedRoute,
+    public router: Router,
+    private tenantService: TenantService
+  ) {}
 
   ngOnInit(): void {
     const tenant: Tenant | null = this.route.snapshot.data['tenant'];
@@ -22,6 +26,19 @@ export class StoreComponent implements OnInit {
     }
     this.tenant = tenant;
     this.applyBrandColor(tenant.primaryColor);
+  }
+
+  ngOnDestroy(): void {
+    this.resetBranding();
+  }
+
+  private resetBranding(): void {
+    const root = document.documentElement;
+    root.style.setProperty('--brand-primary', '#FF6F00');
+    root.style.setProperty('--brand-primary-light', '#FF6F001A');
+    root.style.setProperty('--brand-primary-hover', '#EA580C');
+    this.tenantService.clearTenant();
+    ['tenantId', 'storeName', 'storeSlug', 'brandPrimary'].forEach(k => localStorage.removeItem(k));
   }
 
   private applyBrandColor(color?: string): void {
