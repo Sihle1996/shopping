@@ -40,6 +40,15 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
   profileIncomplete = false;
   showAllCompleted = false;
 
+  // OTP flow
+  showOtpModal = false;
+  otpOrderId: string | null = null;
+  otpCode = '';
+  otpSending = false;
+  otpVerifying = false;
+  otpSent = false;
+  otpError = '';
+
   lastUpdatedSeconds = 0;
   private pollInterval: any;
   private secondsInterval: any;
@@ -134,27 +143,57 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
   }
 
   confirmDeliver(id: string): void {
-    this.deliverTargetId = id;
-    this.showDeliverConfirm = true;
+    this.otpOrderId = id;
+    this.otpCode = '';
+    this.otpSent = false;
+    this.otpError = '';
+    this.showOtpModal = true;
   }
 
-  onDeliverConfirmed(): void {
-    if (!this.deliverTargetId) return;
-    this.driverService.markAsDelivered(this.deliverTargetId).pipe(takeUntil(this.destroy$)).subscribe({
+  requestOtp(): void {
+    if (!this.otpOrderId) return;
+    this.otpSending = true;
+    this.otpError = '';
+    this.driverService.requestDeliveryOtp(this.otpOrderId).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
+        this.otpSent = true;
+        this.otpSending = false;
+        this.toastr.info('OTP sent to customer');
+      },
+      error: (err) => {
+        this.otpSending = false;
+        this.otpError = err.error?.error || 'Failed to send OTP';
+      }
+    });
+  }
+
+  verifyOtp(): void {
+    if (!this.otpOrderId || !this.otpCode.trim()) return;
+    this.otpVerifying = true;
+    this.otpError = '';
+    this.driverService.verifyDeliveryOtp(this.otpOrderId, this.otpCode.trim()).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.otpVerifying = false;
+        this.showOtpModal = false;
+        this.otpOrderId = null;
         this.toastr.success('Order marked as delivered');
         this.loadOrders();
       },
-      error: () => this.toastr.error('Failed to update order')
+      error: (err) => {
+        this.otpVerifying = false;
+        this.otpError = err.error?.error || 'Incorrect OTP — please try again';
+      }
     });
-    this.showDeliverConfirm = false;
-    this.deliverTargetId = null;
   }
 
-  onDeliverCancelled(): void {
-    this.showDeliverConfirm = false;
-    this.deliverTargetId = null;
+  closeOtpModal(): void {
+    this.showOtpModal = false;
+    this.otpOrderId = null;
+    this.otpCode = '';
   }
+
+  onDeliverConfirmed(): void { /* unused — kept for template compat */ }
+  onDeliverCancelled(): void { this.showDeliverConfirm = false; this.deliverTargetId = null; }
 
   toggleAvailability(): void {
     const newStatus = this.availability === 'AVAILABLE' ? 'UNAVAILABLE' : 'AVAILABLE';

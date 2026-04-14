@@ -61,6 +61,10 @@ public class Order {
     @Column(columnDefinition = "TEXT")
     private String orderNotes;
 
+    private String deliveryOtp;
+    private Instant otpExpiresAt;
+    private boolean otpVerified;
+
     public Order(User user, Tenant tenant, List<OrderItem> orderItems, Double totalAmount, Instant orderDate, String status, String deliveryAddress) {
         this.user = user;
         this.tenant = tenant;

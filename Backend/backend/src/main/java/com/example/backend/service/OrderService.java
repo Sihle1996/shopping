@@ -393,16 +393,19 @@ public class OrderService {
             messagingTemplate.convertAndSend("/topic/orders/" + updated.getUser().getId(), dto);
         }
 
+        String storeName = updated.getTenant() != null ? updated.getTenant().getName() : "Our Store";
+        String customerEmail = updated.getUser() != null ? updated.getUser().getEmail() : updated.getGuestEmail();
+
         if ("Delivered".equals(status)) {
-            // Award loyalty points now that delivery is confirmed
             if (updated.getUser() != null) {
                 loyaltyService.awardPoints(updated.getUser(), updated);
             }
-            String storeName = updated.getTenant() != null ? updated.getTenant().getName() : "Our Store";
-            String email = updated.getUser() != null ? updated.getUser().getEmail() : updated.getGuestEmail();
-            if (email != null && !email.isBlank()) {
-                emailService.sendOrderDelivered(email, dto, storeName);
+            if (customerEmail != null && !customerEmail.isBlank()) {
+                emailService.sendOrderDelivered(customerEmail, dto, storeName);
             }
+        } else if (customerEmail != null && !customerEmail.isBlank()) {
+            // Send status update email for Confirmed, Preparing, Out for Delivery, Cancelled, Rejected
+            emailService.sendOrderStatusUpdate(customerEmail, status, updated.getId().toString(), storeName);
         }
 
         return dto;

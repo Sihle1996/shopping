@@ -349,13 +349,67 @@
   </div>
 </div>
 
-<!-- Delivery Confirmation Modal -->
-<app-confirm-modal
-  [isOpen]="showDeliverConfirm"
-  title="Confirm Delivery"
-  message="Mark this order as delivered? This cannot be undone."
-  confirmLabel="Delivered"
-  variant="primary"
-  (confirmed)="onDeliverConfirmed()"
-  (cancelled)="onDeliverCancelled()">
-</app-confirm-modal>
+<!-- OTP Delivery Confirmation Modal -->
+<div *ngIf="showOtpModal"
+     class="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm px-4 pb-6 sm:pb-0">
+  <div class="bg-white rounded-3xl shadow-float w-full max-w-sm p-6">
+
+    <!-- Header -->
+    <div class="text-center mb-5">
+      <div class="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
+        <i class="bi bi-shield-lock-fill text-primary text-xl"></i>
+      </div>
+      <h3 class="font-heading text-lg font-bold text-textDark">Confirm Delivery</h3>
+      <p class="text-sm text-textMuted mt-1">Request an OTP from the customer and enter it below to complete the delivery.</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="otpError"
+         class="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-4 text-sm text-red-700">
+      <i class="bi bi-exclamation-circle flex-shrink-0"></i>
+      <span>{{ otpError }}</span>
+    </div>
+
+    <!-- Step 1: send OTP -->
+    <div *ngIf="!otpSent" class="space-y-3">
+      <button (click)="requestOtp()" [disabled]="otpSending"
+              class="w-full py-3 rounded-2xl bg-primary text-white font-semibold text-sm hover:bg-primary-600 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+        <i class="bi bi-envelope" *ngIf="!otpSending"></i>
+        <i class="bi bi-arrow-repeat animate-spin" *ngIf="otpSending"></i>
+        {{ otpSending ? 'Sending…' : 'Send OTP to Customer' }}
+      </button>
+      <button (click)="closeOtpModal()"
+              class="w-full py-3 rounded-2xl border border-borderColor text-textMuted text-sm font-medium hover:bg-surface transition-colors">
+        Cancel
+      </button>
+    </div>
+
+    <!-- Step 2: enter OTP -->
+    <div *ngIf="otpSent" class="space-y-3">
+      <p class="text-xs text-green-700 bg-green-50 border border-green-200 rounded-xl px-3 py-2 flex items-center gap-2">
+        <i class="bi bi-check-circle-fill flex-shrink-0"></i>
+        OTP sent! Ask the customer for the code.
+      </p>
+      <input type="text" [(ngModel)]="otpCode" maxlength="6" inputmode="numeric"
+             placeholder="Enter 6-digit OTP"
+             class="w-full px-4 py-3 rounded-xl border border-borderColor text-center text-2xl font-bold tracking-[0.5em] font-mono bg-surface focus:outline-none focus:ring-2 focus:ring-primary-400" />
+      <button (click)="verifyOtp()" [disabled]="otpVerifying || otpCode.length < 6"
+              class="w-full py-3 rounded-2xl bg-success text-white font-semibold text-sm hover:bg-green-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+        <i class="bi bi-check-circle" *ngIf="!otpVerifying"></i>
+        <i class="bi bi-arrow-repeat animate-spin" *ngIf="otpVerifying"></i>
+        {{ otpVerifying ? 'Verifying…' : 'Confirm Delivery' }}
+      </button>
+      <div class="flex gap-2">
+        <button (click)="requestOtp()" [disabled]="otpSending"
+                class="flex-1 py-2.5 rounded-xl border border-borderColor text-textMuted text-xs font-medium hover:bg-surface transition-colors disabled:opacity-60">
+          Resend OTP
+        </button>
+        <button (click)="closeOtpModal()"
+                class="flex-1 py-2.5 rounded-xl border border-borderColor text-textMuted text-xs font-medium hover:bg-surface transition-colors">
+          Cancel
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>

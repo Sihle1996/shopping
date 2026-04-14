@@ -11,6 +11,7 @@ interface TrackResult {
   totalAmount: number;
   deliveryFee: number;
   items: Array<{ name: string; quantity: number }>;
+  deliveryOtp?: string;
 }
 
 const STATUS_STEPS = ['Pending', 'Confirmed', 'Preparing', 'Out for Delivery', 'Delivered'];

@@ -61,6 +61,12 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   newCategoryName = '';
   savingCategory = false;
 
+  // Store hours
+  storeHours: Array<{ id: string | null; dayOfWeek: number; openTime: string; closeTime: string; closed: boolean }> = [];
+  hoursLoading = false;
+  hoursSaving = false;
+  readonly DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
   constructor(
     private http: HttpClient,
     private authService: AuthService,
@@ -74,6 +80,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadSettings();
     this.loadCategories();
+    this.loadStoreHours();
     this.subscriptionService.load().subscribe(info => {
       this.hasCustomBranding = info.features.hasCustomBranding;
       this.subscriptionPlan = info.plan;
@@ -207,6 +214,29 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
         this.toastr.success('Category removed');
       },
       error: () => this.toastr.error('Failed to remove category')
+    });
+  }
+
+  loadStoreHours(): void {
+    this.hoursLoading = true;
+    this.http.get<any[]>(`${environment.apiUrl}/api/admin/store-hours`, { headers: this.getHeaders() }).subscribe({
+      next: (data) => { this.storeHours = data; this.hoursLoading = false; },
+      error: () => { this.hoursLoading = false; }
+    });
+  }
+
+  saveStoreHours(): void {
+    this.hoursSaving = true;
+    this.http.put<any[]>(`${environment.apiUrl}/api/admin/store-hours`, this.storeHours, { headers: this.getHeaders() }).subscribe({
+      next: (saved) => {
+        this.storeHours = saved;
+        this.hoursSaving = false;
+        this.toastr.success('Store hours saved');
+      },
+      error: () => {
+        this.hoursSaving = false;
+        this.toastr.error('Failed to save store hours');
+      }
     });
   }
 

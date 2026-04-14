@@ -9,7 +9,10 @@ import com.example.backend.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -29,6 +32,67 @@ public class DriverService {
                 .toList();
     }
 
+    public Map<String, String> requestDeliveryOtp(User driver, UUID orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (!order.getDriver().getId().equals(driver.getId())) {
+            throw new RuntimeException("Unauthorized to modify this order");
+        }
+        if (!"Out for Delivery".equals(order.getStatus())) {
+            throw new RuntimeException("Order must be Out for Delivery to request OTP");
+        }
+
+        String otp = String.format("%06d", new SecureRandom().nextInt(1_000_000));
+        order.setDeliveryOtp(otp);
+        order.setOtpExpiresAt(Instant.now().plusSeconds(900)); // 15 minutes
+        order.setOtpVerified(false);
+        orderRepository.save(order);
+
+        String customerEmail = order.getUser() != null ? order.getUser().getEmail() : order.getGuestEmail();
+        if (customerEmail != null && !customerEmail.isBlank()) {
+            String storeName = order.getTenant() != null ? order.getTenant().getName() : "the store";
+            emailService.sendDeliveryOtp(customerEmail, otp, storeName, order.getId().toString());
+        }
+
+        return Map.of("message", "OTP sent to customer");
+    }
+
+    public void verifyDeliveryOtp(User driver, UUID orderId, String otp) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (!order.getDriver().getId().equals(driver.getId())) {
+            throw new RuntimeException("Unauthorized to modify this order");
+        }
+        if (order.getDeliveryOtp() == null || order.getOtpExpiresAt() == null) {
+            throw new RuntimeException("No OTP has been requested for this order");
+        }
+        if (Instant.now().isAfter(order.getOtpExpiresAt())) {
+            throw new RuntimeException("OTP has expired — request a new one");
+        }
+        if (!order.getDeliveryOtp().equals(otp)) {
+            throw new RuntimeException("Incorrect OTP");
+        }
+
+        order.setOtpVerified(true);
+        order.setDeliveryOtp(null);
+        order.setOtpExpiresAt(null);
+        order.setStatus("Delivered");
+        orderRepository.save(order);
+
+        var dto = orderService.convertToOrderDTO(order);
+        if (order.getUser() != null) {
+            messagingTemplate.convertAndSend("/topic/orders/" + order.getUser().getId(), dto);
+        }
+
+        String customerEmail = order.getUser() != null ? order.getUser().getEmail() : order.getGuestEmail();
+        if (customerEmail != null && !customerEmail.isBlank()) {
+            String storeName = order.getTenant() != null ? order.getTenant().getName() : "the store";
+            emailService.sendOrderDelivered(customerEmail, dto, storeName);
+        }
+    }
+
     public void markOrderDelivered(User driver, UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
@@ -41,12 +105,10 @@ public class DriverService {
         orderRepository.save(order);
 
         var dto = orderService.convertToOrderDTO(order);
-        // Push real-time update to customer (only if authenticated user)
         if (order.getUser() != null) {
             messagingTemplate.convertAndSend("/topic/orders/" + order.getUser().getId(), dto);
         }
 
-        // Send delivery email to customer or guest
         String customerEmail = order.getUser() != null ? order.getUser().getEmail() : order.getGuestEmail();
         if (customerEmail != null && !customerEmail.isBlank()) {
             String storeName = order.getTenant() != null ? order.getTenant().getName() : "the store";

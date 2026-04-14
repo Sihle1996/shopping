@@ -44,6 +44,85 @@ public class EmailService {
         send(toEmail, subject, html);
     }
 
+    public void sendDeliveryOtp(String toEmail, String otp, String storeName, String orderId) {
+        if (apiKey == null || apiKey.isBlank()) {
+            log.warn("RESEND_API_KEY not configured — skipping OTP email");
+            return;
+        }
+        String subject = "Your delivery OTP — " + storeName;
+        String html = String.format("""
+            <div style='font-family:Inter,Helvetica,Arial,sans-serif;background:#f9fafb;padding:40px 0;'>
+              <div style='max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);'>
+                <div style='background:#111827;padding:28px 36px;text-align:center;'>
+                  <h1 style='margin:0;color:#ffffff;font-size:20px;font-weight:700;'>%s</h1>
+                  <p style='margin:8px 0 0;color:#9ca3af;font-size:13px;'>Delivery Verification Code</p>
+                </div>
+                <div style='padding:32px 36px;text-align:center;'>
+                  <p style='margin:0 0 24px;color:#374151;font-size:15px;'>Your driver has arrived! Share this code to confirm delivery:</p>
+                  <div style='background:#f3f4f6;border-radius:12px;padding:24px;margin-bottom:24px;'>
+                    <p style='margin:0;font-size:42px;font-weight:800;letter-spacing:12px;color:#111827;font-family:monospace;'>%s</p>
+                  </div>
+                  <p style='margin:0;color:#6b7280;font-size:13px;'>This code expires in 15 minutes. Order ID: <span style='font-family:monospace;'>%s</span></p>
+                </div>
+                <div style='background:#f9fafb;padding:16px 36px;text-align:center;border-top:1px solid #e5e7eb;'>
+                  <p style='margin:0;color:#9ca3af;font-size:12px;'>Only share this code with your delivery driver.</p>
+                </div>
+              </div>
+            </div>
+            """, escapeHtml(storeName), otp, escapeHtml(orderId));
+        send(toEmail, subject, html);
+    }
+
+    public void sendOrderStatusUpdate(String toEmail, String status, String orderId, String storeName) {
+        if (apiKey == null || apiKey.isBlank()) return;
+        String subject;
+        String body;
+        switch (status) {
+            case "Confirmed" -> {
+                subject = "Order confirmed \u2705 \u2014 " + storeName;
+                body = "Great news! Your order has been confirmed and will be prepared shortly.";
+            }
+            case "Preparing" -> {
+                subject = "Your order is being prepared \uD83D\uDC68\u200D\uD83C\uDF73 \u2014 " + storeName;
+                body = "Our kitchen is now preparing your order. It won't be long!";
+            }
+            case "Out for Delivery" -> {
+                subject = "Order on its way \uD83D\uDEF4 \u2014 " + storeName;
+                body = "Your order has been picked up and is on its way to you!";
+            }
+            case "Cancelled" -> {
+                subject = "Order cancelled \u2014 " + storeName;
+                body = "Your order has been cancelled. If you have any questions, please contact the store.";
+            }
+            case "Rejected" -> {
+                subject = "Order rejected \u2014 " + storeName;
+                body = "Unfortunately your order could not be accepted. Please try again or contact the store.";
+            }
+            default -> { return; }
+        }
+        String html = String.format("""
+            <div style='font-family:Inter,Helvetica,Arial,sans-serif;background:#f9fafb;padding:40px 0;'>
+              <div style='max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);'>
+                <div style='background:#111827;padding:28px 36px;text-align:center;'>
+                  <h1 style='margin:0;color:#ffffff;font-size:20px;font-weight:700;'>%s</h1>
+                  <p style='margin:8px 0 0;color:#9ca3af;font-size:13px;'>Order Update</p>
+                </div>
+                <div style='padding:32px 36px;'>
+                  <p style='margin:0 0 20px;color:#374151;font-size:15px;line-height:1.6;'>%s</p>
+                  <div style='background:#f3f4f6;border-radius:10px;padding:16px 20px;'>
+                    <p style='margin:0 0 4px;color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;'>Order ID</p>
+                    <p style='margin:0;color:#111827;font-size:13px;font-family:monospace;'>%s</p>
+                  </div>
+                </div>
+                <div style='background:#f9fafb;padding:16px 36px;text-align:center;border-top:1px solid #e5e7eb;'>
+                  <p style='margin:0;color:#9ca3af;font-size:12px;'>This is an automated message from %s.</p>
+                </div>
+              </div>
+            </div>
+            """, escapeHtml(storeName), escapeHtml(body), escapeHtml(orderId), escapeHtml(storeName));
+        send(toEmail, subject, html);
+    }
+
     public void sendOrderDelivered(String toEmail, OrderDTO order, String storeName) {
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("RESEND_API_KEY not configured — skipping order delivered email");

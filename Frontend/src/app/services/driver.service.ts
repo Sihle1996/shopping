@@ -19,6 +19,14 @@ export class DriverService {
     return this.http.put(`${this.baseUrl}/orders/${orderId}/delivered`, {});
   }
 
+  requestDeliveryOtp(orderId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/orders/${orderId}/request-otp`, {});
+  }
+
+  verifyDeliveryOtp(orderId: string, otp: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/orders/${orderId}/verify-otp`, { otp });
+  }
+
   updateAvailability(status: 'AVAILABLE' | 'UNAVAILABLE'): Observable<any> {
     return this.http.put(`${this.baseUrl}/availability?status=${status}`, {});
   }

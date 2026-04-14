@@ -249,6 +249,56 @@
         </div>
       </div>
 
+      <!-- Store Hours Card -->
+      <div id="store-hours-section" class="bg-white rounded-2xl shadow-card p-6">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <h3 class="font-heading text-base font-semibold text-textDark">
+              <i class="bi bi-clock text-primary mr-2"></i>Opening Hours
+            </h3>
+            <p class="text-textMuted text-xs mt-0.5">Schedule auto-opens and closes your store every day at these times.</p>
+          </div>
+          <app-button variant="primary" size="sm" [loading]="hoursSaving" (clicked)="saveStoreHours()">
+            Save Hours
+          </app-button>
+        </div>
+
+        <div *ngIf="hoursLoading" class="animate-pulse space-y-2">
+          <div *ngFor="let _ of [1,2,3,4,5,6,7]" class="h-10 bg-gray-100 rounded-xl"></div>
+        </div>
+
+        <div *ngIf="!hoursLoading && storeHours.length > 0" class="space-y-2">
+          <div *ngFor="let row of storeHours; let i = index"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+               [class.bg-surface]="!row.closed"
+               [class.bg-red-50]="row.closed">
+            <!-- Day label -->
+            <span class="w-9 text-xs font-semibold text-textDark flex-shrink-0">{{ DAY_NAMES[i] }}</span>
+            <!-- Closed toggle -->
+            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+              <input type="checkbox" class="sr-only peer" [checked]="row.closed" (change)="row.closed = !row.closed" />
+              <div class="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-red-400 after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-4"></div>
+            </label>
+            <span class="text-[10px] text-textMuted w-10 flex-shrink-0">{{ row.closed ? 'Closed' : 'Open' }}</span>
+            <!-- Times — hidden when closed -->
+            <ng-container *ngIf="!row.closed">
+              <input type="time" [(ngModel)]="row.openTime"
+                     class="flex-1 px-2 py-1.5 rounded-lg border border-borderColor bg-white text-xs text-textDark focus:outline-none focus:ring-1 focus:ring-primary-400" />
+              <span class="text-[10px] text-textMuted">to</span>
+              <input type="time" [(ngModel)]="row.closeTime"
+                     class="flex-1 px-2 py-1.5 rounded-lg border border-borderColor bg-white text-xs text-textDark focus:outline-none focus:ring-1 focus:ring-primary-400" />
+            </ng-container>
+            <ng-container *ngIf="row.closed">
+              <span class="flex-1 text-xs text-red-400 italic">Store closed all day</span>
+            </ng-container>
+          </div>
+        </div>
+
+        <p class="text-[10px] text-textMuted mt-3">
+          <i class="bi bi-info-circle mr-1"></i>The scheduler checks every minute and updates your store's open/closed status automatically (Africa/Johannesburg time). You can still toggle manually from the dashboard.
+        </p>
+      </div>
+
       <!-- Save -->
       <div class="flex justify-end">
         <app-button

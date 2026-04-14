@@ -35,6 +35,33 @@ public class DriverController {
         return ResponseEntity.ok(driverService.getOrdersAssignedToDriver(driver));
     }
 
+    @PostMapping("/orders/{orderId}/request-otp")
+    public ResponseEntity<?> requestDeliveryOtp(@PathVariable UUID orderId, Authentication authentication) {
+        User driver = authUtil.getCurrentUser(authentication);
+        try {
+            return ResponseEntity.ok(driverService.requestDeliveryOtp(driver, orderId));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/orders/{orderId}/verify-otp")
+    public ResponseEntity<?> verifyDeliveryOtp(@PathVariable UUID orderId,
+                                               @RequestBody Map<String, String> body,
+                                               Authentication authentication) {
+        User driver = authUtil.getCurrentUser(authentication);
+        String otp = body.get("otp");
+        if (otp == null || otp.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "OTP is required"));
+        }
+        try {
+            driverService.verifyDeliveryOtp(driver, orderId, otp);
+            return ResponseEntity.ok(Map.of("message", "Order marked as delivered."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PutMapping("/orders/{orderId}/delivered")
     public ResponseEntity<?> markOrderAsDelivered(@PathVariable UUID orderId, Authentication authentication) {
         User driver = authUtil.getCurrentUser(authentication);
