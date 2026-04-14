@@ -23,7 +23,6 @@ interface TenantSettings {
   isOpen: boolean;
   minimumOrderAmount: number | null;
   estimatedDeliveryMinutes: number;
-  openingHours: string;
   cuisineType: string;
 }
 
@@ -47,7 +46,6 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     isOpen: true,
     minimumOrderAmount: null,
     estimatedDeliveryMinutes: 30,
-    openingHours: '',
     cuisineType: ''
   };
   isLoading = false;

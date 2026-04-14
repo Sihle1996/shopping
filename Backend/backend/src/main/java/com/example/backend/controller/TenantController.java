@@ -1,7 +1,9 @@
 package com.example.backend.controller;
 
+import com.example.backend.entity.StoreHours;
 import com.example.backend.entity.Tenant;
 import com.example.backend.repository.OrderRepository;
+import com.example.backend.repository.StoreHoursRepository;
 import com.example.backend.repository.TenantRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +27,7 @@ public class TenantController {
 
     private final TenantRepository tenantRepository;
     private final OrderRepository orderRepository;
+    private final StoreHoursRepository storeHoursRepository;
 
     // Public - list active tenants (for customer store selection)
     // Must be defined BEFORE {slug} to avoid path conflict
@@ -87,6 +91,26 @@ public class TenantController {
         return tenantRepository.findBySlug(slug)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    // Public - get weekly store hours for a given slug
+    @GetMapping("/api/tenants/{slug}/hours")
+    public ResponseEntity<List<Map<String, Object>>> getStoreHours(@PathVariable String slug) {
+        return tenantRepository.findBySlug(slug).map(tenant -> {
+            List<StoreHours> rows = storeHoursRepository.findByTenant_IdOrderByDayOfWeek(tenant.getId());
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (int day = 1; day <= 7; day++) {
+                final int d = day;
+                StoreHours sh = rows.stream().filter(h -> h.getDayOfWeek() == d).findFirst().orElse(null);
+                if (sh != null) {
+                    result.add(Map.of("dayOfWeek", sh.getDayOfWeek(), "openTime", sh.getOpenTime(),
+                            "closeTime", sh.getCloseTime(), "closed", sh.isClosed()));
+                } else {
+                    result.add(Map.of("dayOfWeek", day, "openTime", "08:00", "closeTime", "22:00", "closed", false));
+                }
+            }
+            return ResponseEntity.ok(result);
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     // Public - register new tenant

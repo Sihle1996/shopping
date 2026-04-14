@@ -65,6 +65,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   totalReviews = 0;
   estimatedDeliveryMinutes = 30;
 
+  storeHours: Array<{ dayOfWeek: number; openTime: string; closeTime: string; closed: boolean }> = [];
+  showAllHours = false;
+  readonly DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -175,6 +179,24 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadPromotions();
     this.subscribeToCart();
     this.loadReviews();
+    this.loadStoreHours();
+  }
+
+  private loadStoreHours(): void {
+    const slug = localStorage.getItem('storeSlug');
+    if (!slug) return;
+    this.http.get<any[]>(`${environment.apiUrl}/api/tenants/${slug}/hours`).subscribe({
+      next: hours => this.storeHours = hours,
+      error: () => {}
+    });
+  }
+
+  get todayHours(): { dayOfWeek: number; openTime: string; closeTime: string; closed: boolean } | null {
+    if (!this.storeHours.length) return null;
+    // JS: 0=Sun,1=Mon…6=Sat  ISO: 1=Mon…7=Sun
+    const jsDay = new Date().getDay();
+    const isoDay = jsDay === 0 ? 7 : jsDay;
+    return this.storeHours.find(h => h.dayOfWeek === isoDay) ?? null;
   }
 
   private loadReviews(): void {

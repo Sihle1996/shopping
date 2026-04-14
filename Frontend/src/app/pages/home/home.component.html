@@ -58,6 +58,45 @@
         <span>This store is currently <strong>closed</strong>. You can browse the menu but ordering is unavailable.</span>
       </div>
 
+      <!-- Opening hours -->
+      <div *ngIf="storeHours.length > 0" class="mb-5 bg-white rounded-2xl shadow-card overflow-hidden">
+
+        <!-- Collapsed row — today's hours -->
+        <button (click)="showAllHours = !showAllHours"
+                class="w-full flex items-center justify-between px-4 py-3 text-sm hover:bg-surface transition-colors">
+          <div class="flex items-center gap-2">
+            <i class="bi bi-clock text-primary text-base"></i>
+            <span class="font-semibold text-textDark">Opening Hours</span>
+            <ng-container *ngIf="todayHours">
+              <span class="text-textMuted">·</span>
+              <span *ngIf="!todayHours.closed" class="text-textDark">
+                Today <span class="text-primary font-semibold">{{ todayHours.openTime }} – {{ todayHours.closeTime }}</span>
+              </span>
+              <span *ngIf="todayHours.closed" class="text-red-500 font-medium">Closed today</span>
+            </ng-container>
+          </div>
+          <i class="bi text-textMuted text-xs transition-transform"
+             [class.bi-chevron-down]="!showAllHours"
+             [class.bi-chevron-up]="showAllHours"></i>
+        </button>
+
+        <!-- Expanded week schedule -->
+        <div *ngIf="showAllHours" class="px-4 pb-3 border-t border-borderColor space-y-1.5 pt-3">
+          <div *ngFor="let row of storeHours; let i = index"
+               class="flex items-center justify-between text-xs"
+               [class.font-semibold]="row.dayOfWeek === todayHours?.dayOfWeek">
+            <span [class.text-primary]="row.dayOfWeek === todayHours?.dayOfWeek"
+                  [class.text-textDark]="row.dayOfWeek !== todayHours?.dayOfWeek">
+              {{ DAY_NAMES[i] }}
+              <span *ngIf="row.dayOfWeek === todayHours?.dayOfWeek" class="text-[10px] text-textMuted font-normal ml-1">(today)</span>
+            </span>
+            <span *ngIf="!row.closed" class="text-textDark">{{ row.openTime }} – {{ row.closeTime }}</span>
+            <span *ngIf="row.closed" class="text-red-400">Closed</span>
+          </div>
+        </div>
+
+      </div>
+
       <!-- Featured Promotion Banner -->
       <div class="mb-5" *ngIf="isFeaturedPromoValid && featuredPromotion as fp">
         <app-promotion-banner [promotion]="fp"></app-promotion-banner>
