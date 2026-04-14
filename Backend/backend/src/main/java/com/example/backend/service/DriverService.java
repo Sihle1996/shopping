@@ -39,8 +39,13 @@ public class DriverService {
         if (!order.getDriver().getId().equals(driver.getId())) {
             throw new RuntimeException("Unauthorized to modify this order");
         }
+        if ("Delivered".equals(order.getStatus()) || "Cancelled".equals(order.getStatus())) {
+            throw new RuntimeException("Order is already " + order.getStatus());
+        }
+
+        // Auto-advance to Out for Delivery if not already there
         if (!"Out for Delivery".equals(order.getStatus())) {
-            throw new RuntimeException("Order must be Out for Delivery to request OTP");
+            order.setStatus("Out for Delivery");
         }
 
         String otp = String.format("%06d", new SecureRandom().nextInt(1_000_000));
@@ -48,6 +53,13 @@ public class DriverService {
         order.setOtpExpiresAt(Instant.now().plusSeconds(900)); // 15 minutes
         order.setOtpVerified(false);
         orderRepository.save(order);
+
+        var dto = orderService.convertToOrderDTO(order);
+
+        // Push real-time update so customer's track page shows OTP immediately
+        if (order.getUser() != null) {
+            messagingTemplate.convertAndSend("/topic/orders/" + order.getUser().getId(), dto);
+        }
 
         String customerEmail = order.getUser() != null ? order.getUser().getEmail() : order.getGuestEmail();
         if (customerEmail != null && !customerEmail.isBlank()) {

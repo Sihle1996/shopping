@@ -507,6 +507,13 @@ public class OrderService {
             dto.setDriverLon(driver.getLongitude());
         }
 
+        // Include OTP for authenticated customers when it's active and not yet expired
+        if (order.getDeliveryOtp() != null
+                && order.getOtpExpiresAt() != null
+                && java.time.Instant.now().isBefore(order.getOtpExpiresAt())) {
+            dto.setDeliveryOtp(order.getDeliveryOtp());
+        }
+
         return dto;
     }
 
