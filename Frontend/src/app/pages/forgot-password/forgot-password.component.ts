@@ -39,6 +39,7 @@ export class ForgotPasswordComponent {
   }
 
   sendOtp(): void {
+    this.emailForm.markAllAsTouched();
     if (this.emailForm.invalid) return;
     this.isLoading = true;
     this.email = this.emailForm.value.email;
@@ -56,6 +57,7 @@ export class ForgotPasswordComponent {
   }
 
   resetPassword(): void {
+    this.resetForm.markAllAsTouched();
     if (this.resetForm.invalid) return;
     this.isLoading = true;
     const { otp, newPassword } = this.resetForm.value;

@@ -50,6 +50,7 @@ export class AddressBookComponent implements OnInit {
   }
 
   save() {
+    this.form.markAllAsTouched();
     if (this.form.invalid) return;
     this.saving = true;
     const req = this.form.value;

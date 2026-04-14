@@ -26,13 +26,19 @@
               <i class="bi bi-envelope text-textMuted"></i>
             </div>
             <input type="email" formControlName="email" data-testid="register-email"
-                   class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                   class="w-full pl-10 pr-4 py-3 rounded-xl border bg-surface text-textDark
                           placeholder-textMuted text-sm
-                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow"
+                          focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
+                   [class.border-red-400]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+                   [class.border-borderColor]="!(registerForm.get('email')?.invalid && registerForm.get('email')?.touched)"
+                   [class.focus:ring-red-400]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+                   [class.focus:ring-primary-400]="!(registerForm.get('email')?.invalid && registerForm.get('email')?.touched)"
                    placeholder="your@email.com" />
           </div>
+          <p *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.hasError('required')"
+             class="text-danger text-xs mt-1">Email is required</p>
           <p *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.hasError('email')"
-             class="text-danger text-xs mt-1">Please enter a valid email</p>
+             class="text-danger text-xs mt-1">Please enter a valid email address</p>
         </div>
 
         <!-- Password -->
@@ -44,15 +50,21 @@
             </div>
             <input [type]="showPassword ? 'text' : 'password'" formControlName="password"
                    data-testid="register-password"
-                   class="w-full pl-10 pr-12 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                   class="w-full pl-10 pr-12 py-3 rounded-xl border bg-surface text-textDark
                           placeholder-textMuted text-sm
-                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow"
+                          focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
+                   [class.border-red-400]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+                   [class.border-borderColor]="!(registerForm.get('password')?.invalid && registerForm.get('password')?.touched)"
+                   [class.focus:ring-red-400]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+                   [class.focus:ring-primary-400]="!(registerForm.get('password')?.invalid && registerForm.get('password')?.touched)"
                    placeholder="Min. 6 characters" />
             <button type="button" (click)="showPassword = !showPassword"
                     class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-textMuted hover:text-textDark transition-colors">
               <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
             </button>
           </div>
+          <p *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.hasError('required')"
+             class="text-danger text-xs mt-1">Password is required</p>
           <p *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.hasError('minlength')"
              class="text-danger text-xs mt-1">Password must be at least 6 characters</p>
         </div>
@@ -66,15 +78,21 @@
             </div>
             <input [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword"
                    data-testid="register-confirm-password"
-                   class="w-full pl-10 pr-12 py-3 rounded-xl border border-borderColor bg-surface text-textDark
+                   class="w-full pl-10 pr-12 py-3 rounded-xl border bg-surface text-textDark
                           placeholder-textMuted text-sm
-                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-shadow"
+                          focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
+                   [class.border-red-400]="(registerForm.get('confirmPassword')?.touched && registerForm.get('confirmPassword')?.hasError('required')) || (registerForm.hasError('mismatch') && registerForm.get('confirmPassword')?.touched)"
+                   [class.border-borderColor]="!((registerForm.get('confirmPassword')?.touched && registerForm.get('confirmPassword')?.hasError('required')) || (registerForm.hasError('mismatch') && registerForm.get('confirmPassword')?.touched))"
+                   [class.focus:ring-red-400]="(registerForm.get('confirmPassword')?.touched && registerForm.get('confirmPassword')?.hasError('required')) || (registerForm.hasError('mismatch') && registerForm.get('confirmPassword')?.touched)"
+                   [class.focus:ring-primary-400]="!((registerForm.get('confirmPassword')?.touched && registerForm.get('confirmPassword')?.hasError('required')) || (registerForm.hasError('mismatch') && registerForm.get('confirmPassword')?.touched))"
                    placeholder="Re-enter your password" />
             <button type="button" (click)="showConfirmPassword = !showConfirmPassword"
                     class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-textMuted hover:text-textDark transition-colors">
               <i [class]="showConfirmPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
             </button>
           </div>
+          <p *ngIf="registerForm.get('confirmPassword')?.touched && registerForm.get('confirmPassword')?.hasError('required')"
+             class="text-danger text-xs mt-1">Please confirm your password</p>
           <p *ngIf="registerForm.hasError('mismatch') && registerForm.get('confirmPassword')?.touched"
              class="text-danger text-xs mt-1">Passwords do not match</p>
         </div>

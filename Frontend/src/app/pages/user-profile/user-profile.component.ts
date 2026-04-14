@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from 'src/environments/environment';
@@ -45,7 +45,7 @@ export class UserProfileComponent implements OnInit {
       currentPassword: ['', Validators.required],
       newPassword: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', Validators.required]
-    });
+    }, { validators: this.passwordsMatchValidator });
   }
 
   ngOnInit() {
@@ -96,12 +96,16 @@ export class UserProfileComponent implements OnInit {
     });
   }
 
+  private passwordsMatchValidator(group: AbstractControl) {
+    return (group as FormGroup).get('newPassword')?.value === (group as FormGroup).get('confirmPassword')?.value
+      ? null : { mismatch: true };
+  }
+
   changePassword() {
-    const { currentPassword, newPassword, confirmPassword } = this.passwordForm.value;
-    if (!currentPassword || !newPassword) { this.toastr.warning('Please fill in all fields'); return; }
-    if (newPassword !== confirmPassword) { this.toastr.warning('New passwords do not match'); return; }
-    if (newPassword.length < 6) { this.toastr.warning('Password must be at least 6 characters'); return; }
+    this.passwordForm.markAllAsTouched();
+    if (this.passwordForm.invalid) return;
     this.changingPassword = true;
+    const { currentPassword, newPassword } = this.passwordForm.value;
     this.http.put<any>(`${environment.apiUrl}/api/change-password`, { currentPassword, newPassword }).subscribe({
       next: () => {
         this.changingPassword = false;

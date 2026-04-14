@@ -124,21 +124,43 @@
             <div>
               <label class="text-xs font-medium text-textMuted block mb-1">Current Password</label>
               <input formControlName="currentPassword" type="password" placeholder="••••••••"
-                     class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                            focus:outline-none focus:ring-2 focus:ring-primary-400" />
+                     class="w-full px-4 py-2.5 rounded-xl border bg-surface text-sm text-textDark
+                            focus:outline-none focus:ring-2 focus:border-transparent"
+                     [class.border-red-400]="passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched"
+                     [class.border-borderColor]="!(passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched)"
+                     [class.focus:ring-red-400]="passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched"
+                     [class.focus:ring-primary-400]="!(passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched)" />
+              <p *ngIf="passwordForm.get('currentPassword')?.touched && passwordForm.get('currentPassword')?.hasError('required')"
+                 class="text-danger text-xs mt-1">Current password is required</p>
             </div>
             <div class="grid sm:grid-cols-2 gap-4">
               <div>
                 <label class="text-xs font-medium text-textMuted block mb-1">New Password</label>
                 <input formControlName="newPassword" type="password" placeholder="••••••••"
-                       class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                              focus:outline-none focus:ring-2 focus:ring-primary-400" />
+                       class="w-full px-4 py-2.5 rounded-xl border bg-surface text-sm text-textDark
+                              focus:outline-none focus:ring-2 focus:border-transparent"
+                       [class.border-red-400]="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched"
+                       [class.border-borderColor]="!(passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched)"
+                       [class.focus:ring-red-400]="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched"
+                       [class.focus:ring-primary-400]="!(passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched)" />
+                <p *ngIf="passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.hasError('required')"
+                   class="text-danger text-xs mt-1">New password is required</p>
+                <p *ngIf="passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.hasError('minlength')"
+                   class="text-danger text-xs mt-1">Must be at least 6 characters</p>
               </div>
               <div>
                 <label class="text-xs font-medium text-textMuted block mb-1">Confirm New Password</label>
                 <input formControlName="confirmPassword" type="password" placeholder="••••••••"
-                       class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                              focus:outline-none focus:ring-2 focus:ring-primary-400" />
+                       class="w-full px-4 py-2.5 rounded-xl border bg-surface text-sm text-textDark
+                              focus:outline-none focus:ring-2 focus:border-transparent"
+                       [class.border-red-400]="(passwordForm.get('confirmPassword')?.touched && passwordForm.get('confirmPassword')?.hasError('required')) || (passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.touched)"
+                       [class.border-borderColor]="!((passwordForm.get('confirmPassword')?.touched && passwordForm.get('confirmPassword')?.hasError('required')) || (passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.touched))"
+                       [class.focus:ring-red-400]="(passwordForm.get('confirmPassword')?.touched && passwordForm.get('confirmPassword')?.hasError('required')) || (passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.touched)"
+                       [class.focus:ring-primary-400]="!((passwordForm.get('confirmPassword')?.touched && passwordForm.get('confirmPassword')?.hasError('required')) || (passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.touched))" />
+                <p *ngIf="passwordForm.get('confirmPassword')?.touched && passwordForm.get('confirmPassword')?.hasError('required')"
+                   class="text-danger text-xs mt-1">Please confirm your password</p>
+                <p *ngIf="passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.touched"
+                   class="text-danger text-xs mt-1">Passwords do not match</p>
               </div>
             </div>
             <button type="submit" [disabled]="changingPassword"

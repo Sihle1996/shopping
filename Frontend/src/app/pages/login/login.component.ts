@@ -34,6 +34,7 @@ export class LoginComponent implements OnInit {
   }
 
   onLogin(): void {
+    this.loginForm.markAllAsTouched();
     if (this.loginForm.invalid) return;
 
     this.isLoading = true;

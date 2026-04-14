@@ -64,6 +64,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
 
   orderNotes = '';
   isLoggedIn = false;
+  formSubmitted = false;
 
   // Guest checkout fields (shown when not logged in)
   guestEmail = '';
@@ -408,16 +409,21 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       .join(', ');
   }
 
+  get guestEmailValid(): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.guestEmail?.trim() || '');
+  }
+
   get isCheckoutValid(): boolean {
     const d = this.deliveryDetails;
     const fieldsOk = !!(d.address?.trim() && d.city?.trim() && d.zip?.trim() && d.phone?.trim());
     if (!this.isLoggedIn) {
-      return fieldsOk && !!(this.guestEmail?.includes('@'));
+      return fieldsOk && this.guestEmailValid;
     }
     return fieldsOk;
   }
 
   onSubmit(): void {
+    this.formSubmitted = true;
     const d = this.deliveryDetails;
     if (!this.storeIsOpen) {
       this.toastr.error('This store is currently closed and not accepting orders.');
@@ -427,16 +433,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       this.toastr.warning(`Minimum order amount is R${this.minimumOrderAmount!.toFixed(2)}. Add more items to continue.`);
       return;
     }
-    if (!d.address || !d.city || !d.zip || !d.phone) {
-      this.toastr.warning('Please fill in all delivery fields');
-      return;
-    }
-    if (!this.isLoggedIn) {
-      if (!this.guestEmail || !this.guestEmail.includes('@')) {
-        this.toastr.warning('Please enter a valid email address');
-        return;
-      }
-    }
+    if (!this.isCheckoutValid) return;
 
     this.cartService.getCartItems().subscribe(items => {
       this.cartItems = items;
