@@ -63,6 +63,7 @@ jobs:
     name: E2E — Playwright
     runs-on: ubuntu-latest
     needs: [frontend, backend]
+    timeout-minutes: 15
     # Only run when a public target URL is configured (set E2E_BASE_URL in repo variables)
     if: ${{ vars.E2E_BASE_URL != '' }}
 
@@ -86,6 +87,19 @@ jobs:
 
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
+
+      - name: Wake up backend
+        run: |
+          echo "Pinging backend to wake Railway instance..."
+          for i in 1 2 3 4 5; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "${{ vars.E2E_BASE_URL }}/api/tenants/active" || echo "000")
+            echo "Attempt $i: HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "Backend is up"
+              break
+            fi
+            sleep 15
+          done
 
       - name: Run E2E tests
         run: npx playwright test --project=chromium

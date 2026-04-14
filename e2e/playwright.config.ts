@@ -6,14 +6,14 @@ export default defineConfig({
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 1 : 0,
   workers: 1,
-  timeout: 60_000,
+  timeout: 30_000,
   reporter: [['html', { outputFolder: 'playwright-report' }], ['list']],
   use: {
     baseURL: process.env['BASE_URL'] || 'https://shopping-5lrc634em-sihle1996s-projects.vercel.app',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    actionTimeout: 15_000,
-    navigationTimeout: 60_000,
+    actionTimeout: 10_000,
+    navigationTimeout: 30_000,
   },
   projects: [
     {
