@@ -497,7 +497,8 @@ public class OrderService {
                 order.getDeliveryLat(),
                 order.getDeliveryLon(),
                 order.getOrderNotes(),
-                userPhone
+                userPhone,
+                null  // deliveryOtp — set below if active
         );
 
         if (order.getDriver() != null) {

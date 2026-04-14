@@ -36,6 +36,7 @@ interface OrderDTO {
   driverName?: string;
   deliveryLat?: number;
   deliveryLon?: number;
+  deliveryOtp?: string;
 }
 
 @Component({
