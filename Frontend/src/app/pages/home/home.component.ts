@@ -140,6 +140,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   confirmModifiers(): void {
+    if (!this.authService.isLoggedIn()) {
+      const slug = localStorage.getItem('storeSlug');
+      this.router.navigate(['/login'], { queryParams: { returnUrl: slug ? `/store/${slug}` : '/' } });
+      return;
+    }
     if (!this.modifierItem || !this.modifierRequiredSatisfied) return;
     const choices: any[] = [];
     for (const g of this.modifierGroups) {
@@ -386,6 +391,11 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   quickAddToCart(item: ProductCardItem): void {
     if (!item.id) return;
+    if (!this.authService.isLoggedIn()) {
+      const slug = localStorage.getItem('storeSlug');
+      this.router.navigate(['/login'], { queryParams: { returnUrl: slug ? `/store/${slug}` : '/' } });
+      return;
+    }
     if (!item.isAvailable) {
       this.outOfStockItemName = item.name;
       this.showOutOfStockModal = true;

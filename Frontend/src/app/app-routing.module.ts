@@ -36,7 +36,7 @@ const routes: Routes = [
       { path: '', component: HomeComponent },
       { path: 'product/:id', component: ProductComponent },
       { path: 'cart', component: CartComponent, canActivate: [UserGuard] },
-      { path: 'checkout', component: CheckoutComponent },
+      { path: 'checkout', component: CheckoutComponent, canActivate: [UserGuard] },
       { path: 'orders', component: HistoryordersComponent, canActivate: [UserGuard] },
       { path: 'thank-you', component: ThankYouComponent },
     ]
@@ -58,7 +58,7 @@ const routes: Routes = [
   { path: 'profile', component: UserProfileComponent, canActivate: [UserGuard] },
   { path: 'track', component: TrackOrderComponent },
 
-{ path: '**', redirectTo: '' },
+  { path: '**', redirectTo: '' },
 ];
 
 @NgModule({

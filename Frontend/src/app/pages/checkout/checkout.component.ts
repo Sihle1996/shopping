@@ -63,12 +63,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   addressControl = new FormControl();
 
   orderNotes = '';
-  isLoggedIn = false;
   formSubmitted = false;
-
-  // Guest checkout fields (shown when not logged in)
-  guestEmail = '';
-  guestPhone = '';
 
   deliveryDetails = {
     fullName: '',
@@ -107,7 +102,6 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    this.isLoggedIn = this.authService.isLoggedIn();
     // Load tenant info for store-closed and minimum order checks
     const tenantId = localStorage.getItem('tenantId');
     if (tenantId) {
@@ -125,19 +119,17 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       }
     }
     this.loadCartAndPromos();
-    if (this.isLoggedIn) {
-      this.loyaltyService.getBalance().subscribe({
-        next: b => this.loyaltyBalance = b,
-        error: () => {}
-      });
-      this.addressService.list().subscribe({
-        next: addresses => {
-          this.savedAddresses = addresses;
-          const def = addresses.find(a => a.isDefault);
-          if (def) this.fillFromSaved(def);
-        }
-      });
-    }
+    this.loyaltyService.getBalance().subscribe({
+      next: b => this.loyaltyBalance = b,
+      error: () => {}
+    });
+    this.addressService.list().subscribe({
+      next: addresses => {
+        this.savedAddresses = addresses;
+        const def = addresses.find(a => a.isDefault);
+        if (def) this.fillFromSaved(def);
+      }
+    });
   }
 
   fillFromSaved(a: UserAddress): void {
@@ -409,17 +401,9 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       .join(', ');
   }
 
-  get guestEmailValid(): boolean {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.guestEmail?.trim() || '');
-  }
-
   get isCheckoutValid(): boolean {
     const d = this.deliveryDetails;
-    const fieldsOk = !!(d.address?.trim() && d.city?.trim() && d.zip?.trim() && d.phone?.trim());
-    if (!this.isLoggedIn) {
-      return fieldsOk && this.guestEmailValid;
-    }
-    return fieldsOk;
+    return !!(d.address?.trim() && d.city?.trim() && d.zip?.trim() && d.phone?.trim());
   }
 
   onSubmit(): void {
@@ -442,9 +426,9 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
 
       // Place the order first, then redirect to PayFast for payment
       const orderData: any = {
-        userId: this.isLoggedIn ? this.authService.getUserId() : null,
-        guestEmail: !this.isLoggedIn ? this.guestEmail.trim() : null,
-        guestPhone: !this.isLoggedIn ? (this.guestPhone.trim() || this.deliveryDetails.phone) : null,
+        userId: this.authService.getUserId(),
+        guestEmail: null,
+        guestPhone: null,
         deliveryAddress: [
           this.building.name?.trim(),
           this.building.block?.trim(),

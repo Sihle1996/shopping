@@ -62,35 +62,7 @@
             </button>
           </div>
 
-          <!-- Guest info banner -->
-          <div *ngIf="!isLoggedIn" class="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
-            <i class="bi bi-person-fill-exclamation mt-0.5 flex-shrink-0"></i>
-            <span>Checking out as guest. <a routerLink="/login" class="font-semibold underline">Sign in</a> to save your address and view order history.</span>
-          </div>
-
           <form (ngSubmit)="onSubmit()" class="space-y-4">
-
-            <!-- Guest email -->
-            <div *ngIf="!isLoggedIn">
-              <label class="block text-xs font-medium text-textDark mb-1.5">Email Address <span class="text-danger">*</span></label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <i class="bi bi-envelope text-textMuted text-sm"></i>
-                </div>
-                <input type="email" [(ngModel)]="guestEmail" name="guestEmail"
-                       class="w-full pl-10 pr-4 py-3 rounded-xl border bg-surface text-textDark
-                              placeholder-textMuted text-sm focus:outline-none focus:ring-2
-                              focus:border-transparent transition-shadow"
-                       [class.border-red-400]="formSubmitted && !guestEmailValid"
-                       [class.border-borderColor]="!(formSubmitted && !guestEmailValid)"
-                       [class.focus:ring-red-400]="formSubmitted && !guestEmailValid"
-                       [class.focus:ring-primary-400]="!(formSubmitted && !guestEmailValid)"
-                       placeholder="your@email.com" />
-              </div>
-              <p *ngIf="formSubmitted && !guestEmail?.trim()" class="text-danger text-xs mt-1">Email is required</p>
-              <p *ngIf="formSubmitted && guestEmail?.trim() && !guestEmailValid"
-                 class="text-danger text-xs mt-1">Please enter a valid email address</p>
-            </div>
 
             <!-- Full Name -->
             <div>
@@ -319,7 +291,7 @@
         </div>
 
         <!-- Loyalty Points Card -->
-        <div *ngIf="isLoggedIn && loyaltyBalance && loyaltyBalance.balance >= 100"
+        <div *ngIf="loyaltyBalance && loyaltyBalance.balance >= 100"
              class="bg-white rounded-2xl brand-trim shadow-card p-6">
           <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
             <i class="bi bi-gift text-amber-500"></i> Loyalty Points
