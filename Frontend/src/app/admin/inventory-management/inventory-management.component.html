@@ -146,7 +146,8 @@
             </td>
             <td class="px-5 py-4">
               <button type="button" (click)="toggleAvailability(item)"
-                      class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none"
+                      [disabled]="togglingId === item.id"
+                      class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50"
                       [class.bg-primary]="item.isAvailable"
                       [class.bg-gray-300]="!item.isAvailable">
                 <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
@@ -158,13 +159,15 @@
               <div class="flex items-center gap-2">
                 <div class="inline-flex items-center rounded-xl border border-borderColor overflow-hidden">
                   <button type="button" (click)="step(item, -1)"
-                          class="px-3 py-2 text-textDark hover:bg-surface transition-colors font-bold">−</button>
+                          [disabled]="adjustingId === item.id"
+                          class="px-3 py-2 text-textDark hover:bg-surface transition-colors font-bold disabled:opacity-40">−</button>
                   <input type="number" [(ngModel)]="item.adjustStock"
                          class="w-16 border-x border-borderColor bg-white px-2 py-2 text-center text-sm text-textDark outline-none" />
                   <button type="button" (click)="step(item, 1)"
-                          class="px-3 py-2 text-textDark hover:bg-surface transition-colors font-bold">+</button>
+                          [disabled]="adjustingId === item.id"
+                          class="px-3 py-2 text-textDark hover:bg-surface transition-colors font-bold disabled:opacity-40">+</button>
                 </div>
-                <app-button variant="primary" size="sm" (clicked)="adjust(item)">Save</app-button>
+                <app-button variant="primary" size="sm" [loading]="adjustingId === item.id" (clicked)="adjust(item)">Save</app-button>
               </div>
             </td>
           </tr>
@@ -211,7 +214,8 @@
         <div class="flex items-center justify-between mb-2">
           <span class="text-sm text-textLight">Visible to customers</span>
           <button type="button" (click)="toggleAvailability(item)"
-                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                  [disabled]="togglingId === item.id"
+                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50"
                   [class.bg-primary]="item.isAvailable"
                   [class.bg-gray-300]="!item.isAvailable">
             <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
@@ -221,12 +225,12 @@
         </div>
         <div class="flex items-center gap-2">
           <div class="inline-flex items-center rounded-xl border border-borderColor overflow-hidden">
-            <button type="button" (click)="step(item, -1)" class="px-3 py-2 hover:bg-surface font-bold">−</button>
+            <button type="button" (click)="step(item, -1)" [disabled]="adjustingId === item.id" class="px-3 py-2 hover:bg-surface font-bold disabled:opacity-40">−</button>
             <input type="number" [(ngModel)]="item.adjustStock"
                    class="w-16 border-x border-borderColor bg-white px-2 py-2 text-center text-sm outline-none" />
-            <button type="button" (click)="step(item, 1)" class="px-3 py-2 hover:bg-surface font-bold">+</button>
+            <button type="button" (click)="step(item, 1)" [disabled]="adjustingId === item.id" class="px-3 py-2 hover:bg-surface font-bold disabled:opacity-40">+</button>
           </div>
-          <app-button variant="primary" size="sm" (clicked)="adjust(item)">Save</app-button>
+          <app-button variant="primary" size="sm" [loading]="adjustingId === item.id" (clicked)="adjust(item)">Save</app-button>
         </div>
       </div>
     </div>

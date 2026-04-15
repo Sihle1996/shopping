@@ -25,6 +25,8 @@ export class AdminUsersComponent implements OnInit {
   toast = '';
   toastType: 'success' | 'error' = 'success';
   confirmDeleteId: string | null = null;
+  updatingId: string | null = null;
+  deletingUserId: string | null = null;
 
   private api = environment.apiUrl + '/api/admin/users';
 
@@ -49,22 +51,26 @@ export class AdminUsersComponent implements OnInit {
   }
 
   setRole(user: UserSummary, role: string) {
+    this.updatingId = user.id;
     this.http.patch<UserSummary>(`${this.api}/${user.id}/role`, { role }).subscribe({
       next: updated => {
         Object.assign(user, updated);
+        this.updatingId = null;
         this.showToast(`Role updated to ${role}`);
       },
-      error: err => this.showToast(err.error?.message || 'Failed to update role', 'error')
+      error: err => { this.updatingId = null; this.showToast(err.error?.message || 'Failed to update role', 'error'); }
     });
   }
 
   toggleActive(user: UserSummary) {
+    this.updatingId = user.id;
     this.http.patch<UserSummary>(`${this.api}/${user.id}/active`, { active: !user.active }).subscribe({
       next: updated => {
         Object.assign(user, updated);
+        this.updatingId = null;
         this.showToast(updated.active ? 'User activated' : 'User deactivated');
       },
-      error: () => this.showToast('Failed to update status', 'error')
+      error: () => { this.updatingId = null; this.showToast('Failed to update status', 'error'); }
     });
   }
 
@@ -75,14 +81,20 @@ export class AdminUsersComponent implements OnInit {
   deleteUser() {
     if (!this.confirmDeleteId) return;
     const id = this.confirmDeleteId;
+    this.deletingUserId = id;
     this.http.delete(`${this.api}/${id}`).subscribe({
       next: () => {
         this.users = this.users.filter(u => u.id !== id);
         this.applyFilter();
         this.confirmDeleteId = null;
+        this.deletingUserId = null;
         this.showToast('User deleted');
       },
-      error: () => { this.confirmDeleteId = null; this.showToast('Failed to delete user', 'error'); }
+      error: () => {
+        this.confirmDeleteId = null;
+        this.deletingUserId = null;
+        this.showToast('Failed to delete user', 'error');
+      }
     });
   }
 

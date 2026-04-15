@@ -63,6 +63,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   categories: any[] = [];
   newCategoryName = '';
   savingCategory = false;
+  removingCategoryId: string | null = null;
 
   // Store hours
   storeHours: Array<{ id: string | null; dayOfWeek: number; openTime: string; closeTime: string; closed: boolean }> = [];
@@ -211,12 +212,17 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   }
 
   removeCategory(id: string): void {
+    this.removingCategoryId = id;
     this.adminService.deleteCategory(id).subscribe({
       next: () => {
         this.categories = this.categories.filter(c => c.id !== id);
+        this.removingCategoryId = null;
         this.toastr.success('Category removed');
       },
-      error: () => this.toastr.error('Failed to remove category')
+      error: () => {
+        this.removingCategoryId = null;
+        this.toastr.error('Failed to remove category');
+      }
     });
   }
 

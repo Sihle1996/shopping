@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { AdminService } from 'src/app/services/admin.service';
+import { ToastrService } from 'ngx-toastr';
 
 /** Strict status unions */
 type Status = 'Pending' | 'Preparing' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
@@ -75,7 +76,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   pageSize = 5;
   totalPages = 0;
 
-  constructor(private adminSerivce: AdminService, private route: ActivatedRoute, private router: Router) {}
+  constructor(private adminSerivce: AdminService, private route: ActivatedRoute, private router: Router, private toastr: ToastrService) {}
 
   ngOnInit(): void {
     this.fetchOrders(1);
@@ -187,9 +188,8 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
 
   // ──────────────────────────────────────────────────────────────────────────────
   updateStatus(orderId: string, newStatus: Status): void {
-    // Optimistic UI
+    // Optimistic UI — toastr feedback handled by OptimisticService
     this.orders = this.orders.map(o => (o.id === orderId ? { ...o, status: newStatus } : o));
-    // Fire-and-forget: service returns void (handles optimistic/revert itself if needed)
     this.adminSerivce.updateOrderStatus(orderId, newStatus);
   }
 
@@ -215,17 +215,18 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
       next: (updated: Order | void) => {
         if (updated) {
           this.selectedOrder = updated;
-          this.orders = this.orders.map(o => (o.id === updated.id ? updated : o));
+          this.orders = this.orders.map(o => (o.id === (updated as Order).id ? updated as Order : o));
         } else {
-          // If API returns no body, reflect a sensible state
           this.orders = this.orders.map(o =>
             o.id === this.selectedOrder!.id ? { ...o, status: 'In Progress' } : o
           );
         }
         this.assigning = false;
+        this.toastr.success('Driver assigned successfully');
       },
       error: () => {
         this.assigning = false;
+        this.toastr.error('Failed to assign driver');
       }
     });
   }

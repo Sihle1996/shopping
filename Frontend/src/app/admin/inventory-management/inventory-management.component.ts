@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AdminService } from 'src/app/services/admin.service';
 import { SubscriptionService } from 'src/app/services/subscription.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-inventory-management',
@@ -18,11 +19,14 @@ export class InventoryManagementComponent implements OnInit {
 
   hasInventoryExport = false;
   subscriptionPlan = '';
+  adjustingId: string | null = null;
+  togglingId: string | null = null;
 
   constructor(
     private adminService: AdminService,
     private subscriptionService: SubscriptionService,
-    private router: Router
+    private router: Router,
+    private toastr: ToastrService
   ) {}
 
   ngOnInit(): void {
@@ -68,9 +72,18 @@ export class InventoryManagementComponent implements OnInit {
       reservedChange: 0,
       lowStockThreshold: item.lowStockThreshold ?? 5
     }];
+    this.adjustingId = item.id;
     this.adminService.adjustInventory(adjustment).subscribe({
-      next: () => { item.adjustStock = 0; this.fetchInventory(); },
-      error: () => {}
+      next: () => {
+        item.adjustStock = 0;
+        this.adjustingId = null;
+        this.toastr.success('Stock updated');
+        this.fetchInventory();
+      },
+      error: () => {
+        this.adjustingId = null;
+        this.toastr.error('Failed to update stock');
+      }
     });
   }
 
@@ -79,16 +92,31 @@ export class InventoryManagementComponent implements OnInit {
   syncAvailability(): void {
     this.syncing = true;
     this.adminService.syncAvailability().subscribe({
-      next: (count) => { this.syncing = false; this.fetchInventory(); },
-      error: () => { this.syncing = false; }
+      next: (count) => {
+        this.syncing = false;
+        this.toastr.success(`Availability synced (${count} items updated)`);
+        this.fetchInventory();
+      },
+      error: () => {
+        this.syncing = false;
+        this.toastr.error('Failed to sync availability');
+      }
     });
   }
 
   toggleAvailability(item: any): void {
     const next = !item.isAvailable;
+    this.togglingId = item.id;
     this.adminService.setItemAvailability(item.id, next).subscribe({
-      next: () => { item.isAvailable = next; },
-      error: () => {}
+      next: () => {
+        item.isAvailable = next;
+        this.togglingId = null;
+        this.toastr.success(next ? `${item.name} is now visible` : `${item.name} hidden from customers`);
+      },
+      error: () => {
+        this.togglingId = null;
+        this.toastr.error('Failed to update visibility');
+      }
     });
   }
 
@@ -106,7 +134,7 @@ export class InventoryManagementComponent implements OnInit {
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: () => {}
+      error: () => this.toastr.error('Failed to export CSV')
     });
   }
 

@@ -260,7 +260,7 @@
 
         <!-- Actions -->
         <div class="flex gap-3">
-          <app-button variant="primary" size="md" type="submit">
+          <app-button variant="primary" size="md" type="submit" [loading]="submitting">
             {{ editingId ? 'Update Promotion' : 'Create Promotion' }}
           </app-button>
           <app-button variant="ghost" size="md" (clicked)="resetForm()">Cancel</app-button>

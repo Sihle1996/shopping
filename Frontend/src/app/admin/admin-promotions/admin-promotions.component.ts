@@ -4,6 +4,7 @@ import { AdminPromotionService, PromotionRequest } from 'src/app/services/admin-
 import { AdminService } from 'src/app/services/admin.service';
 import { Promotion, getPromoStatus, PromoStatus } from 'src/app/services/promotion.service';
 import { environment } from 'src/environments/environment';
+import { ToastrService } from 'ngx-toastr';
 
 type StatusFilter = 'All' | 'Active' | 'Scheduled' | 'Expired';
 
@@ -17,6 +18,7 @@ export class AdminPromotionsComponent implements OnInit {
   form!: FormGroup;
   editingId: string | null = null;
   loading = false;
+  submitting = false;
   submitError: string | null = null;
   formOpen = false;
 
@@ -83,7 +85,8 @@ export class AdminPromotionsComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private api: AdminPromotionService,
-    private adminService: AdminService
+    private adminService: AdminService,
+    private toastr: ToastrService
   ) {}
 
   ngOnInit(): void {
@@ -156,9 +159,16 @@ export class AdminPromotionsComponent implements OnInit {
       : this.api.create(payload);
 
     this.submitError = null;
+    this.submitting = true;
     op.subscribe({
-      next: () => { this.resetForm(); this.refresh(); },
+      next: () => {
+        this.submitting = false;
+        this.toastr.success(this.editingId ? 'Promotion updated' : 'Promotion created');
+        this.resetForm();
+        this.refresh();
+      },
       error: (err) => {
+        this.submitting = false;
         if (err?.status === 402) {
           this.submitError = err?.error?.message || 'Promotion limit reached for your plan. Upgrade to add more.';
         } else if (err?.status === 403) {
@@ -222,7 +232,11 @@ export class AdminPromotionsComponent implements OnInit {
 
   onDeleteConfirmed(): void {
     if (this.deleteTarget) {
-      this.api.delete(this.deleteTarget.id).subscribe({ next: () => this.refresh() });
+      const target = this.deleteTarget;
+      this.api.delete(target.id).subscribe({
+        next: () => { this.toastr.success('Promotion deleted'); this.refresh(); },
+        error: () => this.toastr.error('Failed to delete promotion')
+      });
     }
     this.onDeleteCancelled();
   }
@@ -233,11 +247,17 @@ export class AdminPromotionsComponent implements OnInit {
   }
 
   toggleActive(p: Promotion): void {
-    this.api.setActive(p.id, !p.active).subscribe({ next: () => this.refresh() });
+    this.api.setActive(p.id, !p.active).subscribe({
+      next: () => { this.toastr.success(p.active ? 'Promotion paused' : 'Promotion activated'); this.refresh(); },
+      error: () => this.toastr.error('Failed to update promotion')
+    });
   }
 
   toggleFeatured(p: Promotion): void {
-    this.api.setFeatured(p.id, !p.featured).subscribe({ next: () => this.refresh() });
+    this.api.setFeatured(p.id, !p.featured).subscribe({
+      next: () => { this.toastr.success(p.featured ? 'Removed from featured' : 'Marked as featured'); this.refresh(); },
+      error: () => this.toastr.error('Failed to update promotion')
+    });
   }
 
   getStatus(p: Promotion): PromoStatus { return getPromoStatus(p); }

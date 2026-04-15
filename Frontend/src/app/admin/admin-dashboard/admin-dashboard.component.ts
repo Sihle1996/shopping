@@ -10,6 +10,7 @@ import { driver } from 'driver.js';
 import { AnalyticsService } from './analytics.service';
 import { AdminService } from 'src/app/services/admin.service';
 import { SubscriptionService } from 'src/app/services/subscription.service';
+import { ToastrService } from 'ngx-toastr';
 
 export type SalesChartOptions = {
   series: ApexAxisChartSeries;
@@ -106,7 +107,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     private analyticsService: AnalyticsService,
     private adminService: AdminService,
     private subscriptionService: SubscriptionService,
-    private router: Router
+    private router: Router,
+    private toastr: ToastrService
   ) {}
 
   ngOnInit(): void {
@@ -259,9 +261,13 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         this.isStoreOpen = res.isOpen;
         if (this.setupSettings) this.setupSettings.isOpen = res.isOpen;
         this.toggleLoading = false;
+        this.toastr.success(res.isOpen ? 'Store is now open' : 'Store is now closed');
         if (res.isOpen && this.setupComplete) this.fireConfetti();
       },
-      error: () => { this.toggleLoading = false; }
+      error: () => {
+        this.toggleLoading = false;
+        this.toastr.error('Failed to update store status');
+      }
     });
   }
 

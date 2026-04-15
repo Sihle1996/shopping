@@ -79,8 +79,9 @@
             <!-- Role dropdown -->
             <td class="px-5 py-4">
               <select [value]="user.role" (change)="setRole(user, $any($event.target).value)"
+                      [disabled]="updatingId === user.id"
                       class="text-xs px-2.5 py-1.5 rounded-lg border border-borderColor bg-white
-                             focus:outline-none focus:ring-1 focus:ring-primary-400 cursor-pointer">
+                             focus:outline-none focus:ring-1 focus:ring-primary-400 cursor-pointer disabled:opacity-50">
                 <option value="USER">Customer</option>
                 <option value="DRIVER">Driver</option>
                 <option value="ADMIN">Admin</option>
@@ -90,9 +91,11 @@
             <!-- Status toggle -->
             <td class="px-5 py-4">
               <button (click)="toggleActive(user)"
-                      class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+                      [disabled]="updatingId === user.id"
+                      class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors disabled:opacity-50"
                       [ngClass]="user.active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-600 hover:bg-red-200'">
-                <i class="bi text-[10px]" [ngClass]="user.active ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
+                <i class="bi text-[10px]"
+                   [ngClass]="updatingId === user.id ? 'bi-arrow-repeat animate-spin' : (user.active ? 'bi-check-circle-fill' : 'bi-x-circle-fill')"></i>
                 {{ user.active ? 'Active' : 'Deactivated' }}
               </button>
             </td>
@@ -100,8 +103,9 @@
             <!-- Delete -->
             <td class="px-5 py-4 text-right">
               <button (click)="confirmDelete(user.id)"
+                      [disabled]="updatingId === user.id"
                       class="w-8 h-8 flex items-center justify-center rounded-xl text-textMuted
-                             hover:text-danger hover:bg-red-50 transition-colors ml-auto">
+                             hover:text-danger hover:bg-red-50 transition-colors disabled:opacity-50 ml-auto">
                 <i class="bi bi-trash text-base"></i>
               </button>
             </td>
@@ -125,8 +129,10 @@
             </div>
           </div>
           <button (click)="toggleActive(user)"
-                  class="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ml-2"
+                  [disabled]="updatingId === user.id"
+                  class="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ml-2 disabled:opacity-50"
                   [ngClass]="user.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'">
+            <i *ngIf="updatingId === user.id" class="bi bi-arrow-repeat animate-spin mr-1"></i>
             {{ user.active ? 'Active' : 'Off' }}
           </button>
         </div>
@@ -167,8 +173,10 @@
         Cancel
       </button>
       <button (click)="deleteUser()"
-              class="flex-1 py-2.5 rounded-xl bg-danger hover:bg-red-600 text-white text-sm font-semibold transition-colors">
-        Delete
+              [disabled]="deletingUserId !== null"
+              class="flex-1 py-2.5 rounded-xl bg-danger hover:bg-red-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+        <i *ngIf="deletingUserId" class="bi bi-arrow-repeat animate-spin"></i>
+        {{ deletingUserId ? 'Deleting...' : 'Delete' }}
       </button>
     </div>
   </div>

@@ -234,8 +234,9 @@
                  [(ngModel)]="newCategoryName"
                  placeholder="e.g. Burgers, Drinks, Desserts"
                  (keyup.enter)="addCategory()"
+                 [disabled]="savingCategory"
                  class="flex-1 px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent disabled:opacity-60" />
           <app-button variant="primary" size="md" [loading]="savingCategory" (clicked)="addCategory()">
             Add
           </app-button>
@@ -250,8 +251,9 @@
                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface border border-borderColor text-sm text-textDark">
             <span>{{ cat.name }}</span>
             <button (click)="removeCategory(cat.id)"
-                    class="w-4 h-4 flex items-center justify-center rounded-full hover:bg-red-100 hover:text-danger transition-colors">
-              <i class="bi bi-x text-xs"></i>
+                    [disabled]="removingCategoryId === cat.id"
+                    class="w-4 h-4 flex items-center justify-center rounded-full hover:bg-red-100 hover:text-danger transition-colors disabled:opacity-50">
+              <i class="bi text-xs" [ngClass]="removingCategoryId === cat.id ? 'bi-arrow-repeat animate-spin' : 'bi-x'"></i>
             </button>
           </div>
         </div>
