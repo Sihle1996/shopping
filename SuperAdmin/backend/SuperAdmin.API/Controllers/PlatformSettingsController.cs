@@ -13,16 +13,20 @@ public class PlatformSettingsController(AppDbContext db) : ControllerBase
     [HttpGet]
     public async Task<IActionResult> Get()
     {
-        var row = await db.Database.SqlQueryRaw<PlatformSettingsRow>(
-            @"SELECT commission_rate_percent, support_email, default_trial_days, allow_self_registration, updated_at FROM platform_settings WHERE id = 1"
-        ).FirstOrDefaultAsync();
-
-        if (row == null) return NotFound(new { message = "Platform settings not found." });
-        return Ok(row);
+        var settings = await db.PlatformSettings.FirstOrDefaultAsync(p => p.Id == 1);
+        if (settings == null) return NotFound(new { message = "Platform settings not found." });
+        return Ok(new
+        {
+            commissionRatePercent = settings.CommissionRatePercent,
+            supportEmail          = settings.SupportEmail,
+            defaultTrialDays      = settings.DefaultTrialDays,
+            allowSelfRegistration = settings.AllowSelfRegistration,
+            updatedAt             = settings.UpdatedAt
+        });
     }
 
     [HttpPut]
-    public async Task<IActionResult> Update([FromBody] PlatformSettingsRow request)
+    public async Task<IActionResult> Update([FromBody] PlatformSettingsRequest request)
     {
         if (request.CommissionRatePercent < 0 || request.CommissionRatePercent > 100)
             return BadRequest(new { message = "Commission rate must be between 0 and 100." });
@@ -31,28 +35,31 @@ public class PlatformSettingsController(AppDbContext db) : ControllerBase
         if (string.IsNullOrWhiteSpace(request.SupportEmail))
             return BadRequest(new { message = "Support email is required." });
 
-        await db.Database.ExecuteSqlRawAsync(@"
-            UPDATE platform_settings SET
-                commission_rate_percent = {0},
-                support_email = {1},
-                default_trial_days = {2},
-                allow_self_registration = {3},
-                updated_at = NOW()
-            WHERE id = 1",
-            request.CommissionRatePercent,
-            request.SupportEmail.Trim(),
-            request.DefaultTrialDays,
-            request.AllowSelfRegistration
-        );
+        var settings = await db.PlatformSettings.FirstOrDefaultAsync(p => p.Id == 1);
+        if (settings == null) return NotFound(new { message = "Platform settings not found." });
 
-        return Ok(request);
+        settings.CommissionRatePercent = request.CommissionRatePercent;
+        settings.SupportEmail          = request.SupportEmail.Trim();
+        settings.DefaultTrialDays      = request.DefaultTrialDays;
+        settings.AllowSelfRegistration = request.AllowSelfRegistration;
+        settings.UpdatedAt             = DateTime.UtcNow;
+
+        await db.SaveChangesAsync();
+
+        return Ok(new
+        {
+            commissionRatePercent = settings.CommissionRatePercent,
+            supportEmail          = settings.SupportEmail,
+            defaultTrialDays      = settings.DefaultTrialDays,
+            allowSelfRegistration = settings.AllowSelfRegistration,
+            updatedAt             = settings.UpdatedAt
+        });
     }
 }
 
-public record PlatformSettingsRow(
+public record PlatformSettingsRequest(
     decimal CommissionRatePercent,
     string SupportEmail,
     int DefaultTrialDays,
-    bool AllowSelfRegistration,
-    DateTime UpdatedAt
+    bool AllowSelfRegistration
 );
