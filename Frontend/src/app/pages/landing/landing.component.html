@@ -12,6 +12,7 @@
       <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-textLight">
         <a href="#how-it-works" class="hover:text-primary transition-colors">How it works</a>
         <a href="#features" class="hover:text-primary transition-colors">Features</a>
+        <a routerLink="/stores" class="hover:text-primary transition-colors">Order food</a>
         <a routerLink="/login" class="hover:text-primary transition-colors">Log in</a>
       </nav>
     </div>
@@ -44,11 +45,15 @@
             I already have a store
           </a>
         </div>
-        <div class="flex flex-wrap gap-5 text-sm text-textMuted">
+        <div class="flex flex-wrap gap-5 text-sm text-textMuted mb-6">
           <span class="flex items-center gap-1.5"><i class="bi bi-check-circle-fill text-success text-xs"></i>No monthly fee to start</span>
           <span class="flex items-center gap-1.5"><i class="bi bi-check-circle-fill text-success text-xs"></i>No commission on orders</span>
           <span class="flex items-center gap-1.5"><i class="bi bi-check-circle-fill text-success text-xs"></i>PayFast ZAR payouts</span>
         </div>
+        <p class="text-sm text-textMuted">
+          Hungry instead?
+          <a routerLink="/stores" class="font-semibold text-primary hover:underline">Browse restaurants &rarr;</a>
+        </p>
       </div>
 
       <!-- Right: stacked restaurant photos with overlay card -->
