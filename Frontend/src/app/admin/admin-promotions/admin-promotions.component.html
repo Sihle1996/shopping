@@ -193,8 +193,8 @@
         <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-3">Schedule</p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
-            <label class="block text-xs font-medium text-textDark mb-1">Start Date & Time <span class="text-danger">*</span></label>
-            <input type="datetime-local" formControlName="startAt"
+            <label class="block text-xs font-medium text-textDark mb-1">Start Date <span class="text-danger">*</span></label>
+            <input type="date" formControlName="startAt"
                    [class.border-red-400]="form.get('startAt')?.invalid && form.get('startAt')?.touched"
                    [class.border-borderColor]="!(form.get('startAt')?.invalid && form.get('startAt')?.touched)"
                    class="w-full px-4 py-2.5 rounded-xl border bg-surface text-sm text-textDark
@@ -203,8 +203,8 @@
                class="text-danger text-xs mt-1">Start date is required</p>
           </div>
           <div>
-            <label class="block text-xs font-medium text-textDark mb-1">End Date & Time <span class="text-danger">*</span></label>
-            <input type="datetime-local" formControlName="endAt"
+            <label class="block text-xs font-medium text-textDark mb-1">End Date <span class="text-danger">*</span></label>
+            <input type="date" formControlName="endAt"
                    [class.border-red-400]="(form.get('endAt')?.invalid && form.get('endAt')?.touched) || (form.hasError('dateOrder') && form.get('endAt')?.touched)"
                    [class.border-borderColor]="!((form.get('endAt')?.invalid && form.get('endAt')?.touched) || (form.hasError('dateOrder') && form.get('endAt')?.touched))"
                    class="w-full px-4 py-2.5 rounded-xl border bg-surface text-sm text-textDark

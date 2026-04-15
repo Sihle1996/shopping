@@ -137,20 +137,10 @@ export class AdminPromotionsComponent implements OnInit {
     }
     const raw = this.form.value;
 
-    const toIso = (dt: string): string => {
-      if (!dt || dt.length !== 16) return dt;
-      const d = new Date(dt);
-      const off = -d.getTimezoneOffset();
-      const sign = off >= 0 ? '+' : '-';
-      const hh = String(Math.floor(Math.abs(off) / 60)).padStart(2, '0');
-      const mm = String(Math.abs(off) % 60).padStart(2, '0');
-      return `${dt}:00${sign}${hh}:${mm}`;
-    };
-
     const payload: PromotionRequest = {
       ...raw,
-      startAt: toIso(raw.startAt),
-      endAt: toIso(raw.endAt),
+      startAt: raw.startAt ? `${raw.startAt}T00:00:00+02:00` : raw.startAt,
+      endAt:   raw.endAt   ? `${raw.endAt}T23:59:59+02:00`   : raw.endAt,
       targetProductIds: this.selectedAppliesTo === 'MULTI_PRODUCT' ? this.selectedProductIds : [],
     };
 
@@ -191,8 +181,8 @@ export class AdminPromotionsComponent implements OnInit {
       imageUrl: p.imageUrl,
       badgeText: p.badgeText,
       discountPercent: p.discountPercent ?? null,
-      startAt: p.startAt?.substring(0, 16),
-      endAt: p.endAt?.substring(0, 16),
+      startAt: p.startAt?.substring(0, 10),
+      endAt: p.endAt?.substring(0, 10),
       appliesTo: p.appliesTo,
       targetCategoryId: p.targetCategoryId ?? null,
       targetProductId: p.targetProductId ?? null,

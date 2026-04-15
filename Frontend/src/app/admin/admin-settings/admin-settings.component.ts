@@ -261,10 +261,16 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
         this.settings = updated;
         localStorage.setItem('storeName', updated.name);
         this.tenantService.setCurrentTenant(updated as any);
-        // Apply brand color immediately
         if (updated.primaryColor) {
           document.documentElement.style.setProperty('--brand-primary', updated.primaryColor);
           document.documentElement.style.setProperty('--brand-primary-light', updated.primaryColor + '1A');
+        }
+        // Save hours in the same action so the user doesn't need a separate click
+        if (this.storeHours.length > 0) {
+          this.http.put<any[]>(`${environment.apiUrl}/api/admin/store-hours`, this.storeHours, { headers: this.getHeaders() }).subscribe({
+            next: saved => this.storeHours = saved,
+            error: () => this.toastr.error('Settings saved but hours failed — try "Save Hours" above')
+          });
         }
         this.toastr.success('Settings saved successfully');
         this.isSaving = false;
