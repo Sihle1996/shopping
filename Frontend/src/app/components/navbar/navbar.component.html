@@ -30,7 +30,7 @@
         </li>
 
         <!-- Cart with badge -->
-        <li *ngIf="isLoggedIn" class="relative">
+        <li *ngIf="isLoggedIn && hasStoreContext" class="relative">
           <a [routerLink]="cartRoute" routerLinkActive="text-primary bg-primary-50"
              class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors flex items-center gap-1">
             <span class="relative">
@@ -44,7 +44,7 @@
           </a>
         </li>
 
-        <li *ngIf="isLoggedIn">
+        <li *ngIf="isLoggedIn && hasStoreContext">
           <a [routerLink]="ordersRoute" routerLinkActive="text-primary bg-primary-50"
              class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
             <i class="bi bi-receipt mr-1"></i> Orders
@@ -68,7 +68,7 @@
 
     <!-- Mobile right side: cart badge + hamburger -->
     <div class="md:hidden flex items-center gap-2">
-      <a *ngIf="isCustomer && isLoggedIn" [routerLink]="cartRoute" class="relative p-2">
+      <a *ngIf="isCustomer && isLoggedIn && hasStoreContext" [routerLink]="cartRoute" class="relative p-2">
         <i class="bi bi-cart3 text-textDark text-xl"></i>
         <span *ngIf="cartCount > 0"
               class="absolute top-0 right-0 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
@@ -112,14 +112,14 @@
     <!-- Drawer Links -->
     <nav class="py-2 mt-1">
       <ng-container *ngIf="isCustomer">
-        <a *ngIf="isLoggedIn" [routerLink]="cartRoute" (click)="toggleMenu()"
+        <a *ngIf="isLoggedIn && hasStoreContext" [routerLink]="cartRoute" (click)="toggleMenu()"
            class="flex items-center justify-between px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
           <span class="flex items-center gap-3"><i class="bi bi-cart3 text-base"></i> Cart</span>
           <span *ngIf="cartCount > 0" class="w-5 h-5 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center">
             {{ cartCount }}
           </span>
         </a>
-        <a *ngIf="isLoggedIn" [routerLink]="ordersRoute" (click)="toggleMenu()"
+        <a *ngIf="isLoggedIn && hasStoreContext" [routerLink]="ordersRoute" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
           <i class="bi bi-receipt text-base"></i> Orders
         </a>

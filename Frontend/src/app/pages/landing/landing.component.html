@@ -13,7 +13,11 @@
         <a href="#how-it-works" class="hover:text-primary transition-colors">How it works</a>
         <a href="#features" class="hover:text-primary transition-colors">Features</a>
         <a routerLink="/stores" class="hover:text-primary transition-colors">Order food</a>
-        <a routerLink="/login" class="hover:text-primary transition-colors">Log in</a>
+        <a *ngIf="!isLoggedIn" routerLink="/login" class="hover:text-primary transition-colors">Log in</a>
+        <a *ngIf="isLoggedIn" routerLink="/stores"
+           class="px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary-600 transition-colors shadow-sm">
+          Browse restaurants
+        </a>
       </nav>
     </div>
   </header>
