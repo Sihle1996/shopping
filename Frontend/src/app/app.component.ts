@@ -16,6 +16,7 @@ export class AppComponent implements OnDestroy {
   isDriverRoute = false;
   isAuthRoute = false;
   isStoreRoute = false;
+  isLandingRoute = false;
 
   private idleTimer: any;
   private readonly activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
@@ -36,6 +37,7 @@ export class AppComponent implements OnDestroy {
       this.isDriverRoute = url.startsWith('/driver');
       this.isAuthRoute = url.startsWith('/login') || url.startsWith('/register');
       this.isStoreRoute = url.startsWith('/store/');
+      this.isLandingRoute = url === '/';
     });
 
     // Idle timeout runs outside Angular zone to avoid triggering change detection on every mouse move

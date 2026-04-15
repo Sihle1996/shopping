@@ -1,7 +1,7 @@
-<app-navbar></app-navbar>
-<div class="pt-14">
+<app-navbar *ngIf="!isLandingRoute"></app-navbar>
+<div [class.pt-14]="!isLandingRoute">
   <router-outlet></router-outlet>
 </div>
-<app-footer *ngIf="!isAdminRoute && !isDriverRoute && !isAuthRoute"></app-footer>
+<app-footer *ngIf="!isAdminRoute && !isDriverRoute && !isAuthRoute && !isLandingRoute"></app-footer>
 <app-admin-footer *ngIf="isAdminRoute"></app-admin-footer>
 <app-global-spinner></app-global-spinner>
