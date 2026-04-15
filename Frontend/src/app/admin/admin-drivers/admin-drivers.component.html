@@ -23,19 +23,30 @@
       <div id="add-driver-form" class="bg-white rounded-2xl shadow-card border border-borderColor p-5">
         <h3 class="font-semibold text-sm text-textDark mb-4">Add New Driver</h3>
         <form (ngSubmit)="addDriver()" class="space-y-3">
-          <div class="relative">
-            <i class="bi bi-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted text-sm pointer-events-none"></i>
-            <input type="email" [(ngModel)]="newDriver.email" name="email" required
-                   placeholder="driver@email.com"
-                   class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                          placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+          <div>
+            <div class="relative">
+              <i class="bi bi-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted text-sm pointer-events-none"></i>
+              <input type="email" [(ngModel)]="newDriver.email" name="email" required
+                     placeholder="driver@email.com"
+                     [class.border-red-400]="driverFormSubmitted && (!newDriver.email?.trim() || !driverEmailValid)"
+                     [class.border-borderColor]="!(driverFormSubmitted && (!newDriver.email?.trim() || !driverEmailValid))"
+                     class="w-full pl-9 pr-4 py-2.5 rounded-xl border bg-surface text-sm text-textDark
+                            placeholder-textMuted focus:outline-none focus:ring-2 focus:border-transparent" />
+            </div>
+            <p *ngIf="driverFormSubmitted && !newDriver.email?.trim()" class="text-danger text-xs mt-1">Email is required</p>
+            <p *ngIf="driverFormSubmitted && newDriver.email?.trim() && !driverEmailValid" class="text-danger text-xs mt-1">Enter a valid email address</p>
           </div>
-          <div class="relative">
-            <i class="bi bi-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted text-sm pointer-events-none"></i>
-            <input type="password" [(ngModel)]="newDriver.password" name="password" required
-                   placeholder="Password"
-                   class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                          placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+          <div>
+            <div class="relative">
+              <i class="bi bi-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted text-sm pointer-events-none"></i>
+              <input type="password" [(ngModel)]="newDriver.password" name="password" required
+                     placeholder="Password"
+                     [class.border-red-400]="driverFormSubmitted && !driverPasswordValid"
+                     [class.border-borderColor]="!(driverFormSubmitted && !driverPasswordValid)"
+                     class="w-full pl-9 pr-4 py-2.5 rounded-xl border bg-surface text-sm text-textDark
+                            placeholder-textMuted focus:outline-none focus:ring-2 focus:border-transparent" />
+            </div>
+            <p *ngIf="driverFormSubmitted && !driverPasswordValid" class="text-danger text-xs mt-1">Password must be at least 6 characters</p>
           </div>
           <button type="submit" [disabled]="submitting"
                   class="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600

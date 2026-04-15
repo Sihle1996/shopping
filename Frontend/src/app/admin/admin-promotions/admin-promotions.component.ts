@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AdminPromotionService, PromotionRequest } from 'src/app/services/admin-promotion.service';
 import { AdminService } from 'src/app/services/admin.service';
 import { Promotion, getPromoStatus, PromoStatus } from 'src/app/services/promotion.service';
@@ -92,7 +92,7 @@ export class AdminPromotionsComponent implements OnInit {
       description: [''],
       imageUrl: [''],
       badgeText: [''],
-      discountPercent: [null, [Validators.min(0), Validators.max(100)]],
+      discountPercent: [null, [Validators.min(1), Validators.max(100)]],
       startAt: ['', Validators.required],
       endAt: ['', Validators.required],
       appliesTo: ['ALL', Validators.required],
@@ -101,6 +101,12 @@ export class AdminPromotionsComponent implements OnInit {
       code: [''],
       active: [true],
       featured: [false],
+    }, {
+      validators: (g: AbstractControl) => {
+        const start = (g as FormGroup).get('startAt')?.value;
+        const end = (g as FormGroup).get('endAt')?.value;
+        return start && end && end <= start ? { dateOrder: true } : null;
+      }
     });
     this.refresh();
     this.adminService.getCategories().subscribe({ next: (cats) => this.categories = cats, error: () => {} });
@@ -120,6 +126,7 @@ export class AdminPromotionsComponent implements OnInit {
   }
 
   submit(): void {
+    this.form.markAllAsTouched();
     if (this.form.invalid) return;
     if (this.selectedAppliesTo === 'MULTI_PRODUCT' && this.selectedProductIds.length === 0) {
       this.submitError = 'Please select at least one product.';

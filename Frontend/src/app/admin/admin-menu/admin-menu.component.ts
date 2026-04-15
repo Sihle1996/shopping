@@ -37,6 +37,8 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
     lowStockThreshold: 5
   };
 
+  menuFormSubmitted = false;
+
   // ── CSV import state ────────────────────────────────────────────────────
   importLoading = false;
   importResult: string | null = null;
@@ -142,10 +144,8 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
   }
 
   submitForm(): void {
-    if (!this.formData.name || !this.formData.price || !this.formData.category) {
-      this.toastr.warning('Name, price and category are required');
-      return;
-    }
+    this.menuFormSubmitted = true;
+    if (!this.formData.name?.trim() || !this.formData.category || !this.formData.price || this.formData.price <= 0) return;
 
     if (this.isEditing) {
       this.adminService.updateMenuItem(this.formData.id!, this.formData);
@@ -159,6 +159,7 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
     this.formData = { ...item };
     this.showForm = true;
     this.isEditing = true;
+    this.menuFormSubmitted = false;
   }
 
   confirmDelete(id: string): void {
@@ -189,6 +190,7 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
   }
 
   private resetForm(): void {
+    this.menuFormSubmitted = false;
     this.formData = {
       id: null,
       name: '',

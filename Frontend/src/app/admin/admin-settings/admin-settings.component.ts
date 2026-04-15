@@ -51,6 +51,11 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   isLoading = false;
   isSaving = false;
   isUploadingLogo = false;
+  settingsSubmitted = false;
+
+  get settingsEmailValid(): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.settings.email?.trim() || '');
+  }
 
   hasCustomBranding = false;
   subscriptionPlan = '';
@@ -239,6 +244,9 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   }
 
   saveSettings(): void {
+    this.settingsSubmitted = true;
+    const s = this.settings;
+    if (!s.name?.trim() || !s.phone?.trim() || !s.email?.trim() || !this.settingsEmailValid) return;
     this.isSaving = true;
     this.http.put<TenantSettings>(`${environment.apiUrl}/api/admin/settings`, this.settings, {
       headers: this.getHeaders()

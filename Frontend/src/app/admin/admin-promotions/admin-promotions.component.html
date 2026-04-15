@@ -37,8 +37,12 @@
           <div class="md:col-span-2">
             <label class="block text-xs font-medium text-textDark mb-1">Title <span class="text-danger">*</span></label>
             <input type="text" formControlName="title" placeholder="e.g. Weekend Special, Happy Hour"
-                   class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+                   [class.border-red-400]="form.get('title')?.invalid && form.get('title')?.touched"
+                   [class.border-borderColor]="!(form.get('title')?.invalid && form.get('title')?.touched)"
+                   class="w-full px-4 py-2.5 rounded-xl border bg-surface text-sm text-textDark
+                          focus:outline-none focus:ring-2 focus:border-transparent" />
+            <p *ngIf="form.get('title')?.touched && form.get('title')?.hasError('required')"
+               class="text-danger text-xs mt-1">Title is required</p>
           </div>
 
           <div class="md:col-span-2">
@@ -81,10 +85,14 @@
             <label class="block text-xs font-medium text-textDark mb-1">Discount % <span class="text-danger">*</span></label>
             <div class="relative">
               <input type="number" min="1" max="100" formControlName="discountPercent" placeholder="e.g. 20"
-                     class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                            focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+                     [class.border-red-400]="form.get('discountPercent')?.invalid && form.get('discountPercent')?.touched"
+                     [class.border-borderColor]="!(form.get('discountPercent')?.invalid && form.get('discountPercent')?.touched)"
+                     class="w-full pl-4 pr-10 py-2.5 rounded-xl border bg-surface text-sm text-textDark
+                            focus:outline-none focus:ring-2 focus:border-transparent" />
               <span class="absolute inset-y-0 right-3 flex items-center text-textMuted text-sm font-medium">%</span>
             </div>
+            <p *ngIf="form.get('discountPercent')?.touched && (form.get('discountPercent')?.hasError('min') || form.get('discountPercent')?.hasError('max'))"
+               class="text-danger text-xs mt-1">Enter a value between 1 and 100</p>
           </div>
 
           <div>
@@ -187,14 +195,24 @@
           <div>
             <label class="block text-xs font-medium text-textDark mb-1">Start Date & Time <span class="text-danger">*</span></label>
             <input type="datetime-local" formControlName="startAt"
-                   class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+                   [class.border-red-400]="form.get('startAt')?.invalid && form.get('startAt')?.touched"
+                   [class.border-borderColor]="!(form.get('startAt')?.invalid && form.get('startAt')?.touched)"
+                   class="w-full px-4 py-2.5 rounded-xl border bg-surface text-sm text-textDark
+                          focus:outline-none focus:ring-2 focus:border-transparent" />
+            <p *ngIf="form.get('startAt')?.touched && form.get('startAt')?.hasError('required')"
+               class="text-danger text-xs mt-1">Start date is required</p>
           </div>
           <div>
             <label class="block text-xs font-medium text-textDark mb-1">End Date & Time <span class="text-danger">*</span></label>
             <input type="datetime-local" formControlName="endAt"
-                   class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+                   [class.border-red-400]="(form.get('endAt')?.invalid && form.get('endAt')?.touched) || (form.hasError('dateOrder') && form.get('endAt')?.touched)"
+                   [class.border-borderColor]="!((form.get('endAt')?.invalid && form.get('endAt')?.touched) || (form.hasError('dateOrder') && form.get('endAt')?.touched))"
+                   class="w-full px-4 py-2.5 rounded-xl border bg-surface text-sm text-textDark
+                          focus:outline-none focus:ring-2 focus:border-transparent" />
+            <p *ngIf="form.get('endAt')?.touched && form.get('endAt')?.hasError('required')"
+               class="text-danger text-xs mt-1">End date is required</p>
+            <p *ngIf="form.hasError('dateOrder') && form.get('endAt')?.touched"
+               class="text-danger text-xs mt-1">End date must be after start date</p>
           </div>
         </div>
 
@@ -242,7 +260,7 @@
 
         <!-- Actions -->
         <div class="flex gap-3">
-          <app-button variant="primary" size="md" type="submit" [disabled]="form.invalid">
+          <app-button variant="primary" size="md" type="submit">
             {{ editingId ? 'Update Promotion' : 'Create Promotion' }}
           </app-button>
           <app-button variant="ghost" size="md" (clicked)="resetForm()">Cancel</app-button>

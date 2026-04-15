@@ -16,6 +16,15 @@ export class AdminDriversComponent implements OnInit, OnDestroy {
   deletingId: string | null = null;
   toast: string | null = null;
   toastType: 'success' | 'error' = 'success';
+  driverFormSubmitted = false;
+
+  get driverEmailValid(): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.newDriver.email?.trim() || '');
+  }
+
+  get driverPasswordValid(): boolean {
+    return (this.newDriver.password?.length || 0) >= 6;
+  }
   private activeDriver: any = null;
 
   ngOnDestroy(): void {
@@ -61,11 +70,13 @@ export class AdminDriversComponent implements OnInit, OnDestroy {
   }
 
   addDriver(): void {
-    if (!this.newDriver.email || !this.newDriver.password) return;
+    this.driverFormSubmitted = true;
+    if (!this.driverEmailValid || !this.driverPasswordValid) return;
     this.submitting = true;
     this.adminService.createDriver(this.newDriver).subscribe({
       next: () => {
         this.newDriver = { email: '', password: '' };
+        this.driverFormSubmitted = false;
         this.submitting = false;
         this.showToast('Driver added successfully', 'success');
         this.loadDrivers();
