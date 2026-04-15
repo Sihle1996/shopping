@@ -4,12 +4,12 @@ import { storesService } from '../../services/stores.service'
 import { subscriptionsService } from '../../services/subscriptions.service'
 import { useToast } from '../../context/ToastContext'
 import { useDebounce } from '../../hooks/useDebounce'
-import type { TenantDto, UpdateStoreDto } from '../../types'
+import type { TenantDto, UpdateStoreDto, CreateStoreDto } from '../../types'
 import Table from '../../components/common/Table'
 import Badge from '../../components/common/Badge'
 import Modal from '../../components/common/Modal'
 import Pagination from '../../components/common/Pagination'
-import { Search, Pencil, Trash2, Eye, EyeOff, AlertTriangle, Download } from 'lucide-react'
+import { Search, Pencil, Trash2, Eye, EyeOff, AlertTriangle, Download, Plus } from 'lucide-react'
 import { exportCsv } from '../../utils/exportCsv'
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -32,6 +32,154 @@ function subStatusVariant(status?: string): 'success' | 'warning' | 'danger' | '
     case 'SUSPENDED': return 'danger'
     default: return 'neutral'
   }
+}
+
+// ── Create Modal ────────────────────────────────────────────────────────────
+interface CreateStoreModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onCreate: (data: CreateStoreDto) => void
+  saving: boolean
+  saveError?: string | null
+}
+
+function CreateStoreModal({ isOpen, onClose, onCreate, saving, saveError }: CreateStoreModalProps) {
+  const [form, setForm] = useState<CreateStoreDto>({ name: '', slug: '', subscriptionPlan: 'BASIC', subscriptionStatus: 'TRIAL' })
+  const [validationError, setValidationError] = useState<string | null>(null)
+
+  const { data: plans = [] } = useQuery({
+    queryKey: ['plans'],
+    queryFn: () => subscriptionsService.getPlans(),
+    staleTime: 5 * 60 * 1000
+  })
+
+  React.useEffect(() => {
+    if (!isOpen) {
+      setForm({ name: '', slug: '', subscriptionPlan: 'BASIC', subscriptionStatus: 'TRIAL' })
+      setValidationError(null)
+    }
+  }, [isOpen])
+
+  // Auto-generate slug from name
+  const handleNameChange = (name: string) => {
+    const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+    setForm(f => ({ ...f, name, slug }))
+  }
+
+  const handleCreate = () => {
+    if (!form.name.trim()) { setValidationError('Store name is required.'); return }
+    if (!form.slug.trim()) { setValidationError('Slug is required.'); return }
+    if (!/^[a-z0-9-]+$/.test(form.slug)) { setValidationError('Slug can only contain lowercase letters, numbers, and hyphens.'); return }
+    setValidationError(null)
+    onCreate(form)
+  }
+
+  const inputCls = 'w-full px-3 py-2 rounded-lg border border-gray-700 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent'
+  const inputStyle = { background: '#0d1117' }
+  const field = (label: string, node: React.ReactNode) => (
+    <div>
+      <label className="block text-sm font-medium text-gray-400 mb-1">{label}</label>
+      {node}
+    </div>
+  )
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="New Store" size="md">
+      <div className="space-y-4">
+        {field('Store Name *',
+          <input
+            type="text"
+            value={form.name}
+            onChange={e => handleNameChange(e.target.value)}
+            placeholder="e.g. Joe's Burgers"
+            className={inputCls}
+            style={inputStyle}
+          />
+        )}
+        {field('Slug *',
+          <input
+            type="text"
+            value={form.slug}
+            onChange={e => setForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+            placeholder="e.g. joes-burgers"
+            className={inputCls}
+            style={inputStyle}
+          />
+        )}
+        <div className="grid grid-cols-2 gap-4">
+          {field('Email',
+            <input
+              type="email"
+              value={form.email ?? ''}
+              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+              placeholder="owner@example.com"
+              className={inputCls}
+              style={inputStyle}
+            />
+          )}
+          {field('Phone',
+            <input
+              type="text"
+              value={form.phone ?? ''}
+              onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+              placeholder="+27 81 234 5678"
+              className={inputCls}
+              style={inputStyle}
+            />
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          {field('Subscription Plan',
+            <select
+              value={form.subscriptionPlan ?? 'BASIC'}
+              onChange={e => setForm(f => ({ ...f, subscriptionPlan: e.target.value }))}
+              className={inputCls}
+              style={inputStyle}
+            >
+              {plans.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+              {plans.length === 0 && <>
+                <option value="BASIC">BASIC</option>
+                <option value="PRO">PRO</option>
+                <option value="ENTERPRISE">ENTERPRISE</option>
+              </>}
+            </select>
+          )}
+          {field('Subscription Status',
+            <select
+              value={form.subscriptionStatus ?? 'TRIAL'}
+              onChange={e => setForm(f => ({ ...f, subscriptionStatus: e.target.value }))}
+              className={inputCls}
+              style={inputStyle}
+            >
+              <option value="TRIAL">TRIAL</option>
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="SUSPENDED">SUSPENDED</option>
+            </select>
+          )}
+        </div>
+
+        {(validationError || saveError) && (
+          <p className="text-sm text-red-400">{validationError ?? saveError}</p>
+        )}
+
+        <div className="flex justify-end gap-3 pt-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm text-gray-500 hover:text-gray-300 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleCreate}
+            disabled={saving}
+            className="px-4 py-2 text-sm bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium disabled:opacity-60"
+          >
+            {saving ? 'Creating…' : 'Create Store'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
 }
 
 // ── Edit Modal ──────────────────────────────────────────────────────────────
@@ -218,6 +366,7 @@ export default function Stores() {
   const [page, setPage] = useState(1)
   const pageSize = 10
 
+  const [createOpen, setCreateOpen] = useState(false)
   const [editStore, setEditStore] = useState<TenantDto | null>(null)
   const [deleteStore, setDeleteStore] = useState<TenantDto | null>(null)
 
@@ -227,6 +376,16 @@ export default function Stores() {
     queryKey: ['stores', debouncedSearch, status, page],
     queryFn: () => storesService.getStores({ search: debouncedSearch, status, page, pageSize }),
     placeholderData: (prev) => prev
+  })
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateStoreDto) => storesService.createStore(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stores'] })
+      setCreateOpen(false)
+      showToast('Store created successfully')
+    },
+    onError: (err: Error) => showToast(err.message || 'Failed to create store', 'error')
   })
 
   const updateMutation = useMutation({
@@ -384,6 +543,12 @@ export default function Stores() {
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-600">{data?.total ?? 0} stores</span>
           <button
+            onClick={() => setCreateOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-white bg-orange-500 hover:bg-orange-600 rounded-lg font-medium transition-colors"
+          >
+            <Plus size={13} /> New Store
+          </button>
+          <button
             onClick={() => exportCsv('stores.csv', (data?.data ?? []).map(s => ({
               name: s.name,
               slug: s.slug,
@@ -426,6 +591,15 @@ export default function Stores() {
         page={page}
         totalPages={data?.totalPages ?? 1}
         onPageChange={setPage}
+      />
+
+      {/* Create Modal */}
+      <CreateStoreModal
+        isOpen={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreate={(data) => createMutation.mutate(data)}
+        saving={createMutation.isPending}
+        saveError={createMutation.error ? (createMutation.error as Error).message : null}
       />
 
       {/* Edit Modal */}

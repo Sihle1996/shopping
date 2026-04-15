@@ -1,23 +1,25 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ordersService } from '../../services/orders.service'
 import { storesService } from '../../services/stores.service'
+import { useToast } from '../../context/ToastContext'
 import { useDebounce } from '../../hooks/useDebounce'
 import type { OrderDto } from '../../types'
 import Table from '../../components/common/Table'
-import Badge from '../../components/common/Badge'
 import Pagination from '../../components/common/Pagination'
 import { Search, ShoppingBag, AlertCircle, Download } from 'lucide-react'
 import { exportCsv } from '../../utils/exportCsv'
 
-function statusVariant(status: string): 'success' | 'warning' | 'danger' | 'neutral' | 'info' {
+const ORDER_STATUSES = ['PENDING', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED']
+
+function statusColor(status: string) {
   switch (status.toUpperCase()) {
-    case 'DELIVERED':  return 'success'
-    case 'PENDING':    return 'warning'
-    case 'CANCELLED':  return 'danger'
-    case 'PREPARING':  return 'info'
-    case 'OUT_FOR_DELIVERY': return 'info'
-    default:           return 'neutral'
+    case 'DELIVERED':       return 'text-green-400'
+    case 'PENDING':         return 'text-yellow-400'
+    case 'CANCELLED':       return 'text-red-400'
+    case 'PREPARING':       return 'text-blue-400'
+    case 'OUT_FOR_DELIVERY': return 'text-blue-400'
+    default:                return 'text-gray-400'
   }
 }
 
@@ -29,6 +31,8 @@ function formatDate(iso: string) {
 }
 
 export default function Orders() {
+  const queryClient = useQueryClient()
+  const { showToast } = useToast()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [storeId, setStoreId] = useState('')
@@ -36,6 +40,16 @@ export default function Orders() {
   const pageSize = 20
 
   const debouncedSearch = useDebounce(search)
+
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      ordersService.updateStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+      showToast('Order status updated')
+    },
+    onError: () => showToast('Failed to update order status', 'error')
+  })
 
   const { data: storesData } = useQuery({
     queryKey: ['stores-list'],
@@ -68,7 +82,16 @@ export default function Orders() {
       key: 'status',
       header: 'Status',
       render: (row: OrderDto) => (
-        <Badge label={row.status} variant={statusVariant(row.status)} />
+        <select
+          value={row.status}
+          onChange={e => statusMutation.mutate({ id: row.id, status: e.target.value })}
+          className={`px-2 py-1 rounded-lg border border-gray-700 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 ${statusColor(row.status)}`}
+          style={{ background: '#0d1117' }}
+        >
+          {ORDER_STATUSES.map(s => (
+            <option key={s} value={s}>{s.replace('_', ' ')}</option>
+          ))}
+        </select>
       )
     },
     {

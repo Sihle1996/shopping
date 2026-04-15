@@ -104,6 +104,23 @@ export interface OrderQueryParams {
   pageSize?: number
 }
 
+export interface CreateStoreDto {
+  name: string
+  slug: string
+  email?: string
+  phone?: string
+  subscriptionPlan?: string
+  subscriptionStatus?: string
+}
+
+export interface PlatformSettingsDto {
+  commissionRatePercent: number
+  supportEmail: string
+  defaultTrialDays: number
+  allowSelfRegistration: boolean
+  updatedAt: string
+}
+
 export interface UpdateStoreDto {
   name?: string
   subscriptionStatus?: string

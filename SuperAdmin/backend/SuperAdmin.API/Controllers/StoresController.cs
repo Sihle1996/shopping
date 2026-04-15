@@ -83,6 +83,50 @@ public class StoresController(AppDbContext db) : ControllerBase
         return Ok(new { data = result, total, page, pageSize, totalPages = (int)Math.Ceiling((double)total / pageSize) });
     }
 
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateStoreRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 200)
+            return BadRequest(new { message = "Name must be 1–200 characters." });
+        if (string.IsNullOrWhiteSpace(request.Slug))
+            return BadRequest(new { message = "Slug is required." });
+
+        var slug = request.Slug.Trim().ToLower().Replace(" ", "-");
+
+        if (await db.Tenants.AnyAsync(t => t.Slug == slug))
+            return Conflict(new { message = "A store with this slug already exists." });
+
+        var plan   = ValidPlans.Contains(request.SubscriptionPlan?.ToUpper() ?? "") ? request.SubscriptionPlan!.ToUpper() : "BASIC";
+        var status = ValidSubStatuses.Contains(request.SubscriptionStatus?.ToUpper() ?? "") ? request.SubscriptionStatus!.ToUpper() : "TRIAL";
+
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Name = request.Name.Trim(),
+            Slug = slug,
+            Email = request.Email?.Trim(),
+            Phone = request.Phone?.Trim(),
+            SubscriptionPlan = plan,
+            SubscriptionStatus = status,
+            Active = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            TrialStartedAt = status == "TRIAL" ? DateTime.UtcNow : null
+        };
+
+        db.Tenants.Add(tenant);
+        await db.SaveChangesAsync();
+
+        int? trialDays = status == "TRIAL" ? 14 : null;
+        return Created($"/api/stores/{tenant.Id}", new TenantDto(
+            tenant.Id, tenant.Name, tenant.Slug, tenant.LogoUrl, tenant.PrimaryColor,
+            tenant.Email, tenant.Phone, tenant.Address,
+            tenant.DeliveryRadiusKm, tenant.DeliveryFeeBase, tenant.PlatformCommissionPercent,
+            tenant.SubscriptionStatus, tenant.SubscriptionPlan, tenant.Active, tenant.CreatedAt,
+            0, 0, 0, 0, tenant.TrialStartedAt, trialDays
+        ));
+    }
+
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTenantRequest request)
     {

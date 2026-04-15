@@ -11,6 +11,7 @@ import Users from './pages/Users/Users'
 import Drivers from './pages/Drivers/Drivers'
 import Subscriptions from './pages/Subscriptions/Subscriptions'
 import Orders from './pages/Orders/Orders'
+import Settings from './pages/Settings/Settings'
 import NotFound from './pages/NotFound/NotFound'
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
               <Route path="/drivers" element={<Drivers />} />
               <Route path="/orders" element={<Orders />} />
               <Route path="/subscriptions" element={<Subscriptions />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
 
             {/* 404 */}

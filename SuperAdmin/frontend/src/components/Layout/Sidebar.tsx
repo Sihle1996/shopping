@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Store, Users, Truck, CreditCard, LogOut, Zap, ShoppingBag } from 'lucide-react'
+import { LayoutDashboard, Store, Users, Truck, CreditCard, LogOut, Zap, ShoppingBag, Settings } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
@@ -8,7 +8,8 @@ const navItems = [
   { to: '/users', label: 'Users', icon: Users },
   { to: '/drivers', label: 'Drivers', icon: Truck },
   { to: '/orders', label: 'Orders', icon: ShoppingBag },
-  { to: '/subscriptions', label: 'Subscriptions', icon: CreditCard }
+  { to: '/subscriptions', label: 'Subscriptions', icon: CreditCard },
+  { to: '/settings', label: 'Settings', icon: Settings }
 ]
 
 function getInitials(email: string) {

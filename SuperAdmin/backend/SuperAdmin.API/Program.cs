@@ -176,6 +176,26 @@ using (var scope = app.Services.CreateScope())
     {
         startupLogger.LogWarning(ex, "[Startup] DB seed warning");
     }
+
+    // Platform settings singleton table
+    try
+    {
+        db.Database.ExecuteSqlRaw(@"
+            CREATE TABLE IF NOT EXISTS platform_settings (
+                id INT PRIMARY KEY DEFAULT 1,
+                commission_rate_percent DECIMAL(5,2) NOT NULL DEFAULT 4.00,
+                support_email VARCHAR(200) NOT NULL DEFAULT 'support@fastfood.co.za',
+                default_trial_days INT NOT NULL DEFAULT 14,
+                allow_self_registration BOOLEAN NOT NULL DEFAULT TRUE,
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+            INSERT INTO platform_settings (id) VALUES (1) ON CONFLICT DO NOTHING;
+        ");
+    }
+    catch (Exception ex)
+    {
+        startupLogger.LogWarning(ex, "[Startup] platform_settings seed warning");
+    }
 }
 
 app.Run();

@@ -32,3 +32,12 @@ public record UpdateTenantRequest(
     decimal? PlatformCommissionPercent,
     int? DeliveryRadiusKm
 );
+
+public record CreateStoreRequest(
+    string Name,
+    string Slug,
+    string? Email,
+    string? Phone,
+    string? SubscriptionPlan,
+    string? SubscriptionStatus
+);

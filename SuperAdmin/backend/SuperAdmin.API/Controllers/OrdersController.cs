@@ -69,4 +69,23 @@ public class OrdersController(AppDbContext db) : ControllerBase
             totalPages = (int)Math.Ceiling((double)total / pageSize)
         });
     }
+
+    private static readonly HashSet<string> ValidStatuses =
+        ["PENDING", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"];
+
+    [HttpPatch("{id}/status")]
+    public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateOrderStatusRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Status) || !ValidStatuses.Contains(request.Status.ToUpper()))
+            return BadRequest(new { message = $"Invalid status. Valid values: {string.Join(", ", ValidStatuses)}" });
+
+        var order = await db.Orders.FindAsync(id);
+        if (order == null) return NotFound();
+
+        order.Status = request.Status.ToUpper();
+        await db.SaveChangesAsync();
+        return Ok(new { id = order.Id, status = order.Status });
+    }
 }
+
+public record UpdateOrderStatusRequest(string Status);
