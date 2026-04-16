@@ -14,7 +14,13 @@ public class PlatformSettingsController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> Get()
     {
         var settings = await db.PlatformSettings.FirstOrDefaultAsync(p => p.Id == 1);
-        if (settings == null) return NotFound(new { message = "Platform settings not found." });
+        if (settings == null)
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "INSERT INTO platform_settings (id) VALUES (1) ON CONFLICT DO NOTHING");
+            settings = await db.PlatformSettings.FirstOrDefaultAsync(p => p.Id == 1);
+            if (settings == null) return StatusCode(500, new { message = "Failed to initialise platform settings." });
+        }
         return Ok(new
         {
             commissionRatePercent = settings.CommissionRatePercent,
@@ -36,7 +42,13 @@ public class PlatformSettingsController(AppDbContext db) : ControllerBase
             return BadRequest(new { message = "Support email is required." });
 
         var settings = await db.PlatformSettings.FirstOrDefaultAsync(p => p.Id == 1);
-        if (settings == null) return NotFound(new { message = "Platform settings not found." });
+        if (settings == null)
+        {
+            await db.Database.ExecuteSqlRawAsync(
+                "INSERT INTO platform_settings (id) VALUES (1) ON CONFLICT DO NOTHING");
+            settings = await db.PlatformSettings.FirstOrDefaultAsync(p => p.Id == 1);
+            if (settings == null) return StatusCode(500, new { message = "Failed to initialise platform settings." });
+        }
 
         settings.CommissionRatePercent = request.CommissionRatePercent;
         settings.SupportEmail          = request.SupportEmail.Trim();

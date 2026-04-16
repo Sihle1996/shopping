@@ -109,6 +109,40 @@ using (var scope = app.Services.CreateScope())
         catch (Exception ex) { startupLogger.LogWarning("[Startup] Index skipped: {Message}", ex.Message); }
     }
 
+    // Add enrollment columns + store_documents table (idempotent)
+    try
+    {
+        db.Database.ExecuteSqlRaw(@"
+            ALTER TABLE tenants
+                ADD COLUMN IF NOT EXISTS approval_status VARCHAR(20) NOT NULL DEFAULT 'APPROVED',
+                ADD COLUMN IF NOT EXISTS rejection_reason TEXT,
+                ADD COLUMN IF NOT EXISTS submitted_for_review_at TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS cipc_number VARCHAR(20),
+                ADD COLUMN IF NOT EXISTS bank_name VARCHAR(60),
+                ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(30),
+                ADD COLUMN IF NOT EXISTS bank_account_type VARCHAR(20),
+                ADD COLUMN IF NOT EXISTS bank_branch_code VARCHAR(10);
+
+            CREATE TABLE IF NOT EXISTS store_documents (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                document_type VARCHAR(30) NOT NULL,
+                file_url TEXT NOT NULL,
+                file_name TEXT,
+                status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+                review_notes TEXT,
+                uploaded_at TIMESTAMP DEFAULT NOW(),
+                reviewed_at TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS ix_store_documents_tenant_id ON store_documents(tenant_id);
+        ");
+    }
+    catch (Exception ex)
+    {
+        startupLogger.LogWarning(ex, "[Startup] Enrollment migration warning");
+    }
+
     try
     {
         db.Database.ExecuteSqlRaw(@"
