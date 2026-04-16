@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DriverService } from 'src/app/services/driver.service';
+import { AuthService } from 'src/app/services/auth.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-driver-profile',
@@ -8,9 +11,13 @@ import { DriverService } from 'src/app/services/driver.service';
 })
 export class DriverProfileComponent implements OnInit {
   form: FormGroup;
+  passwordForm: FormGroup;
   earnings: { deliveredCount: number; totalEarnings: number } | null = null;
   loading = true;
   saving = false;
+  savingPassword = false;
+  showCurrentPassword = false;
+  showNewPassword = false;
   toast = '';
   toastType: 'success' | 'error' = 'success';
 
@@ -19,12 +26,20 @@ export class DriverProfileComponent implements OnInit {
     'bg-pink-500', 'bg-teal-500', 'bg-rose-500', 'bg-indigo-500'
   ];
 
-  constructor(private fb: FormBuilder, private driverService: DriverService) {
+  constructor(
+    private fb: FormBuilder,
+    private driverService: DriverService,
+    private http: HttpClient
+  ) {
     this.form = this.fb.group({
       fullName: [''],
       phone: [''],
       vehicleType: [''],
       vehiclePlate: ['']
+    });
+    this.passwordForm = this.fb.group({
+      currentPassword: ['', Validators.required],
+      newPassword: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
 
@@ -61,6 +76,23 @@ export class DriverProfileComponent implements OnInit {
     this.driverService.updateProfile(this.form.value).subscribe({
       next: () => { this.saving = false; this.showToast('Profile saved'); },
       error: () => { this.saving = false; this.showToast('Failed to save', 'error'); }
+    });
+  }
+
+  changePassword() {
+    this.passwordForm.markAllAsTouched();
+    if (this.passwordForm.invalid) return;
+    this.savingPassword = true;
+    this.http.put(`${environment.apiUrl}/api/change-password`, this.passwordForm.value).subscribe({
+      next: () => {
+        this.savingPassword = false;
+        this.passwordForm.reset();
+        this.showToast('Password changed successfully');
+      },
+      error: (err) => {
+        this.savingPassword = false;
+        this.showToast(err.error || 'Failed to change password', 'error');
+      }
     });
   }
 

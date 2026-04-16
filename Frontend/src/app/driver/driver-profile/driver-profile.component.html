@@ -130,6 +130,44 @@
           </button>
 
         </form>
+
+        <!-- Change Password -->
+        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="bg-white rounded-2xl border border-borderColor p-5 shadow-card mt-4">
+          <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-4">Change Password</p>
+          <div class="space-y-3">
+            <div>
+              <label class="text-xs font-medium text-textMuted block mb-1">Current Password</label>
+              <div class="relative">
+                <input formControlName="currentPassword" [type]="showCurrentPassword ? 'text' : 'password'"
+                       placeholder="Enter current password"
+                       class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
+                <button type="button" (click)="showCurrentPassword = !showCurrentPassword"
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-textMuted hover:text-textDark">
+                  <i [class]="showCurrentPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                </button>
+              </div>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-textMuted block mb-1">New Password</label>
+              <div class="relative">
+                <input formControlName="newPassword" [type]="showNewPassword ? 'text' : 'password'"
+                       placeholder="Min. 6 characters"
+                       class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
+                <button type="button" (click)="showNewPassword = !showNewPassword"
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-textMuted hover:text-textDark">
+                  <i [class]="showNewPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                </button>
+              </div>
+              <p *ngIf="passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.hasError('minlength')"
+                 class="text-danger text-xs mt-1">Password must be at least 6 characters</p>
+            </div>
+          </div>
+          <button type="submit" [disabled]="savingPassword"
+                  class="w-full mt-4 py-3 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+            <i class="bi bi-lock"></i>
+            {{ savingPassword ? 'Saving...' : 'Change Password' }}
+          </button>
+        </form>
       </div><!-- end right -->
 
     </div>
