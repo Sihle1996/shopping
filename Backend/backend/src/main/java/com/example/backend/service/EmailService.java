@@ -25,6 +25,27 @@ public class EmailService {
 
     private final RestTemplate restTemplate;
 
+    public void sendVerificationEmail(String toEmail, String nameOrEmail, String verificationUrl) {
+        if (apiKey == null || apiKey.isBlank()) {
+            log.warn("RESEND_API_KEY not configured — skipping verification email");
+            return;
+        }
+        String html = "<div style='font-family:Inter,Helvetica,Arial,sans-serif;background:#f9fafb;padding:40px 0;'>"
+            + "<div style='max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);'>"
+            + "<div style='background:#111827;padding:28px 36px;text-align:center;'>"
+            + "<h1 style='margin:0;color:#ffffff;font-size:20px;font-weight:700;'>CraveIt</h1>"
+            + "<p style='margin:8px 0 0;color:#9ca3af;font-size:13px;'>Verify your email address</p>"
+            + "</div>"
+            + "<div style='padding:32px 36px;text-align:center;'>"
+            + "<p style='margin:0 0 24px;color:#374151;font-size:15px;'>Click the button below to verify your email and activate your account.</p>"
+            + "<a href='" + escapeHtml(verificationUrl) + "' style='display:inline-block;background:#FF6F00;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:15px;font-weight:600;'>Verify Email</a>"
+            + "<p style='margin:24px 0 0;color:#6b7280;font-size:12px;'>If you didn't create an account, you can safely ignore this email.</p>"
+            + "</div>"
+            + "</div>"
+            + "</div>";
+        send(toEmail, "Verify your CraveIt account", html);
+    }
+
     public void sendRaw(String toEmail, String subject, String html) {
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("RESEND_API_KEY not configured — skipping email");

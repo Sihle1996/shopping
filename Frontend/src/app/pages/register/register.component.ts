@@ -17,6 +17,8 @@ export class RegisterComponent implements OnInit {
   tenantId: string | null = null;
   storeName: string | null = null;
   returnUrl: string | null = null;
+  emailSent = false;
+  registeredEmail = '';
 
   constructor(
     private fb: FormBuilder,
@@ -54,30 +56,15 @@ export class RegisterComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
+    this.registeredEmail = this.registerForm.value.email;
+
     this.authService.register(this.registerForm.value, this.tenantId || undefined).subscribe({
-      next: (response: any) => {
-        // Store the token returned by registration — no separate login needed
-        if (response?.token) {
-          this.authService.storeToken(response.token);
-        }
-
-        if (this.returnUrl) {
-          this.router.navigateByUrl(this.returnUrl, { replaceUrl: true });
-          return;
-        }
-
-        const role = this.authService.getUserRole();
-        if (role === 'ROLE_ADMIN') {
-          this.router.navigate(['/admin/dashboard'], { replaceUrl: true });
-        } else if (role === 'ROLE_SUPERADMIN') {
-          this.router.navigate(['/superadmin'], { replaceUrl: true });
-        } else {
-          const slug = localStorage.getItem('storeSlug');
-          this.router.navigate(slug ? ['/store', slug] : ['/'], { replaceUrl: true });
-        }
+      next: () => {
+        this.emailSent = true;
+        this.isLoading = false;
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Registration failed. Please try again.';
+        this.errorMessage = err.error?.message || err.error || 'Registration failed. Please try again.';
         this.isLoading = false;
       }
     });

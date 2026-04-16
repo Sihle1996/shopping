@@ -1,6 +1,23 @@
 <div class="min-h-screen bg-surface flex items-center justify-center p-4">
   <div class="w-full max-w-md animate-fade-in">
 
+    <!-- Email sent confirmation -->
+    <div *ngIf="emailSent" class="text-center">
+      <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-md">
+        <i class="bi bi-envelope-check text-white text-2xl"></i>
+      </div>
+      <h1 class="font-heading text-2xl font-bold text-textDark mb-2">Check your email</h1>
+      <p class="text-textLight text-sm mb-1">We sent a verification link to</p>
+      <p class="font-semibold text-textDark text-sm mb-6">{{ registeredEmail }}</p>
+      <p class="text-textLight text-xs">Click the link in the email to activate your account.<br>Check your spam folder if you don't see it.</p>
+      <p class="text-center text-sm text-textLight mt-8">
+        Already verified? <a routerLink="/login" class="text-primary font-semibold hover:underline">Sign in</a>
+      </p>
+    </div>
+
+    <!-- Registration form -->
+    <ng-container *ngIf="!emailSent">
+
     <!-- Logo / Brand -->
     <div class="text-center mb-8">
       <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
@@ -125,5 +142,7 @@
       <a [routerLink]="['/login']" [queryParams]="returnUrl ? { returnUrl: returnUrl } : {}"
          class="text-primary font-semibold hover:underline">Sign in</a>
     </p>
+
+    </ng-container>
   </div>
 </div>

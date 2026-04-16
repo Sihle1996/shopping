@@ -49,6 +49,7 @@ public class SecurityConfiguration {
                                 "/api/menu/**",
                                 "/api/register",
                                 "/api/login",
+                                "/api/verify-email",
                                 "/api/forgot-password",
                                 "/api/reset-password",
                                 "/api/promotions/**",

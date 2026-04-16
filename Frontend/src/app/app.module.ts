@@ -31,6 +31,7 @@ import { LandingComponent } from './pages/landing/landing.component';
 import { AddressBookComponent } from './pages/address-book/address-book.component';
 import { UserProfileComponent } from './pages/user-profile/user-profile.component';
 import { TrackOrderComponent } from './pages/track-order/track-order.component';
+import { VerifyEmailComponent } from './pages/verify-email/verify-email.component';
 
 @NgModule({
   declarations: [
@@ -54,6 +55,7 @@ import { TrackOrderComponent } from './pages/track-order/track-order.component';
     AddressBookComponent,
     UserProfileComponent,
     TrackOrderComponent,
+    VerifyEmailComponent,
   ],
   imports: [
     BrowserModule,

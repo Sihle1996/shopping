@@ -21,6 +21,7 @@ import { TenantResolver } from './resolvers/tenant.resolver';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 import { LandingComponent } from './pages/landing/landing.component';
 import { TrackOrderComponent } from './pages/track-order/track-order.component';
+import { VerifyEmailComponent } from './pages/verify-email/verify-email.component';
 
 const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -50,6 +51,7 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'register', component: RegisterComponent },
+  { path: 'verify-email', component: VerifyEmailComponent },
   { path: 'register-restaurant', component: RegisterRestaurantComponent },
 
   { path: 'driver/dashboard', component: DriverDashboardComponent, canActivate: [DriverGuard] },

@@ -42,6 +42,13 @@ public class User implements UserDetails {
     @Builder.Default
     private boolean active = true;
 
+    @Column(name = "email_verified", nullable = false, columnDefinition = "boolean default true")
+    @Builder.Default
+    private boolean emailVerified = true;
+
+    @Column(name = "email_verification_token")
+    private String emailVerificationToken;
+
     private String fullName;
     private String phone;
     private String vehicleType;
@@ -94,6 +101,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return active;
+        return active && emailVerified;
     }
 }

@@ -29,6 +29,10 @@ export class AuthService {
     return this.http.post(url, data);
   }
 
+  verifyEmail(token: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrlAuth}/verify-email`, { params: { token } });
+  }
+
   login(credentials: { email: string; password: string }): Observable<{ token: string }> {
     return this.http.post<{ token: string }>(`${this.apiUrlAuth}/login`, credentials).pipe(
       tap(response => { if (response.token) this.storeToken(response.token); })

@@ -65,8 +65,12 @@ export class LoginComponent implements OnInit {
           navigate();
         }
       },
-      error: () => {
-        this.errorMessage = 'Invalid email or password';
+      error: (err) => {
+        if (err.status === 403) {
+          this.errorMessage = 'Please verify your email before logging in. Check your inbox.';
+        } else {
+          this.errorMessage = 'Invalid email or password';
+        }
         this.isLoading = false;
       }
     });

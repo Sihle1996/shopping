@@ -14,6 +14,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -28,6 +30,9 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
+
+    @Value("${app.frontend-url:http://localhost:4200}")
+    private String frontendUrl;
 
     public AuthenticationResponse register(RegisterRequest request, UUID tenantId) {
         // Check if the user already exists within this tenant (or globally if no tenant)
@@ -56,22 +61,25 @@ public class AuthenticationService {
         // Create and save the user — ADMIN if registering with a tenant, USER otherwise
         Role assignedRole = (tenant != null) ? Role.ADMIN : Role.USER;
 
+        String verificationToken = UUID.randomUUID().toString();
+
         User user = User.builder()
                 .email(request.getEmail())
                 .password(hashedPassword)
                 .role(assignedRole)
                 .tenant(tenant)
+                .emailVerified(false)
+                .emailVerificationToken(verificationToken)
                 .build();
 
         user = repository.save(user);
 
-        // Generate JWT token with tenantId
-        UUID userTenantId = tenant != null ? tenant.getId() : null;
-        String jwtToken = jwtService.generateTokenWithId(user, user.getId(), userTenantId);
+        // Send verification email; auto-login happens after clicking the link
+        String verifyUrl = frontendUrl + "/verify-email?token=" + verificationToken;
+        emailService.sendVerificationEmail(request.getEmail(), request.getEmail(), verifyUrl);
 
-        // Return the token in the response
         return AuthenticationResponse.builder()
-                .token(jwtToken)
+                .message("Check your email to verify your account before logging in.")
                 .build();
     }
 
@@ -97,6 +105,17 @@ public class AuthenticationService {
         return AuthenticationResponse.builder()
                 .token(jwtToken)
                 .build();
+    }
+
+    public AuthenticationResponse verifyEmail(String token) {
+        User user = repository.findByEmailVerificationToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired verification link"));
+        user.setEmailVerified(true);
+        user.setEmailVerificationToken(null);
+        repository.save(user);
+        UUID tenantId = user.getTenant() != null ? user.getTenant().getId() : null;
+        String jwtToken = jwtService.generateTokenWithId(user, user.getId(), tenantId);
+        return AuthenticationResponse.builder().token(jwtToken).build();
     }
 
     public User findById(UUID id) {

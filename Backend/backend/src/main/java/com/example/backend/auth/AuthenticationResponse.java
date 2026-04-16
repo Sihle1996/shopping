@@ -10,27 +10,34 @@ import lombok.Setter;
 public class AuthenticationResponse {
 
     private String token;
+    private String message;
 
-    // Constructor for manual creation
     public AuthenticationResponse(String token) {
         this.token = token;
     }
 
-    // Builder pattern
     public static AuthenticationResponseBuilder builder() {
         return new AuthenticationResponseBuilder();
     }
 
     public static class AuthenticationResponseBuilder {
         private String token;
+        private String message;
 
         public AuthenticationResponseBuilder token(String token) {
             this.token = token;
             return this;
         }
 
+        public AuthenticationResponseBuilder message(String message) {
+            this.message = message;
+            return this;
+        }
+
         public AuthenticationResponse build() {
-            return new AuthenticationResponse(token);
+            AuthenticationResponse r = new AuthenticationResponse(token);
+            r.setMessage(message);
+            return r;
         }
     }
 }
