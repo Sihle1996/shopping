@@ -86,6 +86,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Indexes + seed on startup
+try
+{
 using (var scope = app.Services.CreateScope())
 {
     var startupLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
@@ -230,6 +232,13 @@ using (var scope = app.Services.CreateScope())
     {
         startupLogger.LogWarning(ex, "[Startup] platform_settings seed warning");
     }
+}
+}
+catch (Exception ex)
+{
+    // Log startup scope failure but don't crash — let app.Run() serve requests
+    // (individual SQL migration failures are handled in the inner try-catch blocks above)
+    Console.Error.WriteLine($"[Startup] Scope initialisation warning: {ex}");
 }
 
 app.Run();

@@ -34,6 +34,5 @@ public class StoreDocument
     [Column("reviewed_at")]
     public DateTime? ReviewedAt { get; set; }
 
-    [ForeignKey("TenantId")]
     public Tenant? Tenant { get; set; }
 }
