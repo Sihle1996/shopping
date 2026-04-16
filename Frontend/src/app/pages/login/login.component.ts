@@ -15,6 +15,9 @@ export class LoginComponent implements OnInit {
   isLoading = false;
   showPassword = false;
   returnUrl: string | null = null;
+  emailUnverified = false;
+  resendLoading = false;
+  resendSent = false;
 
   constructor(
     private fb: FormBuilder,
@@ -33,12 +36,24 @@ export class LoginComponent implements OnInit {
     this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
   }
 
+  resendVerification(): void {
+    const email = this.loginForm.value.email;
+    if (!email) return;
+    this.resendLoading = true;
+    this.authService.resendVerification(email).subscribe({
+      next: () => { this.resendLoading = false; this.resendSent = true; },
+      error: () => { this.resendLoading = false; this.resendSent = true; }
+    });
+  }
+
   onLogin(): void {
     this.loginForm.markAllAsTouched();
     if (this.loginForm.invalid) return;
 
     this.isLoading = true;
     this.errorMessage = '';
+    this.emailUnverified = false;
+    this.resendSent = false;
 
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
@@ -67,7 +82,8 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         if (err.status === 403) {
-          this.errorMessage = 'Please verify your email before logging in. Check your inbox.';
+          this.errorMessage = 'Please verify your email before logging in.';
+          this.emailUnverified = true;
         } else {
           this.errorMessage = 'Invalid email or password';
         }

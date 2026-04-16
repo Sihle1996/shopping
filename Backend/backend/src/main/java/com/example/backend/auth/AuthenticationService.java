@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.beans.factory.annotation.Value;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -70,6 +71,7 @@ public class AuthenticationService {
                 .tenant(tenant)
                 .emailVerified(false)
                 .emailVerificationToken(verificationToken)
+                .emailVerificationTokenExpiresAt(Instant.now().plusSeconds(86400))
                 .build();
 
         user = repository.save(user);
@@ -110,12 +112,31 @@ public class AuthenticationService {
     public AuthenticationResponse verifyEmail(String token) {
         User user = repository.findByEmailVerificationToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired verification link"));
+        if (user.getEmailVerificationTokenExpiresAt() != null &&
+                Instant.now().isAfter(user.getEmailVerificationTokenExpiresAt())) {
+            throw new IllegalArgumentException("This link has expired. Please request a new verification email.");
+        }
         user.setEmailVerified(true);
         user.setEmailVerificationToken(null);
+        user.setEmailVerificationTokenExpiresAt(null);
         repository.save(user);
         UUID tenantId = user.getTenant() != null ? user.getTenant().getId() : null;
         String jwtToken = jwtService.generateTokenWithId(user, user.getId(), tenantId);
         return AuthenticationResponse.builder().token(jwtToken).build();
+    }
+
+    public void resendVerificationEmail(String email) {
+        User user = repository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("No account found with that email"));
+        if (user.isEmailVerified()) {
+            throw new IllegalArgumentException("This account is already verified");
+        }
+        String token = UUID.randomUUID().toString();
+        user.setEmailVerificationToken(token);
+        user.setEmailVerificationTokenExpiresAt(Instant.now().plusSeconds(86400));
+        repository.save(user);
+        String verifyUrl = frontendUrl + "/verify-email?token=" + token;
+        emailService.sendVerificationEmail(email, email, verifyUrl);
     }
 
     public User findById(UUID id) {

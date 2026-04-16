@@ -49,6 +49,9 @@ public class User implements UserDetails {
     @Column(name = "email_verification_token")
     private String emailVerificationToken;
 
+    @Column(name = "email_verification_token_expires_at")
+    private java.time.Instant emailVerificationTokenExpiresAt;
+
     private String fullName;
     private String phone;
     private String vehicleType;

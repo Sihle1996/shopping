@@ -86,9 +86,20 @@
         <!-- Error -->
         <div *ngIf="errorMessage"
              data-testid="login-error"
-             class="flex items-center gap-2 text-danger text-sm bg-red-50 px-4 py-2.5 rounded-xl">
-          <i class="bi bi-exclamation-circle"></i>
-          <span>{{ errorMessage }}</span>
+             class="text-sm bg-red-50 border border-red-100 px-4 py-3 rounded-xl space-y-2">
+          <div class="flex items-center gap-2 text-danger">
+            <i class="bi bi-exclamation-circle"></i>
+            <span>{{ errorMessage }}</span>
+          </div>
+          <div *ngIf="emailUnverified">
+            <button *ngIf="!resendSent" type="button" (click)="resendVerification()" [disabled]="resendLoading"
+                    class="text-xs text-primary font-semibold hover:underline disabled:opacity-60">
+              {{ resendLoading ? 'Sending…' : 'Resend verification email' }}
+            </button>
+            <p *ngIf="resendSent" class="text-xs text-green-700">
+              <i class="bi bi-check-circle-fill mr-1"></i>Verification email sent — check your inbox.
+            </p>
+          </div>
         </div>
 
         <!-- Submit -->
