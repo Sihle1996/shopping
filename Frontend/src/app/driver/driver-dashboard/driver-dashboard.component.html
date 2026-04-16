@@ -390,6 +390,11 @@
         <i class="bi bi-check-circle-fill flex-shrink-0"></i>
         OTP sent! Ask the customer for the code.
       </p>
+      <!-- Show OTP directly so driver can complete delivery if customer email fails -->
+      <div *ngIf="otpValue" class="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-center">
+        <p class="text-xs text-amber-700 mb-1">Customer OTP (driver view)</p>
+        <p class="text-2xl font-bold font-mono tracking-[0.4em] text-amber-800">{{ otpValue }}</p>
+      </div>
       <input type="text" [(ngModel)]="otpCode" maxlength="6" inputmode="numeric"
              placeholder="Enter 6-digit OTP"
              class="w-full px-4 py-3 rounded-xl border border-borderColor text-center text-2xl font-bold tracking-[0.5em] font-mono bg-surface focus:outline-none focus:ring-2 focus:ring-primary-400" />

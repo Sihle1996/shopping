@@ -48,6 +48,7 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
   otpVerifying = false;
   otpSent = false;
   otpError = '';
+  otpValue = '';
 
   lastUpdatedSeconds = 0;
   private pollInterval: any;
@@ -147,6 +148,7 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
     this.otpCode = '';
     this.otpSent = false;
     this.otpError = '';
+    this.otpValue = '';
     this.showOtpModal = true;
   }
 
@@ -155,9 +157,10 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
     this.otpSending = true;
     this.otpError = '';
     this.driverService.requestDeliveryOtp(this.otpOrderId).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.otpSent = true;
         this.otpSending = false;
+        this.otpValue = res?.otp ?? '';
         this.toastr.info('OTP sent to customer');
       },
       error: (err) => {
@@ -190,6 +193,7 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
     this.showOtpModal = false;
     this.otpOrderId = null;
     this.otpCode = '';
+    this.otpValue = '';
   }
 
   onDeliverConfirmed(): void { /* unused — kept for template compat */ }

@@ -67,7 +67,7 @@ public class DriverService {
             emailService.sendDeliveryOtp(customerEmail, otp, storeName, order.getId().toString());
         }
 
-        return Map.of("message", "OTP sent to customer");
+        return Map.of("message", "OTP sent to customer", "otp", otp);
     }
 
     public void verifyDeliveryOtp(User driver, UUID orderId, String otp) {
