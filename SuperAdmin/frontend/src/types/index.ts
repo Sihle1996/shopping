@@ -168,3 +168,27 @@ export interface SubscriptionHealthDto {
   monthlyRevenueForecast: number
   planDistribution: { plan: string; count: number }[]
 }
+
+export type DocumentType = 'CIPC' | 'COA' | 'BANK_DETAILS' | 'STOREFRONT_PHOTO'
+export type DocumentStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED'
+
+export interface StoreDocumentDto {
+  id: string
+  documentType: DocumentType
+  fileUrl: string
+  fileName: string
+  status: DocumentStatus
+  reviewNotes?: string
+  uploadedAt: string
+}
+
+export interface PendingEnrollmentDto {
+  id: string
+  name: string
+  slug: string
+  email?: string
+  phone?: string
+  address?: string
+  submittedAt: string
+  documents: StoreDocumentDto[]
+}

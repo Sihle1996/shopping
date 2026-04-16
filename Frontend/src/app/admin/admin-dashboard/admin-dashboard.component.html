@@ -3,6 +3,41 @@
 <div class="px-4 pt-6 pb-24 lg:px-8 lg:pb-8">
   <div class="w-full">
 
+    <!-- Enrollment banner (shown when store is not yet approved) -->
+    <div *ngIf="setupSettings && setupSettings.approvalStatus && setupSettings.approvalStatus !== 'APPROVED'"
+         class="mb-6 rounded-2xl border p-5 flex flex-col sm:flex-row sm:items-center gap-4"
+         [ngClass]="setupSettings.approvalStatus === 'REJECTED'
+           ? 'bg-red-50 border-red-200'
+           : 'bg-amber-50 border-amber-200'">
+      <div class="flex items-start gap-3 flex-1">
+        <i class="bi text-xl flex-shrink-0 mt-0.5"
+           [ngClass]="setupSettings.approvalStatus === 'REJECTED' ? 'bi-exclamation-triangle-fill text-red-500' : 'bi-hourglass-split text-amber-500'"></i>
+        <div>
+          <p class="font-semibold text-sm"
+             [ngClass]="setupSettings.approvalStatus === 'REJECTED' ? 'text-red-700' : 'text-amber-700'">
+            {{ setupSettings.approvalStatus === 'PENDING_REVIEW' ? 'Application under review' :
+               setupSettings.approvalStatus === 'REJECTED'       ? 'Application rejected' :
+               'Store verification required' }}
+          </p>
+          <p class="text-xs mt-0.5"
+             [ngClass]="setupSettings.approvalStatus === 'REJECTED' ? 'text-red-600' : 'text-amber-600'">
+            {{ setupSettings.approvalStatus === 'PENDING_REVIEW' ?
+               'Your documents are being reviewed. You\'ll receive an email once approved.' :
+               setupSettings.approvalStatus === 'REJECTED' ?
+               'Your application was not approved. Please review the feedback and resubmit.' :
+               'Upload your verification documents to go live and start accepting orders.' }}
+          </p>
+        </div>
+      </div>
+      <a routerLink="/admin/enrollment"
+         class="flex-shrink-0 text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+         [ngClass]="setupSettings.approvalStatus === 'REJECTED'
+           ? 'bg-red-500 text-white hover:bg-red-600'
+           : 'bg-amber-500 text-white hover:bg-amber-600'">
+        {{ setupSettings.approvalStatus === 'PENDING_REVIEW' ? 'View Status' : 'Complete Verification' }}
+      </a>
+    </div>
+
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
       <div>

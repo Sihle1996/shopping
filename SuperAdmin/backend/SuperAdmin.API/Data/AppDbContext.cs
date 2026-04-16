@@ -10,6 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
     public DbSet<PlatformSettings> PlatformSettings => Set<PlatformSettings>();
+    public DbSet<StoreDocument> StoreDocuments => Set<StoreDocument>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -41,5 +42,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Order>().HasIndex(o => o.TenantId);
         modelBuilder.Entity<Order>().HasIndex(o => o.OrderDate);
         modelBuilder.Entity<Order>().HasIndex(o => o.Status);
+
+        // StoreDocuments
+        modelBuilder.Entity<StoreDocument>()
+            .HasOne(d => d.Tenant)
+            .WithMany(t => t.StoreDocuments)
+            .HasForeignKey(d => d.TenantId);
+        modelBuilder.Entity<StoreDocument>().HasIndex(d => d.TenantId);
     }
 }

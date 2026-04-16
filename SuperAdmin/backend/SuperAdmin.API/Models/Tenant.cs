@@ -58,5 +58,18 @@ public class Tenant
     [Column("trial_started_at")]
     public DateTime? TrialStartedAt { get; set; }
 
+    [Column("approval_status")]
+    public string ApprovalStatus { get; set; } = "APPROVED";
+
+    [Column("rejection_reason")]
+    public string? RejectionReason { get; set; }
+
+    [Column("submitted_for_review_at")]
+    public DateTime? SubmittedForReviewAt { get; set; }
+
+    [Column("approved_at")]
+    public DateTime? ApprovedAt { get; set; }
+
     public ICollection<User> Users { get; set; } = new List<User>();
+    public ICollection<StoreDocument> StoreDocuments { get; set; } = new List<StoreDocument>();
 }

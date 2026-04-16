@@ -1,6 +1,8 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Store, Users, Truck, CreditCard, LogOut, Zap, ShoppingBag, Settings } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { LayoutDashboard, Store, Users, Truck, CreditCard, LogOut, Zap, ShoppingBag, Settings, ClipboardCheck } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { enrollmentService } from '../../services/enrollment.service'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -9,6 +11,7 @@ const navItems = [
   { to: '/drivers', label: 'Drivers', icon: Truck },
   { to: '/orders', label: 'Orders', icon: ShoppingBag },
   { to: '/subscriptions', label: 'Subscriptions', icon: CreditCard },
+  { to: '/enrollment', label: 'Enrollments', icon: ClipboardCheck },
   { to: '/settings', label: 'Settings', icon: Settings }
 ]
 
@@ -19,6 +22,15 @@ function getInitials(email: string) {
 export default function Sidebar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+
+  const { data: pending = [] } = useQuery({
+    queryKey: ['enrollment-pending'],
+    queryFn: () => enrollmentService.getPending(),
+    staleTime: 60_000,
+    refetchInterval: 120_000
+  })
+
+  const pendingCount = pending.length
 
   return (
     <aside
@@ -54,7 +66,12 @@ export default function Sidebar() {
             {({ isActive }) => (
               <>
                 <Icon size={17} className={isActive ? 'text-orange-400' : ''} />
-                {label}
+                <span className="flex-1">{label}</span>
+                {to === '/enrollment' && pendingCount > 0 && (
+                  <span className="flex-shrink-0 min-w-[18px] h-[18px] bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                    {pendingCount}
+                  </span>
+                )}
               </>
             )}
           </NavLink>

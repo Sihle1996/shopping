@@ -180,6 +180,95 @@ public class EmailService {
         send(toEmail, subject, html);
     }
 
+    public void sendDocumentsReceivedEmail(String storeName, String toEmail) {
+        if (apiKey == null || apiKey.isBlank()) {
+            log.warn("RESEND_API_KEY not configured — skipping documents received email");
+            return;
+        }
+        String html = String.format("""
+            <div style='font-family:Inter,Helvetica,Arial,sans-serif;background:#f9fafb;padding:40px 0;'>
+              <div style='max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);'>
+                <div style='background:#111827;padding:28px 36px;text-align:center;'>
+                  <h1 style='margin:0;color:#ffffff;font-size:20px;font-weight:700;'>CraveIt</h1>
+                  <p style='margin:8px 0 0;color:#9ca3af;font-size:13px;'>Store Application Received</p>
+                </div>
+                <div style='padding:32px 36px;'>
+                  <p style='margin:0 0 16px;color:#374151;font-size:15px;'>Hi <strong>%s</strong>,</p>
+                  <p style='margin:0 0 16px;color:#374151;font-size:15px;line-height:1.6;'>We've received your store application and documents. Our team will review your submission within <strong>1–2 business days</strong>.</p>
+                  <p style='margin:0 0 24px;color:#374151;font-size:15px;line-height:1.6;'>We'll send you an email as soon as a decision has been made.</p>
+                  <div style='background:#fef3c7;border-radius:10px;padding:16px 20px;border-left:4px solid #f59e0b;'>
+                    <p style='margin:0;color:#92400e;font-size:13px;line-height:1.5;'>Your store will remain inactive until your application is approved.</p>
+                  </div>
+                </div>
+                <div style='background:#f9fafb;padding:16px 36px;text-align:center;border-top:1px solid #e5e7eb;'>
+                  <p style='margin:0;color:#9ca3af;font-size:12px;'>CraveIt Platform &mdash; noreply@crave-it.co.za</p>
+                </div>
+              </div>
+            </div>
+            """, escapeHtml(storeName));
+        send(toEmail, "We've received your application — CraveIt", html);
+    }
+
+    public void sendStoreApprovedEmail(String storeName, String toEmail, String dashboardUrl) {
+        if (apiKey == null || apiKey.isBlank()) {
+            log.warn("RESEND_API_KEY not configured — skipping store approved email");
+            return;
+        }
+        String html = String.format("""
+            <div style='font-family:Inter,Helvetica,Arial,sans-serif;background:#f9fafb;padding:40px 0;'>
+              <div style='max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);'>
+                <div style='background:#111827;padding:28px 36px;text-align:center;'>
+                  <h1 style='margin:0;color:#ffffff;font-size:20px;font-weight:700;'>CraveIt</h1>
+                  <p style='margin:8px 0 0;color:#9ca3af;font-size:13px;'>Store Approved 🎉</p>
+                </div>
+                <div style='padding:32px 36px;'>
+                  <p style='margin:0 0 16px;color:#374151;font-size:15px;'>Hi <strong>%s</strong>,</p>
+                  <p style='margin:0 0 16px;color:#374151;font-size:15px;line-height:1.6;'>Congratulations! Your store application has been <strong style='color:#10b981;'>approved</strong>. You can now log in and start accepting orders from customers.</p>
+                  <a href='%s' style='display:inline-block;background:#E76F51;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:15px;font-weight:600;margin-bottom:24px;'>Go to Dashboard</a>
+                  <p style='margin:0;color:#6b7280;font-size:13px;line-height:1.5;'>Complete your store setup — add your menu, set your hours, and open your store when you're ready.</p>
+                </div>
+                <div style='background:#f9fafb;padding:16px 36px;text-align:center;border-top:1px solid #e5e7eb;'>
+                  <p style='margin:0;color:#9ca3af;font-size:12px;'>CraveIt Platform &mdash; noreply@crave-it.co.za</p>
+                </div>
+              </div>
+            </div>
+            """, escapeHtml(storeName), escapeHtml(dashboardUrl));
+        send(toEmail, "Your store is approved — Welcome to CraveIt!", html);
+    }
+
+    public void sendStoreRejectedEmail(String storeName, String toEmail, String reason, String resubmitUrl) {
+        if (apiKey == null || apiKey.isBlank()) {
+            log.warn("RESEND_API_KEY not configured — skipping store rejected email");
+            return;
+        }
+        String reasonBlock = (reason != null && !reason.isBlank())
+                ? String.format("<div style='background:#fef2f2;border-radius:10px;padding:16px 20px;border-left:4px solid #ef4444;margin-bottom:20px;'>"
+                        + "<p style='margin:0 0 4px;color:#7f1d1d;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;'>Reason</p>"
+                        + "<p style='margin:0;color:#991b1b;font-size:14px;line-height:1.5;'>%s</p>"
+                        + "</div>", escapeHtml(reason))
+                : "";
+        String html = String.format("""
+            <div style='font-family:Inter,Helvetica,Arial,sans-serif;background:#f9fafb;padding:40px 0;'>
+              <div style='max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);'>
+                <div style='background:#111827;padding:28px 36px;text-align:center;'>
+                  <h1 style='margin:0;color:#ffffff;font-size:20px;font-weight:700;'>CraveIt</h1>
+                  <p style='margin:8px 0 0;color:#9ca3af;font-size:13px;'>Application Update</p>
+                </div>
+                <div style='padding:32px 36px;'>
+                  <p style='margin:0 0 16px;color:#374151;font-size:15px;'>Hi <strong>%s</strong>,</p>
+                  <p style='margin:0 0 20px;color:#374151;font-size:15px;line-height:1.6;'>Unfortunately, your store application was not approved at this time. Please review the feedback below, update your documents, and resubmit.</p>
+                  %s
+                  <a href='%s' style='display:inline-block;background:#E76F51;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:15px;font-weight:600;'>Update & Resubmit</a>
+                </div>
+                <div style='background:#f9fafb;padding:16px 36px;text-align:center;border-top:1px solid #e5e7eb;'>
+                  <p style='margin:0;color:#9ca3af;font-size:12px;'>CraveIt Platform &mdash; noreply@crave-it.co.za</p>
+                </div>
+              </div>
+            </div>
+            """, escapeHtml(storeName), reasonBlock, escapeHtml(resubmitUrl));
+        send(toEmail, "Action required on your CraveIt application", html);
+    }
+
     private void send(String to, String subject, String html) {
         try {
             HttpHeaders headers = new HttpHeaders();

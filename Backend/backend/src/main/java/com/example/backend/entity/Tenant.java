@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -87,9 +88,24 @@ public class Tenant {
     @Column(length = 50)
     private String cuisineType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "approval_status", nullable = false, columnDefinition = "varchar(20) default 'APPROVED'")
+    @Builder.Default
+    private ApprovalStatus approvalStatus = ApprovalStatus.APPROVED;
+
+    @Column(columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    private Instant submittedForReviewAt;
+    private Instant approvedAt;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public enum ApprovalStatus {
+        DRAFT, PENDING_REVIEW, APPROVED, REJECTED
+    }
 }

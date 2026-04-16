@@ -1,17 +1,23 @@
 package com.example.backend.controller;
 
+import com.example.backend.entity.StoreDocument;
 import com.example.backend.entity.StoreHours;
 import com.example.backend.entity.Tenant;
 import com.example.backend.repository.OrderRepository;
+import com.example.backend.repository.StoreDocumentRepository;
 import com.example.backend.repository.StoreHoursRepository;
 import com.example.backend.repository.TenantRepository;
+import com.example.backend.service.EmailService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -28,6 +34,11 @@ public class TenantController {
     private final TenantRepository tenantRepository;
     private final OrderRepository orderRepository;
     private final StoreHoursRepository storeHoursRepository;
+    private final StoreDocumentRepository storeDocumentRepository;
+    private final EmailService emailService;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     // Public - list active tenants (for customer store selection)
     // Must be defined BEFORE {slug} to avoid path conflict
@@ -127,6 +138,9 @@ public class TenantController {
         if ("TRIAL".equals(tenant.getSubscriptionStatus()) || tenant.getSubscriptionStatus() == null) {
             tenant.setTrialStartedAt(LocalDateTime.now());
         }
+        // New stores start inactive; they must submit documents and be approved
+        tenant.setActive(false);
+        tenant.setApprovalStatus(Tenant.ApprovalStatus.DRAFT);
         Tenant saved = tenantRepository.save(tenant);
         return ResponseEntity.created(URI.create("/api/tenants/" + saved.getSlug())).body(saved);
     }
@@ -264,6 +278,59 @@ public class TenantController {
                 totalTenants, activeTenants, totalOrders, totalRevenue,
                 planBreakdown, statusBreakdown, recentTenants, trialsExpiringSoon));
     }
+
+    // SUPERADMIN — enrollment: list stores pending review
+    @GetMapping("/api/superadmin/enrollment/pending")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    public ResponseEntity<List<PendingEnrollmentDto>> getPendingEnrollments() {
+        List<Tenant> pending = tenantRepository.findByApprovalStatus(Tenant.ApprovalStatus.PENDING_REVIEW);
+        List<PendingEnrollmentDto> result = pending.stream().map(t -> {
+            List<StoreDocument> docs = storeDocumentRepository.findByTenantId(t.getId());
+            return new PendingEnrollmentDto(
+                    t.getId(), t.getName(), t.getSlug(), t.getEmail(), t.getPhone(),
+                    t.getAddress(), t.getSubmittedForReviewAt(), docs
+            );
+        }).toList();
+        return ResponseEntity.ok(result);
+    }
+
+    // SUPERADMIN — enrollment: approve a store
+    @PostMapping("/api/superadmin/enrollment/{tenantId}/approve")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    @Transactional
+    public ResponseEntity<?> approveEnrollment(@PathVariable UUID tenantId) {
+        return tenantRepository.findById(tenantId).map(tenant -> {
+            tenant.setApprovalStatus(Tenant.ApprovalStatus.APPROVED);
+            tenant.setActive(true);
+            tenant.setApprovedAt(Instant.now());
+            tenant.setRejectionReason(null);
+            tenantRepository.save(tenant);
+            emailService.sendStoreApprovedEmail(tenant.getName(), tenant.getEmail(),
+                    frontendUrl + "/admin/dashboard");
+            return ResponseEntity.ok(Map.of("message", "Store approved"));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // SUPERADMIN — enrollment: reject a store
+    @PostMapping("/api/superadmin/enrollment/{tenantId}/reject")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    @Transactional
+    public ResponseEntity<?> rejectEnrollment(@PathVariable UUID tenantId,
+                                               @RequestBody Map<String, String> body) {
+        String reason = body.getOrDefault("reason", "");
+        return tenantRepository.findById(tenantId).map(tenant -> {
+            tenant.setApprovalStatus(Tenant.ApprovalStatus.REJECTED);
+            tenant.setRejectionReason(reason);
+            tenantRepository.save(tenant);
+            emailService.sendStoreRejectedEmail(tenant.getName(), tenant.getEmail(), reason,
+                    frontendUrl + "/admin/enrollment");
+            return ResponseEntity.ok(Map.of("message", "Store rejected"));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    public record PendingEnrollmentDto(
+            UUID id, String name, String slug, String email, String phone,
+            String address, Instant submittedAt, List<StoreDocument> documents) {}
 
     public record RecentTenant(UUID id, String name, String slug,
                                String subscriptionPlan, String subscriptionStatus,

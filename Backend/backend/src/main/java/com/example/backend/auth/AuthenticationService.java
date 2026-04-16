@@ -75,7 +75,10 @@ public class AuthenticationService {
             user = repository.save(user);
             UUID userTenantId = tenant.getId();
             String jwtToken = jwtService.generateTokenWithId(user, user.getId(), userTenantId);
-            return AuthenticationResponse.builder().token(jwtToken).build();
+            return AuthenticationResponse.builder()
+                    .token(jwtToken)
+                    .approvalStatus(tenant.getApprovalStatus().name())
+                    .build();
         }
 
         // Customer registration — require email verification
@@ -117,8 +120,13 @@ public class AuthenticationService {
         UUID userTenantId = user.getTenant() != null ? user.getTenant().getId() : null;
         String jwtToken = jwtService.generateTokenWithId(user, user.getId(), userTenantId);
 
+        String approvalStatus = (user.getTenant() != null && user.getTenant().getApprovalStatus() != null)
+                ? user.getTenant().getApprovalStatus().name()
+                : null;
+
         return AuthenticationResponse.builder()
                 .token(jwtToken)
+                .approvalStatus(approvalStatus)
                 .build();
     }
 

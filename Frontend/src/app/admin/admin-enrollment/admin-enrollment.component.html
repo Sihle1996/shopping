@@ -1,0 +1,130 @@
+<div class="min-h-screen bg-surface py-10 px-4">
+  <div class="max-w-2xl mx-auto">
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="flex justify-center py-20">
+      <i class="bi bi-arrow-repeat animate-spin text-3xl text-primary"></i>
+    </div>
+
+    <ng-container *ngIf="!loading">
+
+      <!-- ── PENDING REVIEW ──────────────────────────────────────────────── -->
+      <div *ngIf="state.approvalStatus === 'PENDING_REVIEW'"
+           class="bg-white rounded-2xl shadow-card p-8 text-center">
+        <div class="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="bi bi-hourglass-split text-amber-500 text-2xl"></i>
+        </div>
+        <h2 class="font-heading text-xl font-bold text-textDark mb-2">Application Under Review</h2>
+        <p class="text-textMuted text-sm mb-6">
+          We've received your documents and will review your application within 1–2 business days.
+          You'll receive an email once a decision has been made.
+        </p>
+        <div class="text-left space-y-2 mt-4">
+          <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-3">Submitted documents</p>
+          <div *ngFor="let doc of state.documents"
+               class="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 text-sm">
+            <i class="bi bi-file-earmark-check text-green-500"></i>
+            <span class="flex-1 text-textDark font-medium">{{ docLabel(doc.documentType) }}</span>
+            <a [href]="doc.fileUrl" target="_blank" class="text-primary hover:underline text-xs">View</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── APPROVED ───────────────────────────────────────────────────── -->
+      <div *ngIf="state.approvalStatus === 'APPROVED'"
+           class="bg-white rounded-2xl shadow-card p-8 text-center">
+        <div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="bi bi-check-circle-fill text-green-500 text-2xl"></i>
+        </div>
+        <h2 class="font-heading text-xl font-bold text-textDark mb-2">Store Approved</h2>
+        <p class="text-textMuted text-sm">Your store is live. Head to the dashboard to start accepting orders.</p>
+        <a routerLink="/admin/dashboard"
+           class="mt-6 inline-block bg-primary text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-primary-600 transition-colors">
+          Go to Dashboard
+        </a>
+      </div>
+
+      <!-- ── DRAFT / REJECTED ───────────────────────────────────────────── -->
+      <div *ngIf="state.approvalStatus === 'DRAFT' || state.approvalStatus === 'REJECTED'">
+
+        <!-- Header -->
+        <div class="mb-8">
+          <h1 class="font-heading text-2xl font-bold text-textDark mb-1">Store Verification</h1>
+          <p class="text-textMuted text-sm">Upload the required documents to verify your store and start accepting orders.</p>
+        </div>
+
+        <!-- Rejection alert -->
+        <div *ngIf="state.approvalStatus === 'REJECTED' && state.rejectionReason"
+             class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex gap-3">
+          <i class="bi bi-exclamation-triangle-fill text-red-500 flex-shrink-0 mt-0.5"></i>
+          <div>
+            <p class="text-sm font-semibold text-red-700 mb-1">Application rejected</p>
+            <p class="text-sm text-red-600">{{ state.rejectionReason }}</p>
+            <p class="text-xs text-red-500 mt-1">Please update your documents below and resubmit.</p>
+          </div>
+        </div>
+
+        <!-- Document cards -->
+        <div class="space-y-4 mb-8">
+          <div *ngFor="let dt of DOC_TYPES"
+               class="bg-white rounded-2xl shadow-card p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+
+            <!-- Icon + info -->
+            <div class="flex items-start gap-3 flex-1">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                   [class]="getDoc(dt.type) ? 'bg-green-50' : 'bg-gray-100'">
+                <i class="bi text-lg"
+                   [class]="getDoc(dt.type) ? 'bi-file-earmark-check text-green-500' : 'bi-file-earmark text-textMuted'"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold text-textDark text-sm">
+                  {{ dt.label }}
+                  <span *ngIf="dt.required" class="text-red-500 ml-0.5">*</span>
+                </p>
+                <p class="text-xs text-textMuted mt-0.5">{{ dt.hint }}</p>
+                <div *ngIf="getDoc(dt.type)" class="mt-2 flex items-center gap-2">
+                  <span class="text-xs text-green-600 font-medium truncate max-w-[180px]">{{ getDoc(dt.type)!.fileName }}</span>
+                  <a [href]="getDoc(dt.type)!.fileUrl" target="_blank"
+                     class="text-xs text-primary hover:underline flex-shrink-0">View</a>
+                  <button (click)="removeDoc(getDoc(dt.type)!)"
+                          class="text-xs text-red-400 hover:text-red-600 flex-shrink-0">Remove</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Upload button -->
+            <div class="flex-shrink-0">
+              <label [for]="'upload-' + dt.type"
+                     class="inline-flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                     [class]="getDoc(dt.type)
+                       ? 'bg-gray-100 text-textMuted hover:bg-gray-200'
+                       : 'bg-primary text-white hover:bg-primary-600'">
+                <i class="bi" [class]="uploading[dt.type] ? 'bi-arrow-repeat animate-spin' : 'bi-upload'"></i>
+                {{ getDoc(dt.type) ? 'Replace' : 'Upload' }}
+              </label>
+              <input [id]="'upload-' + dt.type" type="file" class="hidden"
+                     accept=".pdf,.jpg,.jpeg,.png"
+                     (change)="uploadFile($event, dt.type)"
+                     [disabled]="uploading[dt.type]">
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex flex-col items-center gap-3">
+          <button (click)="submit()"
+                  [disabled]="!canSubmit() || submitting"
+                  class="w-full max-w-sm py-4 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-600 transition-colors disabled:opacity-50">
+            <span *ngIf="!submitting">Submit for Review</span>
+            <span *ngIf="submitting"><i class="bi bi-arrow-repeat animate-spin mr-2"></i>Submitting…</span>
+          </button>
+          <p *ngIf="!canSubmit()" class="text-xs text-textMuted">
+            Upload all required documents to enable submission.
+          </p>
+        </div>
+
+      </div>
+
+    </ng-container>
+  </div>
+</div>
