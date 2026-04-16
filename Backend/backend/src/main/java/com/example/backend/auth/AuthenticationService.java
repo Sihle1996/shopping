@@ -128,7 +128,9 @@ public class AuthenticationService {
                 + "<p style='color:#999;font-size:12px;'>This code expires in 15 minutes. If you didn't request this, ignore this email.</p>"
                 + "</div>";
 
-        emailService.sendRaw(user.getEmail(), "Your password reset code", html);
+        if (user.getEmail() != null && !user.getEmail().isBlank()) {
+            emailService.sendRaw(user.getEmail(), "Your password reset code", html);
+        }
     }
 
     public void resetPassword(String email, String otp, String newPassword) {

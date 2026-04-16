@@ -20,7 +20,7 @@ public class EmailService {
     @Value("${resend.api-key:}")
     private String apiKey;
 
-    @Value("${resend.from:orders@resend.dev}")
+    @Value("${resend.from:noreply@crave-it.co.za}")
     private String fromAddress;
 
     private final RestTemplate restTemplate;

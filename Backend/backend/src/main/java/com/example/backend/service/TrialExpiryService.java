@@ -39,7 +39,7 @@ public class TrialExpiryService {
                     "<p>Hi <strong>" + tenant.getName() + "</strong>,</p>" +
                     "<p>Your <strong>" + previousPlan + "</strong> subscription has ended and your account " +
                     "has moved to the <strong>BASIC</strong> plan.</p>" +
-                    "<p>You can upgrade again at any time from your <a href=\"https://fastfood.app/admin/subscription\">subscription settings</a>.</p>"
+                    "<p>You can upgrade again at any time from your <a href=\"https://crave-it.co.za/admin/subscription\">subscription settings</a>.</p>"
                 );
             }
         }
@@ -53,7 +53,7 @@ public class TrialExpiryService {
             if (tenant.getEmail() != null) {
                 emailService.sendRaw(
                     tenant.getEmail(),
-                    "Your FastFood trial has ended",
+                    "Your CraveIt trial has ended",
                     buildSuspendedHtml(tenant.getName())
                 );
             }
@@ -69,7 +69,7 @@ public class TrialExpiryService {
             if (tenant.getEmail() != null) {
                 emailService.sendRaw(
                     tenant.getEmail(),
-                    "How's your FastFood trial going?",
+                    "How's your CraveIt trial going?",
                     buildDay3Html(tenant.getName())
                 );
             }
@@ -101,7 +101,7 @@ public class TrialExpiryService {
             if (tenant.getEmail() != null) {
                 emailService.sendRaw(
                     tenant.getEmail(),
-                    "4 days left on your FastFood trial",
+                    "4 days left on your CraveIt trial",
                     buildWarningHtml(tenant.getName())
                 );
             }
@@ -110,10 +110,10 @@ public class TrialExpiryService {
 
     private String buildDay3Html(String name) {
         return "<p>Hi <strong>" + name + "</strong>,</p>" +
-               "<p>You're 3 days into your free trial — we hope you're enjoying FastFood!</p>" +
+               "<p>You're 3 days into your free trial — we hope you're enjoying CraveIt!</p>" +
                "<p>Have you had a chance to explore the menu builder, driver management, and order tracking?</p>" +
                "<p>If you need any help getting set up, just reply to this email — we're happy to assist.</p>" +
-               "<p><a href=\"https://fastfood.app/admin/subscription\">View plans and pricing →</a></p>";
+               "<p><a href=\"https://crave-it.co.za/admin/subscription\">View plans and pricing →</a></p>";
     }
 
     private String buildDay7Html(String name) {
@@ -125,7 +125,7 @@ public class TrialExpiryService {
                "<li><strong>PRO</strong> — R699/month, up to 100 items + promotions</li>" +
                "<li><strong>ENTERPRISE</strong> — R1,499/month, unlimited everything</li>" +
                "</ul>" +
-               "<p><a href=\"https://fastfood.app/admin/subscription\">Upgrade now →</a></p>";
+               "<p><a href=\"https://crave-it.co.za/admin/subscription\">Upgrade now →</a></p>";
     }
 
     private String buildSuspendedHtml(String name) {
