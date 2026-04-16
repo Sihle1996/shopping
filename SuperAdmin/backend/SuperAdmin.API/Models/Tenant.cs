@@ -58,6 +58,21 @@ public class Tenant
     [Column("trial_started_at")]
     public DateTime? TrialStartedAt { get; set; }
 
+    [Column("cipc_number")]
+    public string? CipcNumber { get; set; }
+
+    [Column("bank_name")]
+    public string? BankName { get; set; }
+
+    [Column("bank_account_number")]
+    public string? BankAccountNumber { get; set; }
+
+    [Column("bank_account_type")]
+    public string? BankAccountType { get; set; }
+
+    [Column("bank_branch_code")]
+    public string? BankBranchCode { get; set; }
+
     [Column("approval_status")]
     public string ApprovalStatus { get; set; } = "APPROVED";
 

@@ -28,6 +28,11 @@ public class EnrollmentController(AppDbContext db) : ControllerBase
             t.Phone,
             t.Address,
             submittedAt = t.SubmittedForReviewAt,
+            t.CipcNumber,
+            t.BankName,
+            t.BankAccountNumber,
+            t.BankAccountType,
+            t.BankBranchCode,
             documents = t.StoreDocuments.Select(d => new
             {
                 d.Id,

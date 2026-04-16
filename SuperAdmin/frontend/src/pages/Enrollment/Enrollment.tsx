@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { enrollmentService } from '../../services/enrollment.service'
 import { useToast } from '../../context/ToastContext'
 import type { PendingEnrollmentDto, StoreDocumentDto } from '../../types'
-import { CheckCircle, XCircle, FileText, ChevronDown, ChevronUp, ExternalLink, Clock } from 'lucide-react'
+import { CheckCircle, XCircle, FileText, ChevronDown, ChevronUp, ExternalLink, Clock, AlertTriangle } from 'lucide-react'
 
 const DOC_LABELS: Record<string, string> = {
   CIPC: 'CIPC Registration Certificate',
@@ -18,6 +18,20 @@ function formatDate(iso?: string | null) {
     year: 'numeric', month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit'
   })
+}
+
+function getWaitingHours(submittedAt?: string | null): number {
+  if (!submittedAt) return 0
+  return (Date.now() - new Date(submittedAt).getTime()) / 3_600_000
+}
+
+function SlaChip({ submittedAt }: { submittedAt?: string | null }) {
+  const hours = getWaitingHours(submittedAt)
+  if (hours < 24)
+    return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400">{Math.round(hours)}h waiting</span>
+  if (hours < 48)
+    return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 flex items-center gap-1"><AlertTriangle size={10} />{Math.round(hours)}h waiting</span>
+  return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 flex items-center gap-1"><AlertTriangle size={10} />Overdue — {Math.round(hours / 24)}d</span>
 }
 
 function DocumentRow({ doc }: { doc: StoreDocumentDto }) {
@@ -45,7 +59,10 @@ function EnrollmentRow({ store, onApprove, onReject, approving, rejecting }:
       {/* Header row */}
       <div className="flex items-center gap-4 px-5 py-4">
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-white truncate">{store.name}</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-semibold text-white truncate">{store.name}</p>
+            <SlaChip submittedAt={store.submittedAt} />
+          </div>
           <p className="text-xs text-gray-500 mt-0.5">
             {store.email ?? '—'} &bull; {store.phone ?? '—'}
           </p>
@@ -67,6 +84,40 @@ function EnrollmentRow({ store, onApprove, onReject, approving, rejecting }:
       {/* Expanded content */}
       {expanded && (
         <div className="border-t border-gray-800 px-5 py-4 space-y-4">
+          {/* Structured details */}
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            {store.cipcNumber && (
+              <div className="bg-gray-800/60 rounded-xl px-4 py-3">
+                <p className="text-gray-500 text-xs mb-1">CIPC Number</p>
+                <p className="text-gray-200 font-medium">{store.cipcNumber}</p>
+              </div>
+            )}
+            {store.bankName && (
+              <div className="bg-gray-800/60 rounded-xl px-4 py-3">
+                <p className="text-gray-500 text-xs mb-1">Bank</p>
+                <p className="text-gray-200 font-medium">{store.bankName}</p>
+              </div>
+            )}
+            {store.bankAccountNumber && (
+              <div className="bg-gray-800/60 rounded-xl px-4 py-3">
+                <p className="text-gray-500 text-xs mb-1">Account Number</p>
+                <p className="text-gray-200 font-medium font-mono">{store.bankAccountNumber}</p>
+              </div>
+            )}
+            {store.bankAccountType && (
+              <div className="bg-gray-800/60 rounded-xl px-4 py-3">
+                <p className="text-gray-500 text-xs mb-1">Account Type</p>
+                <p className="text-gray-200 font-medium">{store.bankAccountType}</p>
+              </div>
+            )}
+            {store.bankBranchCode && (
+              <div className="bg-gray-800/60 rounded-xl px-4 py-3">
+                <p className="text-gray-500 text-xs mb-1">Branch Code</p>
+                <p className="text-gray-200 font-medium font-mono">{store.bankBranchCode}</p>
+              </div>
+            )}
+          </div>
+
           {/* Documents */}
           <div className="space-y-2">
             <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-2">Documents</p>

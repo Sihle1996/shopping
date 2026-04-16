@@ -50,7 +50,7 @@
         <!-- Header -->
         <div class="mb-8">
           <h1 class="font-heading text-2xl font-bold text-textDark mb-1">Store Verification</h1>
-          <p class="text-textMuted text-sm">Upload the required documents to verify your store and start accepting orders.</p>
+          <p class="text-textMuted text-sm">Complete all steps below to submit your store for review.</p>
         </div>
 
         <!-- Rejection alert -->
@@ -60,53 +60,241 @@
           <div>
             <p class="text-sm font-semibold text-red-700 mb-1">Application rejected</p>
             <p class="text-sm text-red-600">{{ state.rejectionReason }}</p>
-            <p class="text-xs text-red-500 mt-1">Please update your documents below and resubmit.</p>
+            <p class="text-xs text-red-500 mt-1">Please update the information below and resubmit.</p>
           </div>
         </div>
 
-        <!-- Document cards -->
-        <div class="space-y-4 mb-8">
-          <div *ngFor="let dt of DOC_TYPES"
-               class="bg-white rounded-2xl shadow-card p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+        <!-- ── Step 1: Business Registration ──────────────────────────────── -->
+        <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
+            <h3 class="font-semibold text-textDark">Business Registration</h3>
+          </div>
 
-            <!-- Icon + info -->
+          <!-- CIPC number -->
+          <div class="mb-4">
+            <label class="block text-xs font-semibold text-textMuted mb-1.5">
+              CIPC Registration Number <span class="text-textMuted font-normal">(or SA ID for sole traders)</span>
+            </label>
+            <input type="text" [(ngModel)]="state.cipcNumber" placeholder="e.g. 2023/123456/07"
+                   [disabled]="!canEdit()"
+                   class="w-full px-4 py-3 rounded-xl border border-borderColor bg-white text-sm text-textDark focus:outline-none focus:border-primary transition-colors disabled:bg-gray-50" />
+          </div>
+
+          <!-- CIPC doc upload -->
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3">
             <div class="flex items-start gap-3 flex-1">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                   [class]="getDoc(dt.type) ? 'bg-green-50' : 'bg-gray-100'">
-                <i class="bi text-lg"
-                   [class]="getDoc(dt.type) ? 'bi-file-earmark-check text-green-500' : 'bi-file-earmark text-textMuted'"></i>
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                   [class]="getDoc('CIPC') ? 'bg-green-50' : 'bg-gray-100'">
+                <i class="bi text-base" [class]="getDoc('CIPC') ? 'bi-file-earmark-check text-green-500' : 'bi-file-earmark text-textMuted'"></i>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="font-semibold text-textDark text-sm">
-                  {{ dt.label }}
-                  <span *ngIf="dt.required" class="text-red-500 ml-0.5">*</span>
-                </p>
-                <p class="text-xs text-textMuted mt-0.5">{{ dt.hint }}</p>
-                <div *ngIf="getDoc(dt.type)" class="mt-2 flex items-center gap-2">
-                  <span class="text-xs text-green-600 font-medium truncate max-w-[180px]">{{ getDoc(dt.type)!.fileName }}</span>
-                  <a [href]="getDoc(dt.type)!.fileUrl" target="_blank"
-                     class="text-xs text-primary hover:underline flex-shrink-0">View</a>
-                  <button (click)="removeDoc(getDoc(dt.type)!)"
-                          class="text-xs text-red-400 hover:text-red-600 flex-shrink-0">Remove</button>
+                <p class="font-medium text-textDark text-sm">CIPC Certificate / SA ID <span class="text-red-500">*</span></p>
+                <p class="text-xs text-textMuted">PDF, JPG or PNG</p>
+                <div *ngIf="getDoc('CIPC')" class="mt-1 flex items-center gap-2">
+                  <span class="text-xs text-green-600 font-medium truncate max-w-[160px]">{{ getDoc('CIPC')!.fileName }}</span>
+                  <a [href]="getDoc('CIPC')!.fileUrl" target="_blank" class="text-xs text-primary hover:underline flex-shrink-0">View</a>
+                  <button (click)="removeDoc(getDoc('CIPC')!)" class="text-xs text-red-400 hover:text-red-600">Remove</button>
                 </div>
               </div>
             </div>
+            <label for="upload-CIPC"
+                   class="flex-shrink-0 inline-flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                   [class]="getDoc('CIPC') ? 'bg-gray-100 text-textMuted hover:bg-gray-200' : 'bg-primary text-white hover:bg-primary-600'">
+              <i class="bi" [class]="uploading['CIPC'] ? 'bi-arrow-repeat animate-spin' : 'bi-upload'"></i>
+              {{ getDoc('CIPC') ? 'Replace' : 'Upload' }}
+            </label>
+            <input id="upload-CIPC" type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png"
+                   (change)="uploadFile($event, 'CIPC')" [disabled]="uploading['CIPC']">
+          </div>
+        </div>
 
-            <!-- Upload button -->
-            <div class="flex-shrink-0">
-              <label [for]="'upload-' + dt.type"
-                     class="inline-flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
-                     [class]="getDoc(dt.type)
-                       ? 'bg-gray-100 text-textMuted hover:bg-gray-200'
-                       : 'bg-primary text-white hover:bg-primary-600'">
-                <i class="bi" [class]="uploading[dt.type] ? 'bi-arrow-repeat animate-spin' : 'bi-upload'"></i>
-                {{ getDoc(dt.type) ? 'Replace' : 'Upload' }}
-              </label>
-              <input [id]="'upload-' + dt.type" type="file" class="hidden"
-                     accept=".pdf,.jpg,.jpeg,.png"
-                     (change)="uploadFile($event, dt.type)"
-                     [disabled]="uploading[dt.type]">
+        <!-- ── Step 2: Food Safety ─────────────────────────────────────────── -->
+        <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
+            <h3 class="font-semibold text-textDark">Food Safety Certificate</h3>
+          </div>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div class="flex items-start gap-3 flex-1">
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                   [class]="getDoc('COA') ? 'bg-green-50' : 'bg-gray-100'">
+                <i class="bi text-base" [class]="getDoc('COA') ? 'bi-file-earmark-check text-green-500' : 'bi-file-earmark text-textMuted'"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-textDark text-sm">Certificate of Acceptability <span class="text-red-500">*</span></p>
+                <p class="text-xs text-textMuted">Issued by your municipality — PDF, JPG or PNG</p>
+                <div *ngIf="getDoc('COA')" class="mt-1 flex items-center gap-2">
+                  <span class="text-xs text-green-600 font-medium truncate max-w-[160px]">{{ getDoc('COA')!.fileName }}</span>
+                  <a [href]="getDoc('COA')!.fileUrl" target="_blank" class="text-xs text-primary hover:underline flex-shrink-0">View</a>
+                  <button (click)="removeDoc(getDoc('COA')!)" class="text-xs text-red-400 hover:text-red-600">Remove</button>
+                </div>
+              </div>
             </div>
+            <label for="upload-COA"
+                   class="flex-shrink-0 inline-flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                   [class]="getDoc('COA') ? 'bg-gray-100 text-textMuted hover:bg-gray-200' : 'bg-primary text-white hover:bg-primary-600'">
+              <i class="bi" [class]="uploading['COA'] ? 'bi-arrow-repeat animate-spin' : 'bi-upload'"></i>
+              {{ getDoc('COA') ? 'Replace' : 'Upload' }}
+            </label>
+            <input id="upload-COA" type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png"
+                   (change)="uploadFile($event, 'COA')" [disabled]="uploading['COA']">
+          </div>
+        </div>
+
+        <!-- ── Step 3: Bank Account ────────────────────────────────────────── -->
+        <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">3</span>
+            <h3 class="font-semibold text-textDark">Bank Account Details</h3>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold text-textMuted mb-1.5">Bank Name <span class="text-red-500">*</span></label>
+              <select [(ngModel)]="state.bankName" [disabled]="!canEdit()"
+                      class="w-full px-4 py-3 rounded-xl border border-borderColor bg-white text-sm text-textDark focus:outline-none focus:border-primary transition-colors disabled:bg-gray-50">
+                <option value="">Select your bank</option>
+                <option value="Absa">Absa</option>
+                <option value="Capitec">Capitec</option>
+                <option value="FNB">FNB</option>
+                <option value="Nedbank">Nedbank</option>
+                <option value="Standard Bank">Standard Bank</option>
+                <option value="African Bank">African Bank</option>
+                <option value="Bidvest Bank">Bidvest Bank</option>
+                <option value="Discovery Bank">Discovery Bank</option>
+                <option value="Investec">Investec</option>
+                <option value="TymeBank">TymeBank</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-textMuted mb-1.5">Account Number <span class="text-red-500">*</span></label>
+              <input type="text" [(ngModel)]="state.bankAccountNumber" placeholder="e.g. 1234567890"
+                     [disabled]="!canEdit()"
+                     class="w-full px-4 py-3 rounded-xl border border-borderColor bg-white text-sm text-textDark focus:outline-none focus:border-primary transition-colors disabled:bg-gray-50" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-textMuted mb-1.5">Account Type</label>
+              <select [(ngModel)]="state.bankAccountType" [disabled]="!canEdit()"
+                      class="w-full px-4 py-3 rounded-xl border border-borderColor bg-white text-sm text-textDark focus:outline-none focus:border-primary transition-colors disabled:bg-gray-50">
+                <option value="Cheque">Cheque</option>
+                <option value="Savings">Savings</option>
+                <option value="Current">Current</option>
+                <option value="Transmission">Transmission</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-textMuted mb-1.5">Branch Code</label>
+              <input type="text" [(ngModel)]="state.bankBranchCode" placeholder="e.g. 250655"
+                     [disabled]="!canEdit()"
+                     class="w-full px-4 py-3 rounded-xl border border-borderColor bg-white text-sm text-textDark focus:outline-none focus:border-primary transition-colors disabled:bg-gray-50" />
+            </div>
+          </div>
+
+          <!-- Supporting bank document (optional) -->
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3 border-t border-borderColor pt-4">
+            <div class="flex items-start gap-3 flex-1">
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                   [class]="getDoc('BANK_DETAILS') ? 'bg-green-50' : 'bg-gray-100'">
+                <i class="bi text-base" [class]="getDoc('BANK_DETAILS') ? 'bi-file-earmark-check text-green-500' : 'bi-file-earmark text-textMuted'"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-textDark text-sm">Bank Statement / Confirmation Letter <span class="text-red-500">*</span></p>
+                <p class="text-xs text-textMuted">Official document confirming your account details</p>
+                <div *ngIf="getDoc('BANK_DETAILS')" class="mt-1 flex items-center gap-2">
+                  <span class="text-xs text-green-600 font-medium truncate max-w-[160px]">{{ getDoc('BANK_DETAILS')!.fileName }}</span>
+                  <a [href]="getDoc('BANK_DETAILS')!.fileUrl" target="_blank" class="text-xs text-primary hover:underline flex-shrink-0">View</a>
+                  <button (click)="removeDoc(getDoc('BANK_DETAILS')!)" class="text-xs text-red-400 hover:text-red-600">Remove</button>
+                </div>
+              </div>
+            </div>
+            <label for="upload-BANK_DETAILS"
+                   class="flex-shrink-0 inline-flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                   [class]="getDoc('BANK_DETAILS') ? 'bg-gray-100 text-textMuted hover:bg-gray-200' : 'bg-primary text-white hover:bg-primary-600'">
+              <i class="bi" [class]="uploading['BANK_DETAILS'] ? 'bi-arrow-repeat animate-spin' : 'bi-upload'"></i>
+              {{ getDoc('BANK_DETAILS') ? 'Replace' : 'Upload' }}
+            </label>
+            <input id="upload-BANK_DETAILS" type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png"
+                   (change)="uploadFile($event, 'BANK_DETAILS')" [disabled]="uploading['BANK_DETAILS']">
+          </div>
+
+          <!-- Save details button -->
+          <div *ngIf="canEdit()" class="mt-4 flex justify-end">
+            <button (click)="saveDetails()" [disabled]="savingDetails"
+                    class="px-4 py-2 bg-gray-100 text-textDark rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors disabled:opacity-60">
+              <i class="bi" [class]="savingDetails ? 'bi-arrow-repeat animate-spin' : 'bi-floppy'"></i>
+              {{ savingDetails ? 'Saving…' : 'Save Details' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Step 4: Storefront Photo (optional) ────────────────────────── -->
+        <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-6 h-6 rounded-full bg-gray-200 text-textMuted text-xs font-bold flex items-center justify-center flex-shrink-0">4</span>
+            <h3 class="font-semibold text-textDark">Storefront Photo <span class="text-xs text-textMuted font-normal">(optional)</span></h3>
+          </div>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div class="flex items-start gap-3 flex-1">
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                   [class]="getDoc('STOREFRONT_PHOTO') ? 'bg-green-50' : 'bg-gray-100'">
+                <i class="bi text-base" [class]="getDoc('STOREFRONT_PHOTO') ? 'bi-image-fill text-green-500' : 'bi-image text-textMuted'"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-textDark text-sm">Photo of your restaurant or kitchen</p>
+                <p class="text-xs text-textMuted">Increases trust with customers — JPG or PNG</p>
+                <div *ngIf="getDoc('STOREFRONT_PHOTO')" class="mt-1 flex items-center gap-2">
+                  <span class="text-xs text-green-600 font-medium truncate max-w-[160px]">{{ getDoc('STOREFRONT_PHOTO')!.fileName }}</span>
+                  <a [href]="getDoc('STOREFRONT_PHOTO')!.fileUrl" target="_blank" class="text-xs text-primary hover:underline flex-shrink-0">View</a>
+                  <button (click)="removeDoc(getDoc('STOREFRONT_PHOTO')!)" class="text-xs text-red-400 hover:text-red-600">Remove</button>
+                </div>
+              </div>
+            </div>
+            <label for="upload-STOREFRONT_PHOTO"
+                   class="flex-shrink-0 inline-flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                   [class]="getDoc('STOREFRONT_PHOTO') ? 'bg-gray-100 text-textMuted hover:bg-gray-200' : 'bg-gray-100 text-textDark hover:bg-gray-200'">
+              <i class="bi" [class]="uploading['STOREFRONT_PHOTO'] ? 'bi-arrow-repeat animate-spin' : 'bi-upload'"></i>
+              {{ getDoc('STOREFRONT_PHOTO') ? 'Replace' : 'Upload' }}
+            </label>
+            <input id="upload-STOREFRONT_PHOTO" type="file" class="hidden" accept=".jpg,.jpeg,.png"
+                   (change)="uploadFile($event, 'STOREFRONT_PHOTO')" [disabled]="uploading['STOREFRONT_PHOTO']">
+          </div>
+        </div>
+
+        <!-- ── Step 5: Menu readiness ─────────────────────────────────────── -->
+        <div class="bg-white rounded-2xl shadow-card p-5 mb-8">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
+                  [class]="menuReady ? 'bg-green-500 text-white' : 'bg-primary text-white'">5</span>
+            <h3 class="font-semibold text-textDark">Menu Readiness</h3>
+          </div>
+          <p class="text-xs text-textMuted mb-4">Your menu must be set up before you can submit.</p>
+          <div class="space-y-2">
+            <div class="flex items-center gap-3 text-sm"
+                 [class]="state.categoryCount > 0 ? 'text-green-700' : 'text-textMuted'">
+              <i class="bi flex-shrink-0" [class]="state.categoryCount > 0 ? 'bi-check-circle-fill text-green-500' : 'bi-circle text-gray-300'"></i>
+              <span>At least one menu category</span>
+              <span *ngIf="state.categoryCount > 0" class="ml-auto text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">
+                {{ state.categoryCount }} added
+              </span>
+            </div>
+            <div class="flex items-center gap-3 text-sm"
+                 [class]="state.menuItemCount > 0 ? 'text-green-700' : 'text-textMuted'">
+              <i class="bi flex-shrink-0" [class]="state.menuItemCount > 0 ? 'bi-check-circle-fill text-green-500' : 'bi-circle text-gray-300'"></i>
+              <span>At least one menu item</span>
+              <span *ngIf="state.menuItemCount > 0" class="ml-auto text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">
+                {{ state.menuItemCount }} added
+              </span>
+            </div>
+          </div>
+          <div *ngIf="!menuReady" class="mt-4">
+            <a routerLink="/admin/settings" class="text-sm text-primary hover:underline font-medium">
+              <i class="bi bi-arrow-right mr-1"></i>Go to Settings to add categories
+            </a>
+            <span class="text-textMuted mx-2">·</span>
+            <a routerLink="/admin/menu" class="text-sm text-primary hover:underline font-medium">
+              Go to Menu to add items
+            </a>
           </div>
         </div>
 
@@ -118,9 +306,13 @@
             <span *ngIf="!submitting">Submit for Review</span>
             <span *ngIf="submitting"><i class="bi bi-arrow-repeat animate-spin mr-2"></i>Submitting…</span>
           </button>
-          <p *ngIf="!canSubmit()" class="text-xs text-textMuted">
-            Upload all required documents to enable submission.
-          </p>
+          <div *ngIf="!canSubmit()" class="text-xs text-textMuted text-center space-y-0.5">
+            <p *ngIf="!getDoc('CIPC')">• Upload CIPC Certificate</p>
+            <p *ngIf="!getDoc('COA')">• Upload Certificate of Acceptability</p>
+            <p *ngIf="!getDoc('BANK_DETAILS')">• Upload bank confirmation document</p>
+            <p *ngIf="!bankDetailsFilled">• Fill in bank account details</p>
+            <p *ngIf="!menuReady">• Add at least one category and one menu item</p>
+          </div>
         </div>
 
       </div>

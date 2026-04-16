@@ -18,6 +18,13 @@ interface EnrollmentState {
   approvalStatus: 'DRAFT' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
   rejectionReason: string;
   documents: StoreDocument[];
+  cipcNumber: string;
+  bankName: string;
+  bankAccountNumber: string;
+  bankAccountType: string;
+  bankBranchCode: string;
+  menuItemCount: number;
+  categoryCount: number;
 }
 
 @Component({
@@ -26,9 +33,15 @@ interface EnrollmentState {
   styleUrls: ['./admin-enrollment.component.scss']
 })
 export class AdminEnrollmentComponent implements OnInit {
-  state: EnrollmentState = { approvalStatus: 'DRAFT', rejectionReason: '', documents: [] };
+  state: EnrollmentState = {
+    approvalStatus: 'DRAFT', rejectionReason: '', documents: [],
+    cipcNumber: '', bankName: '', bankAccountNumber: '',
+    bankAccountType: 'Cheque', bankBranchCode: '',
+    menuItemCount: 0, categoryCount: 0
+  };
   loading = true;
   submitting = false;
+  savingDetails = false;
 
   uploading: Record<string, boolean> = {};
 
@@ -102,9 +115,32 @@ export class AdminEnrollmentComponent implements OnInit {
       });
   }
 
+  get bankDetailsFilled(): boolean {
+    return !!(this.state.bankName?.trim() && this.state.bankAccountNumber?.trim());
+  }
+
+  get menuReady(): boolean {
+    return this.state.categoryCount > 0 && this.state.menuItemCount > 0;
+  }
+
+  saveDetails(): void {
+    this.savingDetails = true;
+    this.http.put<any>(`${environment.apiUrl}/api/admin/enrollment/details`, {
+      cipcNumber: this.state.cipcNumber,
+      bankName: this.state.bankName,
+      bankAccountNumber: this.state.bankAccountNumber,
+      bankAccountType: this.state.bankAccountType,
+      bankBranchCode: this.state.bankBranchCode
+    }, { headers: this.headers() }).subscribe({
+      next: () => { this.savingDetails = false; this.toastr.success('Details saved'); },
+      error: () => { this.savingDetails = false; this.toastr.error('Failed to save details'); }
+    });
+  }
+
   canSubmit(): boolean {
     const required = this.DOC_TYPES.filter(t => t.required).map(t => t.type);
-    return required.every(type => this.state.documents.some(d => d.documentType === type));
+    const docsDone = required.every(type => this.state.documents.some(d => d.documentType === type));
+    return docsDone && this.bankDetailsFilled && this.menuReady;
   }
 
   docLabel(type: string): string {

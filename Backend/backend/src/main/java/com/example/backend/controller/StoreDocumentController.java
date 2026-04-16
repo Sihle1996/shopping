@@ -2,6 +2,8 @@ package com.example.backend.controller;
 
 import com.example.backend.entity.StoreDocument;
 import com.example.backend.entity.Tenant;
+import com.example.backend.repository.CategoryRepository;
+import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.StoreDocumentRepository;
 import com.example.backend.repository.TenantRepository;
 import com.example.backend.service.CloudinaryService;
@@ -17,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -29,6 +32,8 @@ public class StoreDocumentController {
 
     private final StoreDocumentRepository documentRepository;
     private final TenantRepository tenantRepository;
+    private final MenuItemRepository menuItemRepository;
+    private final CategoryRepository categoryRepository;
     private final CloudinaryService cloudinaryService;
     private final EmailService emailService;
 
@@ -42,11 +47,40 @@ public class StoreDocumentController {
         Tenant tenant = tenantRepository.findById(tenantId).orElse(null);
         if (tenant == null) return ResponseEntity.notFound().build();
         List<StoreDocument> docs = documentRepository.findByTenantId(tenantId);
-        return ResponseEntity.ok(Map.of(
-                "approvalStatus", tenant.getApprovalStatus(),
-                "rejectionReason", tenant.getRejectionReason() != null ? tenant.getRejectionReason() : "",
-                "documents", docs
-        ));
+        long menuItemCount = menuItemRepository.countByTenant_Id(tenantId);
+        long categoryCount = categoryRepository.findByTenant_Id(tenantId).size();
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("approvalStatus", tenant.getApprovalStatus());
+        resp.put("rejectionReason", tenant.getRejectionReason() != null ? tenant.getRejectionReason() : "");
+        resp.put("documents", docs);
+        resp.put("cipcNumber", tenant.getCipcNumber() != null ? tenant.getCipcNumber() : "");
+        resp.put("bankName", tenant.getBankName() != null ? tenant.getBankName() : "");
+        resp.put("bankAccountNumber", tenant.getBankAccountNumber() != null ? tenant.getBankAccountNumber() : "");
+        resp.put("bankAccountType", tenant.getBankAccountType() != null ? tenant.getBankAccountType() : "");
+        resp.put("bankBranchCode", tenant.getBankBranchCode() != null ? tenant.getBankBranchCode() : "");
+        resp.put("menuItemCount", menuItemCount);
+        resp.put("categoryCount", categoryCount);
+        return ResponseEntity.ok(resp);
+    }
+
+    @PutMapping("/details")
+    @Transactional
+    public ResponseEntity<?> saveDetails(@RequestBody Map<String, String> body) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return ResponseEntity.badRequest().build();
+        Tenant tenant = tenantRepository.findById(tenantId).orElse(null);
+        if (tenant == null) return ResponseEntity.notFound().build();
+        if (tenant.getApprovalStatus() == Tenant.ApprovalStatus.PENDING_REVIEW ||
+                tenant.getApprovalStatus() == Tenant.ApprovalStatus.APPROVED) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Cannot edit details in current status"));
+        }
+        if (body.containsKey("cipcNumber")) tenant.setCipcNumber(body.get("cipcNumber"));
+        if (body.containsKey("bankName")) tenant.setBankName(body.get("bankName"));
+        if (body.containsKey("bankAccountNumber")) tenant.setBankAccountNumber(body.get("bankAccountNumber"));
+        if (body.containsKey("bankAccountType")) tenant.setBankAccountType(body.get("bankAccountType"));
+        if (body.containsKey("bankBranchCode")) tenant.setBankBranchCode(body.get("bankBranchCode"));
+        tenantRepository.save(tenant);
+        return ResponseEntity.ok(Map.of("message", "Details saved"));
     }
 
     @PostMapping("/upload")
@@ -116,6 +150,25 @@ public class StoreDocumentController {
         if (!hasCipc || !hasCoa || !hasBank) {
             return ResponseEntity.badRequest().body(Map.of("error",
                     "Please upload CIPC Certificate, Certificate of Acceptability, and Bank Details before submitting"));
+        }
+
+        // Require at least one menu category and one menu item
+        long categoryCount = categoryRepository.findByTenant_Id(tenantId).size();
+        long menuItemCount = menuItemRepository.countByTenant_Id(tenantId);
+        if (categoryCount == 0) {
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "Add at least one menu category before submitting"));
+        }
+        if (menuItemCount == 0) {
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "Add at least one menu item before submitting"));
+        }
+
+        // Require structured bank details
+        if (tenant.getBankName() == null || tenant.getBankName().isBlank() ||
+                tenant.getBankAccountNumber() == null || tenant.getBankAccountNumber().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "Please fill in your bank account details before submitting"));
         }
 
         tenant.setApprovalStatus(Tenant.ApprovalStatus.PENDING_REVIEW);

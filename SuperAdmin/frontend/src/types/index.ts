@@ -190,5 +190,10 @@ export interface PendingEnrollmentDto {
   phone?: string
   address?: string
   submittedAt: string
+  cipcNumber?: string
+  bankName?: string
+  bankAccountNumber?: string
+  bankAccountType?: string
+  bankBranchCode?: string
   documents: StoreDocumentDto[]
 }

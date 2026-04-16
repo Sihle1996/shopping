@@ -88,6 +88,22 @@ public class Tenant {
     @Column(length = 50)
     private String cuisineType;
 
+    // Enrollment — structured details (captured via form, not just document uploads)
+    @Column(length = 20)
+    private String cipcNumber;
+
+    @Column(length = 60)
+    private String bankName;
+
+    @Column(length = 30)
+    private String bankAccountNumber;
+
+    @Column(length = 20)
+    private String bankAccountType;  // Cheque / Savings / Current
+
+    @Column(length = 10)
+    private String bankBranchCode;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "approval_status", nullable = false, columnDefinition = "varchar(20) default 'APPROVED'")
     @Builder.Default
