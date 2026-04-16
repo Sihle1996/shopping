@@ -10,10 +10,10 @@
       </div>
       <div class="flex flex-col">
         <span class="font-heading text-lg font-bold text-textDark leading-tight">
-          {{ storeName || 'FastFood' }}
+          {{ storeName || 'CraveIt' }}
         </span>
         <span *ngIf="storeName && isAdmin" class="text-[10px] text-textMuted leading-tight">Admin Panel</span>
-        <span *ngIf="storeName && !isAdmin" class="text-[10px] text-textMuted leading-tight">Powered by FastFood</span>
+        <span *ngIf="storeName && !isAdmin" class="text-[10px] text-textMuted leading-tight">Powered by CraveIt</span>
       </div>
     </a>
 
@@ -92,7 +92,7 @@
         <div *ngIf="!storeLogo" class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
           <i class="bi bi-fire text-white text-sm"></i>
         </div>
-        <span class="font-heading font-bold text-textDark">{{ storeName || 'FastFood' }}</span>
+        <span class="font-heading font-bold text-textDark">{{ storeName || 'CraveIt' }}</span>
       </div>
       <button (click)="toggleMenu()" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
         <i class="bi bi-x-lg text-textDark text-sm"></i>

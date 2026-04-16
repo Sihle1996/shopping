@@ -37,7 +37,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     name: '',
     slug: '',
     logoUrl: '',
-    primaryColor: '#FF6F00',
+    primaryColor: '#E76F51',
     phone: '',
     email: '',
     address: '',

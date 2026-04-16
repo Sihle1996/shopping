@@ -15,9 +15,9 @@ export class LandingComponent implements OnInit {
     this.isLoggedIn = this.authService.isLoggedIn();
     // Reset any store branding left over from a previous store visit
     const root = document.documentElement;
-    root.style.setProperty('--brand-primary', '#FF6F00');
-    root.style.setProperty('--brand-primary-light', '#FF6F001A');
-    root.style.setProperty('--brand-primary-hover', '#EA580C');
+    root.style.setProperty('--brand-primary', '#E76F51');
+    root.style.setProperty('--brand-primary-light', '#E76F511A');
+    root.style.setProperty('--brand-primary-hover', '#C15A35');
     this.tenantService.clearTenant();
     ['tenantId', 'storeName', 'storeSlug', 'brandPrimary'].forEach(k => localStorage.removeItem(k));
   }

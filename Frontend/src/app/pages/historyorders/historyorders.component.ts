@@ -142,7 +142,7 @@ export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewCheck
     });
     // Driver marker
     const el = document.createElement('div');
-    el.innerHTML = '<i class="bi bi-bicycle" style="font-size:22px;color:#FF6F00"></i>';
+    el.innerHTML = '<i class="bi bi-bicycle" style="font-size:22px;color:#E76F51"></i>';
     this.trackingMarker = new mapboxgl.Marker({ element: el })
       .setLngLat([this.trackingOrder.driverLon, this.trackingOrder.driverLat])
       .addTo(this.trackingMap);

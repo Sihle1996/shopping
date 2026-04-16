@@ -230,7 +230,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   private fireConfetti(): void {
-    const colors = ['#FF6F00', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#ffffff'];
+    const colors = ['#E76F51', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#ffffff'];
     const end = Date.now() + 3500;
     const burst = () => {
       confetti({ particleCount: 4, angle: 60,  spread: 60, origin: { x: 0, y: 0.8 }, colors, zIndex: 9999 });
