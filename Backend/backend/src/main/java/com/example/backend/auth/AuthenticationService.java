@@ -62,21 +62,34 @@ public class AuthenticationService {
         // Create and save the user — ADMIN if registering with a tenant, USER otherwise
         Role assignedRole = (tenant != null) ? Role.ADMIN : Role.USER;
 
-        String verificationToken = UUID.randomUUID().toString();
+        User user;
+        if (tenant != null) {
+            // Admin registration — skip email verification, auto-login immediately
+            user = User.builder()
+                    .email(request.getEmail())
+                    .password(hashedPassword)
+                    .role(assignedRole)
+                    .tenant(tenant)
+                    .emailVerified(true)
+                    .build();
+            user = repository.save(user);
+            UUID userTenantId = tenant.getId();
+            String jwtToken = jwtService.generateTokenWithId(user, user.getId(), userTenantId);
+            return AuthenticationResponse.builder().token(jwtToken).build();
+        }
 
-        User user = User.builder()
+        // Customer registration — require email verification
+        String verificationToken = UUID.randomUUID().toString();
+        user = User.builder()
                 .email(request.getEmail())
                 .password(hashedPassword)
                 .role(assignedRole)
-                .tenant(tenant)
                 .emailVerified(false)
                 .emailVerificationToken(verificationToken)
                 .emailVerificationTokenExpiresAt(Instant.now().plusSeconds(86400))
                 .build();
-
         user = repository.save(user);
 
-        // Send verification email; auto-login happens after clicking the link
         String verifyUrl = frontendUrl + "/verify-email?token=" + verificationToken;
         emailService.sendVerificationEmail(request.getEmail(), request.getEmail(), verifyUrl);
 

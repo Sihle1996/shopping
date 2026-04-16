@@ -59,9 +59,25 @@ export class RegisterComponent implements OnInit {
     this.registeredEmail = this.registerForm.value.email;
 
     this.authService.register(this.registerForm.value, this.tenantId || undefined).subscribe({
-      next: () => {
-        this.emailSent = true;
-        this.isLoading = false;
+      next: (response: any) => {
+        if (response?.token) {
+          // Admin registration — token returned, auto-login
+          this.authService.storeToken(response.token);
+          const role = this.authService.getUserRole();
+          if (this.returnUrl) {
+            this.router.navigateByUrl(this.returnUrl, { replaceUrl: true });
+          } else if (role === 'ROLE_ADMIN') {
+            this.router.navigate(['/admin/dashboard'], { replaceUrl: true });
+          } else if (role === 'ROLE_SUPERADMIN') {
+            this.router.navigate(['/superadmin'], { replaceUrl: true });
+          } else {
+            this.router.navigate(['/stores'], { replaceUrl: true });
+          }
+        } else {
+          // Customer registration — verify email first
+          this.emailSent = true;
+          this.isLoading = false;
+        }
       },
       error: (err) => {
         this.errorMessage = err.error?.message || err.error || 'Registration failed. Please try again.';

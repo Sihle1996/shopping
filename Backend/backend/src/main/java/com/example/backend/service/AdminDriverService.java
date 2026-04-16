@@ -12,6 +12,7 @@ import com.example.backend.user.Role;
 import com.example.backend.user.User;
 import com.example.backend.config.EmailAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,10 @@ public class AdminDriverService {
     private final PasswordEncoder passwordEncoder;
     private final TenantRepository tenantRepository;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
+    private final EmailService emailService;
+
+    @Value("${app.frontend-url:http://localhost:4200}")
+    private String frontendUrl;
 
     public DriverDTO createDriver(RegisterRequest request) {
         UUID tenantId = TenantContext.getCurrentTenantId();
@@ -52,6 +57,11 @@ public class AdminDriverService {
         }
 
         User saved = userRepository.save(builder.build());
+
+        String storeName = saved.getTenant() != null ? saved.getTenant().getName() : "CraveIt";
+        emailService.sendDriverWelcomeEmail(
+                saved.getEmail(), request.getPassword(), storeName, frontendUrl + "/login");
+
         return new DriverDTO(saved.getId(), saved.getEmail(), saved.getDriverStatus());
     }
 

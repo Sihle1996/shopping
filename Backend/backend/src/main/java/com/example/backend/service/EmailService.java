@@ -25,6 +25,32 @@ public class EmailService {
 
     private final RestTemplate restTemplate;
 
+    public void sendDriverWelcomeEmail(String toEmail, String password, String storeName, String loginUrl) {
+        if (apiKey == null || apiKey.isBlank()) {
+            log.warn("RESEND_API_KEY not configured — skipping driver welcome email");
+            return;
+        }
+        String html = "<div style='font-family:Inter,Helvetica,Arial,sans-serif;background:#f9fafb;padding:40px 0;'>"
+            + "<div style='max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);'>"
+            + "<div style='background:#111827;padding:28px 36px;text-align:center;'>"
+            + "<h1 style='margin:0;color:#ffffff;font-size:20px;font-weight:700;'>CraveIt</h1>"
+            + "<p style='margin:8px 0 0;color:#9ca3af;font-size:13px;'>Driver Account Created</p>"
+            + "</div>"
+            + "<div style='padding:32px 36px;'>"
+            + "<p style='margin:0 0 16px;color:#374151;font-size:15px;'>Hi! Your driver account for <strong>" + escapeHtml(storeName) + "</strong> is ready.</p>"
+            + "<div style='background:#f3f4f6;border-radius:10px;padding:16px 20px;margin-bottom:20px;'>"
+            + "<p style='margin:0 0 8px;color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;'>Your login details</p>"
+            + "<p style='margin:0 0 4px;color:#374151;font-size:14px;'><strong>Email:</strong> " + escapeHtml(toEmail) + "</p>"
+            + "<p style='margin:0;color:#374151;font-size:14px;'><strong>Password:</strong> " + escapeHtml(password) + "</p>"
+            + "</div>"
+            + "<a href='" + escapeHtml(loginUrl) + "' style='display:inline-block;background:#FF6F00;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:15px;font-weight:600;'>Log In Now</a>"
+            + "<p style='margin:20px 0 0;color:#9ca3af;font-size:12px;'>Please change your password after your first login.</p>"
+            + "</div>"
+            + "</div>"
+            + "</div>";
+        send(toEmail, "Your CraveIt driver account is ready", html);
+    }
+
     public void sendVerificationEmail(String toEmail, String nameOrEmail, String verificationUrl) {
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("RESEND_API_KEY not configured — skipping verification email");
