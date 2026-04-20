@@ -402,6 +402,13 @@ public class OrderService {
         if (updated.getUser() != null) {
             messagingTemplate.convertAndSend("/topic/orders/" + updated.getUser().getId(), dto);
         }
+        // Broadcast to admin
+        String eventType = ("Cancelled".equals(status) || "Rejected".equals(status)) ? "ORDER_CANCELLED" : "ORDER_UPDATED";
+        messagingTemplate.convertAndSend("/topic/orders", Map.of(
+                "type", eventType,
+                "orderId", updated.getId().toString(),
+                "status", updated.getStatus()
+        ));
 
         String storeName = updated.getTenant() != null ? updated.getTenant().getName() : "Our Store";
         String customerEmail = updated.getUser() != null ? updated.getUser().getEmail() : updated.getGuestEmail();
@@ -455,6 +462,12 @@ public class OrderService {
         if (updated.getUser() != null) {
             messagingTemplate.convertAndSend("/topic/orders/" + updated.getUser().getId(), dto);
         }
+        // Broadcast driver assignment to admin
+        messagingTemplate.convertAndSend("/topic/orders", Map.of(
+                "type", "ORDER_ASSIGNED",
+                "orderId", updated.getId().toString(),
+                "status", updated.getStatus()
+        ));
         return dto;
     }
 

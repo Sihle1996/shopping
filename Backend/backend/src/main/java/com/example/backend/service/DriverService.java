@@ -97,6 +97,11 @@ public class DriverService {
         if (order.getUser() != null) {
             messagingTemplate.convertAndSend("/topic/orders/" + order.getUser().getId(), dto);
         }
+        messagingTemplate.convertAndSend("/topic/orders", Map.of(
+                "type", "ORDER_UPDATED",
+                "orderId", order.getId().toString(),
+                "status", "Delivered"
+        ));
 
         String customerEmail = order.getUser() != null ? order.getUser().getEmail() : order.getGuestEmail();
         if (customerEmail != null && !customerEmail.isBlank()) {
@@ -120,6 +125,11 @@ public class DriverService {
         if (order.getUser() != null) {
             messagingTemplate.convertAndSend("/topic/orders/" + order.getUser().getId(), dto);
         }
+        messagingTemplate.convertAndSend("/topic/orders", Map.of(
+                "type", "ORDER_UPDATED",
+                "orderId", order.getId().toString(),
+                "status", "Delivered"
+        ));
 
         String customerEmail = order.getUser() != null ? order.getUser().getEmail() : order.getGuestEmail();
         if (customerEmail != null && !customerEmail.isBlank()) {
