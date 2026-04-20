@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
@@ -54,6 +55,7 @@ export class AdminEnrollmentComponent implements OnInit {
 
   constructor(
     private http: HttpClient,
+    private router: Router,
     private authService: AuthService,
     private toastr: ToastrService
   ) {}
@@ -70,9 +72,19 @@ export class AdminEnrollmentComponent implements OnInit {
     this.loading = true;
     this.http.get<EnrollmentState>(`${environment.apiUrl}/api/admin/enrollment`, { headers: this.headers() })
       .subscribe({
-        next: s => { this.state = s; this.loading = false; },
+        next: s => {
+          this.state = s;
+          this.loading = false;
+          if (s.approvalStatus === 'APPROVED') {
+            this.router.navigate(['/admin/dashboard']);
+          }
+        },
         error: () => { this.loading = false; this.toastr.error('Failed to load enrollment status'); }
       });
+  }
+
+  checkStatus(): void {
+    this.loadState();
   }
 
   getDoc(type: StoreDocument['documentType']): StoreDocument | undefined {
