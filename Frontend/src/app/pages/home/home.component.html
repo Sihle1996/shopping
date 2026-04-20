@@ -196,7 +196,7 @@
         <!-- When All is selected, group items under their category headers.
              Categories with no matching items (e.g. during search) are hidden. -->
         <ng-container *ngIf="selectedCategory === 'All'">
-          <div *ngFor="let group of filteredCategories" class="mb-8" [attr.data-testid]="'category-' + group.name">
+          <div *ngFor="let group of filteredCategories; trackBy: trackByName" class="mb-8" [attr.data-testid]="'category-' + group.name">
             <h3 class="font-heading text-base font-semibold text-textDark mb-3 flex items-center gap-2">
               <span>{{ group.name }}</span>
               <span class="text-textMuted font-normal text-sm">({{ group.items.length }})</span>

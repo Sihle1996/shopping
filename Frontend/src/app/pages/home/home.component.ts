@@ -39,16 +39,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     ];
   }
 
-  /** Returns categories that have at least one item in filteredMenuItems, used for grouped display. */
-  get filteredCategories(): { name: string; items: MenuItem[] }[] {
-    const unique = [...new Set(this.menuItems.map(i => (i as any).category).filter(Boolean))] as string[];
-    return unique
-      .map(name => ({
-        name,
-        items: this.filteredMenuItems.filter(i => (i as any).category === name)
-      }))
-      .filter(group => group.items.length > 0);
-  }
+  /** Stable field updated by applyFilters() — avoids new references every CD cycle. */
+  filteredCategories: { name: string; items: MenuItem[] }[] = [];
 
   selectedCategory = 'All';
   selectedSort = 'default';
@@ -386,6 +378,16 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     this.filteredMenuItems = items;
+
+    // Update grouped categories — only when "All" is active and no search
+    if (this.selectedCategory === 'All' && !this.searchQuery) {
+      const unique = [...new Set(this.menuItems.map(i => (i as any).category).filter(Boolean))] as string[];
+      this.filteredCategories = unique
+        .map(name => ({ name, items: items.filter(i => (i as any).category === name) }))
+        .filter(g => g.items.length > 0);
+    } else {
+      this.filteredCategories = [];
+    }
   }
 
   goToProductDetails(item: ProductCardItem): void {
@@ -468,5 +470,9 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   trackById(_: number, item: MenuItem): string | null {
     return item.id;
+  }
+
+  trackByName(_: number, group: { name: string }): string {
+    return group.name;
   }
 }
