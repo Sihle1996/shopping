@@ -12,8 +12,8 @@
         <span class="font-heading text-lg font-bold text-textDark leading-tight">
           {{ storeName || 'CraveIt' }}
         </span>
-        <span *ngIf="storeName && isAdmin" class="text-[10px] text-textMuted leading-tight">Admin Panel</span>
-        <span *ngIf="storeName && !isAdmin" class="text-[10px] text-textMuted leading-tight">Powered by CraveIt</span>
+        <span *ngIf="storeName && isAdmin && router.url.startsWith('/admin')" class="text-[10px] text-textMuted leading-tight">Admin Panel</span>
+        <span *ngIf="storeName && !(isAdmin && router.url.startsWith('/admin'))" class="text-[10px] text-textMuted leading-tight">Powered by CraveIt</span>
       </div>
     </a>
 
