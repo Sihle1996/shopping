@@ -151,25 +151,23 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   /** Computed directly from raw data — no dependency on setupSteps to avoid circular inference */
   get canOpenStore(): boolean {
     const s = this.setupSettings;
-    const storeInfoDone  = !!(s?.phone);
-    const logoDone       = !!(s?.logoUrl) || !this.hasCustomBranding;
-    const deliveryDone   = (s?.deliveryFeeBase ?? 0) > 0;
-    const categoryDone   = this.setupCategories.length > 0;
-    const menuItemDone   = this.setupMenuItems.length > 0;
-    const driverDone     = this.setupDrivers.length > 0;
-    return storeInfoDone && logoDone && deliveryDone && categoryDone && menuItemDone && driverDone;
+    const storeInfoDone = !!(s?.phone);
+    const deliveryDone  = (s?.deliveryFeeBase ?? 0) > 0;
+    const categoryDone  = this.setupCategories.length > 0;
+    const menuItemDone  = this.setupMenuItems.length > 0;
+    const driverDone    = this.setupDrivers.length > 0;
+    return storeInfoDone && deliveryDone && categoryDone && menuItemDone && driverDone;
   }
 
   get setupSteps(): SetupStep[] {
     const s = this.setupSettings;
     return [
-      { label: 'Add your store info',      done: !!(s?.phone),                    route: '/admin/settings', tourParam: 'store-info',   actionLabel: 'Set up',     proLocked: false,                    prereqLocked: false },
-      { label: 'Upload a logo',            done: !!(s?.logoUrl),                   route: '/admin/settings', tourParam: 'logo',         actionLabel: 'Set up',     proLocked: !this.hasCustomBranding,  prereqLocked: false },
-      { label: 'Set delivery fee',         done: (s?.deliveryFeeBase ?? 0) > 0,    route: '/admin/settings', tourParam: 'delivery',     actionLabel: 'Set up',     proLocked: false,                    prereqLocked: false },
-      { label: 'Add a menu category',      done: this.setupCategories.length > 0,  route: '/admin/settings', tourParam: 'category',     actionLabel: 'Set up',     proLocked: false,                    prereqLocked: false },
-      { label: 'Add your first menu item', done: this.setupMenuItems.length > 0,   route: '/admin/menu',     tourParam: 'add-item',     actionLabel: 'Add item',   proLocked: false,                    prereqLocked: false },
-      { label: 'Add a delivery driver',    done: this.setupDrivers.length > 0,     route: '/admin/drivers',  tourParam: 'add-driver',   actionLabel: 'Add driver', proLocked: false,                    prereqLocked: false },
-      { label: 'Open your store',          done: !!(s?.isOpen),                    route: null,              tourParam: 'store-toggle', actionLabel: 'Open now',   proLocked: false,                    prereqLocked: !this.canOpenStore },
+      { label: 'Add your store info',      done: !!(s?.phone),                   route: '/admin/settings', tourParam: 'store-info',   actionLabel: 'Set up',     proLocked: false, prereqLocked: false },
+      { label: 'Set delivery fee',         done: (s?.deliveryFeeBase ?? 0) > 0,  route: '/admin/settings', tourParam: 'delivery',     actionLabel: 'Set up',     proLocked: false, prereqLocked: false },
+      { label: 'Add a menu category',      done: this.setupCategories.length > 0, route: '/admin/settings', tourParam: 'category',    actionLabel: 'Set up',     proLocked: false, prereqLocked: false },
+      { label: 'Add your first menu item', done: this.setupMenuItems.length > 0,  route: '/admin/menu',     tourParam: 'add-item',    actionLabel: 'Add item',   proLocked: false, prereqLocked: false },
+      { label: 'Add a delivery driver',    done: this.setupDrivers.length > 0,    route: '/admin/drivers',  tourParam: 'add-driver',  actionLabel: 'Add driver', proLocked: false, prereqLocked: false },
+      { label: 'Open your store',          done: !!(s?.isOpen),                   route: null,              tourParam: 'store-toggle', actionLabel: 'Open now',  proLocked: false, prereqLocked: !this.canOpenStore },
     ];
   }
 
