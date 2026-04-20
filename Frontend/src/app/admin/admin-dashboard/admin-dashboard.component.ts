@@ -100,6 +100,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     return `onboardingDone_${localStorage.getItem('tenantId') || ''}`;
   }
 
+  private get confettiKey(): string {
+    return `confettiFired_${localStorage.getItem('tenantId') || ''}`;
+  }
+
   salesChartOptions: Partial<SalesChartOptions> = this.buildSalesChartOptions([], []);
   productsChartOptions: Partial<ProductsChartOptions> = this.buildProductsChartOptions([], []);
 
@@ -174,7 +178,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   get setupDoneCount() { return this.setupSteps.filter(s => s.done).length; }
   get setupProgress()  { return Math.round((this.setupDoneCount / this.setupSteps.length) * 100); }
   get setupComplete()  { return this.setupDoneCount === this.setupSteps.length; }
-  get showOnboarding() { return !this.onboardingDismissed; }
+  get showOnboarding() { return !this.onboardingDismissed && !this.setupComplete; }
 
   dismissOnboarding(): void {
     this.onboardingDismissed = true;
@@ -260,7 +264,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         if (this.setupSettings) this.setupSettings.isOpen = res.isOpen;
         this.toggleLoading = false;
         this.toastr.success(res.isOpen ? 'Store is now open' : 'Store is now closed');
-        if (res.isOpen && this.setupComplete) this.fireConfetti();
+        if (res.isOpen && this.setupComplete && !localStorage.getItem(this.confettiKey)) {
+          localStorage.setItem(this.confettiKey, 'true');
+          this.fireConfetti();
+        }
       },
       error: () => {
         this.toggleLoading = false;
