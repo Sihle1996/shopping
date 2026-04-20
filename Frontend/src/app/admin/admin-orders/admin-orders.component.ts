@@ -97,10 +97,23 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
         this.fetchOrders(1);
       });
 
-    // Silently refresh the list whenever a real-time order event arrives
-    this.notificationService.notifications
+    // Real-time order events: instant local update, fetch only for new orders
+    this.notificationService.orderEvents
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => this.silentRefresh());
+      .subscribe(event => {
+        if (event.type === 'ORDER_CREATED') {
+          // New order — fetch page 1 so it appears at the top
+          this.silentRefresh();
+        } else if (event.orderId && event.status) {
+          // Status/cancellation/assignment — update instantly, no HTTP call
+          this.orders = this.orders.map(o =>
+            o.id === event.orderId ? { ...o, status: event.status as any } : o
+          );
+          if (this.selectedOrder?.id === event.orderId) {
+            this.selectedOrder = { ...this.selectedOrder, status: event.status as any };
+          }
+        }
+      });
   }
 
   private get deepLinkOrderId(): string | null {

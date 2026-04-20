@@ -7,7 +7,7 @@ import {
   ApexPlotOptions, ApexGrid, ApexNoData
 } from 'ng-apexcharts';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { debounceTime, takeUntil } from 'rxjs/operators';
 import { driver } from 'driver.js';
 import { AnalyticsService } from './analytics.service';
 import { AdminService } from 'src/app/services/admin.service';
@@ -132,8 +132,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.loadStoreSettings();
     this.loadRecentOrders();
 
-    this.notificationService.notifications
-      .pipe(takeUntil(this.destroy$))
+    this.notificationService.orderEvents
+      .pipe(debounceTime(200), takeUntil(this.destroy$))
       .subscribe(() => this.silentRefresh());
     this.adminService.menuItems$.subscribe(items => this.setupMenuItems = items);
     this.adminService.loadMenuItems().subscribe({ error: () => {} });

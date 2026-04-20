@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { debounceTime, filter, takeUntil } from 'rxjs/operators';
 import { AdminService } from 'src/app/services/admin.service';
 import { SubscriptionService } from 'src/app/services/subscription.service';
 import { NotificationService } from 'src/app/services/notification.service';
@@ -41,8 +41,12 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
       this.hasInventoryExport = info.features.hasInventoryExport;
       this.subscriptionPlan = info.plan;
     });
-    this.notificationService.notifications
-      .pipe(takeUntil(this.destroy$))
+    this.notificationService.orderEvents
+      .pipe(
+        filter(e => e.type === 'ORDER_CREATED' || e.type === 'ORDER_CANCELLED'),
+        debounceTime(300),
+        takeUntil(this.destroy$)
+      )
       .subscribe(() => this.fetchInventory());
   }
 

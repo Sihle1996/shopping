@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { debounceTime, filter, takeUntil } from 'rxjs/operators';
 import { driver } from 'driver.js';
 import { AdminService } from 'src/app/services/admin.service';
 import { AuthService } from 'src/app/services/auth.service';
@@ -96,8 +96,12 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
       this.menuItems = data;
     });
     this.fetchMenuItems();
-    this.notificationService.notifications
-      .pipe(takeUntil(this.destroy$))
+    this.notificationService.orderEvents
+      .pipe(
+        filter(e => e.type === 'ORDER_CREATED' || e.type === 'ORDER_CANCELLED'),
+        debounceTime(300),
+        takeUntil(this.destroy$)
+      )
       .subscribe(() => this.fetchMenuItems());
     const tour = this.route.snapshot.queryParamMap.get('tour');
     if (tour === 'add-item') {

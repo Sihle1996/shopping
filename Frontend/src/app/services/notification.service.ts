@@ -11,6 +11,7 @@ import { environment } from 'src/environments/environment';
 export interface OrderEvent {
   type?: string;
   orderId?: string;
+  status?: string;
   userEmail?: string;
   customer?: { email?: string; name?: string };
   totalAmount?: number;
@@ -30,6 +31,7 @@ export interface AdminNotification {
 export class NotificationService implements OnDestroy {
   private client!: Client;
   private notificationSubject = new Subject<string>();
+  private orderEventSubject = new Subject<OrderEvent>();
   private nextId = 1;
 
   /** Persistent history — survives component navigation */
@@ -51,8 +53,14 @@ export class NotificationService implements OnDestroy {
     this.connect();
   }
 
+  /** Throttled text stream — used for toasts and history */
   get notifications(): Observable<string> {
-    return this.notificationSubject.asObservable().pipe(throttleTime(1000));
+    return this.notificationSubject.asObservable().pipe(throttleTime(200));
+  }
+
+  /** Raw typed event stream — no throttle, use for instant UI updates */
+  get orderEvents(): Observable<OrderEvent> {
+    return this.orderEventSubject.asObservable();
   }
 
   private connect(): void {
@@ -111,6 +119,7 @@ export class NotificationService implements OnDestroy {
 
       this.addToHistory(text);
       this.notificationSubject.next(text);
+      this.orderEventSubject.next(data);
       this.toastr.success(text, 'Order update', { timeOut: 6000 });
     } catch (e) {
       console.error('Failed to parse notification', e, message.body);
