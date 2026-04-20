@@ -13,8 +13,10 @@ import { AuthService } from 'src/app/services/auth.service';
 export class FooterComponent implements OnInit, OnDestroy {
   cartItemCount = 0;
   activeRoute = '';
-  isLoggedIn = false;
   private destroy$ = new Subject<void>();
+
+  get isLoggedIn(): boolean { return this.authService.isLoggedIn(); }
+  get hasStoreContext(): boolean { return !!localStorage.getItem('storeSlug'); }
 
   constructor(
     private cartService: CartService,
@@ -23,7 +25,6 @@ export class FooterComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.isLoggedIn = this.authService.isLoggedIn();
     this.activeRoute = this.router.url;
 
     this.router.events.pipe(
@@ -31,7 +32,6 @@ export class FooterComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe((e: any) => {
       this.activeRoute = e.urlAfterRedirects;
-      this.isLoggedIn = this.authService.isLoggedIn();
     });
 
     this.cartService.getCartItemCount()

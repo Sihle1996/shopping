@@ -13,7 +13,7 @@
     </a>
 
     <!-- Orders -->
-    <a *ngIf="isLoggedIn" [routerLink]="ordersRoute"
+    <a *ngIf="isLoggedIn && hasStoreContext" [routerLink]="ordersRoute"
        class="flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-2xl transition-all duration-200 min-w-[60px]"
        [class.text-primary]="isActive(ordersRoute)"
        [class.text-textLight]="!isActive(ordersRoute)">
@@ -24,7 +24,7 @@
     </a>
 
     <!-- Cart -->
-    <a *ngIf="isLoggedIn" [routerLink]="cartRoute"
+    <a *ngIf="isLoggedIn && hasStoreContext" [routerLink]="cartRoute"
        class="flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-2xl transition-all duration-200 min-w-[60px] relative"
        [class.text-primary]="isActive(cartRoute)"
        [class.text-textLight]="!isActive(cartRoute)">
