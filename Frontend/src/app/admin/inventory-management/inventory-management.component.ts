@@ -1,7 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { AdminService } from 'src/app/services/admin.service';
 import { SubscriptionService } from 'src/app/services/subscription.service';
+import { NotificationService } from 'src/app/services/notification.service';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
@@ -9,7 +12,7 @@ import { ToastrService } from 'ngx-toastr';
   templateUrl: './inventory-management.component.html',
   styleUrls: ['./inventory-management.component.scss']
 })
-export class InventoryManagementComponent implements OnInit {
+export class InventoryManagementComponent implements OnInit, OnDestroy {
   inventory: any[] = [];
   auditLog: any[] = [];
   auditLogLimit = 20;
@@ -22,9 +25,12 @@ export class InventoryManagementComponent implements OnInit {
   adjustingId: string | null = null;
   togglingId: string | null = null;
 
+  private destroy$ = new Subject<void>();
+
   constructor(
     private adminService: AdminService,
     private subscriptionService: SubscriptionService,
+    private notificationService: NotificationService,
     private router: Router,
     private toastr: ToastrService
   ) {}
@@ -35,6 +41,14 @@ export class InventoryManagementComponent implements OnInit {
       this.hasInventoryExport = info.features.hasInventoryExport;
       this.subscriptionPlan = info.plan;
     });
+    this.notificationService.notifications
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.fetchInventory());
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   fetchInventory(): void {

@@ -1,9 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { driver } from 'driver.js';
 import { AdminService } from 'src/app/services/admin.service';
 import { AuthService } from 'src/app/services/auth.service';
+import { NotificationService } from 'src/app/services/notification.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 
@@ -52,6 +55,8 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
   bulkSaving = false;
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     try { this.activeDriver?.destroy(); } catch { /* ignore */ }
   }
 
@@ -75,11 +80,14 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
     return new HttpHeaders(headers);
   }
 
+  private destroy$ = new Subject<void>();
+
   constructor(
     private adminService: AdminService,
     private toastr: ToastrService,
     private http: HttpClient,
     private authService: AuthService,
+    private notificationService: NotificationService,
     private route: ActivatedRoute
   ) {}
 
@@ -88,6 +96,9 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
       this.menuItems = data;
     });
     this.fetchMenuItems();
+    this.notificationService.notifications
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.fetchMenuItems());
     const tour = this.route.snapshot.queryParamMap.get('tour');
     if (tour === 'add-item') {
       setTimeout(() => {
