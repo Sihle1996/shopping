@@ -6,10 +6,13 @@ import {
   ApexDataLabels, ApexTooltip, ApexFill, ApexStroke,
   ApexPlotOptions, ApexGrid, ApexNoData
 } from 'ng-apexcharts';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { driver } from 'driver.js';
 import { AnalyticsService } from './analytics.service';
 import { AdminService } from 'src/app/services/admin.service';
 import { SubscriptionService } from 'src/app/services/subscription.service';
+import { NotificationService } from 'src/app/services/notification.service';
 import { ToastrService } from 'ngx-toastr';
 
 export type SalesChartOptions = {
@@ -108,10 +111,13 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   salesChartOptions: Partial<SalesChartOptions> = this.buildSalesChartOptions([], []);
   productsChartOptions: Partial<ProductsChartOptions> = this.buildProductsChartOptions([], []);
 
+  private destroy$ = new Subject<void>();
+
   constructor(
     private analyticsService: AnalyticsService,
     private adminService: AdminService,
     private subscriptionService: SubscriptionService,
+    private notificationService: NotificationService,
     private router: Router,
     private toastr: ToastrService
   ) {}
@@ -125,6 +131,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.loadStats();
     this.loadStoreSettings();
     this.loadRecentOrders();
+
+    this.notificationService.notifications
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.silentRefresh());
     this.adminService.menuItems$.subscribe(items => this.setupMenuItems = items);
     this.adminService.loadMenuItems().subscribe({ error: () => {} });
     this.adminService.getCategories().subscribe({ next: cats => this.setupCategories = cats, error: () => {} });
@@ -244,7 +254,26 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.destroyDriver();
+  }
+
+  private silentRefresh(): void {
+    this.adminService.getDashboardStats().pipe(takeUntil(this.destroy$)).subscribe({
+      next: stats => {
+        this.totalOrders = stats.totalOrders || 0;
+        this.totalRevenue = stats.totalRevenue || 0;
+        this.pendingOrders = stats.pendingOrders || 0;
+        this.todayOrders = stats.todayOrders || 0;
+        this.todayRevenue = stats.todayRevenue || 0;
+      },
+      error: () => {}
+    });
+    this.adminService.getRecentOrders().pipe(takeUntil(this.destroy$)).subscribe({
+      next: orders => { this.recentOrders = orders; },
+      error: () => {}
+    });
   }
 
   private loadRecentOrders(): void {
