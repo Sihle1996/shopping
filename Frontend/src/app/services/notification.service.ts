@@ -2,7 +2,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Client, IMessage, StompHeaders } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { Observable, Subject, Subscription } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { ToastrService } from 'ngx-toastr';
@@ -19,10 +19,33 @@ export interface OrderEvent {
   driver?: { name?: string } | null;
 }
 
+export interface AdminNotification {
+  id: number;
+  text: string;
+  time: Date;
+  read: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificationService implements OnDestroy {
-  private client!: Client; // definite assignment
+  private client!: Client;
   private notificationSubject = new Subject<string>();
+  private nextId = 1;
+
+  /** Persistent history — survives component navigation */
+  readonly history: AdminNotification[] = [];
+
+  get unreadCount(): number {
+    return this.history.filter(n => !n.read).length;
+  }
+
+  markAllRead(): void {
+    this.history.forEach(n => n.read = true);
+  }
+
+  markRead(n: AdminNotification): void {
+    n.read = true;
+  }
 
   constructor(private auth: AuthService, private toastr: ToastrService) {
     this.connect();
@@ -86,14 +109,21 @@ export class NotificationService implements OnDestroy {
           ? message.body
           : 'New notification';
 
+      this.addToHistory(text);
       this.notificationSubject.next(text);
       this.toastr.success(text, 'Order update', { timeOut: 6000 });
     } catch (e) {
       console.error('Failed to parse notification', e, message.body);
+      this.addToHistory(message.body);
       this.notificationSubject.next(message.body);
       this.toastr.info(message.body, 'Notification');
     }
   };
+
+  private addToHistory(text: string): void {
+    this.history.unshift({ id: this.nextId++, text, time: new Date(), read: false });
+    if (this.history.length > 50) this.history.splice(50);
+  }
 
   /** Subscribe to real-time order updates for a specific customer user ID. */
   subscribeToOrderUpdates(userId: string): Observable<any> {
