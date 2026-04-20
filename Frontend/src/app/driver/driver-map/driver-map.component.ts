@@ -131,6 +131,7 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
   private lastEaseTo = 0;
   private mapReady = false;
   private geocodingInProgress = false;
+  private routeAnnounced = false;
 
   optimizedStops: (DeliveryStop & { coords: [number, number] })[] = [];
   eta: string | null = null;
@@ -150,9 +151,14 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['deliveryStops'] || changes['deliveryAddress']) {
-      // Reset so the next buildStops call re-geocodes fresh data
+      const prev: DeliveryStop[] = changes['deliveryStops']?.previousValue ?? [];
+      const next: DeliveryStop[] = this.deliveryStops ?? [];
+      const changed = prev.length !== next.length ||
+        next.some((s, i) => s.id !== prev[i]?.id || s.lat !== prev[i]?.lat || s.lon !== prev[i]?.lon);
+      if (!changed) return;
       this.eta = null;
       this.optimizedStops = [];
+      this.routeAnnounced = false;
       this.buildStops();
     }
   }
@@ -280,8 +286,11 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.routeSteps = route.legs?.flatMap((leg: any) => leg.steps || []) || [];
         if (this.routeSteps.length) this.nextInstruction = this.routeSteps[0].maneuver?.instruction || null;
         this.drawMultiLegRoute({ geometry: route.geometry, legs: route.legs });
-        const stopWord = this.optimizedStops.length > 1 ? `${this.optimizedStops.length} stops` : '1 stop';
-        this.speak(`Route loaded. ${stopWord}, ${this.distance}, ${this.eta}.`);
+        if (!this.routeAnnounced) {
+          this.routeAnnounced = true;
+          const stopWord = this.optimizedStops.length > 1 ? `${this.optimizedStops.length} stops` : '1 stop';
+          this.speak(`Route loaded. ${stopWord}, ${this.distance}, ${this.eta}.`);
+        }
       },
       error: () => {
         this.eta = 'Route unavailable';

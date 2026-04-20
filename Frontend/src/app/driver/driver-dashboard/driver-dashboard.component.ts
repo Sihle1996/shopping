@@ -116,13 +116,8 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
     this.driverService.getAssignedOrders().pipe(takeUntil(this.destroy$)).subscribe({
       next: (res) => {
         this.orders = res;
-        this.deliveryStops = this.activeOrders.map(o => ({
-          id: o.id,
-          address: o.deliveryAddress,
-          label: `Order #${o.id.substring(0, 8)}`,
-          lat: o.deliveryLat,
-          lon: o.deliveryLon
-        }));
+        const nextStops = this.buildDeliveryStops();
+        if (this.stopsChanged(nextStops)) this.deliveryStops = nextStops;
         this.isLoading = false;
         this.lastUpdatedSeconds = 0;
       },
@@ -140,13 +135,8 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
           try { new Audio(BEEP_WAV).play(); } catch (_) {}
         }
         this.orders = res;
-        this.deliveryStops = this.activeOrders.map(o => ({
-          id: o.id,
-          address: o.deliveryAddress,
-          label: `Order #${o.id.substring(0, 8)}`,
-          lat: o.deliveryLat,
-          lon: o.deliveryLon
-        }));
+        const nextStops = this.buildDeliveryStops();
+        if (this.stopsChanged(nextStops)) this.deliveryStops = nextStops;
         this.lastUpdatedSeconds = 0;
       },
       error: () => {}
@@ -155,6 +145,25 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
 
   get activeOrders(): DriverOrder[] {
     return this.orders.filter(o => o.status !== 'Delivered');
+  }
+
+  private buildDeliveryStops(): DeliveryStop[] {
+    return this.activeOrders.map(o => ({
+      id: o.id,
+      address: o.deliveryAddress,
+      label: `Order #${o.id.substring(0, 8)}`,
+      lat: o.deliveryLat,
+      lon: o.deliveryLon
+    }));
+  }
+
+  private stopsChanged(next: DeliveryStop[]): boolean {
+    if (next.length !== this.deliveryStops.length) return true;
+    return next.some((s, i) =>
+      s.id !== this.deliveryStops[i].id ||
+      s.lat !== this.deliveryStops[i].lat ||
+      s.lon !== this.deliveryStops[i].lon
+    );
   }
 
   get completedOrders(): DriverOrder[] {
