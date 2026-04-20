@@ -23,6 +23,7 @@ export type SalesChartOptions = {
   tooltip: ApexTooltip;
   grid: ApexGrid;
   noData: ApexNoData;
+  colors: string[];
 };
 
 export type ProductsChartOptions = {
@@ -346,10 +347,16 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
+  private getBrandColor(): string {
+    return getComputedStyle(document.documentElement).getPropertyValue('--brand-primary').trim() || '#E76F51';
+  }
+
   private buildSalesChartOptions(labels: string[], values: number[]): Partial<SalesChartOptions> {
+    const color = this.getBrandColor();
     return {
       series: [{ name: 'Revenue', data: values }],
       chart: { type: 'area', height: 280, toolbar: { show: false }, sparkline: { enabled: false } },
+      colors: [color],
       xaxis: { categories: labels, labels: { style: { fontSize: '11px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
       yaxis: { labels: { formatter: (v: number) => `R${v.toLocaleString('en-ZA', { minimumFractionDigits: 0 })}`, style: { fontSize: '11px' } } },
       fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.05, stops: [0, 100] } },
@@ -362,17 +369,18 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   private buildProductsChartOptions(labels: string[], values: number[]): Partial<ProductsChartOptions> {
+    const color = this.getBrandColor();
     return {
       series: [{ name: 'Orders', data: values }],
       chart: { type: 'bar', height: 280, toolbar: { show: false } },
+      colors: [color],
       plotOptions: { bar: { horizontal: true, borderRadius: 6, barHeight: '60%' } },
       xaxis: { categories: labels, labels: { style: { fontSize: '11px' } } },
       yaxis: { labels: { style: { fontSize: '11px' } } },
       dataLabels: { enabled: true, style: { fontSize: '11px' } },
       tooltip: { y: { formatter: (v: number) => `${v} orders` } },
       grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
-      noData: { text: 'No product data for this period', style: { color: '#94a3b8' } },
-      colors: ['#10b981']
+      noData: { text: 'No product data for this period', style: { color: '#94a3b8' } }
     };
   }
 }
