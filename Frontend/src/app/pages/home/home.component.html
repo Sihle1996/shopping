@@ -12,19 +12,17 @@
   <div class="flex gap-6 px-4 lg:px-8 flex-1 items-start pt-4">
 
     <!-- LEFT SIDEBAR: desktop only, sticky -->
-    <aside class="hidden lg:flex flex-col w-44 flex-shrink-0 sticky top-[72px] pt-[148px]">
-      <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-2 px-3">Menu</p>
+    <aside class="hidden lg:flex flex-col w-40 flex-shrink-0 sticky top-[72px] pt-[148px]">
       <nav class="space-y-0.5">
         <button *ngFor="let cat of categories"
                 (click)="filterByCategory(cat.name)"
-                class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-between"
-                [class.text-white]="selectedCategory === cat.name"
-                [class.text-textDark]="selectedCategory !== cat.name"
-                [class.hover:bg-white]="selectedCategory !== cat.name"
-                [class.hover:shadow-sm]="selectedCategory !== cat.name"
-                [style.background]="selectedCategory === cat.name ? 'var(--brand-primary)' : ''">
-          <span>{{ cat.name === 'All' ? 'All Items' : cat.name }}</span>
-          <span class="text-xs font-numbers opacity-70">{{ categoryItemCount(cat.name) }}</span>
+                class="w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150 flex items-center gap-2 group"
+                [ngClass]="selectedCategory === cat.name
+                  ? 'bg-primary-50 text-primary font-semibold'
+                  : 'text-textMuted hover:text-textDark hover:bg-gray-100'">
+          <span class="w-1 h-4 rounded-full flex-shrink-0 transition-colors"
+                [ngClass]="selectedCategory === cat.name ? 'bg-primary' : 'bg-transparent'"></span>
+          <span class="truncate">{{ cat.name === 'All' ? 'All Items' : cat.name }}</span>
         </button>
       </nav>
     </aside>
