@@ -1,5 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DriverService } from 'src/app/services/driver.service';
+import { NotificationService } from 'src/app/services/notification.service';
+import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { DeliveryStop } from '../driver-map/driver-map.component';
 import { Subject } from 'rxjs';
@@ -57,6 +59,8 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
 
   constructor(
     private driverService: DriverService,
+    private notificationService: NotificationService,
+    private authService: AuthService,
     private toastr: ToastrService
   ) {}
 
@@ -71,10 +75,18 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
       next: p => this.profileIncomplete = !p.fullName || !p.phone
     });
 
-    // Auto-refresh every 30s
+    // Auto-refresh every 30s (fallback)
     this.pollInterval = setInterval(() => this.silentRefresh(), 30000);
     // Update "last updated" counter every second
     this.secondsInterval = setInterval(() => this.lastUpdatedSeconds++, 1000);
+
+    // WebSocket: instant refresh when an order is assigned to this driver
+    const driverId = this.authService.getUserId();
+    if (driverId) {
+      this.notificationService.subscribeToOrderUpdates(driverId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => this.silentRefresh());
+    }
   }
 
   ngOnDestroy(): void {
