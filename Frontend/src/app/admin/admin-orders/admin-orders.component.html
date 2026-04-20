@@ -33,12 +33,12 @@
       </div>
       <div class="bg-white rounded-2xl shadow-card p-4">
         <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center">
-            <i class="bi bi-fire text-blue-600"></i>
+          <div class="w-9 h-9 rounded-xl bg-primary-100 flex items-center justify-center">
+            <i class="bi bi-fire text-primary"></i>
           </div>
           <div>
             <p class="text-textMuted text-xs">Preparing</p>
-            <p class="font-numbers text-xl font-bold text-blue-600">{{ kpi.preparing }}</p>
+            <p class="font-numbers text-xl font-bold text-primary">{{ kpi.preparing }}</p>
           </div>
         </div>
       </div>
@@ -183,8 +183,10 @@
     <div *ngIf="selectedOrder as so" class="fixed inset-0 z-50">
       <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" (click)="closeDrawer()"></div>
       <aside class="absolute right-0 top-0 h-full w-full max-w-lg flex flex-col bg-white shadow-float animate-slide-right">
+        <!-- Brand accent strip -->
+        <div class="h-1 bg-primary flex-shrink-0"></div>
         <button (click)="closeDrawer()"
-                class="absolute right-4 top-4 w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors z-10">
+                class="absolute right-4 top-5 w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors z-10">
           <i class="bi bi-x-lg text-textDark"></i>
         </button>
 
@@ -231,7 +233,7 @@
 
         <!-- Items -->
         <div class="mb-6">
-          <h4 class="text-sm font-semibold text-textDark mb-3">Items</h4>
+          <h4 class="text-sm font-semibold text-textDark mb-3 pl-3 border-l-2 border-primary">Items</h4>
           <div class="rounded-2xl border border-borderColor divide-y divide-borderColor">
             <div *ngFor="let item of so.items" class="flex items-center justify-between px-4 py-3">
               <div>
@@ -256,7 +258,7 @@
 
         <!-- Update Status -->
         <div class="mb-6">
-          <h4 class="text-sm font-semibold text-textDark mb-3">Update Status</h4>
+          <h4 class="text-sm font-semibold text-textDark mb-3 pl-3 border-l-2 border-primary">Update Status</h4>
           <div class="flex flex-wrap gap-2">
             <button *ngFor="let s of orderStatuses"
                     (click)="updateStatus(so.id, s)"
@@ -286,7 +288,7 @@
         <!-- Assign Driver — active orders only -->
         <div *ngIf="selectedOrder && !['Cancelled','Rejected','Delivered'].includes(selectedOrder.status)"
              class="p-6 pt-4 pb-20 border-t border-borderColor bg-white">
-          <h4 class="text-sm font-semibold text-textDark mb-3">Assign Driver</h4>
+          <h4 class="text-sm font-semibold text-textDark mb-3 pl-3 border-l-2 border-primary">Assign Driver</h4>
           <div class="flex gap-2">
             <select [(ngModel)]="selectedDriverId"
                     class="flex-1 rounded-xl border border-borderColor bg-surface px-3 py-2.5 text-sm text-textDark
