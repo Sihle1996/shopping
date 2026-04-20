@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SuperAdmin.API.Data;
 using SuperAdmin.API.DTOs;
+using SuperAdmin.API.Models;
 
 namespace SuperAdmin.API.Controllers;
 
