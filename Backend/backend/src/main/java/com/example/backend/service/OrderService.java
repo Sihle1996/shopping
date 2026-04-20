@@ -31,6 +31,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -265,8 +266,17 @@ public class OrderService {
             );
         }
 
-        String storeName = saved.getTenant() != null ? saved.getTenant().getName() : "Our Store";
+        // Broadcast to admin notification feed
         String recipientEmail = user != null ? user.getEmail() : request.getGuestEmail();
+        messagingTemplate.convertAndSend("/topic/orders", Map.of(
+                "type", "ORDER_CREATED",
+                "orderId", saved.getId().toString(),
+                "userEmail", recipientEmail != null ? recipientEmail : "guest",
+                "totalAmount", saved.getTotalAmount() != null ? saved.getTotalAmount() : BigDecimal.ZERO,
+                "currency", "ZAR"
+        ));
+
+        String storeName = saved.getTenant() != null ? saved.getTenant().getName() : "Our Store";
         if (recipientEmail != null && !recipientEmail.isBlank()) {
             emailService.sendOrderConfirmation(recipientEmail, dto, storeName);
         }
