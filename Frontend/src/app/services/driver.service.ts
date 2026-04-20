@@ -42,4 +42,8 @@ export class DriverService {
   getEarnings(): Observable<{ deliveredCount: number; totalEarnings: number }> {
     return this.http.get<any>(`${this.baseUrl}/earnings`);
   }
+
+  getBranding(): Observable<{ primaryColor: string; storeName: string; logoUrl: string }> {
+    return this.http.get<any>(`${this.baseUrl}/branding`);
+  }
 }

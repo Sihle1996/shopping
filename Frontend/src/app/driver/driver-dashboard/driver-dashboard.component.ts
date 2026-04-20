@@ -74,6 +74,9 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
     this.driverService.getProfile().pipe(takeUntil(this.destroy$)).subscribe({
       next: p => this.profileIncomplete = !p.fullName || !p.phone
     });
+    this.driverService.getBranding().pipe(takeUntil(this.destroy$)).subscribe({
+      next: b => this.applyBrandColor(b.primaryColor)
+    });
 
     // Auto-refresh every 30s (fallback)
     this.pollInterval = setInterval(() => this.silentRefresh(), 30000);
@@ -94,6 +97,18 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
     clearInterval(this.pollInterval);
     clearInterval(this.secondsInterval);
+  }
+
+  private applyBrandColor(color: string): void {
+    if (!color) return;
+    const root = document.documentElement;
+    root.style.setProperty('--brand-primary', color);
+    root.style.setProperty('--brand-primary-light', color + '1A');
+    const num = parseInt(color.replace('#', ''), 16);
+    const r = Math.max(0, (num >> 16) - 38);
+    const g = Math.max(0, ((num >> 8) & 0xff) - 38);
+    const b = Math.max(0, (num & 0xff) - 38);
+    root.style.setProperty('--brand-primary-hover', `#${(r << 16 | g << 8 | b).toString(16).padStart(6, '0')}`);
   }
 
   loadOrders(): void {

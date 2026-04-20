@@ -95,6 +95,19 @@ public class DriverController {
         return ResponseEntity.ok(DriverProfileResponse.from(driver));
     }
 
+    @GetMapping("/branding")
+    public ResponseEntity<Map<String, String>> getBranding(Authentication authentication) {
+        User driver = authUtil.getCurrentUser(authentication);
+        var tenant = driver.getTenant();
+        Map<String, String> result = new java.util.HashMap<>();
+        if (tenant != null) {
+            result.put("primaryColor", tenant.getPrimaryColor() != null ? tenant.getPrimaryColor() : "#E76F51");
+            result.put("storeName",    tenant.getName() != null ? tenant.getName() : "");
+            result.put("logoUrl",      tenant.getLogoUrl() != null ? tenant.getLogoUrl() : "");
+        }
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("/earnings")
     public ResponseEntity<EarningsResponse> getEarnings(Authentication authentication) {
         User driver = authUtil.getCurrentUser(authentication);
