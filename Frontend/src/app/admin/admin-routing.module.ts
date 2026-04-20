@@ -15,6 +15,7 @@ import { AdminSubscriptionComponent } from './admin-subscription/admin-subscript
 import { AdminUsersComponent } from './admin-users/admin-users.component';
 import { AdminReviewsComponent } from './admin-reviews/admin-reviews.component';
 import { AdminEnrollmentComponent } from './admin-enrollment/admin-enrollment.component';
+import { AdminNotificationsComponent } from './admin-notifications/admin-notifications.component';
 
 const routes: Routes = [
   {
@@ -34,6 +35,7 @@ const routes: Routes = [
       { path: 'subscription', component: AdminSubscriptionComponent },
       { path: 'users', canActivate: [EnrollmentGuard], component: AdminUsersComponent },
       { path: 'reviews', canActivate: [EnrollmentGuard], component: AdminReviewsComponent },
+      { path: 'notifications', canActivate: [EnrollmentGuard], component: AdminNotificationsComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

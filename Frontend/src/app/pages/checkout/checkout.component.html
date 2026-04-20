@@ -262,7 +262,7 @@
                 <i class="bi bi-check-circle-fill mr-1.5"></i>{{ appliedPromo.title }}
               </p>
               <p class="text-xs text-green-600 mt-0.5">
-                {{ appliedPromo.code ? appliedPromo.code + ' — ' : 'Auto-applied — ' }}{{ appliedPromo.discountPercent }}% off
+                {{ appliedPromo.code ? appliedPromo.code + ' — ' : 'Auto-applied — ' }}{{ promoDescription }}
               </p>
             </div>
             <button *ngIf="appliedPromo.code" type="button" (click)="removePromo()"
@@ -364,7 +364,7 @@
             <div *ngIf="discount > 0" class="flex justify-between text-sm text-green-600">
               <span class="flex items-center gap-1">
                 <i class="bi bi-tag-fill text-xs"></i>
-                {{ appliedPromo?.code ? appliedPromo?.code : 'Auto-applied' }} ({{ appliedPromo?.discountPercent }}% off)
+                {{ appliedPromo?.code ? appliedPromo?.code : 'Auto-applied' }} ({{ promoDescription }})
               </span>
               <span class="font-numbers font-semibold">-R{{ discount.toFixed(2) }}</span>
             </div>

@@ -14,6 +14,7 @@ export class AdminFooterComponent {
     { route: '/admin/settings',     label: 'Settings',   icon: 'bi bi-gear' },
     { route: '/admin/subscription', label: 'Plan',       icon: 'bi bi-credit-card-2-front' },
     { route: '/admin/users',        label: 'Users',      icon: 'bi bi-people' },
-    { route: '/admin/reviews',      label: 'Reviews',    icon: 'bi bi-star' },
+    { route: '/admin/reviews',       label: 'Reviews',       icon: 'bi bi-star' },
+    { route: '/admin/notifications', label: 'Notifications', icon: 'bi bi-bell' },
   ];
 }

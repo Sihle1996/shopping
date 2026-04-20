@@ -217,6 +217,11 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       this.discount = this.cartItems
         .filter((i: any) => (i.menuItemCategory ?? '').toLowerCase() === catName)
         .reduce((sum: number, i: any) => sum + i.menuItemPrice * i.quantity * pct, 0);
+    } else if (this.appliedPromo.appliesTo === 'MULTI_PRODUCT' && this.appliedPromo.targetProducts?.length) {
+      const ids = new Set(this.appliedPromo.targetProducts.map(tp => tp.id));
+      this.discount = this.cartItems
+        .filter((i: any) => ids.has(i.menuItemId))
+        .reduce((sum: number, i: any) => sum + i.menuItemPrice * i.quantity * pct, 0);
     } else {
       this.discount = 0; // can't apply — unknown scope
     }
@@ -249,6 +254,24 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
         this.promoLoading = false;
       }
     });
+  }
+
+  get promoDescription(): string {
+    const p = this.appliedPromo;
+    if (!p || !p.discountPercent) return '';
+    const pct = p.discountPercent;
+    switch (p.appliesTo) {
+      case 'ALL':
+        return `${pct}% off entire order`;
+      case 'CATEGORY':
+        return `${pct}% off ${p.targetCategoryName || 'selected category'} items`;
+      case 'PRODUCT':
+        return `${pct}% off ${p.targetProductName || 'selected item'}`;
+      case 'MULTI_PRODUCT':
+        return `${pct}% off selected items`;
+      default:
+        return `${pct}% off`;
+    }
   }
 
   removePromo(): void {

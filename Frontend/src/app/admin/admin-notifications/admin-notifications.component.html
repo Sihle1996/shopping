@@ -1,5 +1,61 @@
-<div class="fixed top-4 right-4 w-80 z-50">
-  <div *ngFor="let note of notifications" class="bg-white shadow-md rounded p-3 mb-2 border border-gray-200">
-    <p class="text-sm text-gray-800">{{ note }}</p>
+<div class="px-4 pt-6 pb-24 lg:px-8 lg:pt-8">
+  <div class="w-full">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <h1 class="font-heading text-2xl font-bold text-textDark">Notifications</h1>
+        <span *ngIf="unreadCount > 0"
+              class="inline-flex items-center justify-center min-w-[1.4rem] h-[1.4rem] px-1.5 rounded-full bg-primary text-white text-xs font-bold leading-none">
+          {{ unreadCount > 99 ? '99+' : unreadCount }}
+        </span>
+      </div>
+      <button *ngIf="unreadCount > 0"
+              (click)="markAllRead()"
+              class="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-700
+                     bg-primary-50 hover:bg-primary-100 px-4 py-2 rounded-xl transition-colors">
+        <i class="bi bi-check2-all text-base"></i>
+        Mark all read
+      </button>
+    </div>
+
+    <!-- Empty state -->
+    <div *ngIf="notifications.length === 0"
+         class="flex flex-col items-center justify-center py-24 text-textMuted">
+      <i class="bi bi-bell text-5xl opacity-20 mb-4"></i>
+      <p class="font-medium text-textDark text-base">No notifications yet</p>
+      <p class="text-sm mt-1">Live order updates will appear here as they arrive</p>
+    </div>
+
+    <!-- Notification list -->
+    <div *ngIf="notifications.length > 0" class="space-y-2">
+      <div *ngFor="let note of notifications"
+           (click)="markRead(note)"
+           class="flex items-start gap-4 p-4 rounded-2xl border border-borderColor shadow-card cursor-pointer transition-colors"
+           [ngClass]="note.read ? 'bg-white hover:bg-gray-50/60' : 'bg-primary-50 hover:bg-primary-100/60'">
+
+        <!-- Icon -->
+        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-white border border-borderColor flex items-center justify-center shadow-sm">
+          <i class="bi bi-receipt text-primary text-lg"></i>
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 min-w-0">
+          <p class="text-sm text-textDark leading-snug"
+             [ngClass]="note.read ? 'font-normal' : 'font-semibold'">
+            {{ note.text }}
+          </p>
+          <p class="text-xs text-textMuted mt-1">{{ relativeTime(note.time) }}</p>
+        </div>
+
+        <!-- Unread dot -->
+        <div class="flex-shrink-0 flex items-center justify-center w-5 h-full pt-1">
+          <span *ngIf="!note.read"
+                class="inline-block w-2.5 h-2.5 rounded-full bg-primary"></span>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 </div>
