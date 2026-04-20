@@ -138,6 +138,25 @@
         </button>
       </div>
 
+      <!-- Cuisine filter chips -->
+      <div *ngIf="!isLoading && stores.length > 0"
+           class="flex flex-wrap gap-2 mb-6">
+        <button
+          *ngFor="let cuisine of cuisineTypes"
+          (click)="selectCuisine(cuisine)"
+          [class.bg-primary]="selectedCuisine === cuisine"
+          [class.text-white]="selectedCuisine === cuisine"
+          [class.border-primary]="selectedCuisine === cuisine"
+          [class.bg-white]="selectedCuisine !== cuisine"
+          [class.text-textDark]="selectedCuisine !== cuisine"
+          [class.border-borderColor]="selectedCuisine !== cuisine"
+          [class.hover:border-primary]="selectedCuisine !== cuisine"
+          [class.hover:text-primary]="selectedCuisine !== cuisine"
+          class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-sm font-medium transition-colors whitespace-nowrap">
+          {{ cuisine }}
+        </button>
+      </div>
+
       <!-- Loading skeletons -->
       <div *ngIf="isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div *ngFor="let _ of [1,2,3,4]" class="bg-white rounded-2xl p-6 animate-pulse">
@@ -158,7 +177,7 @@
         <button (click)="changeLocation()" class="text-sm text-primary hover:underline font-medium">Try again</button>
       </div>
 
-      <!-- Empty state -->
+      <!-- Empty state: no stores in area -->
       <div *ngIf="!isLoading && !storesError && stores.length === 0" class="text-center py-12">
         <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <i class="bi bi-shop text-textMuted text-2xl"></i>
@@ -170,9 +189,21 @@
         </button>
       </div>
 
+      <!-- Empty state: no stores match the active cuisine filter -->
+      <div *ngIf="!isLoading && !storesError && stores.length > 0 && filteredStores.length === 0" class="text-center py-12">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="bi bi-funnel text-textMuted text-2xl"></i>
+        </div>
+        <h3 class="font-heading font-semibold text-textDark mb-1">No {{ selectedCuisine }} restaurants nearby</h3>
+        <p class="text-textLight text-sm mb-4">Try a different cuisine or clear the filter.</p>
+        <button (click)="selectCuisine('All')" class="text-sm text-primary hover:underline font-medium">
+          Show all restaurants
+        </button>
+      </div>
+
       <!-- Store grid -->
-      <div *ngIf="!isLoading && stores.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div *ngFor="let store of stores"
+      <div *ngIf="!isLoading && filteredStores.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div *ngFor="let store of filteredStores"
              (click)="goToStore(store.slug)"
              class="bg-white rounded-2xl p-5 cursor-pointer border border-borderColor
                     hover:border-primary hover:shadow-card-hover transition-all duration-200 group">

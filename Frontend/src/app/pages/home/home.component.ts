@@ -39,6 +39,17 @@ export class HomeComponent implements OnInit, OnDestroy {
     ];
   }
 
+  /** Returns categories that have at least one item in filteredMenuItems, used for grouped display. */
+  get filteredCategories(): { name: string; items: MenuItem[] }[] {
+    const unique = [...new Set(this.menuItems.map(i => (i as any).category).filter(Boolean))] as string[];
+    return unique
+      .map(name => ({
+        name,
+        items: this.filteredMenuItems.filter(i => (i as any).category === name)
+      }))
+      .filter(group => group.items.length > 0);
+  }
+
   selectedCategory = 'All';
   selectedSort = 'default';
   searchQuery = '';

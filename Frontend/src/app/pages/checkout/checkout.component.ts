@@ -55,8 +55,13 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   loyaltyLoading = false;
 
   locating = false;
+  deliveryFeeLoading = false;
+  deliveryFeeError: string = '';
+  distanceKm: number | null = null;
   private selectedLat: number | null = null;
   private selectedLon: number | null = null;
+  private storeHasCoords = false;
+  private storeSlug: string | null = null;
 
   addressSuggestions: AddressSuggestion[] = [];
 
@@ -104,19 +109,18 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     // Load tenant info for store-closed and minimum order checks
     const tenantId = localStorage.getItem('tenantId');
-    if (tenantId) {
-      const slug = localStorage.getItem('storeSlug');
-      if (slug) {
-        this.http.get<any>(`${environment.apiUrl}/api/tenants/${slug}`).subscribe({
-          next: (t) => {
-            this.storeIsOpen = t.isOpen !== false;
-            this.minimumOrderAmount = t.minimumOrderAmount ?? null;
-            this.deliveryFee = Number(t.deliveryFeeBase) || 0;
-            this.estimatedDeliveryMinutes = Number(t.estimatedDeliveryMinutes) || 30;
-          },
-          error: () => {}
-        });
-      }
+    this.storeSlug = localStorage.getItem('storeSlug');
+    if (tenantId && this.storeSlug) {
+      this.http.get<any>(`${environment.apiUrl}/api/tenants/${this.storeSlug}`).subscribe({
+        next: (t) => {
+          this.storeIsOpen = t.isOpen !== false;
+          this.minimumOrderAmount = t.minimumOrderAmount ?? null;
+          this.deliveryFee = Number(t.deliveryFeeBase) || 0;
+          this.estimatedDeliveryMinutes = Number(t.estimatedDeliveryMinutes) || 30;
+          this.storeHasCoords = !!(t.latitude && t.longitude);
+        },
+        error: () => {}
+      });
     }
     this.loadCartAndPromos();
     this.loyaltyService.getBalance().subscribe({
@@ -144,6 +148,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       this.selectedLon = a.longitude;
     }
     this.showAddressPicker = false;
+    this.refreshDeliveryFee();
   }
 
   ngAfterViewInit(): void {
@@ -325,6 +330,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   private resolveLocation(pos: GeolocationPosition): void {
     this.selectedLat = pos.coords.latitude;
     this.selectedLon = pos.coords.longitude;
+    this.refreshDeliveryFee();
     this.geocodingService.reverseGeocode(pos.coords.latitude, pos.coords.longitude).subscribe({
       next: (result) => {
         const a = result.address;
@@ -377,6 +383,31 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       this.showBuilding = true;
       if (!this.building.name) this.building.name = suggestion.name;
     }
+
+    this.refreshDeliveryFee();
+  }
+
+  private refreshDeliveryFee(): void {
+    if (!this.storeHasCoords || !this.selectedLat || !this.selectedLon || !this.storeSlug) return;
+
+    this.deliveryFeeLoading = true;
+    this.deliveryFeeError = '';
+    this.http.get<any>(
+      `${environment.apiUrl}/api/tenants/${this.storeSlug}/delivery-fee`,
+      { params: { lat: String(this.selectedLat), lng: String(this.selectedLon) } }
+    ).subscribe({
+      next: (res) => {
+        this.deliveryFee = res.deliveryFee;
+        this.distanceKm = res.distanceKm;
+        this.deliveryFeeLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.deliveryFeeError = err?.error?.error || 'Address may be outside delivery area';
+        this.deliveryFeeLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   cleanAddressLabel(label: string): string {
@@ -415,6 +446,10 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     }
     if (this.belowMinimum) {
       this.toastr.warning(`Minimum order amount is R${this.minimumOrderAmount!.toFixed(2)}. Add more items to continue.`);
+      return;
+    }
+    if (this.deliveryFeeError) {
+      this.toastr.error(this.deliveryFeeError);
       return;
     }
     if (!this.isCheckoutValid) return;

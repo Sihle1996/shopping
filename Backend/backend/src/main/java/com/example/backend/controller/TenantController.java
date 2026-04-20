@@ -104,6 +104,45 @@ public class TenantController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Public - calculate delivery fee based on customer coordinates
+    // fee = deliveryFeeBase + (distanceKm * perKmRate)
+    @GetMapping("/api/tenants/{slug}/delivery-fee")
+    public ResponseEntity<?> getDeliveryFee(
+            @PathVariable String slug,
+            @RequestParam double lat,
+            @RequestParam double lng) {
+
+        return tenantRepository.findBySlug(slug).map(tenant -> {
+            // Fall back to flat base fee when store has no coordinates
+            if (tenant.getLatitude() == null || tenant.getLongitude() == null) {
+                double baseFee = tenant.getDeliveryFeeBase() != null
+                        ? tenant.getDeliveryFeeBase().doubleValue() : 0.0;
+                return ResponseEntity.ok(new DeliveryFeeResponse(baseFee, 0.0, true));
+            }
+
+            double distanceKm = haversineKm(lat, lng, tenant.getLatitude(), tenant.getLongitude());
+            int radiusKm = tenant.getDeliveryRadiusKm() != null ? tenant.getDeliveryRadiusKm() : 10;
+
+            if (distanceKm > radiusKm) {
+                return ResponseEntity.<Object>status(400).body(
+                        Map.of("error", "Address is outside the delivery area",
+                                "distanceKm", Math.round(distanceKm * 10.0) / 10.0,
+                                "deliveryRadiusKm", radiusKm));
+            }
+
+            final double PER_KM_RATE = 2.50;
+            double baseFee = tenant.getDeliveryFeeBase() != null
+                    ? tenant.getDeliveryFeeBase().doubleValue() : 0.0;
+            double fee = baseFee + (distanceKm * PER_KM_RATE);
+            fee = Math.round(fee * 100.0) / 100.0;
+            double roundedDistance = Math.round(distanceKm * 10.0) / 10.0;
+
+            return ResponseEntity.ok(new DeliveryFeeResponse(fee, roundedDistance, true));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    public record DeliveryFeeResponse(double deliveryFee, double distanceKm, boolean withinRadius) {}
+
     // Public - get weekly store hours for a given slug
     @GetMapping("/api/tenants/{slug}/hours")
     public ResponseEntity<List<Map<String, Object>>> getStoreHours(@PathVariable String slug) {

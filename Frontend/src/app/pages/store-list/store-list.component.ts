@@ -50,6 +50,23 @@ export class StoreListComponent implements OnInit, OnDestroy {
   stores: StoreSummary[] = [];
   isLoading = false;
   storesError = '';
+  selectedCuisine = 'All';
+
+  get cuisineTypes(): string[] {
+    const types = this.stores
+      .map(s => s.cuisineType)
+      .filter((c): c is string => !!c);
+    return ['All', ...Array.from(new Set(types)).sort()];
+  }
+
+  get filteredStores(): StoreSummary[] {
+    if (this.selectedCuisine === 'All') return this.stores;
+    return this.stores.filter(s => s.cuisineType === this.selectedCuisine);
+  }
+
+  selectCuisine(cuisine: string): void {
+    this.selectedCuisine = cuisine;
+  }
 
   constructor(
     private http: HttpClient,
@@ -156,6 +173,7 @@ export class StoreListComponent implements OnInit, OnDestroy {
     this.stores = [];
     this.suggestions = [];
     this.addressError = '';
+    this.selectedCuisine = 'All';
     localStorage.removeItem('customer_lat');
     localStorage.removeItem('customer_lon');
     localStorage.removeItem('customer_address');

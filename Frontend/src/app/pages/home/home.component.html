@@ -123,7 +123,7 @@
       <!-- Section header + sort -->
       <div class="flex items-center justify-between mb-4">
         <h3 class="font-heading text-lg font-semibold text-textDark">
-          {{ selectedCategory === 'All' ? 'Popular' : selectedCategory }}
+          {{ selectedCategory === 'All' ? 'Menu' : selectedCategory }}
           <span class="text-textMuted font-normal text-sm ml-1">({{ filteredMenuItems.length }})</span>
         </h3>
         <select
@@ -173,20 +173,51 @@
         (action)="clearFilters()">
       </app-empty-state>
 
-      <!-- Product grid -->
-      <div *ngIf="!isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" data-testid="menu-grid">
-        <app-product-card
-          *ngFor="let item of filteredMenuItems; trackBy: trackById"
-          [attr.data-testid]="'product-card-' + item.id"
-          [item]="item"
-          [showFavorite]="isLoggedIn"
-          [showAddToCart]="storeIsOpen"
-          [discountPercent]="getDiscountForItem(item)"
-          (cardClick)="goToProductDetails($event)"
-          (addToCart)="quickAddToCart($event)"
-          (favorite)="toggleFavorite($event)">
-        </app-product-card>
-      </div>
+      <!-- Product grid — grouped by category -->
+      <ng-container *ngIf="!isLoading">
+
+        <!-- When a specific category is selected, show a flat grid under that category name -->
+        <ng-container *ngIf="selectedCategory !== 'All'">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" data-testid="menu-grid">
+            <app-product-card
+              *ngFor="let item of filteredMenuItems; trackBy: trackById"
+              [attr.data-testid]="'product-card-' + item.id"
+              [item]="item"
+              [showFavorite]="isLoggedIn"
+              [showAddToCart]="storeIsOpen"
+              [discountPercent]="getDiscountForItem(item)"
+              (cardClick)="goToProductDetails($event)"
+              (addToCart)="quickAddToCart($event)"
+              (favorite)="toggleFavorite($event)">
+            </app-product-card>
+          </div>
+        </ng-container>
+
+        <!-- When All is selected, group items under their category headers.
+             Categories with no matching items (e.g. during search) are hidden. -->
+        <ng-container *ngIf="selectedCategory === 'All'">
+          <div *ngFor="let group of filteredCategories" class="mb-8" [attr.data-testid]="'category-' + group.name">
+            <h3 class="font-heading text-base font-semibold text-textDark mb-3 flex items-center gap-2">
+              <span>{{ group.name }}</span>
+              <span class="text-textMuted font-normal text-sm">({{ group.items.length }})</span>
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <app-product-card
+                *ngFor="let item of group.items; trackBy: trackById"
+                [attr.data-testid]="'product-card-' + item.id"
+                [item]="item"
+                [showFavorite]="isLoggedIn"
+                [showAddToCart]="storeIsOpen"
+                [discountPercent]="getDiscountForItem(item)"
+                (cardClick)="goToProductDetails($event)"
+                (addToCart)="quickAddToCart($event)"
+                (favorite)="toggleFavorite($event)">
+              </app-product-card>
+            </div>
+          </div>
+        </ng-container>
+
+      </ng-container>
 
       <!-- Customer Reviews -->
       <section *ngIf="reviews.length > 0" class="py-6 border-t border-borderColor mt-6">

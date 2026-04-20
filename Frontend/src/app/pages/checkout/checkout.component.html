@@ -378,9 +378,16 @@
             <div class="flex justify-between text-sm">
               <span class="text-textMuted flex items-center gap-1">
                 <i class="bi bi-truck text-xs"></i> Delivery
+                <span *ngIf="distanceKm !== null" class="text-xs text-textMuted">({{ distanceKm }} km)</span>
               </span>
-              <span *ngIf="deliveryFee > 0" class="font-numbers font-semibold text-textDark">R{{ deliveryFee.toFixed(2) }}</span>
-              <span *ngIf="deliveryFee === 0" class="font-numbers font-semibold text-green-600">Free</span>
+              <span *ngIf="deliveryFeeLoading" class="text-xs text-textMuted"><i class="bi bi-arrow-repeat animate-spin"></i></span>
+              <ng-container *ngIf="!deliveryFeeLoading">
+                <span *ngIf="deliveryFee > 0" class="font-numbers font-semibold text-textDark">R{{ deliveryFee.toFixed(2) }}</span>
+                <span *ngIf="deliveryFee === 0" class="font-numbers font-semibold text-green-600">Free</span>
+              </ng-container>
+            </div>
+            <div *ngIf="deliveryFeeError" class="flex items-center gap-1 text-xs text-red-600 mt-1">
+              <i class="bi bi-exclamation-circle"></i>{{ deliveryFeeError }}
             </div>
             <div class="flex justify-between text-base font-bold text-textDark pt-1 border-t border-borderColor">
               <span>Total</span>
