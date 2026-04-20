@@ -14,6 +14,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -96,16 +98,18 @@ public class DriverController {
     }
 
     @GetMapping("/branding")
+    @Transactional(readOnly = true)
     public ResponseEntity<Map<String, String>> getBranding(Authentication authentication) {
         User driver = authUtil.getCurrentUser(authentication);
         var tenant = driver.getTenant();
-        Map<String, String> result = new java.util.HashMap<>();
-        if (tenant != null) {
-            result.put("primaryColor", tenant.getPrimaryColor() != null ? tenant.getPrimaryColor() : "#E76F51");
-            result.put("storeName",    tenant.getName() != null ? tenant.getName() : "");
-            result.put("logoUrl",      tenant.getLogoUrl() != null ? tenant.getLogoUrl() : "");
+        if (tenant == null) {
+            return ResponseEntity.ok(Map.of("primaryColor", "#E76F51", "storeName", "", "logoUrl", ""));
         }
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(Map.of(
+            "primaryColor", tenant.getPrimaryColor() != null ? tenant.getPrimaryColor() : "#E76F51",
+            "storeName",    tenant.getName()         != null ? tenant.getName()         : "",
+            "logoUrl",      tenant.getLogoUrl()      != null ? tenant.getLogoUrl()      : ""
+        ));
     }
 
     @GetMapping("/earnings")
