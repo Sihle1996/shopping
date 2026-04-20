@@ -12,7 +12,7 @@ import { AuthService } from 'src/app/services/auth.service';
 import { GeocodingService, AddressSuggestion } from 'src/app/services/geocoding.service';
 import { PromotionService, Promotion } from 'src/app/services/promotion.service';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { FormControl } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -94,6 +94,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     private promotionService: PromotionService,
     private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
     private addressService: AddressService,
@@ -107,6 +108,23 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
+    // Handle PayFast cancellation return — auto-cancel the pending order
+    const payment = this.route.snapshot.queryParamMap.get('payment');
+    const cancelledOrderId = this.route.snapshot.queryParamMap.get('orderId');
+    if (payment === 'cancelled' && cancelledOrderId) {
+      const token = this.authService.getToken();
+      const tenantIdHeader = localStorage.getItem('tenantId');
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      if (tenantIdHeader) headers['X-Tenant-Id'] = tenantIdHeader;
+      this.http.patch(`${environment.apiUrl}/api/orders/${cancelledOrderId}/cancel`, {}, { headers }).subscribe({
+        next: () => {},
+        error: () => {}
+      });
+      this.toastr.warning('Payment cancelled — your order has been voided.');
+      this.router.navigate([], { replaceUrl: true, queryParams: {} });
+    }
+
     // Load tenant info for store-closed and minimum order checks
     const tenantId = localStorage.getItem('tenantId');
     this.storeSlug = localStorage.getItem('storeSlug');

@@ -635,6 +635,20 @@ public class OrderService {
         order.setStatus("Cancelled");
         orderRepository.save(order);
 
+        // Broadcast cancellation to admin and customer in real time
+        messagingTemplate.convertAndSend("/topic/orders", Map.of(
+                "type", "ORDER_CANCELLED",
+                "orderId", order.getId().toString(),
+                "status", "Cancelled"
+        ));
+        if (order.getUser() != null) {
+            messagingTemplate.convertAndSend("/topic/orders/" + order.getUser().getId(), Map.of(
+                    "type", "ORDER_CANCELLED",
+                    "orderId", order.getId().toString(),
+                    "status", "Cancelled"
+            ));
+        }
+
         // Refund any redeemed loyalty points
         loyaltyService.refundPoints(order.getUser(), order);
 

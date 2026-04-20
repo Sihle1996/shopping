@@ -55,7 +55,7 @@ public class PayFastController {
                     ? frontendUrl + "/store/" + storeSlug
                     : frontendUrl;
             returnUrl = basePath + "/thank-you?pf_payment_id=" + paymentId;
-            cancelUrl = basePath + "/checkout?payment=cancelled";
+            cancelUrl = basePath + "/checkout?payment=cancelled&orderId=" + paymentId;
         }
         String notifyUrl = backendUrl + "/api/payfast/notify";
 
