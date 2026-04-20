@@ -58,7 +58,7 @@
           </span>
           <span *ngIf="!toggleLoading">{{ isStoreOpen ? 'Store Open' : 'Store Closed' }}</span>
           <span *ngIf="toggleLoading" class="flex items-center gap-1">
-            <i class="bi bi-arrow-repeat animate-spin"></i> Updating...
+            <span class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin align-middle flex-shrink-0"></span> Updating...
           </span>
         </button>
 

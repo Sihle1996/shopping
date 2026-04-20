@@ -29,7 +29,7 @@
         </div>
         <button (click)="track()" [disabled]="!orderId.trim() || loading"
                 class="w-full py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-          <i class="bi bi-arrow-repeat animate-spin" *ngIf="loading"></i>
+          <span class="inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin align-middle flex-shrink-0" *ngIf="loading"></span>
           <i class="bi bi-search" *ngIf="!loading"></i>
           {{ loading ? 'Searching...' : 'Track Order' }}
         </button>

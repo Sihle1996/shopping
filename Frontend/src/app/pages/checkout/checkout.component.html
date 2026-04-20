@@ -281,7 +281,7 @@
               <button type="button" (click)="applyPromoCode()" [disabled]="!promoCode.trim() || promoLoading"
                       class="flex-shrink-0 px-4 py-3 rounded-xl border border-borderColor bg-white text-sm font-semibold text-textDark hover:bg-surface transition-colors disabled:opacity-50 whitespace-nowrap">
                 <span *ngIf="!promoLoading">Apply</span>
-                <span *ngIf="promoLoading"><i class="bi bi-arrow-repeat animate-spin"></i></span>
+                <span *ngIf="promoLoading"><span class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin align-middle flex-shrink-0"></span></span>
               </button>
             </div>
             <p *ngIf="promoError" class="text-danger text-xs mt-2 flex items-center gap-1">
@@ -328,7 +328,7 @@
               <app-button variant="secondary" size="md" [disabled]="!loyaltyPointsInput || loyaltyLoading"
                           (clicked)="applyLoyalty()">
                 <span *ngIf="!loyaltyLoading">Apply</span>
-                <span *ngIf="loyaltyLoading"><i class="bi bi-arrow-repeat animate-spin"></i></span>
+                <span *ngIf="loyaltyLoading"><span class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin align-middle flex-shrink-0"></span></span>
               </app-button>
             </div>
           </div>
@@ -380,7 +380,7 @@
                 <i class="bi bi-truck text-xs"></i> Delivery
                 <span *ngIf="distanceKm !== null" class="text-xs text-textMuted">({{ distanceKm }} km)</span>
               </span>
-              <span *ngIf="deliveryFeeLoading" class="text-xs text-textMuted"><i class="bi bi-arrow-repeat animate-spin"></i></span>
+              <span *ngIf="deliveryFeeLoading" class="text-xs text-textMuted"><span class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin align-middle flex-shrink-0"></span></span>
               <ng-container *ngIf="!deliveryFeeLoading">
                 <span *ngIf="deliveryFee > 0" class="font-numbers font-semibold text-textDark">R{{ deliveryFee.toFixed(2) }}</span>
                 <span *ngIf="deliveryFee === 0" class="font-numbers font-semibold text-green-600">Free</span>
@@ -404,7 +404,7 @@
 
         <!-- PayFast Loading -->
         <div *ngIf="payFastLoading" class="bg-white rounded-2xl shadow-card p-6 animate-fade-in text-center">
-          <i class="bi bi-arrow-repeat animate-spin text-primary text-2xl mb-2 block"></i>
+          <span class="block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></span>
           <p class="text-sm text-textMuted">Redirecting to PayFast for secure payment...</p>
         </div>
 

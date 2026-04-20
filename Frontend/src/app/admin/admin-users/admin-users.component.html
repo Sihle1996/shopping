@@ -132,7 +132,7 @@
                   [disabled]="updatingId === user.id"
                   class="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ml-2 disabled:opacity-50"
                   [ngClass]="user.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'">
-            <i *ngIf="updatingId === user.id" class="bi bi-arrow-repeat animate-spin mr-1"></i>
+            <span class="inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin align-middle mr-1 flex-shrink-0" *ngIf="updatingId === user.id"></span>
             {{ user.active ? 'Active' : 'Off' }}
           </button>
         </div>
@@ -175,7 +175,7 @@
       <button (click)="deleteUser()"
               [disabled]="deletingUserId !== null"
               class="flex-1 py-2.5 rounded-xl bg-danger hover:bg-red-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
-        <i *ngIf="deletingUserId" class="bi bi-arrow-repeat animate-spin"></i>
+        <span class="inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin align-middle flex-shrink-0" *ngIf="deletingUserId"></span>
         {{ deletingUserId ? 'Deleting...' : 'Delete' }}
       </button>
     </div>

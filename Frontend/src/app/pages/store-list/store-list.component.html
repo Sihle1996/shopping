@@ -89,7 +89,7 @@
             [disabled]="!addressInput.trim() || isLoading"
             class="px-5 py-3.5 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-primary-600 transition-colors disabled:opacity-50 whitespace-nowrap shadow-sm">
             <span *ngIf="!isLoading">Find Stores</span>
-            <span *ngIf="isLoading"><i class="bi bi-arrow-repeat animate-spin mr-1"></i>Searching…</span>
+            <span *ngIf="isLoading"><span class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin align-middle mr-1 flex-shrink-0"></span>Searching…</span>
           </button>
         </div>
 
