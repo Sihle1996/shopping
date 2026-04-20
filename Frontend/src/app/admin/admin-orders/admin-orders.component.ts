@@ -1,8 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, takeUntil } from 'rxjs/operators';
 import { AdminService } from 'src/app/services/admin.service';
+import { NotificationService } from 'src/app/services/notification.service';
 import { ToastrService } from 'ngx-toastr';
 
 /** Strict status unions */
@@ -76,7 +77,15 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   pageSize = 5;
   totalPages = 0;
 
-  constructor(private adminSerivce: AdminService, private route: ActivatedRoute, private router: Router, private toastr: ToastrService) {}
+  private destroy$ = new Subject<void>();
+
+  constructor(
+    private adminSerivce: AdminService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private toastr: ToastrService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.fetchOrders(1);
@@ -87,6 +96,11 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
         this.searchTerm = q;
         this.fetchOrders(1);
       });
+
+    // Silently refresh the list whenever a real-time order event arrives
+    this.notificationService.notifications
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.silentRefresh());
   }
 
   private get deepLinkOrderId(): string | null {
@@ -94,7 +108,22 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.searchSub?.unsubscribe();
+  }
+
+  /** Fetch current page without showing the loading skeleton */
+  private silentRefresh(): void {
+    this.adminSerivce.getOrders(this.currentPage - 1, this.pageSize, this.searchTerm)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: PageResp<Order>) => {
+          this.orders = res.content ?? [];
+          this.totalPages = res.totalPages ?? 0;
+        },
+        error: () => {}
+      });
   }
 
   // ──────────────────────────────────────────────────────────────────────────────
