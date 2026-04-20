@@ -28,7 +28,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   constructor(
-    private authService: AuthService,
+    public authService: AuthService,
     private tenantService: TenantService,
     private cartService: CartService,
     private loyaltyService: LoyaltyService,
@@ -141,8 +141,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     } else {
       const slug = localStorage.getItem('storeSlug');
       if (slug) {
-        if (this.isLoggedIn) {
-          // Logged-in customers: logo always goes to store home, never away from the store
+        if (this.authService.isLoggedIn()) {
+          // Logged-in customers: logo always returns to store menu
           this.router.navigate(['/store', slug]);
         } else {
           // Guests: if already at store root, go back to store list
