@@ -10,6 +10,10 @@ namespace SuperAdmin.API.Controllers;
 [Authorize(Roles = "SUPERADMIN")]
 public class EnrollmentController(AppDbContext db) : ControllerBase
 {
+    [HttpGet("ping")]
+    [AllowAnonymous]
+    public IActionResult Ping() => Ok(new { status = "enrollment-controller-active", ts = DateTime.UtcNow });
+
     [HttpGet("pending")]
     public async Task<IActionResult> GetPending()
     {
