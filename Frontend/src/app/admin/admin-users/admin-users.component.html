@@ -94,8 +94,8 @@
                       [disabled]="updatingId === user.id"
                       class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors disabled:opacity-50"
                       [ngClass]="user.active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-600 hover:bg-red-200'">
-                <i class="bi text-[10px]"
-                   [ngClass]="updatingId === user.id ? 'bi-arrow-repeat animate-spin' : (user.active ? 'bi-check-circle-fill' : 'bi-x-circle-fill')"></i>
+                <span *ngIf="updatingId === user.id" class="inline-block w-3 h-3 border-[1.5px] border-current border-t-transparent rounded-full animate-spin"></span>
+                <i *ngIf="updatingId !== user.id" class="bi text-[10px]" [ngClass]="user.active ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
                 {{ user.active ? 'Active' : 'Deactivated' }}
               </button>
             </td>

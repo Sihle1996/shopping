@@ -21,7 +21,8 @@
         </p>
         <button (click)="checkStatus()" [disabled]="loading"
                 class="mb-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 text-textDark text-sm font-semibold hover:bg-gray-200 transition-colors disabled:opacity-60">
-          <i class="bi" [class]="loading ? 'bi-arrow-repeat animate-spin' : 'bi-arrow-clockwise'"></i>
+          <span *ngIf="loading" class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+          <i *ngIf="!loading" class="bi bi-arrow-clockwise"></i>
           Check Status
         </button>
         <div class="text-left space-y-2 mt-4">
@@ -106,7 +107,8 @@
             <label for="upload-CIPC"
                    class="flex-shrink-0 inline-flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
                    [class]="getDoc('CIPC') ? 'bg-gray-100 text-textMuted hover:bg-gray-200' : 'bg-primary text-white hover:bg-primary-600'">
-              <i class="bi" [class]="uploading['CIPC'] ? 'bi-arrow-repeat animate-spin' : 'bi-upload'"></i>
+              <span *ngIf="uploading['CIPC']" class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+              <i *ngIf="!uploading['CIPC']" class="bi bi-upload"></i>
               {{ getDoc('CIPC') ? 'Replace' : 'Upload' }}
             </label>
             <input id="upload-CIPC" type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png"
@@ -139,7 +141,8 @@
             <label for="upload-COA"
                    class="flex-shrink-0 inline-flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
                    [class]="getDoc('COA') ? 'bg-gray-100 text-textMuted hover:bg-gray-200' : 'bg-primary text-white hover:bg-primary-600'">
-              <i class="bi" [class]="uploading['COA'] ? 'bi-arrow-repeat animate-spin' : 'bi-upload'"></i>
+              <span *ngIf="uploading['COA']" class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+              <i *ngIf="!uploading['COA']" class="bi bi-upload"></i>
               {{ getDoc('COA') ? 'Replace' : 'Upload' }}
             </label>
             <input id="upload-COA" type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png"
@@ -216,7 +219,8 @@
             <label for="upload-BANK_DETAILS"
                    class="flex-shrink-0 inline-flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
                    [class]="getDoc('BANK_DETAILS') ? 'bg-gray-100 text-textMuted hover:bg-gray-200' : 'bg-primary text-white hover:bg-primary-600'">
-              <i class="bi" [class]="uploading['BANK_DETAILS'] ? 'bi-arrow-repeat animate-spin' : 'bi-upload'"></i>
+              <span *ngIf="uploading['BANK_DETAILS']" class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+              <i *ngIf="!uploading['BANK_DETAILS']" class="bi bi-upload"></i>
               {{ getDoc('BANK_DETAILS') ? 'Replace' : 'Upload' }}
             </label>
             <input id="upload-BANK_DETAILS" type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png"
@@ -227,7 +231,8 @@
           <div *ngIf="canEdit()" class="mt-4 flex justify-end">
             <button (click)="saveDetails()" [disabled]="savingDetails"
                     class="px-4 py-2 bg-gray-100 text-textDark rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors disabled:opacity-60">
-              <i class="bi" [class]="savingDetails ? 'bi-arrow-repeat animate-spin' : 'bi-floppy'"></i>
+              <span *ngIf="savingDetails" class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+              <i *ngIf="!savingDetails" class="bi bi-floppy"></i>
               {{ savingDetails ? 'Saving…' : 'Save Details' }}
             </button>
           </div>
@@ -258,7 +263,8 @@
             <label for="upload-STOREFRONT_PHOTO"
                    class="flex-shrink-0 inline-flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
                    [class]="getDoc('STOREFRONT_PHOTO') ? 'bg-gray-100 text-textMuted hover:bg-gray-200' : 'bg-gray-100 text-textDark hover:bg-gray-200'">
-              <i class="bi" [class]="uploading['STOREFRONT_PHOTO'] ? 'bi-arrow-repeat animate-spin' : 'bi-upload'"></i>
+              <span *ngIf="uploading['STOREFRONT_PHOTO']" class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+              <i *ngIf="!uploading['STOREFRONT_PHOTO']" class="bi bi-upload"></i>
               {{ getDoc('STOREFRONT_PHOTO') ? 'Replace' : 'Upload' }}
             </label>
             <input id="upload-STOREFRONT_PHOTO" type="file" class="hidden" accept=".jpg,.jpeg,.png"

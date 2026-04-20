@@ -253,7 +253,8 @@
             <button (click)="removeCategory(cat.id)"
                     [disabled]="removingCategoryId === cat.id"
                     class="w-4 h-4 flex items-center justify-center rounded-full hover:bg-red-100 hover:text-danger transition-colors disabled:opacity-50">
-              <i class="bi text-xs" [ngClass]="removingCategoryId === cat.id ? 'bi-arrow-repeat animate-spin' : 'bi-x'"></i>
+              <span *ngIf="removingCategoryId === cat.id" class="inline-block w-3 h-3 border-[1.5px] border-current border-t-transparent rounded-full animate-spin"></span>
+              <i *ngIf="removingCategoryId !== cat.id" class="bi bi-x text-xs"></i>
             </button>
           </div>
         </div>

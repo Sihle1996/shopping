@@ -51,7 +51,8 @@
           <button type="submit" [disabled]="submitting"
                   class="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600
                          transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
-            <i class="bi" [ngClass]="submitting ? 'bi-arrow-repeat animate-spin' : 'bi-plus-lg'"></i>
+            <span *ngIf="submitting" class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0"></span>
+            <i *ngIf="!submitting" class="bi bi-plus-lg"></i>
             {{ submitting ? 'Adding...' : 'Add Driver' }}
           </button>
         </form>
@@ -89,8 +90,8 @@
                     [disabled]="deletingId === driver.id"
                     class="w-8 h-8 flex items-center justify-center rounded-xl text-textMuted
                            hover:text-danger hover:bg-red-50 transition-colors disabled:opacity-40 flex-shrink-0">
-              <i class="bi text-sm"
-                 [ngClass]="deletingId === driver.id ? 'bi-arrow-repeat animate-spin' : 'bi-trash'"></i>
+              <span *ngIf="deletingId === driver.id" class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+              <i *ngIf="deletingId !== driver.id" class="bi bi-trash text-sm"></i>
             </button>
           </div>
         </div>

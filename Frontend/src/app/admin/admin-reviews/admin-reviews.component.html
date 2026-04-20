@@ -61,10 +61,8 @@
                   [disabled]="deletingId === review.id"
                   class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-xl
                          text-textMuted hover:text-danger hover:bg-red-50 transition-colors disabled:opacity-40">
-            <i class="bi text-sm"
-               [class.bi-trash]="deletingId !== review.id"
-               [class.bi-arrow-repeat]="deletingId === review.id"
-               [class.animate-spin]="deletingId === review.id"></i>
+            <span *ngIf="deletingId === review.id" class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+            <i *ngIf="deletingId !== review.id" class="bi bi-trash text-sm"></i>
           </button>
         </div>
 
