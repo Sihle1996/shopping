@@ -100,7 +100,7 @@ export class ProductComponent implements OnInit {
         this.modifierGroups = groups || [];
         this.modifierSelections = {};
         for (const g of this.modifierGroups) {
-          if (g.type === 'RADIO' && g.choices?.length) {
+          if (g.type === 'RADIO' && g.required && g.choices?.length) {
             this.modifierSelections[g.id] = [g.choices[0].id];
           }
         }
@@ -163,7 +163,8 @@ export class ProductComponent implements OnInit {
 
   toggleChoice(group: any, choiceId: string): void {
     if (group.type === 'RADIO') {
-      this.modifierSelections[group.id] = [choiceId];
+      const already = this.modifierSelections[group.id]?.[0] === choiceId;
+      this.modifierSelections[group.id] = (!group.required && already) ? [] : [choiceId];
     } else {
       const current = this.modifierSelections[group.id] || [];
       const idx = current.indexOf(choiceId);
