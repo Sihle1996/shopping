@@ -28,6 +28,7 @@ export class AppComponent implements OnDestroy {
     private ngZone: NgZone
   ) {
     this.authService.checkSessionOnStartup();
+    this.restoreBrand();
 
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
@@ -59,6 +60,20 @@ export class AppComponent implements OnDestroy {
         this.ngZone.run(() => this.authService.logout());
       }
     }, IDLE_TIMEOUT_MS);
+  }
+
+  private restoreBrand(): void {
+    const color = localStorage.getItem('brandPrimary');
+    if (!color) return;
+    const root = document.documentElement;
+    root.style.setProperty('--brand-primary', color);
+    root.style.setProperty('--brand-primary-light', color + '1A');
+    const hex = color.replace('#', '');
+    const r = Math.max(0, parseInt(hex.slice(0, 2), 16) - 38);
+    const g = Math.max(0, parseInt(hex.slice(2, 4), 16) - 38);
+    const b = Math.max(0, parseInt(hex.slice(4, 6), 16) - 38);
+    root.style.setProperty('--brand-primary-hover',
+      `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`);
   }
 
   ngOnDestroy(): void {

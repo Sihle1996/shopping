@@ -33,12 +33,9 @@ export class StoreComponent implements OnInit, OnDestroy {
   }
 
   private resetBranding(): void {
-    const root = document.documentElement;
-    root.style.setProperty('--brand-primary', '#E76F51');
-    root.style.setProperty('--brand-primary-light', '#E76F511A');
-    root.style.setProperty('--brand-primary-hover', '#C15A35');
     this.tenantService.clearTenant();
-    ['tenantId', 'storeName', 'storeSlug', 'brandPrimary'].forEach(k => localStorage.removeItem(k));
+    ['tenantId', 'storeName', 'storeSlug'].forEach(k => localStorage.removeItem(k));
+    // CSS vars and brandPrimary are kept so profile/address pages retain store branding
   }
 
   private applyBrandColor(color?: string): void {

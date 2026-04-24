@@ -129,7 +129,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       default:
         const slug = localStorage.getItem('storeSlug');
         if (slug) return `/store/${slug}`;
-        return '/';
+        return this.authService.isLoggedIn() ? '/stores' : '/';
     }
   }
 
@@ -147,19 +147,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
       const slug = localStorage.getItem('storeSlug');
       if (slug) {
         if (this.authService.isLoggedIn()) {
-          // Logged-in customers: logo always returns to store menu
           this.router.navigate(['/store', slug]);
         } else {
-          // Guests: if already at store root, go back to store list
           const current = this.router.url.split('?')[0].replace(/\/$/, '');
-          if (current === `/store/${slug}`) {
-            this.router.navigate(['/stores']);
-          } else {
-            this.router.navigate(['/store', slug]);
-          }
+          this.router.navigate(current === `/store/${slug}` ? ['/stores'] : ['/store', slug]);
         }
       } else {
-        this.router.navigate(['/']);
+        this.router.navigate(this.authService.isLoggedIn() ? ['/stores'] : ['/']);
       }
     }
   }
