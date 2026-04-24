@@ -539,7 +539,8 @@ public class OrderService {
                 order.getDeliveryLon(),
                 order.getOrderNotes(),
                 userPhone,
-                null  // deliveryOtp — set below if active
+                null,  // deliveryOtp — set below if active
+                order.getScheduledDeliveryTime() != null ? order.getScheduledDeliveryTime().toString() : null
         );
 
         if (order.getDriver() != null) {
