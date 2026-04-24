@@ -77,7 +77,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   private loadLoyalty(): void {
-    if (!this.authService.isLoggedIn()) return;
+    if (!this.authService.isLoggedIn() || !this.hasStoreContext) return;
     this.loyaltyService.getBalance().pipe(takeUntil(this.destroy$)).subscribe({
       next: b => this.loyaltyPoints = b.balance || 0,
       error: () => {}
