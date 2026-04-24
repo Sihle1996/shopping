@@ -34,8 +34,9 @@ export class StoreComponent implements OnInit, OnDestroy {
 
   private resetBranding(): void {
     this.tenantService.clearTenant();
-    ['tenantId', 'storeName', 'storeSlug'].forEach(k => localStorage.removeItem(k));
-    // CSS vars and brandPrimary are kept so profile/address pages retain store branding
+    // localStorage store context (storeSlug, storeName, tenantId, brandPrimary) is kept
+    // so profile/address/support pages retain the store context and can navigate back.
+    // These keys are cleared on logout (auth.service) and on landing page (navbar).
   }
 
   private applyBrandColor(color?: string): void {
