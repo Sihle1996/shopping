@@ -61,19 +61,20 @@
 
         <!-- Collapsed row — today's hours -->
         <button (click)="showAllHours = !showAllHours"
-                class="w-full flex items-center justify-between px-4 py-3 text-sm hover:bg-surface transition-colors">
-          <div class="flex items-center gap-2">
-            <i class="bi bi-clock text-primary text-base"></i>
-            <span class="font-semibold text-textDark">Opening Hours</span>
-            <ng-container *ngIf="todayHours">
-              <span class="text-textMuted">·</span>
-              <span *ngIf="!todayHours.closed" class="text-textDark">
-                Today <span class="text-primary font-semibold">{{ todayHours.openTime }} – {{ todayHours.closeTime }}</span>
-              </span>
-              <span *ngIf="todayHours.closed" class="text-red-500 font-medium">Closed today</span>
-            </ng-container>
+                class="w-full flex items-center justify-between px-4 py-3 hover:bg-surface transition-colors">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <i class="bi bi-clock text-primary text-base flex-shrink-0"></i>
+            <div class="min-w-0">
+              <p class="font-semibold text-textDark text-sm leading-tight">Opening Hours</p>
+              <ng-container *ngIf="todayHours">
+                <p *ngIf="!todayHours.closed" class="text-xs text-textMuted leading-tight mt-0.5">
+                  Today <span class="text-primary font-semibold">{{ todayHours.openTime }} – {{ todayHours.closeTime }}</span>
+                </p>
+                <p *ngIf="todayHours.closed" class="text-xs text-red-500 font-medium mt-0.5">Closed today</p>
+              </ng-container>
+            </div>
           </div>
-          <i class="bi text-textMuted text-xs transition-transform"
+          <i class="bi flex-shrink-0 text-textMuted text-xs transition-transform ml-2"
              [class.bi-chevron-down]="!showAllHours"
              [class.bi-chevron-up]="showAllHours"></i>
         </button>
