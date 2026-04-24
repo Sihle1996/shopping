@@ -23,6 +23,7 @@ import { LandingComponent } from './pages/landing/landing.component';
 import { TrackOrderComponent } from './pages/track-order/track-order.component';
 import { VerifyEmailComponent } from './pages/verify-email/verify-email.component';
 import { SupportComponent } from './pages/support/support.component';
+import { FavouritesComponent } from './pages/favourites/favourites.component';
 
 const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -41,6 +42,7 @@ const routes: Routes = [
       { path: 'checkout', component: CheckoutComponent, canActivate: [UserGuard] },
       { path: 'orders', component: HistoryordersComponent, canActivate: [UserGuard] },
       { path: 'thank-you', component: ThankYouComponent },
+      { path: 'favourites', component: FavouritesComponent, canActivate: [UserGuard] },
     ]
   },
 

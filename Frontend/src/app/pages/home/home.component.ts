@@ -9,6 +9,7 @@ import { MenuService, MenuItem } from 'src/app/services/menu.service';
 import { CartService, CartItem } from 'src/app/services/cart.service';
 import { PromotionService, Promotion } from 'src/app/services/promotion.service';
 import { TenantService } from 'src/app/services/tenant.service';
+import { FavouriteService } from 'src/app/services/favourite.service';
 import { ProductCardItem } from 'src/app/shared/components/product-card/product-card.component';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
@@ -83,7 +84,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     private promotionService: PromotionService,
     private toastr: ToastrService,
     private http: HttpClient,
-    private tenantService: TenantService
+    private tenantService: TenantService,
+    private favouriteService: FavouriteService
   ) {}
 
   // ── Modifier modal ────────────────────────────────────────────────────────
@@ -182,6 +184,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (tenant) {
       this.storeIsOpen = tenant.isOpen !== false;
       this.estimatedDeliveryMinutes = tenant.estimatedDeliveryMinutes || 30;
+    }
+    if (this.isLoggedIn) {
+      this.favouriteService.load().subscribe();
     }
     this.fetchMenu();
     this.loadPromotions();

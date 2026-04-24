@@ -33,6 +33,7 @@ import { UserProfileComponent } from './pages/user-profile/user-profile.componen
 import { TrackOrderComponent } from './pages/track-order/track-order.component';
 import { VerifyEmailComponent } from './pages/verify-email/verify-email.component';
 import { SupportComponent } from './pages/support/support.component';
+import { FavouritesComponent } from './pages/favourites/favourites.component';
 
 @NgModule({
   declarations: [
@@ -58,6 +59,7 @@ import { SupportComponent } from './pages/support/support.component';
     TrackOrderComponent,
     VerifyEmailComponent,
     SupportComponent,
+    FavouritesComponent,
   ],
   imports: [
     BrowserModule,

@@ -50,4 +50,8 @@ export class AdminPromotionService {
   setFeatured(id: string, value: boolean): Observable<Promotion> {
     return this.http.patch<Promotion>(`${this.baseUrl}/${id}/featured`, null, { params: { value } as any });
   }
+
+  notify(id: string): Observable<{ sent: number }> {
+    return this.http.post<{ sent: number }>(`${this.baseUrl}/${id}/notify`, null);
+  }
 }

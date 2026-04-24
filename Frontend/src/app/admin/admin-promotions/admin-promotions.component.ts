@@ -250,6 +250,19 @@ export class AdminPromotionsComponent implements OnInit {
     });
   }
 
+  notifyingId: string | null = null;
+
+  notifySubscribers(p: Promotion): void {
+    this.notifyingId = p.id;
+    this.api.notify(p.id).subscribe({
+      next: (res) => {
+        this.notifyingId = null;
+        this.toastr.success(`Sent to ${res.sent} subscriber${res.sent !== 1 ? 's' : ''}`);
+      },
+      error: () => { this.notifyingId = null; this.toastr.error('Failed to send notifications'); }
+    });
+  }
+
   getStatus(p: Promotion): PromoStatus { return getPromoStatus(p); }
 
   onImageSelected(event: Event): void {

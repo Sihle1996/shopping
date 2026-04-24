@@ -400,6 +400,10 @@
                 <i class="bi mr-1" [class.bi-star]="!p.featured" [class.bi-star-fill]="p.featured"></i>
                 {{ p.featured ? 'Unfeature' : 'Feature' }}
               </button>
+              <button *ngIf="p.active" (click)="notifySubscribers(p)" [disabled]="notifyingId === p.id"
+                      class="flex-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 py-1.5 rounded-lg transition-colors disabled:opacity-50">
+                <i class="bi bi-send mr-1"></i>{{ notifyingId === p.id ? 'Sending...' : 'Notify' }}
+              </button>
               <button (click)="confirmDelete(p)"
                       class="text-danger hover:bg-red-50 p-1.5 rounded-lg transition-colors">
                 <i class="bi bi-trash3"></i>

@@ -292,8 +292,10 @@ public class OrderService {
         ));
 
         String storeName = saved.getTenant() != null ? saved.getTenant().getName() : "Our Store";
+        String logoUrl = saved.getTenant() != null ? saved.getTenant().getLogoUrl() : null;
+        String primaryColor = saved.getTenant() != null ? saved.getTenant().getPrimaryColor() : null;
         if (recipientEmail != null && !recipientEmail.isBlank()) {
-            emailService.sendOrderConfirmation(recipientEmail, dto, storeName);
+            emailService.sendOrderConfirmation(recipientEmail, dto, storeName, logoUrl, primaryColor);
         }
 
         return dto;
@@ -429,6 +431,8 @@ public class OrderService {
         ));
 
         String storeName = updated.getTenant() != null ? updated.getTenant().getName() : "Our Store";
+        String logoUrl = updated.getTenant() != null ? updated.getTenant().getLogoUrl() : null;
+        String primaryColor = updated.getTenant() != null ? updated.getTenant().getPrimaryColor() : null;
         String customerEmail = updated.getUser() != null ? updated.getUser().getEmail() : updated.getGuestEmail();
 
         if ("Delivered".equals(status)) {
@@ -436,11 +440,10 @@ public class OrderService {
                 loyaltyService.awardPoints(updated.getUser(), updated);
             }
             if (customerEmail != null && !customerEmail.isBlank()) {
-                emailService.sendOrderDelivered(customerEmail, dto, storeName);
+                emailService.sendOrderDelivered(customerEmail, dto, storeName, logoUrl, primaryColor);
             }
         } else if (customerEmail != null && !customerEmail.isBlank()) {
-            // Send status update email for Confirmed, Preparing, Out for Delivery, Cancelled, Rejected
-            emailService.sendOrderStatusUpdate(customerEmail, status, updated.getId().toString(), storeName);
+            emailService.sendOrderStatusUpdate(customerEmail, status, updated.getId().toString(), storeName, logoUrl, primaryColor);
         }
 
         return dto;

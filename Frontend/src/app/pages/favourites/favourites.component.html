@@ -1,0 +1,49 @@
+<div class="min-h-screen bg-surface pb-24 lg:pb-8">
+
+  <!-- Header -->
+  <div class="bg-white border-b border-borderColor px-4 lg:px-8 py-4 sticky top-14 z-10">
+    <div class="max-w-3xl mx-auto flex items-center gap-3">
+      <button (click)="goBack()" class="p-2 rounded-xl hover:bg-surface transition-colors text-textMuted">
+        <i class="bi bi-arrow-left text-lg"></i>
+      </button>
+      <div>
+        <h2 class="font-heading text-lg font-bold text-textDark">My Favourites</h2>
+        <p class="text-xs text-textMuted">Items you've saved</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-3xl mx-auto px-4 lg:px-8 pt-6">
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div *ngFor="let i of [1,2,3,4]" class="h-60 bg-white rounded-2xl animate-pulse shadow-card"></div>
+    </div>
+
+    <!-- Empty state -->
+    <div *ngIf="!loading && items.length === 0"
+         class="flex flex-col items-center justify-center py-20 text-center">
+      <div class="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-4">
+        <i class="bi bi-heart text-3xl text-red-300"></i>
+      </div>
+      <p class="text-base font-semibold text-textDark">No favourites yet</p>
+      <p class="text-sm text-textMuted mt-1 max-w-xs">Tap the heart on any menu item to save it here</p>
+      <button (click)="goBack()"
+              class="mt-6 px-6 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600 transition-colors">
+        Browse Menu
+      </button>
+    </div>
+
+    <!-- Grid -->
+    <div *ngIf="!loading && items.length > 0"
+         class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <app-product-card
+        *ngFor="let item of items"
+        [item]="toCardItem(item)"
+        [showFavorite]="true"
+        [showAddToCart]="item.available">
+      </app-product-card>
+    </div>
+
+  </div>
+</div>

@@ -92,6 +92,22 @@
             </div>
           </div>
 
+          <!-- Marketing email opt-in -->
+          <div class="flex items-start gap-3 p-3 rounded-xl bg-surface border border-borderColor">
+            <label class="relative inline-flex items-center cursor-pointer mt-0.5 flex-shrink-0">
+              <input type="checkbox" formControlName="marketingEmailOptIn" class="sr-only peer">
+              <div class="w-10 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer
+                          peer-checked:after:translate-x-full peer-checked:after:border-white
+                          after:content-[''] after:absolute after:top-[2px] after:start-[2px]
+                          after:bg-white after:border-gray-300 after:border after:rounded-full
+                          after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+            </label>
+            <div>
+              <p class="text-sm font-medium text-textDark">Promotional emails</p>
+              <p class="text-xs text-textMuted mt-0.5">Receive offers and deals from this store</p>
+            </div>
+          </div>
+
           <div class="flex flex-col sm:flex-row gap-3 pt-1">
             <button type="submit" [disabled]="saving"
                     class="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary-600 text-white text-sm font-semibold

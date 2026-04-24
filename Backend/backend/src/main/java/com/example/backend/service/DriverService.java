@@ -64,7 +64,9 @@ public class DriverService {
         String customerEmail = order.getUser() != null ? order.getUser().getEmail() : order.getGuestEmail();
         if (customerEmail != null && !customerEmail.isBlank()) {
             String storeName = order.getTenant() != null ? order.getTenant().getName() : "the store";
-            emailService.sendDeliveryOtp(customerEmail, otp, storeName, order.getId().toString());
+            String logoUrl = order.getTenant() != null ? order.getTenant().getLogoUrl() : null;
+            String primaryColor = order.getTenant() != null ? order.getTenant().getPrimaryColor() : null;
+            emailService.sendDeliveryOtp(customerEmail, otp, storeName, order.getId().toString(), logoUrl, primaryColor);
         }
 
         return Map.of("message", "OTP sent to customer", "otp", otp);
@@ -106,7 +108,9 @@ public class DriverService {
         String customerEmail = order.getUser() != null ? order.getUser().getEmail() : order.getGuestEmail();
         if (customerEmail != null && !customerEmail.isBlank()) {
             String storeName = order.getTenant() != null ? order.getTenant().getName() : "the store";
-            emailService.sendOrderDelivered(customerEmail, dto, storeName);
+            String logoUrl = order.getTenant() != null ? order.getTenant().getLogoUrl() : null;
+            String primaryColor = order.getTenant() != null ? order.getTenant().getPrimaryColor() : null;
+            emailService.sendOrderDelivered(customerEmail, dto, storeName, logoUrl, primaryColor);
         }
     }
 
@@ -134,7 +138,9 @@ public class DriverService {
         String customerEmail = order.getUser() != null ? order.getUser().getEmail() : order.getGuestEmail();
         if (customerEmail != null && !customerEmail.isBlank()) {
             String storeName = order.getTenant() != null ? order.getTenant().getName() : "the store";
-            emailService.sendOrderDelivered(customerEmail, dto, storeName);
+            String logoUrl = order.getTenant() != null ? order.getTenant().getLogoUrl() : null;
+            String primaryColor = order.getTenant() != null ? order.getTenant().getPrimaryColor() : null;
+            emailService.sendOrderDelivered(customerEmail, dto, storeName, logoUrl, primaryColor);
         }
     }
 

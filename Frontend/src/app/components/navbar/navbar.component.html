@@ -50,6 +50,20 @@
             <i class="bi bi-receipt mr-1"></i> Orders
           </a>
         </li>
+
+        <li *ngIf="isLoggedIn && hasStoreContext">
+          <a [routerLink]="favouritesRoute" routerLinkActive="text-primary bg-primary-50"
+             class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
+            <i class="bi bi-heart mr-1"></i> Favourites
+          </a>
+        </li>
+
+        <li *ngIf="isLoggedIn">
+          <a routerLink="/support" routerLinkActive="text-primary bg-primary-50"
+             class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
+            <i class="bi bi-headset mr-1"></i> Support
+          </a>
+        </li>
       </ng-container>
 
       <li class="ml-2" *ngIf="!isLoggedIn && hasStoreContext">
@@ -130,6 +144,14 @@
         <a *ngIf="isLoggedIn" routerLink="/profile/addresses" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
           <i class="bi bi-geo-alt text-base"></i> Saved Addresses
+        </a>
+        <a *ngIf="isLoggedIn && hasStoreContext" [routerLink]="favouritesRoute" (click)="toggleMenu()"
+           class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
+          <i class="bi bi-heart text-base"></i> Favourites
+        </a>
+        <a *ngIf="isLoggedIn" routerLink="/support" (click)="toggleMenu()"
+           class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
+          <i class="bi bi-headset text-base"></i> Support
         </a>
       </ng-container>
 

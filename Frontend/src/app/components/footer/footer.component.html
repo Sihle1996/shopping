@@ -41,6 +41,17 @@
       <span class="text-[11px] font-medium">Cart</span>
     </a>
 
+    <!-- Support -->
+    <a *ngIf="isLoggedIn" routerLink="/support"
+       class="flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-2xl transition-all duration-200 min-w-[60px]"
+       [class.text-primary]="isActive('/support')"
+       [class.text-textLight]="!isActive('/support')">
+      <i class="bi text-2xl transition-all duration-200"
+         [class.bi-headset]="isActive('/support')"
+         [class.bi-headset]="!isActive('/support')"></i>
+      <span class="text-[11px] font-medium">Support</span>
+    </a>
+
     <!-- Sign In (when logged out) -->
     <a *ngIf="!isLoggedIn" routerLink="/login"
        class="flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-2xl transition-all duration-200 min-w-[60px]"

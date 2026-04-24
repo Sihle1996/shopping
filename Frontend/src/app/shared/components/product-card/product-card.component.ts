@@ -1,5 +1,6 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnChanges, SimpleChanges } from '@angular/core';
 import { environment } from 'src/environments/environment';
+import { FavouriteService } from 'src/app/services/favourite.service';
 
 export interface ProductCardItem {
   id: string | null;
@@ -32,9 +33,18 @@ export interface ProductCardItem {
         <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/90 text-textDark backdrop-blur-sm">
           {{ item.category }}
         </span>
+        <!-- Favourite button -->
+        <button *ngIf="showFavorite && item.id"
+                (click)="onFavorite($event)"
+                class="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm z-10 transition-transform active:scale-90">
+          <i class="bi text-base transition-colors" [class.bi-heart-fill]="isFav" [class.bi-heart]="!isFav"
+             [class.text-red-500]="isFav" [class.text-textMuted]="!isFav"></i>
+        </button>
         <!-- Low stock badge -->
         <span *ngIf="isLowStock"
-              class="absolute top-3 right-3 px-2 py-0.5 rounded-full text-xs font-semibold bg-warning/90 text-white">
+              class="absolute px-2 py-0.5 rounded-full text-xs font-semibold bg-warning/90 text-white"
+              [class.top-3]="!showFavorite" [class.right-3]="!showFavorite"
+              [class.top-12]="showFavorite" [class.right-2]="showFavorite">
           Only {{ item.stock }} left
         </span>
         <!-- Unavailable overlay -->
@@ -78,11 +88,21 @@ export interface ProductCardItem {
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProductCardComponent {
+export class ProductCardComponent implements OnChanges {
   @Input() item!: ProductCardItem;
   @Input() showFavorite = false;
   @Input() showAddToCart = true;
   @Input() discountPercent = 0;
+
+  isFav = false;
+
+  constructor(private favouriteService: FavouriteService) {}
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['item'] && this.item?.id) {
+      this.isFav = this.favouriteService.isFavourite(this.item.id);
+    }
+  }
 
   get isLowStock(): boolean {
     const s = this.item?.stock;
@@ -111,6 +131,12 @@ export class ProductCardComponent {
 
   onFavorite(event: MouseEvent): void {
     event.stopPropagation();
+    if (!this.item?.id) return;
+    this.isFav = !this.isFav;
+    this.favouriteService.toggle(this.item.id).subscribe({
+      next: (favourited) => { this.isFav = favourited; },
+      error: () => { this.isFav = !this.isFav; }
+    });
     this.favorite.emit(this.item);
   }
 }

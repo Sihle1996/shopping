@@ -7,8 +7,11 @@ import com.example.backend.model.Promotion;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.PromotionRepository;
 import com.example.backend.repository.TenantRepository;
+import com.example.backend.repository.UserRepository;
+import com.example.backend.service.EmailService;
 import com.example.backend.service.SubscriptionEnforcementService;
 import com.example.backend.tenant.TenantContext;
+import com.example.backend.user.User;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -29,6 +33,8 @@ public class AdminPromotionController {
     private final TenantRepository tenantRepository;
     private final MenuItemRepository menuItemRepository;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
 
     @GetMapping
     @Transactional
@@ -81,6 +87,27 @@ public class AdminPromotionController {
         return (tenantId != null ? promotionRepository.findByIdAndTenant_Id(id, tenantId) : promotionRepository.findById(id))
                 .map(p -> { p.setFeatured(value); return ResponseEntity.ok(PromotionDTO.from(promotionRepository.save(p))); })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{id}/notify")
+    @Transactional
+    public ResponseEntity<Map<String, Integer>> notifySubscribers(@PathVariable UUID id) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        Promotion promo = (tenantId != null
+                ? promotionRepository.findByIdAndTenant_Id(id, tenantId)
+                : promotionRepository.findById(id))
+                .orElse(null);
+        if (promo == null) return ResponseEntity.notFound().build();
+        List<User> subscribers = tenantId != null
+                ? userRepository.findByTenant_IdAndMarketingEmailOptInTrue(tenantId)
+                : List.of();
+        String storeName = promo.getTenant() != null ? promo.getTenant().getName() : "Our Store";
+        String logoUrl = promo.getTenant() != null ? promo.getTenant().getLogoUrl() : null;
+        String primaryColor = promo.getTenant() != null ? promo.getTenant().getPrimaryColor() : null;
+        subscribers.forEach(u -> emailService.sendPromotionalEmail(
+                u.getEmail(), storeName, logoUrl, primaryColor,
+                promo.getTitle(), promo.getDescription(), promo.getBadgeText(), promo.getCode(), null));
+        return ResponseEntity.ok(Map.of("sent", subscribers.size()));
     }
 
     @DeleteMapping("/{id}")

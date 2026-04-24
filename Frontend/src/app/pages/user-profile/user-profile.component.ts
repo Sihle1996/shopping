@@ -39,7 +39,8 @@ export class UserProfileComponent implements OnInit {
   ) {
     this.form = this.fb.group({
       fullName: [''],
-      phone: ['']
+      phone: [''],
+      marketingEmailOptIn: [false]
     });
     this.passwordForm = this.fb.group({
       currentPassword: ['', Validators.required],
@@ -54,7 +55,7 @@ export class UserProfileComponent implements OnInit {
         this.email = p.email;
         this.role = p.role;
         this.joinedAt = p.createdAt || '';
-        this.form.patchValue({ fullName: p.fullName, phone: p.phone });
+        this.form.patchValue({ fullName: p.fullName, phone: p.phone, marketingEmailOptIn: p.marketingEmailOptIn });
         this.loading = false;
       },
       error: () => { this.loading = false; this.toastr.error('Failed to load profile'); }

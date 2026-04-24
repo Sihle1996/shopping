@@ -29,17 +29,19 @@ public class UserProfileController {
         User user = authUtil.getCurrentUser(authentication);
         if (req.fullName() != null) user.setFullName(req.fullName());
         if (req.phone() != null) user.setPhone(req.phone());
+        if (req.marketingEmailOptIn() != null) user.setMarketingEmailOptIn(req.marketingEmailOptIn());
         userRepository.save(user);
         return ResponseEntity.ok(ProfileResponse.from(user));
     }
 
-    record ProfileRequest(String fullName, String phone) {}
+    record ProfileRequest(String fullName, String phone, Boolean marketingEmailOptIn) {}
 
-    record ProfileResponse(String email, String fullName, String phone, String role) {
+    record ProfileResponse(String email, String fullName, String phone, String role, boolean marketingEmailOptIn) {
         static ProfileResponse from(User u) {
             return new ProfileResponse(
                 u.getEmail(), u.getFullName(), u.getPhone(),
-                u.getRole() != null ? u.getRole().name() : null
+                u.getRole() != null ? u.getRole().name() : null,
+                u.isMarketingEmailOptIn()
             );
         }
     }

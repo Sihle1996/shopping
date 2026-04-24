@@ -109,6 +109,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     return slug ? `/store/${slug}/orders` : '/orders';
   }
 
+  get favouritesRoute(): string {
+    const slug = localStorage.getItem('storeSlug');
+    return slug ? `/store/${slug}/favourites` : '/';
+  }
+
   get isCustomer(): boolean {
     return !this.isLoggedIn || this.userRole === 'ROLE_USER';
   }

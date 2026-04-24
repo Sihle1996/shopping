@@ -54,6 +54,10 @@ public class User implements UserDetails {
 
     private String fullName;
     private String phone;
+
+    @Column(name = "marketing_email_opt_in", nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean marketingEmailOptIn = false;
     private String vehicleType;
     private String vehiclePlate;
     private String profilePhotoUrl;
