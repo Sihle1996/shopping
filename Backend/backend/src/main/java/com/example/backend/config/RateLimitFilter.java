@@ -3,6 +3,7 @@ package com.example.backend.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
+import io.github.bucket4j.Refill;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,12 +51,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private Bucket buildBucket(int requestsPerMinute) {
-        return Bucket.builder()
-                .addLimit(Bandwidth.builder()
-                        .capacity(requestsPerMinute)
-                        .refillGreedy(requestsPerMinute, Duration.ofMinutes(1))
-                        .build())
-                .build();
+        Bandwidth limit = Bandwidth.classic(requestsPerMinute,
+                Refill.greedy(requestsPerMinute, Duration.ofMinutes(1)));
+        return Bucket.builder().addLimit(limit).build();
     }
 
     private String getClientIp(HttpServletRequest request) {
