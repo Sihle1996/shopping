@@ -46,7 +46,8 @@ export class FooterComponent implements OnInit, OnDestroy {
 
   get homeRoute(): string {
     const slug = localStorage.getItem('storeSlug');
-    return slug ? `/store/${slug}` : '/';
+    if (slug) return `/store/${slug}`;
+    return this.authService.isLoggedIn() ? '/stores' : '/';
   }
 
   get ordersRoute(): string {

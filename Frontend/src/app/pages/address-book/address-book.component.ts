@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { AddressService, UserAddress } from 'src/app/services/address.service';
 
 @Component({
@@ -13,11 +15,14 @@ export class AddressBookComponent implements OnInit {
   editingId: string | null = null;
   form: FormGroup;
   saving = false;
-  toast = '';
-  toastType: 'success' | 'error' = 'success';
   confirmDeleteId: string | null = null;
 
-  constructor(private fb: FormBuilder, private addressService: AddressService) {
+  constructor(
+    private fb: FormBuilder,
+    private addressService: AddressService,
+    private router: Router,
+    private toastr: ToastrService
+  ) {
     this.form = this.fb.group({
       label: ['Home', Validators.required],
       street: ['', Validators.required],
@@ -33,7 +38,7 @@ export class AddressBookComponent implements OnInit {
     this.loading = true;
     this.addressService.list().subscribe({
       next: a => { this.addresses = a; this.loading = false; },
-      error: () => { this.loading = false; this.showToast('Failed to load addresses', 'error'); }
+      error: () => { this.loading = false; this.toastr.error('Failed to load addresses'); }
     });
   }
 
@@ -62,9 +67,9 @@ export class AddressBookComponent implements OnInit {
         this.saving = false;
         this.showForm = false;
         this.load();
-        this.showToast(this.editingId ? 'Address updated' : 'Address saved');
+        this.toastr.success(this.editingId ? 'Address updated' : 'Address saved');
       },
-      error: () => { this.saving = false; this.showToast('Failed to save', 'error'); }
+      error: () => { this.saving = false; this.toastr.error('Failed to save address'); }
     });
   }
 
@@ -78,14 +83,13 @@ export class AddressBookComponent implements OnInit {
       next: () => {
         this.addresses = this.addresses.filter(a => a.id !== id);
         this.confirmDeleteId = null;
-        this.showToast('Address deleted');
+        this.toastr.success('Address deleted');
       },
-      error: () => { this.confirmDeleteId = null; this.showToast('Failed to delete', 'error'); }
+      error: () => { this.confirmDeleteId = null; this.toastr.error('Failed to delete'); }
     });
   }
 
-  private showToast(msg: string, type: 'success' | 'error' = 'success') {
-    this.toast = msg; this.toastType = type;
-    setTimeout(() => this.toast = '', 3000);
+  goBack() {
+    this.router.navigate(['/profile']);
   }
 }

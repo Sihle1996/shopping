@@ -2,9 +2,14 @@
 
   <!-- Header -->
   <div class="bg-white border-b border-borderColor px-4 lg:px-8 py-4 sticky top-14 z-10">
-    <div class="max-w-3xl mx-auto">
-      <h2 class="font-heading text-lg font-bold text-textDark">My Profile</h2>
-      <p class="text-xs text-textMuted">Manage your account details</p>
+    <div class="max-w-3xl mx-auto flex items-center gap-3">
+      <button (click)="goBack()" class="p-2 rounded-xl hover:bg-surface transition-colors text-textMuted flex-shrink-0">
+        <i class="bi bi-arrow-left text-lg"></i>
+      </button>
+      <div>
+        <h2 class="font-heading text-lg font-bold text-textDark">My Profile</h2>
+        <p class="text-xs text-textMuted">Manage your account details</p>
+      </div>
     </div>
   </div>
 

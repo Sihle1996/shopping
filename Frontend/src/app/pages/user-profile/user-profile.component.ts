@@ -89,6 +89,11 @@ export class UserProfileComponent implements OnInit {
     this.activeSection = s as Section;
   }
 
+  goBack(): void {
+    const slug = localStorage.getItem('storeSlug');
+    this.router.navigate(slug ? ['/store', slug] : ['/stores']);
+  }
+
   save() {
     this.saving = true;
     this.http.put<any>(`${environment.apiUrl}/api/me`, this.form.value).subscribe({

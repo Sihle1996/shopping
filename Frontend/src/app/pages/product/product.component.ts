@@ -4,6 +4,7 @@ import { Location } from '@angular/common';
 import { CartService } from 'src/app/services/cart.service';
 import { MenuItem, MenuService } from 'src/app/services/menu.service';
 import { PromotionService } from 'src/app/services/promotion.service';
+import { FavouriteService } from 'src/app/services/favourite.service';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
@@ -38,6 +39,7 @@ export class ProductComponent implements OnInit {
     private menuService: MenuService,
     private cartService: CartService,
     private promotionService: PromotionService,
+    private favouriteService: FavouriteService,
     private router: Router,
     private location: Location,
     private toastr: ToastrService,
@@ -46,6 +48,7 @@ export class ProductComponent implements OnInit {
 
   ngOnInit(): void {
     this.slug = localStorage.getItem('storeSlug');
+    this.favouriteService.load().subscribe();
     this.route.paramMap.subscribe(params => {
       const productId = params.get('id');
       if (!productId) { this.router.navigate(['/']); return; }
@@ -80,7 +83,7 @@ export class ProductComponent implements OnInit {
     this.menuService.getProductById(productId).subscribe({
       next: product => {
         this.product = product;
-        this.isFavourite = this.getFavourites().includes(productId);
+        this.isFavourite = this.favouriteService.isFavourite(productId);
         this.loadModifiers(productId);
         this.loadRelated(product);
       },
@@ -211,15 +214,11 @@ export class ProductComponent implements OnInit {
 
   toggleFavourite(): void {
     if (!this.product?.id) return;
-    const favs = this.getFavourites();
-    const idx = favs.indexOf(this.product.id);
-    if (idx >= 0) { favs.splice(idx, 1); this.isFavourite = false; }
-    else { favs.push(this.product.id); this.isFavourite = true; }
-    localStorage.setItem('favourites', JSON.stringify(favs));
-  }
-
-  private getFavourites(): string[] {
-    try { return JSON.parse(localStorage.getItem('favourites') || '[]'); } catch { return []; }
+    this.isFavourite = !this.isFavourite;
+    this.favouriteService.toggle(this.product.id).subscribe({
+      next: (favourited) => { this.isFavourite = favourited; },
+      error: () => { this.isFavourite = !this.isFavourite; }
+    });
   }
 
   get cartRoute(): string {

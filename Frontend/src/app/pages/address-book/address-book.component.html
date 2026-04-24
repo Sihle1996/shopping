@@ -1,126 +1,155 @@
-<div class="p-4 pb-24 max-w-lg mx-auto">
+<div class="min-h-screen bg-surface pb-24 lg:pb-8">
 
   <!-- Header -->
-  <div class="flex items-center justify-between mb-6">
-    <div>
-      <h2 class="text-xl font-bold text-textDark">Saved Addresses</h2>
-      <p class="text-sm text-textMuted mt-0.5">Manage your delivery addresses</p>
-    </div>
-    <button (click)="openAdd()"
-            class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary-500 text-white text-sm font-semibold hover:bg-primary-600 transition-colors">
-      <i class="bi bi-plus-lg"></i> Add
-    </button>
-  </div>
-
-  <!-- Loading -->
-  <div *ngIf="loading" class="space-y-3">
-    <div *ngFor="let i of [1,2,3]" class="h-20 bg-gray-100 rounded-2xl animate-pulse"></div>
-  </div>
-
-  <!-- Empty -->
-  <div *ngIf="!loading && addresses.length === 0" class="text-center py-16 text-textMuted">
-    <i class="bi bi-geo-alt text-4xl block mb-2"></i>
-    <p class="text-sm">No saved addresses yet</p>
-  </div>
-
-  <!-- Address list -->
-  <div *ngIf="!loading && addresses.length > 0" class="space-y-3">
-    <div *ngFor="let a of addresses"
-         class="bg-white rounded-2xl border p-4 shadow-card flex items-start justify-between gap-3"
-         [ngClass]="a.isDefault ? 'border-primary-400' : 'border-borderColor'">
+  <div class="bg-white border-b border-borderColor px-4 lg:px-8 py-4 sticky top-14 z-10">
+    <div class="max-w-3xl mx-auto flex items-center gap-3">
+      <button (click)="goBack()" class="p-2 rounded-xl hover:bg-surface transition-colors text-textMuted flex-shrink-0">
+        <i class="bi bi-arrow-left text-lg"></i>
+      </button>
       <div class="flex-1">
-        <div class="flex items-center gap-2 mb-0.5">
-          <span class="text-sm font-semibold text-textDark">{{ a.label }}</span>
-          <span *ngIf="a.isDefault" class="text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-full font-medium">Default</span>
-        </div>
-        <p class="text-xs text-textMuted">{{ a.street }}, {{ a.city }} {{ a.postalCode }}</p>
+        <h2 class="font-heading text-lg font-bold text-textDark">Saved Addresses</h2>
+        <p class="text-xs text-textMuted">Manage your delivery addresses</p>
       </div>
-      <div class="flex items-center gap-1 flex-shrink-0">
-        <button (click)="openEdit(a)" class="p-1.5 rounded-lg text-textMuted hover:bg-gray-100 transition-colors">
-          <i class="bi bi-pencil text-sm"></i>
-        </button>
-        <button (click)="confirmDelete(a.id)" class="p-1.5 rounded-lg text-textMuted hover:text-red-500 hover:bg-red-50 transition-colors">
-          <i class="bi bi-trash text-sm"></i>
-        </button>
-      </div>
+      <button (click)="openAdd()"
+              class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600 transition-colors">
+        <i class="bi bi-plus-lg"></i> Add
+      </button>
     </div>
   </div>
 
-  <!-- Add/Edit Form Sheet -->
-  <div *ngIf="showForm" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
-      <div class="flex items-center justify-between mb-4">
-        <p class="font-semibold text-textDark">{{ editingId ? 'Edit Address' : 'New Address' }}</p>
-        <button (click)="showForm = false" class="p-1 text-textMuted hover:text-textDark">
-          <i class="bi bi-x-lg"></i>
-        </button>
+  <div class="max-w-3xl mx-auto px-4 lg:px-8 pt-6 space-y-3">
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="space-y-3">
+      <div *ngFor="let i of [1,2,3]" class="h-20 bg-white rounded-2xl animate-pulse shadow-card"></div>
+    </div>
+
+    <!-- Empty -->
+    <div *ngIf="!loading && addresses.length === 0"
+         class="flex flex-col items-center justify-center py-20 text-center">
+      <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+        <i class="bi bi-geo-alt text-2xl text-primary"></i>
       </div>
-      <form [formGroup]="form" (ngSubmit)="save()" class="space-y-3">
-        <div>
-          <label class="text-xs font-medium text-textMuted block mb-1">Label</label>
-          <select formControlName="label"
-                  class="w-full px-3 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400">
-            <option>Home</option>
-            <option>Work</option>
-            <option>Other</option>
-          </select>
+      <p class="text-base font-semibold text-textDark">No saved addresses</p>
+      <p class="text-sm text-textMuted mt-1">Add an address to speed up checkout</p>
+      <button (click)="openAdd()"
+              class="mt-5 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600 transition-colors">
+        Add Address
+      </button>
+    </div>
+
+    <!-- Address list -->
+    <div *ngIf="!loading && addresses.length > 0" class="space-y-3">
+      <div *ngFor="let a of addresses"
+           class="bg-white rounded-2xl border p-4 shadow-card flex items-start justify-between gap-3"
+           [ngClass]="a.isDefault ? 'border-primary/40' : 'border-borderColor'">
+        <div class="flex items-start gap-3 flex-1 min-w-0">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+               [ngClass]="a.isDefault ? 'bg-primary/10' : 'bg-surface'">
+            <i class="bi text-base" [class.bi-house]="a.label === 'Home'" [class.bi-briefcase]="a.label === 'Work'"
+               [class.bi-geo-alt]="a.label !== 'Home' && a.label !== 'Work'"
+               [class.text-primary]="a.isDefault" [class.text-textMuted]="!a.isDefault"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+              <span class="text-sm font-semibold text-textDark">{{ a.label }}</span>
+              <span *ngIf="a.isDefault"
+                    class="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">Default</span>
+            </div>
+            <p class="text-xs text-textMuted truncate">{{ a.street }}, {{ a.city }}<span *ngIf="a.postalCode"> {{ a.postalCode }}</span></p>
+          </div>
         </div>
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <button (click)="openEdit(a)" class="p-2 rounded-xl text-textMuted hover:bg-surface hover:text-primary transition-colors">
+            <i class="bi bi-pencil text-sm"></i>
+          </button>
+          <button (click)="confirmDelete(a.id)" class="p-2 rounded-xl text-textMuted hover:bg-red-50 hover:text-danger transition-colors">
+            <i class="bi bi-trash text-sm"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Add/Edit Form Sheet -->
+<div *ngIf="showForm" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
+  <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
+    <div class="flex items-center justify-between mb-4">
+      <p class="font-semibold text-textDark">{{ editingId ? 'Edit Address' : 'New Address' }}</p>
+      <button (click)="showForm = false" class="p-1.5 rounded-lg text-textMuted hover:bg-surface">
+        <i class="bi bi-x-lg text-sm"></i>
+      </button>
+    </div>
+    <form [formGroup]="form" (ngSubmit)="save()" class="space-y-3">
+      <div>
+        <label class="text-xs font-medium text-textMuted block mb-1">Label</label>
+        <select formControlName="label"
+                class="w-full px-3 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                       focus:outline-none focus:ring-2 focus:ring-primary/40">
+          <option>Home</option>
+          <option>Work</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs font-medium text-textMuted block mb-1">Street address</label>
+        <input formControlName="street" type="text" placeholder="123 Main Street"
+               class="w-full px-3 py-2.5 rounded-xl border bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:border-transparent"
+               [class.border-red-400]="form.get('street')?.invalid && form.get('street')?.touched"
+               [class.border-borderColor]="!(form.get('street')?.invalid && form.get('street')?.touched)" />
+        <p *ngIf="form.get('street')?.touched && form.get('street')?.hasError('required')"
+           class="text-danger text-xs mt-1">Street address is required</p>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
         <div>
-          <label class="text-xs font-medium text-textMuted block mb-1">Street</label>
-          <input formControlName="street" type="text" placeholder="123 Main St"
+          <label class="text-xs font-medium text-textMuted block mb-1">City</label>
+          <input formControlName="city" type="text" placeholder="Cape Town"
                  class="w-full px-3 py-2.5 rounded-xl border bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:border-transparent"
-                 [class.border-red-400]="form.get('street')?.invalid && form.get('street')?.touched"
-                 [class.border-borderColor]="!(form.get('street')?.invalid && form.get('street')?.touched)"
-                 [class.focus:ring-red-400]="form.get('street')?.invalid && form.get('street')?.touched"
-                 [class.focus:ring-primary-400]="!(form.get('street')?.invalid && form.get('street')?.touched)" />
-          <p *ngIf="form.get('street')?.touched && form.get('street')?.hasError('required')"
-             class="text-danger text-xs mt-1">Street address is required</p>
+                 [class.border-red-400]="form.get('city')?.invalid && form.get('city')?.touched"
+                 [class.border-borderColor]="!(form.get('city')?.invalid && form.get('city')?.touched)" />
+          <p *ngIf="form.get('city')?.touched && form.get('city')?.hasError('required')"
+             class="text-danger text-xs mt-1">Required</p>
         </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="text-xs font-medium text-textMuted block mb-1">City</label>
-            <input formControlName="city" type="text" placeholder="Cape Town"
-                   class="w-full px-3 py-2.5 rounded-xl border bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:border-transparent"
-                   [class.border-red-400]="form.get('city')?.invalid && form.get('city')?.touched"
-                   [class.border-borderColor]="!(form.get('city')?.invalid && form.get('city')?.touched)"
-                   [class.focus:ring-red-400]="form.get('city')?.invalid && form.get('city')?.touched"
-                   [class.focus:ring-primary-400]="!(form.get('city')?.invalid && form.get('city')?.touched)" />
-            <p *ngIf="form.get('city')?.touched && form.get('city')?.hasError('required')"
-               class="text-danger text-xs mt-1">City is required</p>
-          </div>
-          <div>
-            <label class="text-xs font-medium text-textMuted block mb-1">Postal Code</label>
-            <input formControlName="postalCode" type="text" placeholder="8001"
-                   class="w-full px-3 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
-          </div>
+        <div>
+          <label class="text-xs font-medium text-textMuted block mb-1">Postal Code</label>
+          <input formControlName="postalCode" type="text" placeholder="8001"
+                 class="w-full px-3 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary/40" />
         </div>
-        <label class="flex items-center gap-2 text-sm text-textDark cursor-pointer">
-          <input formControlName="isDefault" type="checkbox" class="w-4 h-4 rounded accent-primary-500" />
-          Set as default address
-        </label>
-        <button type="submit" [disabled]="saving || form.invalid"
-                class="w-full py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors disabled:opacity-50">
-          {{ saving ? 'Saving...' : 'Save Address' }}
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Delete confirm -->
-  <div *ngIf="confirmDeleteId" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-      <p class="font-semibold text-textDark mb-1">Delete address?</p>
-      <p class="text-sm text-textMuted mb-4">This cannot be undone.</p>
-      <div class="flex gap-3">
-        <button (click)="cancelDelete()" class="flex-1 py-2.5 rounded-xl border border-borderColor text-sm text-textDark hover:bg-gray-50">Cancel</button>
-        <button (click)="deleteAddress()" class="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold">Delete</button>
       </div>
-    </div>
+      <label class="flex items-center gap-2.5 text-sm text-textDark cursor-pointer p-2 rounded-xl hover:bg-surface">
+        <input formControlName="isDefault" type="checkbox" class="w-4 h-4 rounded accent-primary" />
+        Set as default address
+      </label>
+      <button type="submit" [disabled]="saving || form.invalid"
+              class="w-full py-2.5 rounded-xl bg-primary hover:bg-primary-600 text-white text-sm font-semibold
+                     transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+        <i class="bi bi-check-lg"></i>
+        {{ saving ? 'Saving...' : (editingId ? 'Update Address' : 'Save Address') }}
+      </button>
+    </form>
   </div>
+</div>
 
-  <!-- Toast -->
-  <div *ngIf="toast" class="fixed bottom-20 left-4 right-4 z-50 flex justify-center pointer-events-none">
-    <div class="px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg text-white animate-fade-in"
-         [ngClass]="toastType === 'success' ? 'bg-gray-900' : 'bg-red-500'">{{ toast }}</div>
+<!-- Delete confirm -->
+<div *ngIf="confirmDeleteId" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+    <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
+      <i class="bi bi-trash text-xl text-danger"></i>
+    </div>
+    <p class="font-semibold text-textDark text-center mb-1">Delete address?</p>
+    <p class="text-sm text-textMuted text-center mb-5">This cannot be undone.</p>
+    <div class="flex gap-3">
+      <button (click)="cancelDelete()"
+              class="flex-1 py-2.5 rounded-xl border border-borderColor text-sm text-textDark hover:bg-surface transition-colors">
+        Cancel
+      </button>
+      <button (click)="deleteAddress()"
+              class="flex-1 py-2.5 rounded-xl bg-danger hover:bg-red-600 text-white text-sm font-semibold transition-colors">
+        Delete
+      </button>
+    </div>
   </div>
 </div>

@@ -10,16 +10,10 @@ export class UserGuard implements CanActivate {
 
   canActivate(_route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
     const role = this.authService.getUserRole();
-    if (role === 'ROLE_USER') {
+    if (role === 'ROLE_USER' || role === 'ROLE_ADMIN' || role === 'ROLE_DRIVER') {
       return true;
-    } else if (role === 'ROLE_ADMIN') {
-      this.router.navigate(['/admin/dashboard']);
-    } else if (role === 'ROLE_DRIVER') {
-      this.router.navigate(['/driver/dashboard']);
-    } else {
-      // Not logged in — redirect to login with return URL
-      this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
     }
+    this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
     return false;
   }
 }
