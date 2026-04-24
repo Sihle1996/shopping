@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
@@ -34,7 +35,12 @@ export class SupportComponent implements OnInit {
     });
   }
 
-  constructor(private http: HttpClient, private auth: AuthService, private toastr: ToastrService) {}
+  constructor(private http: HttpClient, private auth: AuthService, private toastr: ToastrService, private router: Router) {}
+
+  goBack(): void {
+    const slug = localStorage.getItem('storeSlug');
+    this.router.navigate(slug ? ['/store', slug] : ['/stores']);
+  }
 
   ngOnInit(): void {
     this.loadTickets();
