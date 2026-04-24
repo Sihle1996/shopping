@@ -41,7 +41,10 @@
         *ngFor="let item of items"
         [item]="toCardItem(item)"
         [showFavorite]="true"
-        [showAddToCart]="item.available">
+        [showAddToCart]="item.available"
+        (cardClick)="goToProduct($event)"
+        (addToCart)="addToCart($event)"
+        (favorite)="onFavouriteToggled($event)">
       </app-product-card>
     </div>
 
