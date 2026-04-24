@@ -22,6 +22,7 @@ import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password
 import { LandingComponent } from './pages/landing/landing.component';
 import { TrackOrderComponent } from './pages/track-order/track-order.component';
 import { VerifyEmailComponent } from './pages/verify-email/verify-email.component';
+import { SupportComponent } from './pages/support/support.component';
 
 const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -58,6 +59,7 @@ const routes: Routes = [
   { path: 'driver/profile', component: DriverProfileComponent, canActivate: [DriverGuard] },
   { path: 'profile/addresses', component: AddressBookComponent, canActivate: [UserGuard] },
   { path: 'profile', component: UserProfileComponent, canActivate: [UserGuard] },
+  { path: 'support', component: SupportComponent, canActivate: [UserGuard] },
   { path: 'track', component: TrackOrderComponent },
 
   { path: '**', redirectTo: '' },

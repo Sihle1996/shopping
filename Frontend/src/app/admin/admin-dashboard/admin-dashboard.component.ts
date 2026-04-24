@@ -74,7 +74,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   aov = 0;
   onTime = 0;
   cancellations = 0;
+  avgDeliveryMinutes = 0;
   topProducts: any[] = [];
+  peakHoursChartOptions: Partial<ProductsChartOptions> = this.buildPeakHoursChartOptions([]);
 
   // Store toggle
   isStoreOpen = false;
@@ -336,6 +338,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.analyticsService.getAverageOrderValue(start, end).subscribe(v => this.aov = v);
     this.analyticsService.getOnTimePercentage(start, end).subscribe(v => this.onTime = v);
     this.analyticsService.getCancellationRate(start, end).subscribe(v => this.cancellations = v);
+    this.analyticsService.getDeliveryTime(start, end).subscribe(v => this.avgDeliveryMinutes = v);
+    this.analyticsService.getPeakHours(start, end).subscribe(data => {
+      this.peakHoursChartOptions = this.buildPeakHoursChartOptions(data);
+    });
   }
 
   private loadStats(): void {
@@ -394,6 +400,24 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       tooltip: { y: { formatter: (v: number) => `R${v.toFixed(2)}` } },
       grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
       noData: { text: 'No sales data for this period', style: { color: '#94a3b8' } }
+    };
+  }
+
+  private buildPeakHoursChartOptions(data: Array<{ hour: number; orderCount: number }>): Partial<ProductsChartOptions> {
+    const color = this.getBrandColor();
+    const labels = data.map(d => `${d.hour}:00`);
+    const values = data.map(d => d.orderCount);
+    return {
+      series: [{ name: 'Orders', data: values }],
+      chart: { type: 'bar', height: 240, toolbar: { show: false } },
+      colors: [color],
+      plotOptions: { bar: { borderRadius: 4, columnWidth: '60%' } },
+      xaxis: { categories: labels, labels: { style: { fontSize: '10px' } } },
+      yaxis: { labels: { style: { fontSize: '11px' } } },
+      dataLabels: { enabled: false },
+      tooltip: { y: { formatter: (v: number) => `${v} orders` } },
+      grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
+      noData: { text: 'No order data for this period', style: { color: '#94a3b8' } }
     };
   }
 

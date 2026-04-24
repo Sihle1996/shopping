@@ -7,7 +7,7 @@ import { NotificationService } from 'src/app/services/notification.service';
 import { ToastrService } from 'ngx-toastr';
 
 /** Strict status unions */
-type Status = 'Pending' | 'Preparing' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
+type Status = 'Pending' | 'Scheduled' | 'Preparing' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
 type StatusFilter = Status | 'All';
 
 interface OrderItem {
@@ -56,13 +56,14 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   statuses: ReadonlyArray<StatusOption> = [
     { value: 'All',              label: 'All' },
     { value: 'Pending',          label: 'Pending' },
+    { value: 'Scheduled',        label: 'Scheduled' },
     { value: 'Preparing',        label: 'Preparing' },
     { value: 'Out for Delivery', label: 'Out for Delivery' },
     { value: 'Delivered',        label: 'Delivered' },
     { value: 'Cancelled',        label: 'Cancelled' },
   ] as const;
 
-  orderStatuses: Status[] = ['Pending', 'Preparing', 'Out for Delivery', 'Delivered', 'Cancelled'];
+  orderStatuses: Status[] = ['Pending', 'Scheduled', 'Preparing', 'Out for Delivery', 'Delivered', 'Cancelled'];
 
   filterStatus: StatusFilter = 'All';
 
@@ -281,6 +282,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   statusChip(s: string) {
     return {
       'bg-amber-100 text-amber-800': s === 'Pending',
+      'bg-indigo-100 text-indigo-800': s === 'Scheduled',
       'bg-blue-100 text-blue-800': s === 'Preparing',
       'bg-purple-100 text-purple-800': s === 'Out for Delivery',
       'bg-emerald-100 text-emerald-800': s === 'Delivered',
@@ -290,6 +292,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   statusDot(s: string) {
     return {
       'bg-amber-500': s === 'Pending',
+      'bg-indigo-500': s === 'Scheduled',
       'bg-blue-500': s === 'Preparing',
       'bg-purple-500': s === 'Out for Delivery',
       'bg-emerald-500': s === 'Delivered',

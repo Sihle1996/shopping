@@ -320,6 +320,47 @@
           Save Settings
         </app-button>
       </div>
+
+      <!-- Notification Preferences -->
+      <div class="bg-white rounded-2xl shadow-card p-6">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <h3 class="font-heading text-base font-semibold text-textDark">
+              <i class="bi bi-bell text-primary mr-2"></i>Notification Preferences
+            </h3>
+            <p class="text-textMuted text-xs mt-0.5">Control which notifications you receive.</p>
+          </div>
+          <app-button variant="primary" size="sm" [loading]="notifPrefsSaving" (clicked)="saveNotifPrefs()">
+            Save
+          </app-button>
+        </div>
+        <div *ngIf="notifPrefsLoading" class="animate-pulse space-y-2">
+          <div *ngFor="let _ of [1,2,3,4,5]" class="h-8 bg-gray-100 rounded-xl"></div>
+        </div>
+        <div *ngIf="!notifPrefsLoading" class="space-y-3">
+          <label class="flex items-center justify-between gap-2 cursor-pointer">
+            <span class="text-sm text-textDark">Email on new order</span>
+            <input type="checkbox" [(ngModel)]="notifPrefs.emailOnNewOrder" class="w-4 h-4 accent-primary">
+          </label>
+          <label class="flex items-center justify-between gap-2 cursor-pointer">
+            <span class="text-sm text-textDark">Email on cancellation</span>
+            <input type="checkbox" [(ngModel)]="notifPrefs.emailOnCancellation" class="w-4 h-4 accent-primary">
+          </label>
+          <label class="flex items-center justify-between gap-2 cursor-pointer">
+            <span class="text-sm text-textDark">Email when driver assigned</span>
+            <input type="checkbox" [(ngModel)]="notifPrefs.emailOnDriverAssigned" class="w-4 h-4 accent-primary">
+          </label>
+          <label class="flex items-center justify-between gap-2 cursor-pointer">
+            <span class="text-sm text-textDark">In-app toast on new order</span>
+            <input type="checkbox" [(ngModel)]="notifPrefs.toastOnNewOrder" class="w-4 h-4 accent-primary">
+          </label>
+          <label class="flex items-center justify-between gap-2 cursor-pointer">
+            <span class="text-sm text-textDark">In-app toast on status change</span>
+            <input type="checkbox" [(ngModel)]="notifPrefs.toastOnStatusChange" class="w-4 h-4 accent-primary">
+          </label>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

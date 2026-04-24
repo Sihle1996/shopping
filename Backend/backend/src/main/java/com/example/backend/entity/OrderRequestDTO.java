@@ -23,4 +23,5 @@ public class OrderRequestDTO {
     private String guestPhone;
     private int loyaltyPointsRedeemed;
     private Double deliveryFee;
+    private String scheduledDeliveryTime;
 }

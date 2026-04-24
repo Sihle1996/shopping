@@ -22,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import com.example.backend.service.LoyaltyService;
+import com.example.backend.service.SubscriptionEnforcementService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
@@ -47,6 +48,7 @@ public class OrderService {
     private final EmailService emailService;
     private final LoyaltyService loyaltyService;
     private final PayFastService payFastService;
+    private final SubscriptionEnforcementService subscriptionEnforcementService;
 
     private void checkLowStock(MenuItem menuItem) {
         if (menuItem.getStock() >= 0 && menuItem.getStock() <= menuItem.getLowStockThreshold()) {
@@ -208,7 +210,12 @@ public class OrderService {
             order.setLoyaltyPointsRedeemed(request.getLoyaltyPointsRedeemed());
         }
         order.setOrderDate(Instant.now());
-        order.setStatus("Pending");
+        if (request.getScheduledDeliveryTime() != null && !request.getScheduledDeliveryTime().isBlank()) {
+            order.setScheduledDeliveryTime(Instant.parse(request.getScheduledDeliveryTime()));
+            order.setStatus("Scheduled");
+        } else {
+            order.setStatus("Pending");
+        }
         order.setDeliveryAddress(request.getDeliveryAddress());
         order.setDeliveryLat(request.getDeliveryLat());
         order.setDeliveryLon(request.getDeliveryLon());
@@ -220,6 +227,14 @@ public class OrderService {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null) {
             tenantRepository.findById(tenantId).ifPresent(tenant -> {
+                // Enforce subscription delivery radius
+                if (request.getDeliveryLat() != null && request.getDeliveryLon() != null
+                        && tenant.getLatitude() != null && tenant.getLongitude() != null) {
+                    double distKm = haversineKm(
+                            tenant.getLatitude(), tenant.getLongitude(),
+                            request.getDeliveryLat(), request.getDeliveryLon());
+                    subscriptionEnforcementService.assertDeliveryRadius(tenant.getId(), distKm);
+                }
                 // Enforce store-closed check
                 if (Boolean.FALSE.equals(tenant.getIsOpen())) {
                     throw new IllegalStateException("This store is currently closed and not accepting orders.");
@@ -395,6 +410,9 @@ public class OrderService {
         }
 
         order.setStatus(status);
+        if ("Delivered".equals(status) && order.getDeliveredAt() == null) {
+            order.setDeliveredAt(Instant.now());
+        }
         Order updated = orderRepository.save(order);
         OrderDTO dto = convertToOrderDTO(updated);
 
@@ -538,6 +556,10 @@ public class OrderService {
             dto.setDeliveryOtp(order.getDeliveryOtp());
         }
 
+        if (order.getScheduledDeliveryTime() != null) {
+            dto.setScheduledDeliveryTime(order.getScheduledDeliveryTime().toString());
+        }
+
         return dto;
     }
 
@@ -659,5 +681,15 @@ public class OrderService {
         }
 
         return convertToOrderDTO(order);
+    }
+
+    private double haversineKm(double lat1, double lon1, double lat2, double lon2) {
+        final double R = 6371.0;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 }

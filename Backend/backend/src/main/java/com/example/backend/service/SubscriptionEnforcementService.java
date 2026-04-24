@@ -85,4 +85,13 @@ public class SubscriptionEnforcementService {
                 "Inventory export requires PRO or higher. Upgrade your plan.");
         }
     }
+
+    public void assertDeliveryRadius(UUID tenantId, double distanceKm) {
+        SubscriptionPlan plan = getPlan(tenantId);
+        int maxRadius = plan.getMaxDeliveryRadiusKm();
+        if (maxRadius > 0 && distanceKm > maxRadius) {
+            throw new PlanLimitExceededException(
+                "Delivery address is outside your plan's allowed radius (" + maxRadius + " km). Upgrade to extend your delivery range.");
+        }
+    }
 }

@@ -323,7 +323,7 @@
       </div>
 
       <!-- Secondary metrics -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <div class="bg-white rounded-2xl shadow-card p-5">
           <p class="text-textMuted text-xs mb-1">Avg Order Value</p>
           <p *ngIf="!analyticsLoading" class="font-numbers text-xl font-bold text-textDark">R{{ aov | number:'1.2-2' }}</p>
@@ -339,6 +339,29 @@
           <p *ngIf="!analyticsLoading" class="font-numbers text-xl font-bold text-danger">{{ cancellations | number:'1.0-0' }}%</p>
           <div *ngIf="analyticsLoading" class="h-6 w-16 bg-gray-100 rounded animate-pulse mt-1"></div>
         </div>
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <p class="text-textMuted text-xs mb-1">Avg Delivery Time</p>
+          <p *ngIf="!analyticsLoading" class="font-numbers text-xl font-bold text-textDark">{{ avgDeliveryMinutes | number:'1.0-0' }}<span class="text-sm font-normal text-textMuted ml-1">min</span></p>
+          <div *ngIf="analyticsLoading" class="h-6 w-16 bg-gray-100 rounded animate-pulse mt-1"></div>
+        </div>
+      </div>
+
+      <!-- Peak hours chart -->
+      <div class="bg-white rounded-2xl shadow-card p-5 mb-8">
+        <h3 class="font-heading text-sm font-semibold text-textDark mb-3">Peak Order Hours</h3>
+        <apx-chart *ngIf="!analyticsLoading"
+          [series]="peakHoursChartOptions.series!"
+          [chart]="peakHoursChartOptions.chart!"
+          [xaxis]="peakHoursChartOptions.xaxis!"
+          [yaxis]="peakHoursChartOptions.yaxis!"
+          [plotOptions]="peakHoursChartOptions.plotOptions!"
+          [dataLabels]="peakHoursChartOptions.dataLabels!"
+          [tooltip]="peakHoursChartOptions.tooltip!"
+          [grid]="peakHoursChartOptions.grid!"
+          [noData]="peakHoursChartOptions.noData!"
+          [colors]="peakHoursChartOptions.colors!">
+        </apx-chart>
+        <div *ngIf="analyticsLoading" class="h-48 bg-gray-50 rounded-xl animate-pulse"></div>
       </div>
 
       <!-- Top products leaderboard -->

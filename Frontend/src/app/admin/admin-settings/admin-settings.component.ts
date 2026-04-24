@@ -71,6 +71,17 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   hoursSaving = false;
   readonly DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
+  // Notification preferences
+  notifPrefs = {
+    emailOnNewOrder: true,
+    emailOnCancellation: true,
+    emailOnDriverAssigned: false,
+    toastOnNewOrder: true,
+    toastOnStatusChange: true
+  };
+  notifPrefsLoading = false;
+  notifPrefsSaving = false;
+
   constructor(
     private http: HttpClient,
     private authService: AuthService,
@@ -85,6 +96,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     this.loadSettings();
     this.loadCategories();
     this.loadStoreHours();
+    this.loadNotifPrefs();
     this.subscriptionService.load().subscribe(info => {
       this.hasCustomBranding = info.features.hasCustomBranding;
       this.subscriptionPlan = info.plan;
@@ -280,5 +292,23 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
         this.isSaving = false;
       }
     });
+  }
+
+  loadNotifPrefs(): void {
+    this.notifPrefsLoading = true;
+    this.http.get<any>(`${environment.apiUrl}/api/admin/notification-preferences`, { headers: this.getHeaders() })
+      .subscribe({
+        next: p => { this.notifPrefs = { emailOnNewOrder: p.emailOnNewOrder, emailOnCancellation: p.emailOnCancellation, emailOnDriverAssigned: p.emailOnDriverAssigned, toastOnNewOrder: p.toastOnNewOrder, toastOnStatusChange: p.toastOnStatusChange }; this.notifPrefsLoading = false; },
+        error: () => this.notifPrefsLoading = false
+      });
+  }
+
+  saveNotifPrefs(): void {
+    this.notifPrefsSaving = true;
+    this.http.put<any>(`${environment.apiUrl}/api/admin/notification-preferences`, this.notifPrefs, { headers: this.getHeaders() })
+      .subscribe({
+        next: () => { this.notifPrefsSaving = false; this.toastr.success('Notification preferences saved'); },
+        error: () => { this.notifPrefsSaving = false; this.toastr.error('Failed to save preferences'); }
+      });
   }
 }

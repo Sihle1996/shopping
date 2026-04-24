@@ -69,6 +69,12 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
 
   orderNotes = '';
   formSubmitted = false;
+  scheduleForLater = false;
+  scheduledDeliveryTime = '';
+  get minScheduleTime(): string {
+    const d = new Date(Date.now() + 30 * 60 * 1000);
+    return d.toISOString().slice(0, 16);
+  }
 
   deliveryDetails = {
     fullName: '',
@@ -532,7 +538,10 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
         loyaltyPointsRedeemed: this.loyaltyPointsToRedeem || 0,
         paymentId: '',
         payerId: '',
-        status: 'PENDING'
+        status: 'PENDING',
+        scheduledDeliveryTime: this.scheduleForLater && this.scheduledDeliveryTime
+          ? new Date(this.scheduledDeliveryTime).toISOString()
+          : null
       };
 
       const headers: any = { 'Content-Type': 'application/json' };
@@ -561,7 +570,13 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
           // Now initiate PayFast payment
           this.initiatePayFast(res?.id, this.totalPrice);
         },
-        error: (err) => this.toastr.error(err?.error?.error || 'Failed to place order. Please try again.')
+        error: (err) => {
+            if (err?.status === 429) {
+              this.toastr.error('Too many requests. Please wait a moment before placing another order.');
+            } else {
+              this.toastr.error(err?.error?.error || 'Failed to place order. Please try again.');
+            }
+          }
       });
     });
   }

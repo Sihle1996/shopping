@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -71,5 +72,31 @@ public class AnalyticsService {
         if (orders.isEmpty()) return 0;
         long cancelled = orders.stream().filter(o -> "Cancelled".equalsIgnoreCase(o.getStatus())).count();
         return (cancelled * 100.0) / orders.size();
+    }
+
+    public double getAverageDeliveryMinutes(Instant start, Instant end) {
+        List<Order> orders = getOrdersInRange(start, end);
+        OptionalDouble avg = orders.stream()
+                .filter(o -> "Delivered".equalsIgnoreCase(o.getStatus())
+                        && o.getDeliveredAt() != null
+                        && o.getOrderDate() != null)
+                .mapToLong(o -> ChronoUnit.MINUTES.between(o.getOrderDate(), o.getDeliveredAt()))
+                .average();
+        return avg.isPresent() ? Math.round(avg.getAsDouble() * 10.0) / 10.0 : 0;
+    }
+
+    public List<Map<String, Object>> getPeakHours(Instant start, Instant end) {
+        ZoneId sast = ZoneId.of("Africa/Johannesburg");
+        List<Order> orders = getOrdersInRange(start, end);
+        Map<Integer, Long> hourCounts = new TreeMap<>();
+        for (int h = 0; h < 24; h++) hourCounts.put(h, 0L);
+        for (Order o : orders) {
+            if (o.getOrderDate() == null) continue;
+            int hour = o.getOrderDate().atZone(sast).getHour();
+            hourCounts.merge(hour, 1L, Long::sum);
+        }
+        return hourCounts.entrySet().stream()
+                .map(e -> Map.<String, Object>of("hour", e.getKey(), "orderCount", e.getValue()))
+                .collect(Collectors.toList());
     }
 }

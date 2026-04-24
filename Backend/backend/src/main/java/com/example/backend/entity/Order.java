@@ -65,6 +65,9 @@ public class Order {
     private Instant otpExpiresAt;
     private boolean otpVerified;
 
+    private Instant scheduledDeliveryTime;
+    private Instant deliveredAt;
+
     public Order(User user, Tenant tenant, List<OrderItem> orderItems, Double totalAmount, Instant orderDate, String status, String deliveryAddress) {
         this.user = user;
         this.tenant = tenant;

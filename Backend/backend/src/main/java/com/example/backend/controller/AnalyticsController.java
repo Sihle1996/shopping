@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -50,6 +51,18 @@ public class AnalyticsController {
     public double cancellations(@RequestParam String startDate, @RequestParam String endDate) {
         enforceAnalyticsAccess();
         return analyticsService.getCancellationRate(Instant.parse(startDate), Instant.parse(endDate));
+    }
+
+    @GetMapping("/delivery-time")
+    public double deliveryTime(@RequestParam String startDate, @RequestParam String endDate) {
+        enforceAnalyticsAccess();
+        return analyticsService.getAverageDeliveryMinutes(Instant.parse(startDate), Instant.parse(endDate));
+    }
+
+    @GetMapping("/peak-hours")
+    public List<Map<String, Object>> peakHours(@RequestParam String startDate, @RequestParam String endDate) {
+        enforceAnalyticsAccess();
+        return analyticsService.getPeakHours(Instant.parse(startDate), Instant.parse(endDate));
     }
 
     private void enforceAnalyticsAccess() {

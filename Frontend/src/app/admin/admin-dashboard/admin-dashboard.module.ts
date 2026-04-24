@@ -25,6 +25,8 @@ import { AdminSubscriptionComponent } from '../admin-subscription/admin-subscrip
 import { AdminUsersComponent } from '../admin-users/admin-users.component';
 import { AdminReviewsComponent } from '../admin-reviews/admin-reviews.component';
 import { AdminEnrollmentComponent } from '../admin-enrollment/admin-enrollment.component';
+import { AdminSupportComponent } from '../admin-support/admin-support.component';
+import { AdminPayoutsComponent } from '../admin-payouts/admin-payouts.component';
 
 @NgModule({
   declarations: [
@@ -47,6 +49,8 @@ import { AdminEnrollmentComponent } from '../admin-enrollment/admin-enrollment.c
     AdminUsersComponent,
     AdminReviewsComponent,
     AdminEnrollmentComponent,
+    AdminSupportComponent,
+    AdminPayoutsComponent,
   ],
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, SharedModule, AdminRoutingModule, NgApexchartsModule],
   exports: [AdminDashboardComponent, AdminFooterComponent],

@@ -1,0 +1,83 @@
+<section class="min-h-screen bg-surface">
+  <div class="px-4 pt-6 pb-24 lg:px-8">
+
+    <header class="mb-6">
+      <h1 class="font-heading text-2xl font-bold text-textDark">Support Queue</h1>
+      <p class="text-textLight text-sm mt-1">Review and respond to customer support tickets</p>
+    </header>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="space-y-3">
+      <div *ngFor="let i of [1,2,3]" class="h-16 bg-white rounded-2xl animate-pulse shadow-card"></div>
+    </div>
+
+    <p *ngIf="!loading && !tickets.length"
+       class="text-textMuted text-sm text-center py-12">No support tickets yet.</p>
+
+    <!-- Ticket list -->
+    <div *ngIf="!loading" class="space-y-3">
+      <div *ngFor="let t of tickets"
+           (click)="open(t)"
+           class="bg-white rounded-2xl shadow-card p-4 cursor-pointer hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between gap-2">
+          <p class="font-semibold text-textDark text-sm truncate">{{ t.subject }}</p>
+          <span class="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0"
+                [ngClass]="statusClass(t.status)">{{ statusLabel(t.status) }}</span>
+        </div>
+        <p class="text-xs text-textMuted mt-1 truncate">{{ t.message }}</p>
+        <p class="text-xs text-textLight mt-1">{{ t.user?.email || t.user?.fullName || 'Customer' }} · {{ t.createdAt | date:'mediumDate' }}</p>
+      </div>
+    </div>
+
+    <!-- Drawer -->
+    <div *ngIf="selected"
+         class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40"
+         (click)="close()">
+      <div class="bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
+           (click)="$event.stopPropagation()">
+        <div class="h-1 bg-primary flex-shrink-0 rounded-t-2xl"></div>
+        <div class="p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-textDark">{{ selected.subject }}</h3>
+            <button (click)="close()" class="text-textMuted hover:text-textDark">
+              <i class="bi bi-x-lg text-lg"></i>
+            </button>
+          </div>
+
+          <p class="text-xs text-textMuted mb-1">From: {{ selected.user?.email || 'Customer' }}</p>
+          <p *ngIf="selected.orderId" class="text-xs text-textMuted mb-2">Order: {{ selected.orderId }}</p>
+
+          <div class="bg-surface rounded-xl p-3 mb-4">
+            <p class="text-sm text-textDark">{{ selected.message }}</p>
+          </div>
+
+          <h4 class="text-sm font-semibold text-textDark pl-3 border-l-2 border-primary mb-2">Update Ticket</h4>
+
+          <div class="space-y-3">
+            <div>
+              <label class="text-xs text-textMuted block mb-1">Status</label>
+              <select [(ngModel)]="draftStatus"
+                      class="w-full px-3 py-2 rounded-xl border border-borderColor bg-surface text-sm
+                             focus:outline-none focus:ring-2 focus:ring-primary-400">
+                <option *ngFor="let s of statuses" [value]="s">{{ statusLabel(s) }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-textMuted block mb-1">Reply / Notes</label>
+              <textarea [(ngModel)]="draftNotes" rows="3"
+                        placeholder="Write a reply visible to the customer..."
+                        class="w-full px-3 py-2 rounded-xl border border-borderColor bg-surface text-sm
+                               focus:outline-none focus:ring-2 focus:ring-primary-400 resize-none"></textarea>
+            </div>
+            <button (click)="save()" [disabled]="saving"
+                    class="w-full py-2.5 rounded-xl bg-primary text-white font-semibold text-sm
+                           hover:bg-primary-hover transition-colors disabled:opacity-50">
+              {{ saving ? 'Saving…' : 'Save Changes' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>

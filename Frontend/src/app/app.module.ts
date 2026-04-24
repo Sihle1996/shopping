@@ -32,6 +32,7 @@ import { AddressBookComponent } from './pages/address-book/address-book.componen
 import { UserProfileComponent } from './pages/user-profile/user-profile.component';
 import { TrackOrderComponent } from './pages/track-order/track-order.component';
 import { VerifyEmailComponent } from './pages/verify-email/verify-email.component';
+import { SupportComponent } from './pages/support/support.component';
 
 @NgModule({
   declarations: [
@@ -56,6 +57,7 @@ import { VerifyEmailComponent } from './pages/verify-email/verify-email.componen
     UserProfileComponent,
     TrackOrderComponent,
     VerifyEmailComponent,
+    SupportComponent,
   ],
   imports: [
     BrowserModule,

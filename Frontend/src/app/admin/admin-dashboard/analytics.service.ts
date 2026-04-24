@@ -42,4 +42,14 @@ export class AnalyticsService {
     const params = this.buildRange(startDate, endDate);
     return this.http.get<number>(`${this.baseUrl}/cancellations`, { params });
   }
+
+  getDeliveryTime(startDate: string, endDate: string): Observable<number> {
+    const params = this.buildRange(startDate, endDate);
+    return this.http.get<number>(`${this.baseUrl}/delivery-time`, { params });
+  }
+
+  getPeakHours(startDate: string, endDate: string): Observable<Array<{ hour: number; orderCount: number }>> {
+    const params = this.buildRange(startDate, endDate);
+    return this.http.get<Array<{ hour: number; orderCount: number }>>(`${this.baseUrl}/peak-hours`, { params });
+  }
 }
