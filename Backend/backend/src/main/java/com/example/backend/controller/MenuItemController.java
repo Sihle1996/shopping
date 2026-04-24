@@ -1,6 +1,8 @@
 package com.example.backend.controller;
 
 import com.example.backend.entity.MenuItem;
+import com.example.backend.entity.MenuItemOptionGroup;
+import com.example.backend.repository.MenuItemOptionGroupRepository;
 import com.example.backend.service.MenuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,7 @@ import java.util.UUID;
 public class MenuItemController {
 
     private final MenuService menuService;
+    private final MenuItemOptionGroupRepository optionGroupRepository;
 
     @GetMapping
     public ResponseEntity<List<MenuItem>> getMenuItems() {
@@ -26,6 +29,11 @@ public class MenuItemController {
     public ResponseEntity<MenuItem> getMenuItemById(@PathVariable UUID id) {
         MenuItem menuItem = menuService.getMenuItemById(id);
         return ResponseEntity.ok(menuItem);
+    }
+
+    @GetMapping("/{id}/option-groups")
+    public ResponseEntity<List<MenuItemOptionGroup>> getOptionGroups(@PathVariable UUID id) {
+        return ResponseEntity.ok(optionGroupRepository.findByMenuItem_IdOrderBySortOrderAsc(id));
     }
 
 }
