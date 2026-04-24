@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { switchMap } from 'rxjs/operators';
 import { CartService, CartItem } from 'src/app/services/cart.service';
 import { PromotionService, Promotion } from 'src/app/services/promotion.service';
+import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -25,7 +26,8 @@ export class CartComponent implements OnInit {
     private cartService: CartService,
     private promotionService: PromotionService,
     private router: Router,
-    private location: Location
+    private location: Location,
+    private toastr: ToastrService
   ) {}
 
   ngOnInit(): void {
@@ -93,6 +95,13 @@ export class CartComponent implements OnInit {
     item.quantity = quantity;
     this.updateTotals();
     this.cartService.updateCartItem(item.id, quantity).subscribe();
+  }
+
+  clearAll(): void {
+    this.cartService.clearCart();
+    this.cartItems = [];
+    this.updateTotals();
+    this.toastr.success('Cart cleared');
   }
 
   removeItem(itemId: string): void {
