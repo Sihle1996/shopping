@@ -4,6 +4,8 @@ import { Router } from '@angular/router';
 import { switchMap } from 'rxjs/operators';
 import { CartService, CartItem } from 'src/app/services/cart.service';
 import { PromotionService, Promotion } from 'src/app/services/promotion.service';
+import { GroupCartService } from 'src/app/services/group-cart.service';
+import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 
@@ -22,9 +24,14 @@ export class CartComponent implements OnInit {
   get autoDiscountPercent(): number { return this.bestPromo?.discountPercent ?? 0; }
   get totalPrice(): number { return Math.max(0, this.subtotal - this.discount); }
 
+  sharingCart = false;
+  get isLoggedIn(): boolean { return this.authService.isLoggedIn(); }
+
   constructor(
     private cartService: CartService,
     private promotionService: PromotionService,
+    private groupCartService: GroupCartService,
+    private authService: AuthService,
     private router: Router,
     private location: Location,
     private toastr: ToastrService
@@ -102,6 +109,24 @@ export class CartComponent implements OnInit {
     this.cartItems = [];
     this.updateTotals();
     this.toastr.success('Cart cleared');
+  }
+
+  shareGroupCart(): void {
+    this.sharingCart = true;
+    this.groupCartService.create().subscribe({
+      next: res => {
+        const slug = localStorage.getItem('storeSlug');
+        const url = `${window.location.origin}/store/${slug}/group-cart/${res.token}`;
+        navigator.clipboard.writeText(url).then(() =>
+          this.toastr.success('Group order link copied! Share it with your friends.')
+        ).catch(() =>
+          this.toastr.info('Group order created: ' + url)
+        );
+        this.sharingCart = false;
+        if (slug) this.router.navigate(['/store', slug, 'group-cart', res.token]);
+      },
+      error: () => { this.toastr.error('Could not create group order'); this.sharingCart = false; }
+    });
   }
 
   removeItem(itemId: string): void {

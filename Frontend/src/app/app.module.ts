@@ -34,6 +34,7 @@ import { TrackOrderComponent } from './pages/track-order/track-order.component';
 import { VerifyEmailComponent } from './pages/verify-email/verify-email.component';
 import { SupportComponent } from './pages/support/support.component';
 import { FavouritesComponent } from './pages/favourites/favourites.component';
+import { GroupCartComponent } from './pages/group-cart/group-cart.component';
 
 @NgModule({
   declarations: [
@@ -60,6 +61,7 @@ import { FavouritesComponent } from './pages/favourites/favourites.component';
     VerifyEmailComponent,
     SupportComponent,
     FavouritesComponent,
+    GroupCartComponent,
   ],
   imports: [
     BrowserModule,

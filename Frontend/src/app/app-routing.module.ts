@@ -24,6 +24,7 @@ import { TrackOrderComponent } from './pages/track-order/track-order.component';
 import { VerifyEmailComponent } from './pages/verify-email/verify-email.component';
 import { SupportComponent } from './pages/support/support.component';
 import { FavouritesComponent } from './pages/favourites/favourites.component';
+import { GroupCartComponent } from './pages/group-cart/group-cart.component';
 
 const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -43,6 +44,7 @@ const routes: Routes = [
       { path: 'orders', component: HistoryordersComponent, canActivate: [UserGuard] },
       { path: 'thank-you', component: ThankYouComponent },
       { path: 'favourites', component: FavouritesComponent, canActivate: [UserGuard] },
+      { path: 'group-cart/:token', component: GroupCartComponent },
     ]
   },
 

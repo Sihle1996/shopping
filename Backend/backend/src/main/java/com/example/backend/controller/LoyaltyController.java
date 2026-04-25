@@ -49,6 +49,13 @@ public class LoyaltyController {
                 .orElse(ResponseEntity.ok(java.util.Collections.emptyList()));
     }
 
+    /** All loyalty accounts across every store the user has points at */
+    @GetMapping("/wallet")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getWallet(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(loyaltyService.getWallet(user));
+    }
+
     /** Pre-checkout: validate + calculate discount for N points */
     @PostMapping("/calculate")
     @PreAuthorize("isAuthenticated()")

@@ -1,0 +1,105 @@
+<div class="min-h-screen bg-surface pb-24">
+
+  <!-- Header -->
+  <div class="sticky top-0 z-30 bg-white shadow-sm border-b border-borderColor px-4 py-3 flex items-center gap-3">
+    <button (click)="addMyItems()" class="p-2 rounded-xl hover:bg-surface transition-colors">
+      <i class="bi bi-arrow-left text-textDark text-lg"></i>
+    </button>
+    <div class="flex-1 min-w-0">
+      <h1 class="font-heading font-bold text-textDark text-base leading-tight truncate">Group Order</h1>
+      <p *ngIf="cart" class="text-xs text-textMuted truncate">{{ cart.storeName }} · started by {{ cart.ownerName }}</p>
+    </div>
+    <button *ngIf="cart" (click)="copyLink()"
+            class="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary-50 px-3 py-1.5 rounded-xl hover:bg-primary-100 transition-colors">
+      <i class="bi bi-share"></i> Share
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="flex justify-center py-20">
+    <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error && !loading" class="flex flex-col items-center py-20 gap-3 text-center px-6">
+    <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-2">
+      <i class="bi bi-exclamation-circle text-danger text-2xl"></i>
+    </div>
+    <p class="text-textDark font-semibold">{{ error }}</p>
+    <button (click)="addMyItems()" class="mt-2 px-5 py-2 bg-primary text-white rounded-xl text-sm font-semibold">
+      Go to Menu
+    </button>
+  </div>
+
+  <div *ngIf="cart && !loading" class="max-w-lg mx-auto px-4 pt-4 space-y-4">
+
+    <!-- Status banner -->
+    <div *ngIf="cart.status === 'CHECKED_OUT'"
+         class="bg-green-50 border border-green-200 rounded-2xl px-4 py-3 flex items-center gap-2 text-green-700 text-sm">
+      <i class="bi bi-check-circle-fill"></i>
+      <span>This group order has been checked out.</span>
+    </div>
+
+    <!-- Share link card -->
+    <div class="bg-white rounded-2xl shadow-card p-4">
+      <p class="text-xs font-semibold text-textMuted uppercase tracking-wider mb-2">Share this link</p>
+      <div class="flex items-center gap-2 bg-surface rounded-xl px-3 py-2">
+        <i class="bi bi-link-45deg text-primary"></i>
+        <span class="text-xs text-textMuted truncate flex-1">{{ shareUrl }}</span>
+        <button (click)="copyLink()" class="text-primary text-xs font-semibold hover:underline flex-shrink-0">Copy</button>
+      </div>
+      <p class="text-xs text-textMuted mt-2">Friends open this link, add their items, then you checkout together.</p>
+    </div>
+
+    <!-- Items list -->
+    <div class="bg-white rounded-2xl shadow-card overflow-hidden">
+      <div class="px-4 pt-4 pb-2 border-b border-borderColor flex items-center justify-between">
+        <span class="text-sm font-semibold text-textDark">Items ({{ cart.items.length }})</span>
+        <button *ngIf="cart.status === 'OPEN'"
+                (click)="addMyItems()"
+                class="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary-50 px-3 py-1.5 rounded-xl hover:bg-primary-100 transition-colors">
+          <i class="bi bi-plus-circle"></i> Add items
+        </button>
+      </div>
+
+      <div *ngIf="cart.items.length === 0" class="py-10 text-center text-textMuted text-sm">
+        No items yet — be the first to add something!
+      </div>
+
+      <ul class="divide-y divide-borderColor">
+        <li *ngFor="let item of cart.items" class="px-4 py-3 flex items-start gap-3">
+          <img [src]="getImageUrl(item.menuItem?.image)" alt=""
+               class="w-12 h-12 rounded-xl object-cover flex-shrink-0 bg-surface">
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-textDark leading-tight">{{ item.menuItem?.name }}</p>
+            <p class="text-xs text-textMuted mt-0.5">
+              x{{ item.quantity }} · R{{ (item.unitPrice * item.quantity).toFixed(2) }}
+            </p>
+            <p class="text-xs text-primary mt-0.5">Added by {{ item.addedBy?.fullName || item.addedBy?.email }}</p>
+            <p *ngIf="item.itemNotes" class="text-xs text-textMuted italic mt-0.5">"{{ item.itemNotes }}"</p>
+          </div>
+          <button *ngIf="cart.status === 'OPEN' && (item.addedBy?.id === currentUserId)"
+                  (click)="removeItem(item.id)"
+                  [disabled]="removingId === item.id"
+                  class="p-1.5 text-textMuted hover:text-danger transition-colors rounded-lg hover:bg-red-50 flex-shrink-0">
+            <i class="bi bi-trash3 text-sm"></i>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Total + checkout -->
+    <div class="bg-white rounded-2xl shadow-card p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-textMuted">Total</span>
+        <span class="text-base font-bold text-textDark">R{{ cart.total.toFixed(2) }}</span>
+      </div>
+      <button *ngIf="cart.status === 'OPEN' && cart.items.length"
+              (click)="goToCheckout()"
+              class="w-full py-3 bg-primary text-white font-semibold rounded-xl text-sm hover:opacity-90 transition-opacity">
+        Proceed to Checkout
+      </button>
+    </div>
+
+  </div>
+</div>

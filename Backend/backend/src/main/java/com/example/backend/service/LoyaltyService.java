@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -102,6 +104,21 @@ public class LoyaltyService {
         return accountRepo.findByUser_IdAndTenant_Id(user.getId(), tenantId)
                 .map(LoyaltyAccount::getBalance)
                 .orElse(0);
+    }
+
+    /** Returns all loyalty accounts for the user, across every store they have points at. */
+    public List<Map<String, Object>> getWallet(User user) {
+        return accountRepo.findByUser_Id(user.getId()).stream()
+                .filter(acc -> acc.getBalance() > 0)
+                .map(acc -> Map.<String, Object>of(
+                        "tenantId",   acc.getTenant().getId(),
+                        "tenantName", acc.getTenant().getName(),
+                        "tenantSlug", acc.getTenant().getSlug(),
+                        "logoUrl",    acc.getTenant().getLogoUrl() != null ? acc.getTenant().getLogoUrl() : "",
+                        "balance",    acc.getBalance(),
+                        "cashValue",  Math.floor((acc.getBalance() / (double) POINTS_PER_REDEMPTION) * RAND_VALUE_PER_100 * 100) / 100
+                ))
+                .toList();
     }
 
     /** Refunds redeemed points back to the customer when an order is cancelled */

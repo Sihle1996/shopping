@@ -10,6 +10,15 @@ export interface LoyaltyBalance {
   minRedemption: number;
 }
 
+export interface WalletEntry {
+  tenantId: string;
+  tenantName: string;
+  tenantSlug: string;
+  logoUrl: string;
+  balance: number;
+  cashValue: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class LoyaltyService {
   private api = environment.apiUrl;
@@ -30,5 +39,9 @@ export class LoyaltyService {
 
   calculate(points: number): Observable<{ discount: number; pointsUsed: number }> {
     return this.http.post<any>(`${this.api}/api/loyalty/calculate`, { points }, { headers: this.headers() });
+  }
+
+  getWallet(): Observable<WalletEntry[]> {
+    return this.http.get<WalletEntry[]>(`${this.api}/api/loyalty/wallet`, { headers: this.headers() });
   }
 }

@@ -5,8 +5,10 @@ import { Router } from '@angular/router';
 import { environment } from 'src/environments/environment';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/app/services/auth.service';
+import { LoyaltyService, WalletEntry } from 'src/app/services/loyalty.service';
+import { PushNotificationService } from 'src/app/services/push-notification.service';
 
-type Section = 'personal' | 'security' | 'privacy';
+type Section = 'personal' | 'security' | 'privacy' | 'wallet';
 
 @Component({
   selector: 'app-user-profile',
@@ -24,6 +26,10 @@ export class UserProfileComponent implements OnInit {
   role = '';
   joinedAt = '';
   activeSection: Section = 'personal';
+  wallet: WalletEntry[] = [];
+  walletLoading = false;
+  pushState: 'unsupported' | 'default' | 'granted' | 'denied' = 'unsupported';
+  pushToggling = false;
 
   private readonly AVATAR_COLORS = [
     'bg-violet-500', 'bg-blue-500', 'bg-emerald-500', 'bg-orange-500',
@@ -35,6 +41,8 @@ export class UserProfileComponent implements OnInit {
     private http: HttpClient,
     private toastr: ToastrService,
     private authService: AuthService,
+    private loyaltyService: LoyaltyService,
+    private pushService: PushNotificationService,
     private router: Router
   ) {
     this.form = this.fb.group({
@@ -50,6 +58,9 @@ export class UserProfileComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.pushService.init().then(() =>
+      this.pushService.getSubscriptionState().then(s => this.pushState = s)
+    );
     this.http.get<any>(`${environment.apiUrl}/api/me`).subscribe({
       next: p => {
         this.email = p.email;
@@ -87,6 +98,33 @@ export class UserProfileComponent implements OnInit {
 
   setSection(s: string) {
     this.activeSection = s as Section;
+    if (s === 'wallet' && !this.wallet.length) this.loadWallet();
+  }
+
+  private loadWallet(): void {
+    this.walletLoading = true;
+    this.loyaltyService.getWallet().subscribe({
+      next: w => { this.wallet = w; this.walletLoading = false; },
+      error: () => this.walletLoading = false
+    });
+  }
+
+  goToStore(slug: string): void {
+    this.router.navigate(['/store', slug]);
+  }
+
+  async togglePush(): Promise<void> {
+    this.pushToggling = true;
+    if (this.pushState === 'granted') {
+      await this.pushService.unsubscribe();
+      this.pushState = 'default';
+    } else {
+      const ok = await this.pushService.subscribe();
+      this.pushState = ok ? 'granted' : (Notification.permission as any);
+      if (ok) this.toastr.success('Push notifications enabled');
+      else if (this.pushState === 'denied') this.toastr.warning('Notifications blocked — enable them in browser settings');
+    }
+    this.pushToggling = false;
   }
 
   goBack(): void {

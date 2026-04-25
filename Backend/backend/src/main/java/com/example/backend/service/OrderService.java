@@ -49,6 +49,7 @@ public class OrderService {
     private final LoyaltyService loyaltyService;
     private final PayFastService payFastService;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
+    private final WebPushService webPushService;
 
     private void checkLowStock(MenuItem menuItem) {
         if (menuItem.getStock() >= 0 && menuItem.getStock() <= menuItem.getLowStockThreshold()) {
@@ -438,12 +439,20 @@ public class OrderService {
         if ("Delivered".equals(status)) {
             if (updated.getUser() != null) {
                 loyaltyService.awardPoints(updated.getUser(), updated);
+                webPushService.sendToUser(updated.getUser().getId(),
+                        "Order delivered! 🎉", "Your order from " + storeName + " has arrived. Enjoy!");
             }
             if (customerEmail != null && !customerEmail.isBlank()) {
                 emailService.sendOrderDelivered(customerEmail, dto, storeName, logoUrl, primaryColor);
             }
-        } else if (customerEmail != null && !customerEmail.isBlank()) {
-            emailService.sendOrderStatusUpdate(customerEmail, status, updated.getId().toString(), storeName, logoUrl, primaryColor);
+        } else {
+            if (updated.getUser() != null) {
+                String pushBody = pushBodyForStatus(status, storeName);
+                if (pushBody != null) webPushService.sendToUser(updated.getUser().getId(), storeName, pushBody);
+            }
+            if (customerEmail != null && !customerEmail.isBlank()) {
+                emailService.sendOrderStatusUpdate(customerEmail, status, updated.getId().toString(), storeName, logoUrl, primaryColor);
+            }
         }
 
         return dto;
@@ -565,6 +574,17 @@ public class OrderService {
         }
 
         return dto;
+    }
+
+    private String pushBodyForStatus(String status, String storeName) {
+        return switch (status) {
+            case "Confirmed"        -> "Your order has been confirmed! We're getting started.";
+            case "Preparing"        -> "Your order is now being prepared.";
+            case "Out for Delivery" -> "Your order is on its way! 🚴";
+            case "Cancelled"        -> "Your order from " + storeName + " was cancelled.";
+            case "Rejected"         -> "Your order was rejected. Please contact the store.";
+            default -> null;
+        };
     }
 
     public long getTotalOrders() {
