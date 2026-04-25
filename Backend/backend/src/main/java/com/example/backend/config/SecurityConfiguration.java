@@ -67,6 +67,8 @@ public class SecurityConfiguration {
                                 "/api/orders/track/**",
                                 "/api/payfast/**",
                                 "/api/reviews",
+                                "/api/group-cart/**",
+                                "/api/push/public-key",
                                 "/store/**",
                                 "/images/**",
                                 "/uploads/**"
