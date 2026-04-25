@@ -43,7 +43,15 @@ export class GroupCartComponent implements OnInit, OnDestroy {
       next: cart => {
         this.cart = cart;
         this.loading = false;
-        if (cart.status === 'OPEN') this.startPolling();
+        if (cart.status === 'OPEN') {
+          // Keep the token active for any logged-in user viewing this cart so
+          // product page adds always land in the group cart, not the personal cart.
+          if (this.authService.isLoggedIn()) {
+            localStorage.setItem('groupCartToken', this.token);
+          }
+          if (cart.storeSlug) localStorage.setItem('storeSlug', cart.storeSlug);
+          this.startPolling();
+        }
       },
       error: () => { this.error = 'Group cart not found or has expired.'; this.loading = false; }
     });
