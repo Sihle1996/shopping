@@ -8,6 +8,7 @@ import com.example.backend.tenant.TenantContext;
 import com.example.backend.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ public class GroupCartController {
 
     private final GroupCartService groupCartService;
     private final TenantRepository tenantRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @PostMapping
     @PreAuthorize("isAuthenticated()")
@@ -50,7 +52,9 @@ public class GroupCartController {
         String choices = (String) body.getOrDefault("selectedChoicesJson", null);
         String notes = (String) body.getOrDefault("itemNotes", null);
         groupCartService.addItem(token, user, menuItemId, quantity, choices, notes);
-        return ResponseEntity.ok(groupCartService.summarize(token));
+        Map<String, Object> summary = groupCartService.summarize(token);
+        messagingTemplate.convertAndSend("/topic/group-cart/" + token, summary);
+        return ResponseEntity.ok(summary);
     }
 
     @DeleteMapping("/{token}/items/{itemId}")
@@ -60,6 +64,8 @@ public class GroupCartController {
             @PathVariable UUID itemId,
             @AuthenticationPrincipal User user) {
         groupCartService.removeItem(token, itemId, user);
+        Map<String, Object> summary = groupCartService.summarize(token);
+        messagingTemplate.convertAndSend("/topic/group-cart/" + token, summary);
         return ResponseEntity.noContent().build();
     }
 

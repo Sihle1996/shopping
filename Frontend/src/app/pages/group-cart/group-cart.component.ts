@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
@@ -6,6 +6,8 @@ import { GroupCartService, GroupCartSummary } from 'src/app/services/group-cart.
 import { CartService, CartItem } from 'src/app/services/cart.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { environment } from 'src/environments/environment';
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 
 @Component({
   selector: 'app-group-cart',
@@ -22,6 +24,8 @@ export class GroupCartComponent implements OnInit, OnDestroy {
 
   private token = '';
   private pollInterval: any = null;
+  private stompClient: Client | null = null;
+  private stompSub: any = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -29,7 +33,8 @@ export class GroupCartComponent implements OnInit, OnDestroy {
     private groupCartService: GroupCartService,
     private cartService: CartService,
     public authService: AuthService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private zone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -40,6 +45,7 @@ export class GroupCartComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopPolling();
+    this.disconnectWs();
   }
 
   load(): void {
@@ -52,13 +58,48 @@ export class GroupCartComponent implements OnInit, OnDestroy {
           if (this.authService.isLoggedIn()) {
             localStorage.setItem('groupCartToken', this.token);
             this.checkPersonalCart();
+            this.connectWs();
+          } else {
+            this.startPolling();
           }
           if (cart.storeSlug) localStorage.setItem('storeSlug', cart.storeSlug);
-          this.startPolling();
         }
       },
       error: () => { this.error = 'Group cart not found or has expired.'; this.loading = false; }
     });
+  }
+
+  private connectWs(): void {
+    if (this.stompClient?.active) return;
+    const authToken = this.authService.getToken();
+    this.stompClient = new Client({
+      webSocketFactory: () => new SockJS(`${environment.apiUrl}/ws`),
+      connectHeaders: { Authorization: `Bearer ${authToken}` },
+      reconnectDelay: 0,
+      onConnect: () => {
+        this.stopPolling();
+        this.stompSub = this.stompClient!.subscribe(
+          `/topic/group-cart/${this.token}`,
+          (msg) => {
+            this.zone.run(() => {
+              const updated: GroupCartSummary = JSON.parse(msg.body);
+              this.cart = updated;
+              if (updated.status !== 'OPEN') this.disconnectWs();
+            });
+          }
+        );
+      },
+      onStompError: () => this.startPolling(),
+      onWebSocketError: () => this.startPolling()
+    });
+    this.stompClient.activate();
+  }
+
+  private disconnectWs(): void {
+    try { this.stompSub?.unsubscribe(); } catch (_) {}
+    try { this.stompClient?.deactivate(); } catch (_) {}
+    this.stompClient = null;
+    this.stompSub = null;
   }
 
   private startPolling(): void {
@@ -124,6 +165,7 @@ export class GroupCartComponent implements OnInit, OnDestroy {
     this.removingId = itemId;
     this.groupCartService.removeItem(this.token, itemId).subscribe({
       next: () => {
+        // Optimistic update — WebSocket will confirm the final state
         if (this.cart) {
           this.cart.items = this.cart.items.filter(i => i.id !== itemId);
           this.cart.total = Math.round(this.cart.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0) * 100) / 100;
@@ -136,20 +178,17 @@ export class GroupCartComponent implements OnInit, OnDestroy {
 
   addMyItems(): void {
     if (!this.authService.isLoggedIn()) {
-      // Send to login then back here after auth
       this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
       return;
     }
     const slug = this.cart?.storeSlug || localStorage.getItem('storeSlug');
     if (!slug) { this.toastr.error('Could not determine store'); return; }
-    // Store the token so the product page knows to add to this group cart
     localStorage.setItem('groupCartToken', this.token);
     localStorage.setItem('storeSlug', slug);
     this.router.navigate(['/store', slug]);
   }
 
   goToCheckout(): void {
-    // Keep groupCartToken — checkout reads it to load the group cart items
     const slug = this.cart?.storeSlug || localStorage.getItem('storeSlug');
     if (slug) this.router.navigate(['/store', slug, 'checkout']);
   }
