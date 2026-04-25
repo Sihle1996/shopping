@@ -111,8 +111,7 @@ export class GroupCartComponent implements OnInit, OnDestroy {
   }
 
   goToCheckout(): void {
-    // Clear group cart token — the owner is now checking out, cart is done
-    localStorage.removeItem('groupCartToken');
+    // Keep groupCartToken — checkout reads it to load the group cart items
     const slug = this.cart?.storeSlug || localStorage.getItem('storeSlug');
     if (slug) this.router.navigate(['/store', slug, 'checkout']);
   }

@@ -8,12 +8,13 @@ import {
 } from '@angular/core';
 import { Location } from '@angular/common';
 import { CartService } from 'src/app/services/cart.service';
+import { GroupCartService } from 'src/app/services/group-cart.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { GeocodingService, AddressSuggestion } from 'src/app/services/geocoding.service';
 import { PromotionService, Promotion } from 'src/app/services/promotion.service';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, map } from 'rxjs/operators';
 import { FormControl } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
@@ -28,6 +29,7 @@ import { LoyaltyService, LoyaltyBalance } from 'src/app/services/loyalty.service
 export class CheckoutComponent implements OnInit, AfterViewInit {
   cartItems: any[] = [];
   subtotal: number = 0;
+  isGroupCheckout = false;
   discount: number = 0;
   deliveryFee: number = 0;
   get totalPrice(): number { return Math.max(0, this.subtotal - this.discount - this.loyaltyDiscount + this.deliveryFee); }
@@ -95,6 +97,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
 
   constructor(
     private cartService: CartService,
+    private groupCartService: GroupCartService,
     private authService: AuthService,
     private geocodingService: GeocodingService,
     private promotionService: PromotionService,
@@ -191,20 +194,36 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   }
 
   private loadCartAndPromos(): void {
-    // Load promos first, then cart — guarantees both are set before recalcDiscount()
+    const groupToken = localStorage.getItem('groupCartToken');
+    this.isGroupCheckout = !!groupToken;
+
     this.promotionService.getActivePromotions().pipe(
       switchMap(promos => {
         if (!this.appliedPromo) {
-          // Auto-apply best no-code promo: ALL first, then PRODUCT if item is in cart
           const autoAll = promos.find(p => !p.code && p.appliesTo === 'ALL' && p.discountPercent);
           if (autoAll) {
             this.appliedPromo = autoAll;
           } else {
-            // PRODUCT and CATEGORY promos — will be re-evaluated after cart loads
             const autoOther = promos.filter(p => !p.code && p.discountPercent &&
               (p.appliesTo === 'PRODUCT' || p.appliesTo === 'CATEGORY'));
             if (autoOther.length) this.appliedPromo = autoOther[0];
           }
+        }
+        if (groupToken) {
+          return this.groupCartService.get(groupToken).pipe(
+            map(gc => gc.items.map(item => ({
+              menuItemId: item.menuItem.id,
+              menuItemName: item.menuItem.name,
+              menuItemPrice: item.unitPrice,
+              quantity: item.quantity,
+              totalPrice: item.unitPrice * item.quantity,
+              selectedChoicesJson: item.selectedChoicesJson || null,
+              itemNotes: item.itemNotes || null,
+              size: 'M',
+              menuItemCategory: null,
+              addedByName: item.addedBy.fullName || item.addedBy.email
+            })))
+          );
         }
         return this.cartService.getCartItems();
       })
@@ -501,83 +520,78 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     }
     if (!this.isCheckoutValid) return;
 
-    this.cartService.getCartItems().subscribe(items => {
-      this.cartItems = items;
-      this.subtotal = items.reduce((sum, item) => sum + (item.totalPrice ?? item.menuItemPrice * item.quantity), 0);
-      this.recalcDiscount();
+    const groupToken = localStorage.getItem('groupCartToken');
 
-      // Place the order first, then redirect to PayFast for payment
-      const orderData: any = {
-        userId: this.authService.getUserId(),
-        guestEmail: null,
-        guestPhone: null,
-        deliveryAddress: [
-          this.building.name?.trim(),
-          this.building.block?.trim(),
-          this.building.floor?.trim(),
-          d.address,
-          d.city,
-          d.zip,
-          'South Africa'
-        ].filter(Boolean).join(', '),
-        deliveryLat: this.selectedLat,
-        deliveryLon: this.selectedLon,
-        items: this.cartItems.map(item => ({
-          productId: item.menuItemId,
-          name: item.menuItemName,
-          price: item.menuItemPrice,
-          quantity: item.quantity,
-          size: item.size,
-          selectedChoices: (item as any).selectedChoicesJson
-            ? JSON.parse((item as any).selectedChoicesJson)
-            : null
-        })),
-        total: this.subtotal,
-        promoCode: this.appliedPromo?.code?.trim() || null,
-        orderNotes: this.orderNotes?.trim() || null,
-        loyaltyPointsRedeemed: this.loyaltyPointsToRedeem || 0,
-        paymentId: '',
-        payerId: '',
-        status: 'PENDING',
-        scheduledDeliveryTime: this.scheduleForLater && this.scheduledDeliveryTime
-          ? new Date(this.scheduledDeliveryTime).toISOString()
+    const orderData: any = {
+      userId: this.authService.getUserId(),
+      guestEmail: null,
+      guestPhone: null,
+      deliveryAddress: [
+        this.building.name?.trim(),
+        this.building.block?.trim(),
+        this.building.floor?.trim(),
+        d.address,
+        d.city,
+        d.zip,
+        'South Africa'
+      ].filter(Boolean).join(', '),
+      deliveryLat: this.selectedLat,
+      deliveryLon: this.selectedLon,
+      items: this.cartItems.map(item => ({
+        productId: item.menuItemId,
+        name: item.menuItemName,
+        price: item.menuItemPrice,
+        quantity: item.quantity,
+        size: item.size || 'M',
+        selectedChoices: item.selectedChoicesJson
+          ? JSON.parse(item.selectedChoicesJson)
           : null
-      };
+      })),
+      total: this.subtotal,
+      promoCode: this.appliedPromo?.code?.trim() || null,
+      orderNotes: this.orderNotes?.trim() || null,
+      loyaltyPointsRedeemed: this.loyaltyPointsToRedeem || 0,
+      paymentId: '',
+      payerId: '',
+      status: 'PENDING',
+      scheduledDeliveryTime: this.scheduleForLater && this.scheduledDeliveryTime
+        ? new Date(this.scheduledDeliveryTime).toISOString()
+        : null
+    };
 
-      const headers: any = { 'Content-Type': 'application/json' };
-      const token = this.authService.getToken();
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const tenantId = localStorage.getItem('tenantId');
-      if (tenantId) headers['X-Tenant-Id'] = tenantId;
+    const headers: any = { 'Content-Type': 'application/json' };
+    const token = this.authService.getToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const tenantId = localStorage.getItem('tenantId');
+    if (tenantId) headers['X-Tenant-Id'] = tenantId;
 
-      // Place order first
-      this.http.post<any>(`${environment.apiUrl}/api/orders/place`, orderData, { headers }).subscribe({
-        next: (res) => {
-          this.cartService.clearCart();
-          // Save summary for thank-you page
-          const summary = {
-            orderId: res?.id,
-            items: orderData.items,
-            total: this.totalPrice,
-            subtotal: this.subtotal,
-            deliveryFee: this.deliveryFee,
-            address: orderData.deliveryAddress,
-            loyaltyEarned: Math.floor(this.totalPrice),
-            estimatedDeliveryMinutes: this.estimatedDeliveryMinutes
-          };
-          localStorage.setItem('lastOrderSummary', JSON.stringify(summary));
-
-          // Now initiate PayFast payment
-          this.initiatePayFast(res?.id, this.totalPrice);
-        },
-        error: (err) => {
-            if (err?.status === 429) {
-              this.toastr.error('Too many requests. Please wait a moment before placing another order.');
-            } else {
-              this.toastr.error(err?.error?.error || 'Failed to place order. Please try again.');
-            }
-          }
-      });
+    this.http.post<any>(`${environment.apiUrl}/api/orders/place`, orderData, { headers }).subscribe({
+      next: (res) => {
+        if (groupToken) {
+          this.groupCartService.close(groupToken).subscribe();
+          localStorage.removeItem('groupCartToken');
+        }
+        this.cartService.clearCart();
+        const summary = {
+          orderId: res?.id,
+          items: orderData.items,
+          total: this.totalPrice,
+          subtotal: this.subtotal,
+          deliveryFee: this.deliveryFee,
+          address: orderData.deliveryAddress,
+          loyaltyEarned: Math.floor(this.totalPrice),
+          estimatedDeliveryMinutes: this.estimatedDeliveryMinutes
+        };
+        localStorage.setItem('lastOrderSummary', JSON.stringify(summary));
+        this.initiatePayFast(res?.id, this.totalPrice);
+      },
+      error: (err) => {
+        if (err?.status === 429) {
+          this.toastr.error('Too many requests. Please wait a moment before placing another order.');
+        } else {
+          this.toastr.error(err?.error?.error || 'Failed to place order. Please try again.');
+        }
+      }
     });
   }
 

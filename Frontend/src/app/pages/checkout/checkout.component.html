@@ -359,14 +359,24 @@
         <div class="bg-white rounded-2xl brand-trim shadow-card p-6">
           <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
             <i class="bi bi-receipt text-primary"></i> Order Summary
+            <span *ngIf="isGroupCheckout"
+                  class="ml-auto text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <i class="bi bi-people-fill text-[10px]"></i> Group Order
+            </span>
           </h2>
 
           <div class="space-y-2 mb-4">
-            <div *ngFor="let item of cartItems" class="flex items-center justify-between text-sm">
-              <span class="text-textDark">{{ item.menuItemName }}
-                <span class="text-textMuted">× {{ item.quantity }}</span>
-              </span>
-              <span class="font-numbers font-medium text-textDark">
+            <div *ngFor="let item of cartItems" class="flex items-start justify-between text-sm gap-2">
+              <div class="flex-1 min-w-0">
+                <span class="text-textDark">{{ item.menuItemName }}
+                  <span class="text-textMuted">× {{ item.quantity }}</span>
+                </span>
+                <p *ngIf="isGroupCheckout && item.addedByName"
+                   class="text-[10px] text-primary mt-0.5">
+                  <i class="bi bi-person-fill"></i> {{ item.addedByName }}
+                </p>
+              </div>
+              <span class="font-numbers font-medium text-textDark flex-shrink-0">
                 R{{ (item.totalPrice ?? item.menuItemPrice * item.quantity).toFixed(2) }}
               </span>
             </div>
