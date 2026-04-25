@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -91,14 +93,42 @@ public class GroupCartService {
     @Transactional(readOnly = true)
     public Map<String, Object> summarize(String token) {
         GroupCart gc = getByToken(token);
-        double total = gc.getItems().stream()
-                .mapToDouble(i -> i.getUnitPrice() * i.getQuantity())
-                .sum();
+
+        // Convert items to plain maps inside the transaction so all lazy proxies
+        // (addedBy, menuItem) are resolved before the session closes.
+        List<Map<String, Object>> itemDtos = new ArrayList<>();
+        double total = 0;
+        for (GroupCartItem item : gc.getItems()) {
+            total += item.getUnitPrice() * item.getQuantity();
+
+            Map<String, Object> addedByDto = new HashMap<>();
+            addedByDto.put("id",       item.getAddedBy().getId().toString());
+            addedByDto.put("fullName", item.getAddedBy().getFullName());
+            addedByDto.put("email",    item.getAddedBy().getEmail());
+
+            Map<String, Object> menuItemDto = new HashMap<>();
+            menuItemDto.put("id",    item.getMenuItem().getId().toString());
+            menuItemDto.put("name",  item.getMenuItem().getName());
+            menuItemDto.put("price", item.getMenuItem().getPrice());
+            menuItemDto.put("image", item.getMenuItem().getImage());
+
+            Map<String, Object> dto = new HashMap<>();
+            dto.put("id",                  item.getId().toString());
+            dto.put("quantity",            item.getQuantity());
+            dto.put("unitPrice",           item.getUnitPrice());
+            dto.put("selectedChoicesJson", item.getSelectedChoicesJson());
+            dto.put("itemNotes",           item.getItemNotes());
+            dto.put("addedAt",             item.getAddedAt() != null ? item.getAddedAt().toString() : null);
+            dto.put("addedBy",             addedByDto);
+            dto.put("menuItem",            menuItemDto);
+            itemDtos.add(dto);
+        }
+
         String ownerName = gc.getOwner().getFullName() != null && !gc.getOwner().getFullName().isBlank()
                 ? gc.getOwner().getFullName() : gc.getOwner().getEmail();
         String logoUrl = gc.getTenant().getLogoUrl() != null ? gc.getTenant().getLogoUrl() : "";
 
-        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        Map<String, Object> result = new HashMap<>();
         result.put("id",        gc.getId().toString());
         result.put("token",     gc.getToken());
         result.put("status",    gc.getStatus());
@@ -107,7 +137,7 @@ public class GroupCartService {
         result.put("storeName", gc.getTenant().getName());
         result.put("storeSlug", gc.getTenant().getSlug());
         result.put("logoUrl",   logoUrl);
-        result.put("items",     gc.getItems());
+        result.put("items",     itemDtos);
         result.put("total",     Math.round(total * 100.0) / 100.0);
         return result;
     }

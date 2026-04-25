@@ -49,7 +49,8 @@ public class GroupCartController {
         int quantity = body.containsKey("quantity") ? ((Number) body.get("quantity")).intValue() : 1;
         String choices = (String) body.getOrDefault("selectedChoicesJson", null);
         String notes = (String) body.getOrDefault("itemNotes", null);
-        return ResponseEntity.ok(groupCartService.addItem(token, user, menuItemId, quantity, choices, notes));
+        groupCartService.addItem(token, user, menuItemId, quantity, choices, notes);
+        return ResponseEntity.ok(groupCartService.summarize(token));
     }
 
     @DeleteMapping("/{token}/items/{itemId}")
