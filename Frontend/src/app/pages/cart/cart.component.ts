@@ -139,6 +139,7 @@ export class CartComponent implements OnInit {
   }
 
   proceedToCheckout(): void {
+    localStorage.removeItem('groupCartToken');
     const slug = localStorage.getItem('storeSlug');
     this.router.navigate(slug ? ['/store', slug, 'checkout'] : ['/checkout']);
   }

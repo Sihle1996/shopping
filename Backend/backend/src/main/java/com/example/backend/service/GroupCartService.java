@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -93,16 +94,22 @@ public class GroupCartService {
         double total = gc.getItems().stream()
                 .mapToDouble(i -> i.getUnitPrice() * i.getQuantity())
                 .sum();
-        return Map.of(
-                "id", gc.getId(),
-                "token", gc.getToken(),
-                "status", gc.getStatus(),
-                "ownerName", gc.getOwner().getFullName() != null ? gc.getOwner().getFullName() : gc.getOwner().getEmail(),
-                "storeName", gc.getTenant().getName(),
-                "storeSlug", gc.getTenant().getSlug(),
-                "items", gc.getItems(),
-                "total", Math.round(total * 100.0) / 100.0
-        );
+        String ownerName = gc.getOwner().getFullName() != null && !gc.getOwner().getFullName().isBlank()
+                ? gc.getOwner().getFullName() : gc.getOwner().getEmail();
+        String logoUrl = gc.getTenant().getLogoUrl() != null ? gc.getTenant().getLogoUrl() : "";
+
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("id",        gc.getId().toString());
+        result.put("token",     gc.getToken());
+        result.put("status",    gc.getStatus());
+        result.put("ownerId",   gc.getOwner().getId().toString());
+        result.put("ownerName", ownerName);
+        result.put("storeName", gc.getTenant().getName());
+        result.put("storeSlug", gc.getTenant().getSlug());
+        result.put("logoUrl",   logoUrl);
+        result.put("items",     gc.getItems());
+        result.put("total",     Math.round(total * 100.0) / 100.0);
+        return result;
     }
 
     @Transactional

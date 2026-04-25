@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { GroupCartService, GroupCartSummary } from 'src/app/services/group-cart.service';
@@ -10,20 +10,20 @@ import { environment } from 'src/environments/environment';
   templateUrl: './group-cart.component.html',
   styleUrls: ['./group-cart.component.scss']
 })
-export class GroupCartComponent implements OnInit {
+export class GroupCartComponent implements OnInit, OnDestroy {
   cart: GroupCartSummary | null = null;
   loading = true;
   error = '';
   removingId: string | null = null;
-  closing = false;
 
   private token = '';
+  private pollInterval: any = null;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private groupCartService: GroupCartService,
-    private authService: AuthService,
+    public authService: AuthService,
     private toastr: ToastrService
   ) {}
 
@@ -33,19 +33,42 @@ export class GroupCartComponent implements OnInit {
     this.load();
   }
 
+  ngOnDestroy(): void {
+    this.stopPolling();
+  }
+
   load(): void {
     this.loading = true;
     this.groupCartService.get(this.token).subscribe({
-      next: cart => { this.cart = cart; this.loading = false; },
+      next: cart => {
+        this.cart = cart;
+        this.loading = false;
+        if (cart.status === 'OPEN') this.startPolling();
+      },
       error: () => { this.error = 'Group cart not found or has expired.'; this.loading = false; }
     });
   }
 
+  private startPolling(): void {
+    if (this.pollInterval) return;
+    this.pollInterval = setInterval(() => {
+      this.groupCartService.get(this.token).subscribe({
+        next: cart => {
+          this.cart = cart;
+          if (cart.status !== 'OPEN') this.stopPolling();
+        },
+        error: () => {}
+      });
+    }, 4000);
+  }
+
+  private stopPolling(): void {
+    if (this.pollInterval) { clearInterval(this.pollInterval); this.pollInterval = null; }
+  }
+
   get isOwner(): boolean {
-    if (!this.cart) return false;
-    const userId = this.authService.getUserId();
-    return !!userId && this.cart.items.some(i => i.addedBy?.id === userId &&
-      this.cart?.ownerName === (i.addedBy?.fullName || i.addedBy?.email));
+    const uid = this.authService.getUserId();
+    return !!uid && uid === this.cart?.ownerId;
   }
 
   get currentUserId(): string { return this.authService.getUserId() || ''; }
@@ -54,8 +77,10 @@ export class GroupCartComponent implements OnInit {
     this.removingId = itemId;
     this.groupCartService.removeItem(this.token, itemId).subscribe({
       next: () => {
-        if (this.cart) this.cart.items = this.cart.items.filter(i => i.id !== itemId);
-        this.cart!.total = this.cart!.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+        if (this.cart) {
+          this.cart.items = this.cart.items.filter(i => i.id !== itemId);
+          this.cart.total = Math.round(this.cart.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0) * 100) / 100;
+        }
         this.removingId = null;
       },
       error: () => { this.toastr.error('Could not remove item'); this.removingId = null; }
@@ -63,29 +88,39 @@ export class GroupCartComponent implements OnInit {
   }
 
   addMyItems(): void {
-    const slug = this.cart?.storeSlug || localStorage.getItem('storeSlug');
-    if (slug) {
-      localStorage.setItem('groupCartToken', this.token);
-      this.router.navigate(['/store', slug]);
+    if (!this.authService.isLoggedIn()) {
+      // Send to login then back here after auth
+      this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
+      return;
     }
+    const slug = this.cart?.storeSlug || localStorage.getItem('storeSlug');
+    if (!slug) { this.toastr.error('Could not determine store'); return; }
+    // Store the token so the product page knows to add to this group cart
+    localStorage.setItem('groupCartToken', this.token);
+    localStorage.setItem('storeSlug', slug);
+    this.router.navigate(['/store', slug]);
   }
 
   goToCheckout(): void {
+    // Clear group cart token — the owner is now checking out, cart is done
+    localStorage.removeItem('groupCartToken');
     const slug = this.cart?.storeSlug || localStorage.getItem('storeSlug');
     if (slug) this.router.navigate(['/store', slug, 'checkout']);
+  }
+
+  copyLink(): void {
+    navigator.clipboard.writeText(this.shareUrl)
+      .then(() => this.toastr.success('Link copied!'))
+      .catch(() => this.toastr.info('Copy this link: ' + this.shareUrl));
+  }
+
+  get shareUrl(): string {
+    const slug = this.cart?.storeSlug || localStorage.getItem('storeSlug') || '';
+    return `${window.location.origin}/store/${slug}/group-cart/${this.token}`;
   }
 
   getImageUrl(path?: string): string {
     if (!path) return 'assets/placeholder.png';
     return path.startsWith('http') ? path : `${environment.apiUrl}${path}`;
-  }
-
-  copyLink(): void {
-    const url = `${window.location.origin}/store/${this.cart?.storeSlug}/group-cart/${this.token}`;
-    navigator.clipboard.writeText(url).then(() => this.toastr.success('Link copied!'));
-  }
-
-  get shareUrl(): string {
-    return `${window.location.origin}/store/${this.cart?.storeSlug}/group-cart/${this.token}`;
   }
 }

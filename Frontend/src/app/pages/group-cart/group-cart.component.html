@@ -7,7 +7,9 @@
     </button>
     <div class="flex-1 min-w-0">
       <h1 class="font-heading font-bold text-textDark text-base leading-tight truncate">Group Order</h1>
-      <p *ngIf="cart" class="text-xs text-textMuted truncate">{{ cart.storeName }} · started by {{ cart.ownerName }}</p>
+      <p *ngIf="cart" class="text-xs text-textMuted truncate">
+        {{ cart.storeName }} · started by {{ cart.ownerName }}
+      </p>
     </div>
     <button *ngIf="cart" (click)="copyLink()"
             class="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary-50 px-3 py-1.5 rounded-xl hover:bg-primary-100 transition-colors">
@@ -26,25 +28,36 @@
       <i class="bi bi-exclamation-circle text-danger text-2xl"></i>
     </div>
     <p class="text-textDark font-semibold">{{ error }}</p>
-    <button (click)="addMyItems()" class="mt-2 px-5 py-2 bg-primary text-white rounded-xl text-sm font-semibold">
-      Go to Menu
-    </button>
   </div>
 
   <div *ngIf="cart && !loading" class="max-w-lg mx-auto px-4 pt-4 space-y-4">
 
-    <!-- Status banner -->
+    <!-- Checked out banner -->
     <div *ngIf="cart.status === 'CHECKED_OUT'"
          class="bg-green-50 border border-green-200 rounded-2xl px-4 py-3 flex items-center gap-2 text-green-700 text-sm">
       <i class="bi bi-check-circle-fill"></i>
       <span>This group order has been checked out.</span>
     </div>
 
-    <!-- Share link card -->
+    <!-- Login prompt for guests -->
+    <div *ngIf="!authService.isLoggedIn() && cart.status === 'OPEN'"
+         class="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4 flex items-start gap-3">
+      <i class="bi bi-person-circle text-amber-500 text-xl flex-shrink-0 mt-0.5"></i>
+      <div class="flex-1">
+        <p class="text-sm font-semibold text-amber-800">Log in to add your items</p>
+        <p class="text-xs text-amber-700 mt-0.5">You're viewing this group order as a guest. Sign in to add your choices.</p>
+        <button (click)="addMyItems()"
+                class="mt-2 px-4 py-1.5 bg-amber-500 text-white text-xs font-semibold rounded-xl hover:bg-amber-600 transition-colors">
+          Log in &amp; add items
+        </button>
+      </div>
+    </div>
+
+    <!-- Share link -->
     <div class="bg-white rounded-2xl shadow-card p-4">
-      <p class="text-xs font-semibold text-textMuted uppercase tracking-wider mb-2">Share this link</p>
+      <p class="text-xs font-semibold text-textMuted uppercase tracking-wider mb-2">Share with friends</p>
       <div class="flex items-center gap-2 bg-surface rounded-xl px-3 py-2">
-        <i class="bi bi-link-45deg text-primary"></i>
+        <i class="bi bi-link-45deg text-primary flex-shrink-0"></i>
         <span class="text-xs text-textMuted truncate flex-1">{{ shareUrl }}</span>
         <button (click)="copyLink()" class="text-primary text-xs font-semibold hover:underline flex-shrink-0">Copy</button>
       </div>
@@ -54,8 +67,16 @@
     <!-- Items list -->
     <div class="bg-white rounded-2xl shadow-card overflow-hidden">
       <div class="px-4 pt-4 pb-2 border-b border-borderColor flex items-center justify-between">
-        <span class="text-sm font-semibold text-textDark">Items ({{ cart.items.length }})</span>
-        <button *ngIf="cart.status === 'OPEN'"
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-semibold text-textDark">Items ({{ cart.items.length }})</span>
+          <!-- Live indicator -->
+          <span *ngIf="cart.status === 'OPEN'"
+                class="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+            <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block"></span>
+            Live
+          </span>
+        </div>
+        <button *ngIf="cart.status === 'OPEN' && authService.isLoggedIn()"
                 (click)="addMyItems()"
                 class="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary-50 px-3 py-1.5 rounded-xl hover:bg-primary-100 transition-colors">
           <i class="bi bi-plus-circle"></i> Add items
@@ -63,6 +84,7 @@
       </div>
 
       <div *ngIf="cart.items.length === 0" class="py-10 text-center text-textMuted text-sm">
+        <i class="bi bi-cart3 text-3xl text-borderColor block mb-2"></i>
         No items yet — be the first to add something!
       </div>
 
@@ -75,30 +97,40 @@
             <p class="text-xs text-textMuted mt-0.5">
               x{{ item.quantity }} · R{{ (item.unitPrice * item.quantity).toFixed(2) }}
             </p>
-            <p class="text-xs text-primary mt-0.5">Added by {{ item.addedBy?.fullName || item.addedBy?.email }}</p>
+            <p class="text-xs text-primary mt-0.5 font-medium">
+              <i class="bi bi-person-fill text-[10px] mr-0.5"></i>
+              {{ item.addedBy?.fullName || item.addedBy?.email }}
+              <span *ngIf="item.addedBy?.id === cart.ownerId"
+                    class="ml-1 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">host</span>
+            </p>
             <p *ngIf="item.itemNotes" class="text-xs text-textMuted italic mt-0.5">"{{ item.itemNotes }}"</p>
           </div>
-          <button *ngIf="cart.status === 'OPEN' && (item.addedBy?.id === currentUserId)"
+          <!-- Remove own items only -->
+          <button *ngIf="cart.status === 'OPEN' && item.addedBy?.id === currentUserId"
                   (click)="removeItem(item.id)"
                   [disabled]="removingId === item.id"
-                  class="p-1.5 text-textMuted hover:text-danger transition-colors rounded-lg hover:bg-red-50 flex-shrink-0">
-            <i class="bi bi-trash3 text-sm"></i>
+                  class="p-1.5 text-textMuted hover:text-danger transition-colors rounded-lg hover:bg-red-50 flex-shrink-0 disabled:opacity-40">
+            <i [class]="removingId === item.id ? 'bi bi-hourglass-split text-sm animate-spin' : 'bi bi-trash3 text-sm'"></i>
           </button>
         </li>
       </ul>
     </div>
 
-    <!-- Total + checkout -->
+    <!-- Total + checkout (owner only) -->
     <div class="bg-white rounded-2xl shadow-card p-4 space-y-3">
       <div class="flex items-center justify-between">
-        <span class="text-sm text-textMuted">Total</span>
+        <span class="text-sm text-textMuted">Group total</span>
         <span class="text-base font-bold text-textDark">R{{ cart.total.toFixed(2) }}</span>
       </div>
-      <button *ngIf="cart.status === 'OPEN' && cart.items.length"
+      <button *ngIf="isOwner && cart.status === 'OPEN' && cart.items.length"
               (click)="goToCheckout()"
               class="w-full py-3 bg-primary text-white font-semibold rounded-xl text-sm hover:opacity-90 transition-opacity">
         Proceed to Checkout
       </button>
+      <p *ngIf="!isOwner && cart.status === 'OPEN' && authService.isLoggedIn()"
+         class="text-xs text-center text-textMuted">
+        Waiting for the host ({{ cart.ownerName }}) to checkout
+      </p>
     </div>
 
   </div>

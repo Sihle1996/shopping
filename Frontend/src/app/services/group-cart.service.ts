@@ -19,9 +19,11 @@ export interface GroupCartSummary {
   id: string;
   token: string;
   status: string;
+  ownerId: string;
   ownerName: string;
   storeName: string;
   storeSlug: string;
+  logoUrl: string;
   items: GroupCartItem[];
   total: number;
 }

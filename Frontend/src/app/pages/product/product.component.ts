@@ -5,6 +5,8 @@ import { CartService } from 'src/app/services/cart.service';
 import { MenuItem, MenuService } from 'src/app/services/menu.service';
 import { PromotionService } from 'src/app/services/promotion.service';
 import { FavouriteService } from 'src/app/services/favourite.service';
+import { GroupCartService } from 'src/app/services/group-cart.service';
+import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
@@ -40,6 +42,8 @@ export class ProductComponent implements OnInit {
     private cartService: CartService,
     private promotionService: PromotionService,
     private favouriteService: FavouriteService,
+    private groupCartService: GroupCartService,
+    private authService: AuthService,
     private router: Router,
     private location: Location,
     private toastr: ToastrService,
@@ -191,10 +195,33 @@ export class ProductComponent implements OnInit {
       }
     }
 
+    const choicesJson = choices.length ? JSON.stringify(choices) : null;
+    const groupToken = localStorage.getItem('groupCartToken');
+
+    if (groupToken) {
+      if (!this.authService.isLoggedIn()) {
+        this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
+        return;
+      }
+      this.isAddingToCart = true;
+      this.groupCartService.addItem(groupToken, this.product.id, this.quantity, choicesJson, this.itemNotes || null)
+        .subscribe({
+          next: () => {
+            this.isAddingToCart = false;
+            clearTimeout(this.addedBannerTimer);
+            this.showAddedBanner = true;
+            this.addedBannerTimer = setTimeout(() => this.showAddedBanner = false, 3000);
+            this.toastr.success('Added to group order!');
+            if (this.slug) this.router.navigate(['/store', this.slug, 'group-cart', groupToken]);
+          },
+          error: err => { this.toastr.error(err?.error || 'Failed to add to group order'); this.isAddingToCart = false; }
+        });
+      return;
+    }
+
     this.isAddingToCart = true;
     this.cartService.addToCart(
-      this.product.id, this.quantity, null,
-      choices.length ? JSON.stringify(choices) : null,
+      this.product.id, this.quantity, null, choicesJson,
       { name: this.product.name, price: this.unitPrice, category: this.product.category, image: this.product.image },
       this.itemNotes || null
     ).subscribe({
