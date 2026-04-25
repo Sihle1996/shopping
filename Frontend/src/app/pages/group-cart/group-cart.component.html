@@ -40,7 +40,7 @@
     </div>
 
     <!-- Login prompt for guests -->
-    <div *ngIf="!authService.isLoggedIn() && cart.status === 'OPEN'"
+    <div *ngIf="!isLoggedIn && cart.status === 'OPEN'"
          class="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4 flex items-start gap-3">
       <i class="bi bi-person-circle text-amber-500 text-xl flex-shrink-0 mt-0.5"></i>
       <div class="flex-1">
@@ -51,6 +51,19 @@
           Log in &amp; add items
         </button>
       </div>
+    </div>
+
+    <!-- Add items CTA for logged-in non-owner friends -->
+    <div *ngIf="isLoggedIn && !isOwner && cart.status === 'OPEN'"
+         class="bg-primary/5 border border-primary/20 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <i class="bi bi-cart-plus text-primary text-lg"></i>
+        <p class="text-sm font-semibold text-textDark">Add your items to this order</p>
+      </div>
+      <button (click)="addMyItems()"
+              class="flex items-center gap-1.5 text-xs font-semibold text-white bg-primary px-4 py-2 rounded-xl hover:opacity-90 transition-opacity flex-shrink-0">
+        <i class="bi bi-plus-circle"></i> Add items
+      </button>
     </div>
 
     <!-- Share link -->
@@ -76,7 +89,7 @@
             Live
           </span>
         </div>
-        <button *ngIf="cart.status === 'OPEN' && authService.isLoggedIn()"
+        <button *ngIf="cart.status === 'OPEN' && isLoggedIn"
                 (click)="addMyItems()"
                 class="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary-50 px-3 py-1.5 rounded-xl hover:bg-primary-100 transition-colors">
           <i class="bi bi-plus-circle"></i> Add items
@@ -127,7 +140,7 @@
               class="w-full py-3 bg-primary text-white font-semibold rounded-xl text-sm hover:opacity-90 transition-opacity">
         Proceed to Checkout
       </button>
-      <p *ngIf="!isOwner && cart.status === 'OPEN' && authService.isLoggedIn()"
+      <p *ngIf="!isOwner && cart.status === 'OPEN' && isLoggedIn"
          class="text-xs text-center text-textMuted">
         Waiting for the host ({{ cart.ownerName }}) to checkout
       </p>

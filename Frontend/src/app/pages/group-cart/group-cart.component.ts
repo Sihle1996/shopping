@@ -71,6 +71,7 @@ export class GroupCartComponent implements OnInit, OnDestroy {
     return !!uid && uid === this.cart?.ownerId;
   }
 
+  get isLoggedIn(): boolean { return this.authService.isLoggedIn(); }
   get currentUserId(): string { return this.authService.getUserId() || ''; }
 
   removeItem(itemId: string): void {

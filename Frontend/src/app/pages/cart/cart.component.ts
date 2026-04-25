@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
-import { switchMap } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
+import { switchMap, map } from 'rxjs/operators';
 import { CartService, CartItem } from 'src/app/services/cart.service';
 import { PromotionService, Promotion } from 'src/app/services/promotion.service';
 import { GroupCartService } from 'src/app/services/group-cart.service';
@@ -113,17 +114,26 @@ export class CartComponent implements OnInit {
 
   shareGroupCart(): void {
     this.sharingCart = true;
-    this.groupCartService.create().subscribe({
-      next: res => {
-        const slug = localStorage.getItem('storeSlug');
-        const url = `${window.location.origin}/store/${slug}/group-cart/${res.token}`;
-        navigator.clipboard.writeText(url).then(() =>
-          this.toastr.success('Group order link copied! Share it with your friends.')
-        ).catch(() =>
-          this.toastr.info('Group order created: ' + url)
-        );
+    const slug = localStorage.getItem('storeSlug');
+    this.groupCartService.create().pipe(
+      switchMap(res => {
+        localStorage.setItem('groupCartToken', res.token);
+        if (!this.cartItems.length) return of(res.token);
+        return forkJoin(
+          this.cartItems.map(item =>
+            this.groupCartService.addItem(res.token, item.menuItemId, item.quantity,
+              item.selectedChoicesJson ?? null, item.itemNotes ?? null)
+          )
+        ).pipe(map(() => res.token));
+      })
+    ).subscribe({
+      next: token => {
+        const url = `${window.location.origin}/store/${slug}/group-cart/${token}`;
+        navigator.clipboard.writeText(url)
+          .then(() => this.toastr.success('Group order link copied! Share it with your friends.'))
+          .catch(() => this.toastr.info('Group order created: ' + url));
         this.sharingCart = false;
-        if (slug) this.router.navigate(['/store', slug, 'group-cart', res.token]);
+        if (slug) this.router.navigate(['/store', slug, 'group-cart', token]);
       },
       error: () => { this.toastr.error('Could not create group order'); this.sharingCart = false; }
     });
