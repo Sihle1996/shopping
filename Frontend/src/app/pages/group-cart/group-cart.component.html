@@ -53,6 +53,37 @@
       </div>
     </div>
 
+    <!-- Personal cart merge prompt -->
+    <div *ngIf="isLoggedIn && cart.status === 'OPEN' && personalCartItems.length"
+         class="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3">
+      <div class="flex items-start gap-3">
+        <i class="bi bi-cart-check text-blue-500 text-xl flex-shrink-0 mt-0.5"></i>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-blue-800">
+            You have {{ personalCartItems.length }} item{{ personalCartItems.length > 1 ? 's' : '' }} in your personal cart
+          </p>
+          <p class="text-xs text-blue-600 mt-0.5">Add them to this group order, or keep them separate.</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li *ngFor="let item of personalCartItems" class="text-xs text-blue-700">
+              · {{ item.menuItemName }} × {{ item.quantity }}
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-3">
+        <button (click)="mergePersonalCart()"
+                [disabled]="mergingPersonalCart"
+                class="flex-1 py-2 bg-blue-500 text-white text-xs font-semibold rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50">
+          <span *ngIf="!mergingPersonalCart">Add to group order</span>
+          <span *ngIf="mergingPersonalCart">Adding...</span>
+        </button>
+        <button (click)="dismissPersonalCart()"
+                class="px-4 py-2 text-xs font-semibold text-blue-600 bg-blue-100 rounded-xl hover:bg-blue-200 transition-colors">
+          Keep separate
+        </button>
+      </div>
+    </div>
+
     <!-- Add items CTA for logged-in non-owner friends -->
     <div *ngIf="isLoggedIn && !isOwner && cart.status === 'OPEN'"
          class="bg-primary/5 border border-primary/20 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">

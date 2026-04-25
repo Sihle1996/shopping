@@ -1,7 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { GroupCartService, GroupCartSummary } from 'src/app/services/group-cart.service';
+import { CartService, CartItem } from 'src/app/services/cart.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { environment } from 'src/environments/environment';
 
@@ -15,6 +17,8 @@ export class GroupCartComponent implements OnInit, OnDestroy {
   loading = true;
   error = '';
   removingId: string | null = null;
+  personalCartItems: CartItem[] = [];
+  mergingPersonalCart = false;
 
   private token = '';
   private pollInterval: any = null;
@@ -23,6 +27,7 @@ export class GroupCartComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private groupCartService: GroupCartService,
+    private cartService: CartService,
     public authService: AuthService,
     private toastr: ToastrService
   ) {}
@@ -44,10 +49,9 @@ export class GroupCartComponent implements OnInit, OnDestroy {
         this.cart = cart;
         this.loading = false;
         if (cart.status === 'OPEN') {
-          // Keep the token active for any logged-in user viewing this cart so
-          // product page adds always land in the group cart, not the personal cart.
           if (this.authService.isLoggedIn()) {
             localStorage.setItem('groupCartToken', this.token);
+            this.checkPersonalCart();
           }
           if (cart.storeSlug) localStorage.setItem('storeSlug', cart.storeSlug);
           this.startPolling();
@@ -72,6 +76,40 @@ export class GroupCartComponent implements OnInit, OnDestroy {
 
   private stopPolling(): void {
     if (this.pollInterval) { clearInterval(this.pollInterval); this.pollInterval = null; }
+  }
+
+  private checkPersonalCart(): void {
+    this.cartService.getCartItems().subscribe({
+      next: items => { this.personalCartItems = items; },
+      error: () => {}
+    });
+  }
+
+  mergePersonalCart(): void {
+    if (!this.personalCartItems.length) return;
+    this.mergingPersonalCart = true;
+    forkJoin(
+      this.personalCartItems.map(item =>
+        this.groupCartService.addItem(this.token, item.menuItemId, item.quantity,
+          item.selectedChoicesJson ?? null, item.itemNotes ?? null)
+      )
+    ).subscribe({
+      next: () => {
+        this.cartService.clearCart();
+        this.personalCartItems = [];
+        this.mergingPersonalCart = false;
+        this.toastr.success('Your items have been added to the group order!');
+        this.load();
+      },
+      error: () => {
+        this.mergingPersonalCart = false;
+        this.toastr.error('Could not add all items — please try again');
+      }
+    });
+  }
+
+  dismissPersonalCart(): void {
+    this.personalCartItems = [];
   }
 
   get isOwner(): boolean {
