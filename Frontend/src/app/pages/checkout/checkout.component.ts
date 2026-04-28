@@ -30,6 +30,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   cartItems: any[] = [];
   subtotal: number = 0;
   isGroupCheckout = false;
+  private groupCheckoutToken: string | null = null;
   discount: number = 0;
   deliveryFee: number = 0;
   get totalPrice(): number { return Math.max(0, this.subtotal - this.discount - this.loyaltyDiscount + this.deliveryFee); }
@@ -194,7 +195,9 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   }
 
   private loadCartAndPromos(): void {
-    const groupToken = localStorage.getItem('groupCartToken');
+    const groupToken = localStorage.getItem('checkoutGroupToken');
+    localStorage.removeItem('checkoutGroupToken');
+    this.groupCheckoutToken = groupToken;
     this.isGroupCheckout = !!groupToken;
 
     this.promotionService.getActivePromotions().pipe(
@@ -520,7 +523,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     }
     if (!this.isCheckoutValid) return;
 
-    const groupToken = localStorage.getItem('groupCartToken');
+    const groupToken = this.groupCheckoutToken;
 
     const orderData: any = {
       userId: this.authService.getUserId(),
@@ -569,7 +572,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       next: (res) => {
         if (groupToken) {
           this.groupCartService.close(groupToken).subscribe();
-          localStorage.removeItem('groupCartToken');
+          this.groupCheckoutToken = null;
         }
         this.cartService.clearCart();
         const summary = {

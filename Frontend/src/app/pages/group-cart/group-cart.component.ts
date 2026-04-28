@@ -189,6 +189,7 @@ export class GroupCartComponent implements OnInit, OnDestroy {
   }
 
   goToCheckout(): void {
+    localStorage.setItem('checkoutGroupToken', this.token);
     const slug = this.cart?.storeSlug || localStorage.getItem('storeSlug');
     if (slug) this.router.navigate(['/store', slug, 'checkout']);
   }
