@@ -196,4 +196,5 @@ export interface PendingEnrollmentDto {
   bankAccountType?: string
   bankBranchCode?: string
   documents: StoreDocumentDto[]
+  rejectionReason?: string
 }

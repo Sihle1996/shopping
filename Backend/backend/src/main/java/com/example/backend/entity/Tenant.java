@@ -115,6 +115,10 @@ public class Tenant {
     private Instant submittedForReviewAt;
     private Instant approvedAt;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isArchived = false;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

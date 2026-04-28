@@ -327,10 +327,41 @@ public class TenantController {
             List<StoreDocument> docs = storeDocumentRepository.findByTenantId(t.getId());
             return new PendingEnrollmentDto(
                     t.getId(), t.getName(), t.getSlug(), t.getEmail(), t.getPhone(),
-                    t.getAddress(), t.getSubmittedForReviewAt(), docs
+                    t.getAddress(), t.getSubmittedForReviewAt(), docs, null
             );
         }).toList();
         return ResponseEntity.ok(result);
+    }
+
+    // SUPERADMIN — enrollment: list rejected (non-archived) stores
+    @GetMapping("/api/superadmin/enrollment/rejected")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    public ResponseEntity<List<PendingEnrollmentDto>> getRejectedEnrollments() {
+        List<Tenant> rejected = tenantRepository.findByApprovalStatusAndArchivedFalse(Tenant.ApprovalStatus.REJECTED);
+        List<PendingEnrollmentDto> result = rejected.stream().map(t -> {
+            List<StoreDocument> docs = storeDocumentRepository.findByTenantId(t.getId());
+            return new PendingEnrollmentDto(
+                    t.getId(), t.getName(), t.getSlug(), t.getEmail(), t.getPhone(),
+                    t.getAddress(), t.getSubmittedForReviewAt(), docs, t.getRejectionReason()
+            );
+        }).toList();
+        return ResponseEntity.ok(result);
+    }
+
+    // SUPERADMIN — enrollment: permanently archive a rejected store
+    @PostMapping("/api/superadmin/enrollment/{tenantId}/archive")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    @Transactional
+    public ResponseEntity<?> archiveEnrollment(@PathVariable UUID tenantId) {
+        return tenantRepository.findById(tenantId).map(tenant -> {
+            if (tenant.getApprovalStatus() != Tenant.ApprovalStatus.REJECTED) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Only rejected stores can be archived"));
+            }
+            tenant.setArchived(true);
+            tenant.setActive(false);
+            tenantRepository.save(tenant);
+            return ResponseEntity.ok(Map.of("message", "Store archived"));
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     // SUPERADMIN — enrollment: approve a store
@@ -369,7 +400,8 @@ public class TenantController {
 
     public record PendingEnrollmentDto(
             UUID id, String name, String slug, String email, String phone,
-            String address, Instant submittedAt, List<StoreDocument> documents) {}
+            String address, Instant submittedAt, List<StoreDocument> documents,
+            String rejectionReason) {}
 
     public record RecentTenant(UUID id, String name, String slug,
                                String subscriptionPlan, String subscriptionStatus,

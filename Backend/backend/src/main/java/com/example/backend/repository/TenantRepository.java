@@ -25,4 +25,5 @@ public interface TenantRepository extends JpaRepository<Tenant, UUID> {
     List<Tenant> findBySubscriptionCancelledAtIsNotNullAndBillingPeriodEndBefore(LocalDateTime cutoff);
 
     List<Tenant> findByApprovalStatus(Tenant.ApprovalStatus status);
+    List<Tenant> findByApprovalStatusAndArchivedFalse(Tenant.ApprovalStatus status);
 }

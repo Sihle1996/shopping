@@ -21,6 +21,8 @@
              [ngClass]="setupSettings.approvalStatus === 'REJECTED' ? 'text-red-600' : 'text-amber-600'">
             {{ setupSettings.approvalStatus === 'PENDING_REVIEW' ?
                'Your documents are being reviewed. You\'ll receive an email once approved.' :
+               setupSettings.approvalStatus === 'REJECTED' && setupSettings.rejectionReason ?
+               setupSettings.rejectionReason :
                setupSettings.approvalStatus === 'REJECTED' ?
                'Your application was not approved. Please review the feedback and resubmit.' :
                'Upload your verification documents to go live and start accepting orders.' }}
@@ -28,11 +30,12 @@
         </div>
       </div>
       <a routerLink="/admin/enrollment"
-         class="flex-shrink-0 text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+         class="flex-shrink-0 text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors whitespace-nowrap"
          [ngClass]="setupSettings.approvalStatus === 'REJECTED'
            ? 'bg-red-500 text-white hover:bg-red-600'
            : 'bg-amber-500 text-white hover:bg-amber-600'">
-        {{ setupSettings.approvalStatus === 'PENDING_REVIEW' ? 'View Status' : 'Complete Verification' }}
+        {{ setupSettings.approvalStatus === 'PENDING_REVIEW' ? 'View Status' :
+           setupSettings.approvalStatus === 'REJECTED' ? 'Review & Resubmit' : 'Complete Verification' }}
       </a>
     </div>
 

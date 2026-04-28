@@ -68,9 +68,9 @@
             <option value="">Select a category</option>
             <option *ngFor="let cat of categories" [value]="cat.name">{{ cat.name }}</option>
           </select>
-          <p *ngIf="menuFormSubmitted && !formData.category" class="text-danger text-xs mt-1">Please select a category</p>
-          <p *ngIf="!menuFormSubmitted && categories.length === 0" class="text-xs text-textMuted mt-1">
-            No categories yet — add them in <a routerLink="/admin/settings" class="text-primary underline">Settings</a>
+          <p *ngIf="menuFormSubmitted && !formData.category && categories.length > 0" class="text-danger text-xs mt-1">Please select a category</p>
+          <p *ngIf="categories.length === 0" class="text-danger text-xs mt-1">
+            No categories yet — <a routerLink="/admin/settings" class="underline">add one in Settings</a> first
           </p>
         </div>
         <div>

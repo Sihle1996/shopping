@@ -154,6 +154,10 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
   }
 
   toggleForm(): void {
+    if (!this.showForm && this.categories.length === 0) {
+      this.toastr.warning('Add at least one category in Settings before adding menu items.', 'No Categories');
+      return;
+    }
     this.showForm = !this.showForm;
     if (!this.showForm) this.resetForm();
   }
