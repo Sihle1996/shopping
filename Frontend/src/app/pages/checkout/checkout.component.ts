@@ -231,16 +231,16 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
         return this.cartService.getCartItems();
       })
     ).subscribe({
-      next: (items) => {
+      next: (items: any[]) => {
         this.cartItems = items;
-        this.subtotal = items.reduce((sum, item) => sum + (item.totalPrice ?? item.menuItemPrice * item.quantity), 0);
+        this.subtotal = items.reduce((sum: number, item: any) => sum + (item.totalPrice ?? item.menuItemPrice * item.quantity), 0);
         this.recalcDiscount();
         this.cdr.detectChanges();
       },
       error: () => {
         this.cartService.getCartItems().subscribe(items => {
           this.cartItems = items;
-          this.subtotal = items.reduce((sum, item) => sum + (item.totalPrice ?? item.menuItemPrice * item.quantity), 0);
+          this.subtotal = items.reduce((sum: number, item: any) => sum + (item.totalPrice ?? item.menuItemPrice * item.quantity), 0);
         });
       }
     });
