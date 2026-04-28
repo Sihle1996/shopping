@@ -164,15 +164,18 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
     const selectedChoicesJson = choices.length ? JSON.stringify(choices) : null;
     const groupToken = localStorage.getItem('groupCartToken');
-    if (groupToken) {
+    const groupAddMode = sessionStorage.getItem('groupAddMode') === 'true';
+    if (groupToken && groupAddMode) {
       this.groupCartService.addItem(groupToken, this.modifierItem.id!, 1, selectedChoicesJson, null).subscribe({
         next: () => {
+          sessionStorage.removeItem('groupAddMode');
           this.toastr.success('Added to group order!');
           this.closeModifierModal();
           const slug = localStorage.getItem('storeSlug');
           if (slug) this.router.navigate(['/store', slug, 'group-cart', groupToken]);
         },
         error: () => {
+          sessionStorage.removeItem('groupAddMode');
           localStorage.removeItem('groupCartToken');
           this.addModifierItemToPersonalCart(selectedChoicesJson);
         }
@@ -437,14 +440,17 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   private addDirectToCart(item: ProductCardItem): void {
     const groupToken = localStorage.getItem('groupCartToken');
-    if (groupToken) {
+    const groupAddMode = sessionStorage.getItem('groupAddMode') === 'true';
+    if (groupToken && groupAddMode) {
       this.groupCartService.addItem(groupToken, item.id!, 1, null, null).subscribe({
         next: () => {
+          sessionStorage.removeItem('groupAddMode');
           this.toastr.success('Added to group order!');
           const slug = localStorage.getItem('storeSlug');
           if (slug) this.router.navigate(['/store', slug, 'group-cart', groupToken]);
         },
         error: () => {
+          sessionStorage.removeItem('groupAddMode');
           localStorage.removeItem('groupCartToken');
           this.addToPersonalCart(item, null);
         }

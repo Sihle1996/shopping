@@ -184,6 +184,7 @@ export class GroupCartComponent implements OnInit, OnDestroy {
     const slug = this.cart?.storeSlug || localStorage.getItem('storeSlug');
     if (!slug) { this.toastr.error('Could not determine store'); return; }
     localStorage.setItem('groupCartToken', this.token);
+    sessionStorage.setItem('groupAddMode', 'true');
     localStorage.setItem('storeSlug', slug);
     this.router.navigate(['/store', slug]);
   }
