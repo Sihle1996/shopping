@@ -140,7 +140,7 @@ export class GroupCartComponent implements OnInit, OnDestroy {
         this.personalCartItems = [];
         this.mergingPersonalCart = false;
         this.toastr.success('Your items have been added to the group order!');
-        this.load();
+        // WebSocket will push the updated cart — no need to manually reload
       },
       error: () => {
         this.mergingPersonalCart = false;

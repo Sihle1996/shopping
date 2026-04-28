@@ -7,6 +7,7 @@ import { AuthService } from 'src/app/services/auth.service';
 import { AdminService } from 'src/app/services/admin.service';
 import { MenuService, MenuItem } from 'src/app/services/menu.service';
 import { CartService, CartItem } from 'src/app/services/cart.service';
+import { GroupCartService } from 'src/app/services/group-cart.service';
 import { PromotionService, Promotion } from 'src/app/services/promotion.service';
 import { TenantService } from 'src/app/services/tenant.service';
 import { FavouriteService } from 'src/app/services/favourite.service';
@@ -80,6 +81,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     private menuService: MenuService,
     private adminService: AdminService,
     private cartService: CartService,
+    private groupCartService: GroupCartService,
     private router: Router,
     private promotionService: PromotionService,
     private toastr: ToastrService,
@@ -160,7 +162,20 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
       }
     }
-    const selectedChoicesJson = JSON.stringify(choices);
+    const selectedChoicesJson = choices.length ? JSON.stringify(choices) : null;
+    const groupToken = localStorage.getItem('groupCartToken');
+    if (groupToken) {
+      this.groupCartService.addItem(groupToken, this.modifierItem.id!, 1, selectedChoicesJson, null).subscribe({
+        next: () => {
+          this.toastr.success('Added to group order!');
+          this.closeModifierModal();
+          const slug = localStorage.getItem('storeSlug');
+          if (slug) this.router.navigate(['/store', slug, 'group-cart', groupToken]);
+        },
+        error: (err) => this.toastr.error(err?.error || 'Failed to add to group order')
+      });
+      return;
+    }
     this.cartService.addToCart(this.modifierItem.id!, 1, 'M', selectedChoicesJson, {
       name: this.modifierItem.name,
       price: this.modifierItem.price || 0,
@@ -431,6 +446,18 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private addDirectToCart(item: ProductCardItem): void {
+    const groupToken = localStorage.getItem('groupCartToken');
+    if (groupToken) {
+      this.groupCartService.addItem(groupToken, item.id!, 1, null, null).subscribe({
+        next: () => {
+          this.toastr.success('Added to group order!');
+          const slug = localStorage.getItem('storeSlug');
+          if (slug) this.router.navigate(['/store', slug, 'group-cart', groupToken]);
+        },
+        error: (err) => this.toastr.error(err?.error || 'Failed to add to group order')
+      });
+      return;
+    }
     this.cartService.addToCart(item.id!, 1, 'M', null, {
       name: item.name,
       price: item.price || 0,
