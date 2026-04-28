@@ -172,24 +172,14 @@ export class HomeComponent implements OnInit, OnDestroy {
           const slug = localStorage.getItem('storeSlug');
           if (slug) this.router.navigate(['/store', slug, 'group-cart', groupToken]);
         },
-        error: (err) => this.toastr.error(err?.error || 'Failed to add to group order')
+        error: () => {
+          localStorage.removeItem('groupCartToken');
+          this.addModifierItemToPersonalCart(selectedChoicesJson);
+        }
       });
       return;
     }
-    this.cartService.addToCart(this.modifierItem.id!, 1, 'M', selectedChoicesJson, {
-      name: this.modifierItem.name,
-      price: this.modifierItem.price || 0,
-      category: this.modifierItem.category,
-      image: this.modifierItem.image
-    }).subscribe({
-      next: () => {
-        clearTimeout(this.cartAddedTimer);
-        this.cartAddedName = this.modifierItem!.name;
-        this.cartAddedTimer = setTimeout(() => this.cartAddedName = '', 3000);
-        this.closeModifierModal();
-      },
-      error: (err) => this.toastr.error(err?.error || 'Failed to add item to cart')
-    });
+    this.addModifierItemToPersonalCart(selectedChoicesJson);
   }
 
   ngOnInit(): void {
@@ -454,11 +444,36 @@ export class HomeComponent implements OnInit, OnDestroy {
           const slug = localStorage.getItem('storeSlug');
           if (slug) this.router.navigate(['/store', slug, 'group-cart', groupToken]);
         },
-        error: (err) => this.toastr.error(err?.error || 'Failed to add to group order')
+        error: () => {
+          localStorage.removeItem('groupCartToken');
+          this.addToPersonalCart(item, null);
+        }
       });
       return;
     }
-    this.cartService.addToCart(item.id!, 1, 'M', null, {
+    this.addToPersonalCart(item, null);
+  }
+
+  private addModifierItemToPersonalCart(selectedChoicesJson: string | null): void {
+    if (!this.modifierItem) return;
+    this.cartService.addToCart(this.modifierItem.id!, 1, 'M', selectedChoicesJson, {
+      name: this.modifierItem.name,
+      price: this.modifierItem.price || 0,
+      category: this.modifierItem.category,
+      image: this.modifierItem.image
+    }).subscribe({
+      next: () => {
+        clearTimeout(this.cartAddedTimer);
+        this.cartAddedName = this.modifierItem!.name;
+        this.cartAddedTimer = setTimeout(() => this.cartAddedName = '', 3000);
+        this.closeModifierModal();
+      },
+      error: (err) => this.toastr.error(err?.error || 'Failed to add item to cart')
+    });
+  }
+
+  private addToPersonalCart(item: ProductCardItem, selectedChoicesJson: string | null): void {
+    this.cartService.addToCart(item.id!, 1, 'M', selectedChoicesJson, {
       name: item.name,
       price: item.price || 0,
       category: item.category,
