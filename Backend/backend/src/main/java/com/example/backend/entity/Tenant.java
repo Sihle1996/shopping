@@ -105,7 +105,7 @@ public class Tenant {
     private String bankBranchCode;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "approval_status", nullable = false, columnDefinition = "varchar(20) default 'APPROVED'")
+    @Column(name = "approval_status", nullable = false)
     @Builder.Default
     private ApprovalStatus approvalStatus = ApprovalStatus.APPROVED;
 
