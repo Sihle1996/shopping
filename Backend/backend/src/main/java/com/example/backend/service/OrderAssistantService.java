@@ -23,10 +23,10 @@ import java.util.stream.Collectors;
 public class OrderAssistantService {
 
     private static final ZoneId SAST = ZoneId.of("Africa/Johannesburg");
-    // In-memory token store with TTL — no DB needed for transient suggestions
     private final Map<String, SuggestedOrder> pendingSuggestions = new ConcurrentHashMap<>();
 
     private final IntentParser intentParser;
+    private final AnthropicClient anthropicClient;
     private final RecommendationEngine recommendationEngine;
     private final IntentProfileService intentProfileService;
     private final MenuItemRepository menuItemRepository;
@@ -34,7 +34,7 @@ public class OrderAssistantService {
     private final CartService cartService;
 
     public Map<String, Object> interpret(String prompt, UUID tenantId, UUID userId, Double lat, Double lon) {
-        IntentParser.ParsedIntent parsed = intentParser.parse(prompt);
+        IntentParser.ParsedIntent parsed = parseIntent(prompt);
 
         List<MenuItem> candidates = menuItemRepository.findByTenant_Id(tenantId)
                 .stream().filter(i -> Boolean.TRUE.equals(i.getIsAvailable())).collect(Collectors.toList());
@@ -156,6 +156,93 @@ public class OrderAssistantService {
         } catch (Exception e) {
             return Collections.emptySet();
         }
+    }
+
+    /** Tries Claude first for richer understanding, falls back to keyword parser. */
+    private IntentParser.ParsedIntent parseIntent(String prompt) {
+        if (anthropicClient.isConfigured()) {
+            String aiPrompt =
+                "Extract order intent from this food order request. Return JSON only, no markdown:\n" +
+                "{\n" +
+                "  \"servings\": <number of people, default 1>,\n" +
+                "  \"budgetPerPerson\": <max price per person in ZAR or null>,\n" +
+                "  \"preferredTags\": [<tags from: filling,comfort,healthy,light,premium,indulgent,quick,grilled,fried,spicy,sweet,vegan,value>],\n" +
+                "  \"boostPremium\": <true if splurging/treating>,\n" +
+                "  \"confidence\": <0.0-1.0>\n" +
+                "}\n" +
+                "Request: \"" + prompt.replace("\"", "'") + "\"";
+
+            String raw = anthropicClient.call(aiPrompt, 256);
+            if (raw != null) {
+                try {
+                    String cleaned = raw.trim()
+                            .replaceAll("(?s)^```json\\s*", "").replaceAll("(?s)^```\\s*", "").replaceAll("(?s)\\s*```$", "");
+                    var node = new com.fasterxml.jackson.databind.ObjectMapper().readTree(cleaned);
+                    int servings = node.path("servings").asInt(1);
+                    Double budget = node.path("budgetPerPerson").isNull() ? null : node.path("budgetPerPerson").asDouble();
+                    List<String> tags = new ArrayList<>();
+                    node.path("preferredTags").forEach(t -> tags.add(t.asText()));
+                    boolean premium = node.path("boostPremium").asBoolean(false);
+                    double confidence = node.path("confidence").asDouble(0.8);
+                    return new IntentParser.ParsedIntent(servings, budget, tags, premium, confidence);
+                } catch (Exception ignored) {}
+            }
+        }
+        return intentParser.parse(prompt);
+    }
+
+    /** Customer-facing menu Q&A powered by Claude. */
+    public Map<String, Object> chatAboutMenu(String question, UUID tenantId) {
+        List<MenuItem> items = menuItemRepository.findByTenant_Id(tenantId)
+                .stream().filter(i -> Boolean.TRUE.equals(i.getIsAvailable()))
+                .limit(40).collect(Collectors.toList());
+
+        if (items.isEmpty()) {
+            return Map.of("answer", "Our menu is being updated right now — please check back shortly!");
+        }
+
+        String menuText = items.stream()
+                .map(i -> String.format("- %s | R%.0f | %s%s", i.getName(), i.getPrice(), i.getCategory(),
+                        i.getDescription() != null && !i.getDescription().isBlank() ? " | " + i.getDescription() : ""))
+                .collect(Collectors.joining("\n"));
+
+        if (anthropicClient.isConfigured()) {
+            String aiPrompt =
+                "You are a friendly food ordering assistant for a South African restaurant.\n" +
+                "Answer the customer's question based only on our menu below.\n" +
+                "Be helpful, warm, and concise (max 2 sentences). If the item/category doesn't exist on the menu, say so honestly.\n\n" +
+                "Menu:\n" + menuText + "\n\n" +
+                "Customer question: " + question;
+
+            String answer = anthropicClient.call(aiPrompt, 300);
+            if (answer != null && !answer.isBlank()) {
+                return Map.of("answer", answer.trim());
+            }
+        }
+
+        return Map.of("answer", buildMenuChatFallback(question, items));
+    }
+
+    private String buildMenuChatFallback(String question, List<MenuItem> items) {
+        String q = question.toLowerCase();
+        if (q.contains("vegan") || q.contains("vegetarian") || q.contains("plant")) {
+            return items.stream().filter(i -> i.getCategory() != null &&
+                    (i.getCategory().toLowerCase().contains("salad") || i.getCategory().toLowerCase().contains("healthy")))
+                    .findFirst()
+                    .map(i -> "We have " + i.getName() + " (R" + String.format("%.0f", i.getPrice()) + ") which could work for you!")
+                    .orElse("Please ask our staff about vegetarian/vegan options — they'll be happy to help.");
+        }
+        if (q.contains("cheap") || q.contains("budget") || q.contains("affordable")) {
+            return items.stream().min(Comparator.comparingDouble(MenuItem::getPrice))
+                    .map(i -> "Our most affordable option is " + i.getName() + " at R" + String.format("%.0f", i.getPrice()) + ".")
+                    .orElse("We have options for every budget!");
+        }
+        if (q.contains("popular") || q.contains("best") || q.contains("recommend")) {
+            return items.stream().findFirst()
+                    .map(i -> "A popular choice is " + i.getName() + " — try it out!")
+                    .orElse("Everything on our menu is delicious — browse above to find something you like!");
+        }
+        return "Great question! Browse our menu above and tap any item to add it to your cart. Need help? Ask us anything!";
     }
 
     record SuggestedOrder(String token, UUID menuItemId, int quantity, UUID tenantId, UUID userId, long expiresAt) {}

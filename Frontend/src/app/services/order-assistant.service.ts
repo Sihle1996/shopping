@@ -46,4 +46,8 @@ export class OrderAssistantService {
   confirm(token: string): Observable<any[]> {
     return this.http.post<any[]>(`${this.base}/order-for-me/confirm`, { suggestionToken: token });
   }
+
+  menuChat(question: string): Observable<{ answer: string }> {
+    return this.http.post<{ answer: string }>(`${this.base}/chat`, { question });
+  }
 }

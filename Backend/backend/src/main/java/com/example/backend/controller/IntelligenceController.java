@@ -64,6 +64,17 @@ public class IntelligenceController {
         return ResponseEntity.ok(combos.stream().map(this::toComboDto).collect(Collectors.toList()));
     }
 
+    /** POST /api/intelligence/chat — customer menu Q&A */
+    @PostMapping("/chat")
+    public ResponseEntity<Map<String, Object>> menuChat(
+            @RequestBody Map<String, Object> body) {
+        String question = (String) body.getOrDefault("question", "");
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null || question.isBlank())
+            return ResponseEntity.ok(Map.of("answer", "Please ask a question about our menu!"));
+        return ResponseEntity.ok(orderAssistantService.chatAboutMenu(question, tenantId));
+    }
+
     /** POST /api/intelligence/order-for-me */
     @PostMapping("/order-for-me")
     @PreAuthorize("isAuthenticated()")

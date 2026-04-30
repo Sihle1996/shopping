@@ -7,7 +7,7 @@
                  bg-primary text-white text-sm font-semibold shadow-lg hover:shadow-xl
                  hover:brightness-110 active:scale-95 transition-all duration-200">
     <span>✨</span>
-    <span>Order for me</span>
+    <span>Ask AI</span>
   </button>
 
   <!-- Backdrop -->
@@ -17,29 +17,51 @@
 
   <!-- Bottom sheet -->
   <div *ngIf="isOpen"
-       class="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl max-h-[85vh] flex flex-col animate-slide-up"
+       class="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl max-h-[90vh] flex flex-col animate-slide-up"
        (click)="$event.stopPropagation()">
 
     <!-- Handle & header -->
-    <div class="flex-shrink-0 px-5 pt-4 pb-3 border-b border-borderColor">
+    <div class="flex-shrink-0 px-5 pt-4 pb-0 border-b border-borderColor">
       <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4"></div>
-      <div class="flex items-center justify-between">
-        <div>
-          <h3 class="font-heading text-base font-bold text-textDark">✨ What are you in the mood for?</h3>
-          <p class="text-xs text-textMuted mt-0.5">Tell me what you feel like eating</p>
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">✨</span>
+          <h3 class="font-heading text-base font-bold text-textDark">AI Assistant</h3>
         </div>
         <button (click)="close()"
                 class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
           <i class="bi bi-x-lg text-textMuted"></i>
         </button>
       </div>
+
+      <!-- Mode tabs -->
+      <div class="flex gap-1 bg-surface rounded-xl p-1 mb-0">
+        <button (click)="switchMode('order')"
+                [class.bg-white]="mode === 'order'"
+                [class.shadow-sm]="mode === 'order'"
+                [class.text-primary]="mode === 'order'"
+                [class.font-semibold]="mode === 'order'"
+                [class.text-textMuted]="mode !== 'order'"
+                class="flex-1 py-2 rounded-lg text-sm transition-all duration-150">
+          🍽️ Order for me
+        </button>
+        <button (click)="switchMode('chat')"
+                [class.bg-white]="mode === 'chat'"
+                [class.shadow-sm]="mode === 'chat'"
+                [class.text-primary]="mode === 'chat'"
+                [class.font-semibold]="mode === 'chat'"
+                [class.text-textMuted]="mode !== 'chat'"
+                class="flex-1 py-2 rounded-lg text-sm transition-all duration-150">
+          💬 Ask the menu
+        </button>
+      </div>
     </div>
 
-    <div class="overflow-y-auto flex-1 px-5 py-4">
+    <!-- ── ORDER FOR ME ───────────────────────────────────────────────────── -->
+    <div *ngIf="mode === 'order'" class="overflow-y-auto flex-1 px-5 py-4">
 
-      <!-- Input phase -->
       <ng-container *ngIf="!response && !loading">
-        <!-- Quick chips -->
+        <p class="text-xs text-textMuted mb-3">Tell me what you feel like eating</p>
         <div class="flex flex-wrap gap-2 mb-4">
           <button *ngFor="let chip of quickChips"
                   (click)="useChip(chip.prompt)"
@@ -49,8 +71,6 @@
             {{ chip.label }}
           </button>
         </div>
-
-        <!-- Text input -->
         <div class="flex gap-2">
           <input [(ngModel)]="prompt"
                  (keyup.enter)="submit()"
@@ -68,15 +88,12 @@
         </div>
       </ng-container>
 
-      <!-- Loading -->
       <div *ngIf="loading" class="flex flex-col items-center gap-3 py-8">
         <div class="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
         <p class="text-sm text-textMuted">Finding the perfect meal for you...</p>
       </div>
 
-      <!-- Result phase -->
       <ng-container *ngIf="response && !loading">
-        <!-- Interpretation -->
         <div class="bg-primary-50 rounded-xl px-4 py-3 mb-4 text-sm text-textDark">
           <span class="font-semibold text-primary">Understood:</span>
           {{ response.interpretation.servings }} person(s)
@@ -88,18 +105,14 @@
           </ng-container>
         </div>
 
-        <!-- Suggested items -->
         <div class="space-y-2 mb-4">
           <div *ngFor="let item of response.suggestion.items"
                class="flex items-center justify-between px-4 py-3 bg-white rounded-xl border border-borderColor">
-            <div>
-              <span class="font-semibold text-sm text-textDark">{{ item.quantity }}× {{ item.name }}</span>
-            </div>
+            <span class="font-semibold text-sm text-textDark">{{ item.quantity }}× {{ item.name }}</span>
             <span class="font-numbers font-bold text-primary text-sm">R{{ item.totalPrice.toFixed(2) }}</span>
           </div>
         </div>
 
-        <!-- Total + message -->
         <div class="bg-surface rounded-xl px-4 py-3 mb-4">
           <div class="flex items-center justify-between mb-1.5">
             <span class="text-sm font-semibold text-textDark">Estimated Total</span>
@@ -108,7 +121,6 @@
           <p class="text-xs text-textMuted italic">{{ response.suggestion.message }}</p>
         </div>
 
-        <!-- Actions -->
         <div class="flex gap-3">
           <button (click)="retry()"
                   class="flex-1 py-3 rounded-xl border border-borderColor text-sm font-semibold
@@ -124,7 +136,71 @@
           </button>
         </div>
       </ng-container>
-
     </div>
+
+    <!-- ── MENU CHAT ──────────────────────────────────────────────────────── -->
+    <div *ngIf="mode === 'chat'" class="flex flex-col flex-1 min-h-0">
+
+      <!-- Messages -->
+      <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+        <div *ngIf="chatMessages.length === 0" class="space-y-3">
+          <p class="text-sm text-textMuted text-center">Ask me anything about our menu</p>
+          <div class="flex flex-col gap-2">
+            <button *ngFor="let s of chatSuggestions"
+                    (click)="useChatSuggestion(s)"
+                    class="text-left px-4 py-2.5 rounded-xl border border-borderColor bg-surface
+                           text-sm text-textDark hover:border-primary hover:bg-primary-50
+                           active:scale-95 transition-all duration-150">
+              {{ s }}
+            </button>
+          </div>
+        </div>
+
+        <div *ngFor="let msg of chatMessages"
+             class="flex"
+             [class.justify-end]="msg.role === 'user'"
+             [class.justify-start]="msg.role === 'ai'">
+          <div class="max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
+               [class.bg-primary]="msg.role === 'user'"
+               [class.text-white]="msg.role === 'user'"
+               [class.rounded-br-md]="msg.role === 'user'"
+               [class.bg-surface]="msg.role === 'ai'"
+               [class.text-textDark]="msg.role === 'ai'"
+               [class.border]="msg.role === 'ai'"
+               [class.border-borderColor]="msg.role === 'ai'"
+               [class.rounded-bl-md]="msg.role === 'ai'">
+            {{ msg.text }}
+          </div>
+        </div>
+
+        <div *ngIf="chatLoading" class="flex justify-start">
+          <div class="px-4 py-3 bg-surface border border-borderColor rounded-2xl rounded-bl-md flex gap-1 items-center">
+            <span class="w-1.5 h-1.5 bg-textMuted rounded-full animate-bounce" style="animation-delay:0ms"></span>
+            <span class="w-1.5 h-1.5 bg-textMuted rounded-full animate-bounce" style="animation-delay:150ms"></span>
+            <span class="w-1.5 h-1.5 bg-textMuted rounded-full animate-bounce" style="animation-delay:300ms"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div class="flex-shrink-0 px-5 pb-5 pt-3 border-t border-borderColor">
+        <div class="flex gap-2">
+          <input [(ngModel)]="chatInput"
+                 (keydown)="onChatKeydown($event)"
+                 placeholder="Ask about ingredients, options, prices..."
+                 class="flex-1 px-4 py-3 rounded-xl border border-borderColor bg-surface text-sm
+                        text-textDark placeholder-textMuted focus:outline-none focus:ring-2
+                        focus:ring-primary-400 focus:border-transparent" />
+          <button (click)="sendChat()"
+                  [disabled]="!chatInput.trim() || chatLoading"
+                  class="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200
+                         disabled:bg-gray-100 disabled:text-textMuted disabled:cursor-not-allowed
+                         bg-primary text-white hover:brightness-110 active:scale-95">
+            <i class="bi bi-send-fill text-sm"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </ng-container>

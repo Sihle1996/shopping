@@ -6,20 +6,13 @@ import com.example.backend.entity.Review;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.ReviewRepository;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -31,35 +24,17 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AdminAiService {
 
-    @Value("${anthropic.api-key:}")
-    private String apiKey;
-
-    @Value("${anthropic.model:claude-haiku-4-5-20251001}")
-    private String model;
-
-    @Value("${anthropic.max-tokens:1024}")
-    private int maxTokens;
-
     private final ReviewRepository reviewRepository;
     private final OrderRepository orderRepository;
     private final MenuItemRepository menuItemRepository;
     private final AnalyticsService analyticsService;
     private final ObjectMapper objectMapper;
-
-    private HttpClient httpClient;
+    private final AnthropicClient anthropicClient;
 
     private final ConcurrentHashMap<UUID, CachedDigest> digestCache = new ConcurrentHashMap<>();
 
-    @PostConstruct
-    public void init() {
-        if (apiKey == null || apiKey.isBlank()) {
-            log.warn("ANTHROPIC_API_KEY is not set — admin AI endpoints will return 503");
-        }
-        httpClient = HttpClient.newHttpClient();
-    }
-
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.isBlank();
+        return anthropicClient.isConfigured();
     }
 
     // ── Feature 1: Menu Writing Assistant ──────────────────────────────────
@@ -77,7 +52,7 @@ public class AdminAiService {
                 "}\n" +
                 "Tags must be chosen only from: filling, comfort, healthy, light, premium, indulgent, quick, grilled, fried, spicy, sweet, vegan, value";
 
-        String raw = callClaude(prompt);
+        String raw = anthropicClient.call(prompt);
         if (raw != null && !raw.isBlank()) {
             return parseJsonOrFallback(raw, buildDescribeFallback(name, price, category));
         }
@@ -145,7 +120,7 @@ public class AdminAiService {
                 "}\n" +
                 "Menu items (name | price | category | orders in last 30 days):\n" + sb;
 
-        String promoRaw = callClaude(prompt);
+        String promoRaw = anthropicClient.call(prompt);
         Map<String, Object> result = (promoRaw != null && !promoRaw.isBlank())
                 ? parseJsonOrFallback(promoRaw, Map.of("suggestions", List.of()))
                 : buildRuleBasedPromoSuggestions(menuItems, itemCounts);
@@ -239,7 +214,7 @@ public class AdminAiService {
                 "}\n" +
                 "Reviews:\n" + sb;
 
-        Map<String, Object> result = parseJsonOrFallback(callClaude(prompt), Map.of(
+        Map<String, Object> result = parseJsonOrFallback(anthropicClient.call(prompt), Map.of(
                 "period", formatPeriod(sinceDateTime),
                 "sentimentScore", 0,
                 "positives", List.of(),
@@ -266,7 +241,7 @@ public class AdminAiService {
                 "{ \"intent\": \"<INTENT>\", \"period\": \"<PERIOD>\" }\n" +
                 "Question: \"" + question.replace("\"", "'") + "\"";
 
-        String classifyRaw = callClaude(classifyPrompt);
+        String classifyRaw = anthropicClient.call(classifyPrompt);
         Map<String, Object> classification = (classifyRaw != null && !classifyRaw.isBlank())
                 ? parseJsonOrFallback(classifyRaw, classifyWithKeywords(question))
                 : classifyWithKeywords(question);
@@ -288,7 +263,7 @@ public class AdminAiService {
                 question.replace("\"", "'") + "\"\n" +
                 "Use South African Rand (R) for currency. Return only the sentence.";
 
-        String raw = callClaude(formatPrompt);
+        String raw = anthropicClient.call(formatPrompt);
         String answer;
         if (raw != null && !raw.isBlank() && !raw.equals("{}")) {
             answer = raw.trim()
@@ -484,40 +459,7 @@ public class AdminAiService {
         return since.format(fmt) + " – " + LocalDateTime.now().format(fmt);
     }
 
-    // ── Anthropic HTTP call ─────────────────────────────────────────────────
-
-    private String callClaude(String userMessage) {
-        try {
-            String requestBody = objectMapper.writeValueAsString(Map.of(
-                    "model", model,
-                    "max_tokens", maxTokens,
-                    "messages", List.of(Map.of("role", "user", "content", userMessage))
-            ));
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://api.anthropic.com/v1/messages"))
-                    .header("x-api-key", apiKey)
-                    .header("anthropic-version", "2023-06-01")
-                    .header("content-type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() != 200) {
-                log.error("Anthropic API returned {}: {}", response.statusCode(), response.body());
-                return null;
-            }
-
-            JsonNode root = objectMapper.readTree(response.body());
-            return root.path("content").get(0).path("text").asText();
-        } catch (Exception e) {
-            log.error("Anthropic API call failed: {}", e.getMessage());
-            return null;
-        }
-    }
-
-    @SuppressWarnings("unchecked")
+@SuppressWarnings("unchecked")
     private Map<String, Object> parseJsonOrFallback(String raw, Map<String, Object> fallback) {
         if (raw == null || raw.isBlank()) return new HashMap<>(fallback);
         try {
