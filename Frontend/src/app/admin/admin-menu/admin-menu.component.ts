@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, filter, takeUntil } from 'rxjs/operators';
 import { driver } from 'driver.js';
 import { AdminService } from 'src/app/services/admin.service';
+import { AdminAiService } from 'src/app/services/admin-ai.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ToastrService } from 'ngx-toastr';
@@ -41,6 +42,7 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
   };
 
   menuFormSubmitted = false;
+  aiGenerating = false;
 
   // ── CSV import state ────────────────────────────────────────────────────
   importLoading = false;
@@ -84,6 +86,7 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
 
   constructor(
     private adminService: AdminService,
+    private adminAiService: AdminAiService,
     private toastr: ToastrService,
     private http: HttpClient,
     private authService: AuthService,
@@ -222,6 +225,34 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
       lowStockThreshold: 5
     };
     this.isEditing = false;
+  }
+
+  generateWithAi(): void {
+    if (!this.formData.name?.trim()) {
+      this.toastr.warning('Enter an item name first', 'AI Generate');
+      return;
+    }
+    this.aiGenerating = true;
+    this.adminAiService.describeItem({
+      name: this.formData.name,
+      price: this.formData.price,
+      category: this.formData.category
+    }).subscribe({
+      next: (res) => {
+        this.aiGenerating = false;
+        if (res.description) this.formData.description = res.description;
+        if (res.suggestedCategory && !this.formData.category) {
+          this.formData.category = res.suggestedCategory;
+        }
+        if (res.tags?.length) {
+          this.toastr.success(`Generated description + ${res.tags.length} tag suggestions`, '✨ AI');
+        }
+      },
+      error: () => {
+        this.aiGenerating = false;
+        this.toastr.error('AI generation failed — check your API key', 'AI Generate');
+      }
+    });
   }
 
   onImageSelected(event: any): void {
