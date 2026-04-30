@@ -1,0 +1,130 @@
+<ng-container *ngIf="isLoggedIn">
+
+  <!-- Floating trigger button -->
+  <button *ngIf="!isOpen"
+          (click)="open()"
+          class="fixed bottom-24 right-4 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full
+                 bg-primary text-white text-sm font-semibold shadow-lg hover:shadow-xl
+                 hover:brightness-110 active:scale-95 transition-all duration-200">
+    <span>✨</span>
+    <span>Order for me</span>
+  </button>
+
+  <!-- Backdrop -->
+  <div *ngIf="isOpen"
+       class="fixed inset-0 bg-black/50 z-40 animate-fade-in"
+       (click)="close()"></div>
+
+  <!-- Bottom sheet -->
+  <div *ngIf="isOpen"
+       class="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl max-h-[85vh] flex flex-col animate-slide-up"
+       (click)="$event.stopPropagation()">
+
+    <!-- Handle & header -->
+    <div class="flex-shrink-0 px-5 pt-4 pb-3 border-b border-borderColor">
+      <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4"></div>
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-heading text-base font-bold text-textDark">✨ What are you in the mood for?</h3>
+          <p class="text-xs text-textMuted mt-0.5">Tell me what you feel like eating</p>
+        </div>
+        <button (click)="close()"
+                class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+          <i class="bi bi-x-lg text-textMuted"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="overflow-y-auto flex-1 px-5 py-4">
+
+      <!-- Input phase -->
+      <ng-container *ngIf="!response && !loading">
+        <!-- Quick chips -->
+        <div class="flex flex-wrap gap-2 mb-4">
+          <button *ngFor="let chip of quickChips"
+                  (click)="useChip(chip.prompt)"
+                  class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium
+                         bg-surface text-textDark border border-borderColor hover:border-primary
+                         hover:bg-primary-50 active:scale-95 transition-all duration-150 cursor-pointer">
+            {{ chip.label }}
+          </button>
+        </div>
+
+        <!-- Text input -->
+        <div class="flex gap-2">
+          <input [(ngModel)]="prompt"
+                 (keyup.enter)="submit()"
+                 placeholder="e.g. something cheap and filling for 2 people"
+                 class="flex-1 px-4 py-3 rounded-xl border border-borderColor bg-surface text-sm
+                        text-textDark placeholder-textMuted focus:outline-none focus:ring-2
+                        focus:ring-primary-400 focus:border-transparent" />
+          <button (click)="submit()"
+                  [disabled]="!prompt.trim()"
+                  class="px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200
+                         disabled:bg-gray-100 disabled:text-textMuted disabled:cursor-not-allowed
+                         bg-primary text-white hover:brightness-110 active:scale-95">
+            <i class="bi bi-arrow-right"></i>
+          </button>
+        </div>
+      </ng-container>
+
+      <!-- Loading -->
+      <div *ngIf="loading" class="flex flex-col items-center gap-3 py-8">
+        <div class="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+        <p class="text-sm text-textMuted">Finding the perfect meal for you...</p>
+      </div>
+
+      <!-- Result phase -->
+      <ng-container *ngIf="response && !loading">
+        <!-- Interpretation -->
+        <div class="bg-primary-50 rounded-xl px-4 py-3 mb-4 text-sm text-textDark">
+          <span class="font-semibold text-primary">Understood:</span>
+          {{ response.interpretation.servings }} person(s)
+          <ng-container *ngIf="response.interpretation.totalBudget">
+            · budget R{{ response.interpretation.totalBudget.toFixed(0) }}
+          </ng-container>
+          <ng-container *ngIf="response.interpretation.tags.length">
+            · {{ response.interpretation.tags.join(', ') }}
+          </ng-container>
+        </div>
+
+        <!-- Suggested items -->
+        <div class="space-y-2 mb-4">
+          <div *ngFor="let item of response.suggestion.items"
+               class="flex items-center justify-between px-4 py-3 bg-white rounded-xl border border-borderColor">
+            <div>
+              <span class="font-semibold text-sm text-textDark">{{ item.quantity }}× {{ item.name }}</span>
+            </div>
+            <span class="font-numbers font-bold text-primary text-sm">R{{ item.totalPrice.toFixed(2) }}</span>
+          </div>
+        </div>
+
+        <!-- Total + message -->
+        <div class="bg-surface rounded-xl px-4 py-3 mb-4">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-sm font-semibold text-textDark">Estimated Total</span>
+            <span class="font-numbers font-bold text-xl text-primary">R{{ response.suggestion.totalEstimate.toFixed(2) }}</span>
+          </div>
+          <p class="text-xs text-textMuted italic">{{ response.suggestion.message }}</p>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3">
+          <button (click)="retry()"
+                  class="flex-1 py-3 rounded-xl border border-borderColor text-sm font-semibold
+                         text-textDark hover:bg-surface active:scale-95 transition-all duration-150">
+            🔄 Try again
+          </button>
+          <button (click)="confirm()"
+                  [disabled]="confirming"
+                  class="flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-150
+                         disabled:bg-gray-100 disabled:text-textMuted disabled:cursor-not-allowed
+                         bg-primary text-white hover:brightness-110 active:scale-95">
+            {{ confirming ? 'Adding...' : '✅ Add to cart' }}
+          </button>
+        </div>
+      </ng-container>
+
+    </div>
+  </div>
+</ng-container>

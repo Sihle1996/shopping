@@ -66,14 +66,22 @@ export interface ProductCardItem {
               R{{ discountedPrice.toFixed(2) }}
             </span>
           </div>
-          <button
-            *ngIf="showAddToCart && item.isAvailable"
-            (click)="onAddToCart($event)"
-            data-testid="add-to-cart-btn"
-            class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center
-                   hover:bg-primary-600 transition-all duration-200 active:scale-90 shadow-sm">
-            <i class="bi bi-plus-lg text-base"></i>
-          </button>
+          <div class="flex items-center gap-1.5">
+            <button *ngIf="hasCombo && showAddToCart && item.isAvailable"
+                    (click)="onAddAsCombo($event)"
+                    title="Add as meal deal"
+                    class="w-9 h-9 rounded-full bg-primary-50 text-primary flex items-center justify-center
+                           hover:bg-primary-100 transition-all duration-200 active:scale-90 border border-primary-200">
+              <i class="bi bi-basket text-sm"></i>
+            </button>
+            <button *ngIf="showAddToCart && item.isAvailable"
+                    (click)="onAddToCart($event)"
+                    data-testid="add-to-cart-btn"
+                    class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center
+                           hover:bg-primary-600 transition-all duration-200 active:scale-90 shadow-sm">
+              <i class="bi bi-plus-lg text-base"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -93,6 +101,7 @@ export class ProductCardComponent implements OnChanges {
   @Input() showFavorite = false;
   @Input() showAddToCart = true;
   @Input() discountPercent = 0;
+  @Input() hasCombo = false;
 
   isFav = false;
 
@@ -117,6 +126,7 @@ export class ProductCardComponent implements OnChanges {
   }
   @Output() cardClick = new EventEmitter<ProductCardItem>();
   @Output() addToCart = new EventEmitter<ProductCardItem>();
+  @Output() addAsCombo = new EventEmitter<ProductCardItem>();
   @Output() favorite = new EventEmitter<ProductCardItem>();
 
   getImageUrl(path: string | null): string {
@@ -127,6 +137,11 @@ export class ProductCardComponent implements OnChanges {
   onAddToCart(event: MouseEvent): void {
     event.stopPropagation();
     this.addToCart.emit(this.item);
+  }
+
+  onAddAsCombo(event: MouseEvent): void {
+    event.stopPropagation();
+    this.addAsCombo.emit(this.item);
   }
 
   onFavorite(event: MouseEvent): void {

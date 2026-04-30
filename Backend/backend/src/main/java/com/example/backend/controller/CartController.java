@@ -2,12 +2,17 @@ package com.example.backend.controller;
 
 
 import com.example.backend.entity.CartItemDTO;
+import com.example.backend.entity.Combo;
+import com.example.backend.repository.ComboRepository;
 import com.example.backend.service.CartService;
+import com.example.backend.tenant.TenantContext;
 import com.example.backend.user.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -19,6 +24,7 @@ import java.util.UUID;
 public class CartController {
 
     private final CartService cartService;
+    private final ComboRepository comboRepository;
 
     @PostMapping("/add")
     public ResponseEntity<?> addToCart(@RequestBody Map<String, Object> payload,
@@ -65,5 +71,19 @@ public class CartController {
     public ResponseEntity<Void> clearCart(@AuthenticationPrincipal User principal) {
         cartService.clearCartByUserId(principal.getId());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/add-combo")
+    public ResponseEntity<List<CartItemDTO>> addCombo(@RequestBody Map<String, Object> payload,
+                                                      @AuthenticationPrincipal User principal) {
+        UUID comboId = UUID.fromString(payload.get("comboId").toString());
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        Combo combo = comboRepository.findByIdAndTenant_Id(comboId, tenantId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Combo not found"));
+        String itemNotes = payload.containsKey("itemNotes") ? (String) payload.get("itemNotes") : null;
+        combo.getItems().forEach(ci ->
+            cartService.addItemToCart(principal.getId(), ci.getMenuItem().getId(), ci.getQuantity(), null, itemNotes)
+        );
+        return ResponseEntity.ok(cartService.getUserCartItems(principal.getId()));
     }
 }

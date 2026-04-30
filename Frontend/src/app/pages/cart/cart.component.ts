@@ -7,6 +7,7 @@ import { CartService, CartItem } from 'src/app/services/cart.service';
 import { PromotionService, Promotion } from 'src/app/services/promotion.service';
 import { GroupCartService } from 'src/app/services/group-cart.service';
 import { AuthService } from 'src/app/services/auth.service';
+import { ComboService, ComboSummary } from 'src/app/services/combo.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 
@@ -26,6 +27,8 @@ export class CartComponent implements OnInit {
   get totalPrice(): number { return Math.max(0, this.subtotal - this.discount); }
 
   sharingCart = false;
+  upsellCombo: ComboSummary | null = null;
+  addingCombo = false;
   get isLoggedIn(): boolean { return this.authService.isLoggedIn(); }
 
   constructor(
@@ -33,6 +36,7 @@ export class CartComponent implements OnInit {
     private promotionService: PromotionService,
     private groupCartService: GroupCartService,
     private authService: AuthService,
+    private comboService: ComboService,
     private router: Router,
     private location: Location,
     private toastr: ToastrService
@@ -54,7 +58,7 @@ export class CartComponent implements OnInit {
         return this.cartService.getCartItems();
       })
     ).subscribe({
-      next: (items) => { this.cartItems = items; this.updateTotals(); },
+      next: (items) => { this.cartItems = items; this.updateTotals(); this.checkComboUpsell(); },
       error: () => { this.cartService.getCartItems().subscribe(items => { this.cartItems = items; this.updateTotals(); }); }
     });
   }
@@ -97,6 +101,36 @@ export class CartComponent implements OnInit {
     return candidates.reduce((best, p) =>
       (p.discountPercent ?? 0) > (best.discountPercent ?? 0) ? p : best
     );
+  }
+
+  private checkComboUpsell(): void {
+    if (!this.cartItems.length) return;
+    const cartItemIds = new Set(this.cartItems.map(i => i.menuItemId));
+    this.comboService.getAllCombos().subscribe({
+      next: combos => {
+        this.upsellCombo = combos.find(combo => {
+          const mainItems = combo.items.filter(i => i.role === 'MAIN');
+          const extras = combo.items.filter(i => i.role !== 'MAIN');
+          return mainItems.some(i => cartItemIds.has(i.menuItemId))
+              && extras.some(i => !cartItemIds.has(i.menuItemId));
+        }) ?? null;
+      },
+      error: () => {}
+    });
+  }
+
+  addUpsellCombo(): void {
+    if (!this.upsellCombo || this.addingCombo) return;
+    this.addingCombo = true;
+    this.comboService.addComboToCart(this.upsellCombo.id).subscribe({
+      next: () => {
+        this.toastr.success(`${this.upsellCombo!.name} added!`);
+        this.upsellCombo = null;
+        this.loadCart();
+        this.addingCombo = false;
+      },
+      error: () => { this.toastr.error('Could not add combo'); this.addingCombo = false; }
+    });
   }
 
   onQuantityChange(item: CartItem, quantity: number): void {

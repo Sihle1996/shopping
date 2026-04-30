@@ -18,6 +18,8 @@ import { EmptyStateComponent } from './components/empty-state/empty-state.compon
 import { CartDrawerComponent } from './components/cart-drawer/cart-drawer.component';
 import { FloatingCartBarComponent } from './components/floating-cart-bar/floating-cart-bar.component';
 import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.component';
+import { IntentChipsComponent } from './components/intent-chips/intent-chips.component';
+import { OrderAssistantComponent } from './components/order-assistant/order-assistant.component';
 
 @NgModule({
   declarations: [
@@ -35,6 +37,8 @@ import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.
     CartDrawerComponent,
     FloatingCartBarComponent,
     ConfirmModalComponent,
+    IntentChipsComponent,
+    OrderAssistantComponent,
   ],
   imports: [
     CommonModule,
@@ -61,6 +65,8 @@ import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.
     CartDrawerComponent,
     FloatingCartBarComponent,
     ConfirmModalComponent,
+    IntentChipsComponent,
+    OrderAssistantComponent,
   ],
 })
 export class SharedModule {}

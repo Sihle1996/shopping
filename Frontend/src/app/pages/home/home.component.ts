@@ -11,6 +11,8 @@ import { GroupCartService } from 'src/app/services/group-cart.service';
 import { PromotionService, Promotion } from 'src/app/services/promotion.service';
 import { TenantService } from 'src/app/services/tenant.service';
 import { FavouriteService } from 'src/app/services/favourite.service';
+import { IntelligenceService, IntentChip, ScoredItem } from 'src/app/services/intelligence.service';
+import { ComboService, ComboSummary } from 'src/app/services/combo.service';
 import { ProductCardItem } from 'src/app/shared/components/product-card/product-card.component';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
@@ -65,6 +67,21 @@ export class HomeComponent implements OnInit, OnDestroy {
   modifierSelections: { [groupId: string]: string[] } = {};
   modifierLoading = false;
 
+  // Intelligence layer
+  intents: IntentChip[] = [];
+  selectedIntent: string | null = null;
+  intentItems: ScoredItem[] = [];
+  intentLabel = '';
+  intentLoading = false;
+  mealDeals: ComboSummary[] = [];
+  comboItemIds = new Set<string>();
+
+  // Combo selection modal
+  comboModalOpen = false;
+  comboModalItem: ProductCardItem | null = null;
+  itemCombos: ComboSummary[] = [];
+  itemCombosLoading = false;
+
   reviews: any[] = [];
   avgRating = 0;
   totalReviews = 0;
@@ -87,7 +104,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     private toastr: ToastrService,
     private http: HttpClient,
     private tenantService: TenantService,
-    private favouriteService: FavouriteService
+    private favouriteService: FavouriteService,
+    private intelligenceService: IntelligenceService,
+    private comboService: ComboService
   ) {}
 
   // ── Modifier modal ────────────────────────────────────────────────────────
@@ -201,6 +220,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.subscribeToCart();
     this.loadReviews();
     this.loadStoreHours();
+    this.loadIntents();
+    this.loadMealDeals();
   }
 
   private loadStoreHours(): void {
@@ -311,6 +332,85 @@ export class HomeComponent implements OnInit, OnDestroy {
       }
     }
     return best;
+  }
+
+  // ── Intelligence layer ────────────────────────────────────────────────────
+
+  private loadIntents(): void {
+    this.intelligenceService.getIntents()
+      .pipe(takeUntil(this.destroy$), catchError(() => of([])))
+      .subscribe(intents => this.intents = intents);
+  }
+
+  private loadMealDeals(): void {
+    this.comboService.getAllCombos()
+      .pipe(takeUntil(this.destroy$), catchError(() => of([])))
+      .subscribe(combos => {
+        this.mealDeals = combos;
+        this.comboItemIds = new Set(
+          combos.flatMap(c => c.items.filter(i => i.role === 'MAIN').map(i => i.menuItemId))
+        );
+      });
+  }
+
+  onIntentSelected(key: string): void {
+    this.selectedIntent = key;
+    this.intentLoading = true;
+    this.intelligenceService.getByIntent(key).pipe(takeUntil(this.destroy$)).subscribe({
+      next: result => {
+        this.intentItems = result.items;
+        this.intentLabel = result.label;
+        this.intentLoading = false;
+      },
+      error: () => { this.intentLoading = false; }
+    });
+  }
+
+  onIntentCleared(): void {
+    this.selectedIntent = null;
+    this.intentItems = [];
+    this.intentLabel = '';
+  }
+
+  openComboModal(item: ProductCardItem): void {
+    if (!item.id) return;
+    this.comboModalItem = item;
+    this.itemCombos = [];
+    this.comboModalOpen = true;
+    this.itemCombosLoading = true;
+    this.comboService.getCombosForItem(item.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: combos => { this.itemCombos = combos; this.itemCombosLoading = false; },
+        error: () => { this.itemCombosLoading = false; }
+      });
+  }
+
+  closeComboModal(): void {
+    this.comboModalOpen = false;
+    this.comboModalItem = null;
+    this.itemCombos = [];
+  }
+
+  addComboToCart(combo: ComboSummary): void {
+    this.comboService.addComboToCart(combo.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.toastr.success(`${combo.name} added to cart!`);
+        this.cartService.getCartItems().subscribe();
+        this.closeComboModal();
+      },
+      error: () => this.toastr.error('Could not add combo to cart')
+    });
+  }
+
+  addMealDealToCart(combo: ComboSummary): void {
+    this.comboService.addComboToCart(combo.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.toastr.success(`${combo.name} added to cart!`);
+        this.cartService.getCartItems().subscribe();
+      },
+      error: () => this.toastr.error('Could not add combo to cart')
+    });
   }
 
   fetchMenu(): void {

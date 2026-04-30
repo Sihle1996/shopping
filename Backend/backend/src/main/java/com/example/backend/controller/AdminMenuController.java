@@ -5,11 +5,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.example.backend.entity.ItemTag;
 import com.example.backend.entity.MenuItem;
+import com.example.backend.entity.Tenant;
+import com.example.backend.repository.ItemTagRepository;
+import com.example.backend.repository.MenuItemRepository;
+import com.example.backend.repository.TenantRepository;
 import com.example.backend.service.CloudinaryService;
 import com.example.backend.service.MenuService;
+import com.example.backend.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,6 +37,9 @@ public class AdminMenuController {
 
     private final MenuService menuService;
     private final CloudinaryService cloudinaryService;
+    private final ItemTagRepository itemTagRepository;
+    private final MenuItemRepository menuItemRepository;
+    private final TenantRepository tenantRepository;
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
@@ -123,6 +133,36 @@ public class AdminMenuController {
         result.put("skipped", skipped);
         result.put("errors", errors);
         return ResponseEntity.ok(result);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{id}/tags")
+    public ResponseEntity<List<String>> getTags(@PathVariable UUID id) {
+        return ResponseEntity.ok(
+                itemTagRepository.findByMenuItem_Id(id).stream()
+                        .map(ItemTag::getTag).collect(Collectors.toList()));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/tags")
+    public ResponseEntity<List<String>> setTags(@PathVariable UUID id,
+                                                @RequestBody Map<String, Object> body) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        MenuItem item = menuItemRepository.findByIdAndTenant_Id(id, tenantId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Menu item not found"));
+        Tenant tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant not found"));
+
+        @SuppressWarnings("unchecked")
+        List<String> tags = (List<String>) body.getOrDefault("tags", List.of());
+
+        itemTagRepository.deleteByMenuItem_Id(id);
+        List<ItemTag> saved = tags.stream()
+                .map(tag -> ItemTag.builder().menuItem(item).tenant(tenant).tag(tag.trim().toLowerCase()).build())
+                .map(itemTagRepository::save)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(saved.stream().map(ItemTag::getTag).collect(Collectors.toList()));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

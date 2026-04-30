@@ -110,8 +110,18 @@
         </app-search-bar>
       </div>
 
+      <!-- Intent / mood chips -->
+      <div class="mb-4" *ngIf="intents.length">
+        <app-intent-chips
+          [chips]="intents"
+          [selected]="selectedIntent"
+          (intentSelected)="onIntentSelected($event)"
+          (intentCleared)="onIntentCleared()">
+        </app-intent-chips>
+      </div>
+
       <!-- Mobile: category chips (hidden on desktop) -->
-      <div class="mb-5 lg:hidden">
+      <div class="mb-5 lg:hidden" *ngIf="!selectedIntent">
         <app-category-chips
           [categories]="categories"
           [selected]="selectedCategory"
@@ -137,15 +147,94 @@
       </div>
 
       <!-- Promotions -->
-      <div class="mb-6" *ngIf="visiblePromotions.length && selectedCategory === 'All' && !searchQuery">
+      <div class="mb-6" *ngIf="visiblePromotions.length && selectedCategory === 'All' && !searchQuery && !selectedIntent">
         <h3 class="font-heading text-lg font-semibold text-textDark mb-3">
           <i class="bi bi-tag text-primary mr-1"></i> Promotions
         </h3>
         <app-promotion-grid [promotions]="visiblePromotions"></app-promotion-grid>
       </div>
 
+      <!-- Meal Deals -->
+      <div class="mb-6" *ngIf="mealDeals.length && !selectedIntent && selectedCategory === 'All' && !searchQuery">
+        <h3 class="font-heading text-lg font-semibold text-textDark mb-3">
+          <i class="bi bi-basket text-primary mr-1"></i> Meal Deals
+        </h3>
+        <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          <div *ngFor="let deal of mealDeals"
+               class="flex-shrink-0 w-64 bg-white rounded-2xl shadow-card overflow-hidden border border-borderColor hover:shadow-card-hover transition-all duration-200">
+            <div class="relative aspect-[16/9] bg-gray-100 overflow-hidden">
+              <img *ngIf="deal.imageUrl" [src]="deal.imageUrl" [alt]="deal.name"
+                   class="w-full h-full object-cover" />
+              <div *ngIf="!deal.imageUrl" class="w-full h-full flex items-center justify-center text-3xl">🍱</div>
+              <span class="absolute top-2 right-2 bg-success text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                Save R{{ deal.savings.toFixed(0) }}
+              </span>
+            </div>
+            <div class="p-3">
+              <h4 class="font-semibold text-sm text-textDark truncate mb-0.5">{{ deal.name }}</h4>
+              <p class="text-xs text-textMuted mb-2">{{ deal.items.length }} items</p>
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="font-numbers text-xs text-textLight line-through mr-1">R{{ deal.originalPrice.toFixed(2) }}</span>
+                  <span class="font-numbers font-bold text-base text-primary">R{{ deal.comboPrice.toFixed(2) }}</span>
+                </div>
+                <button (click)="addMealDealToCart(deal)"
+                        class="px-3 py-1.5 rounded-full bg-primary text-white text-xs font-semibold
+                               hover:brightness-110 active:scale-95 transition-all duration-150">
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Intent results (overrides normal grid when intent is selected) -->
+      <ng-container *ngIf="selectedIntent">
+        <div class="flex items-center gap-2 mb-4">
+          <h3 class="font-heading text-lg font-semibold text-textDark">{{ intentLabel }}</h3>
+          <button (click)="onIntentCleared()"
+                  class="text-xs text-textMuted hover:text-textDark bg-surface border border-borderColor px-2.5 py-1 rounded-full transition-colors">
+            ✕ Clear
+          </button>
+        </div>
+        <div *ngIf="intentLoading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          <div *ngFor="let _ of [1,2,3,4,5,6]"
+               class="bg-white rounded-2xl overflow-hidden shadow-card animate-pulse">
+            <div class="aspect-[4/3] bg-gray-200"></div>
+            <div class="p-4 space-y-2.5">
+              <div class="h-4 bg-gray-200 rounded-full w-3/4"></div>
+              <div class="h-3 bg-gray-200 rounded-full w-full"></div>
+              <div class="flex justify-between items-center pt-1">
+                <div class="h-5 bg-gray-200 rounded-full w-1/4"></div>
+                <div class="w-9 h-9 bg-gray-200 rounded-full"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="!intentLoading && intentItems.length === 0"
+             class="text-center py-10 text-textMuted text-sm">
+          No items found for this mood. Try a different one!
+        </div>
+        <div *ngIf="!intentLoading && intentItems.length > 0"
+             class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          <app-product-card
+            *ngFor="let item of intentItems"
+            [item]="item"
+            [showFavorite]="isLoggedIn"
+            [showAddToCart]="storeIsOpen"
+            [hasCombo]="comboItemIds.has(item.id)"
+            [discountPercent]="getDiscountForItem(item)"
+            (cardClick)="goToProductDetails($event)"
+            (addToCart)="quickAddToCart($event)"
+            (addAsCombo)="openComboModal($event)"
+            (favorite)="toggleFavorite($event)">
+          </app-product-card>
+        </div>
+      </ng-container>
+
       <!-- Skeleton grid while loading -->
-      <div *ngIf="isLoading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+      <div *ngIf="isLoading && !selectedIntent" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
         <div *ngFor="let _ of [1,2,3,4,5,6]"
              class="bg-white rounded-2xl overflow-hidden shadow-card animate-pulse">
           <div class="aspect-[4/3] bg-gray-200"></div>
@@ -164,7 +253,7 @@
 
       <!-- Empty state -->
       <app-empty-state
-        *ngIf="filteredMenuItems.length === 0 && !isLoading"
+        *ngIf="filteredMenuItems.length === 0 && !isLoading && !selectedIntent"
         icon="bi bi-search"
         title="No items found"
         message="Try adjusting your search or category filter"
@@ -173,7 +262,7 @@
       </app-empty-state>
 
       <!-- Product grid — grouped by category -->
-      <ng-container *ngIf="!isLoading">
+      <ng-container *ngIf="!isLoading && !selectedIntent">
 
         <!-- When a specific category is selected, show a flat grid under that category name -->
         <ng-container *ngIf="selectedCategory !== 'All'">
@@ -184,9 +273,11 @@
               [item]="item"
               [showFavorite]="isLoggedIn"
               [showAddToCart]="storeIsOpen"
+              [hasCombo]="comboItemIds.has(item.id!)"
               [discountPercent]="getDiscountForItem(item)"
               (cardClick)="goToProductDetails($event)"
               (addToCart)="quickAddToCart($event)"
+              (addAsCombo)="openComboModal($event)"
               (favorite)="toggleFavorite($event)">
             </app-product-card>
           </div>
@@ -207,9 +298,11 @@
                 [item]="item"
                 [showFavorite]="isLoggedIn"
                 [showAddToCart]="storeIsOpen"
+                [hasCombo]="comboItemIds.has(item.id!)"
                 [discountPercent]="getDiscountForItem(item)"
                 (cardClick)="goToProductDetails($event)"
                 (addToCart)="quickAddToCart($event)"
+                (addAsCombo)="openComboModal($event)"
                 (favorite)="toggleFavorite($event)">
               </app-product-card>
             </div>
@@ -286,6 +379,57 @@
     (updateQuantity)="updateCartItemQuantity($event)">
   </app-cart-drawer>
 
+</div>
+
+<!-- Order assistant -->
+<app-order-assistant></app-order-assistant>
+
+<!-- Combo selection modal -->
+<div *ngIf="comboModalOpen && comboModalItem"
+     class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+     (click)="closeComboModal()">
+  <div class="absolute inset-0 bg-black/50"></div>
+  <div class="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[80vh] flex flex-col"
+       (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-borderColor flex-shrink-0">
+      <div>
+        <h3 class="font-heading text-base font-bold text-textDark">Add as Meal Deal</h3>
+        <p class="text-xs text-textMuted mt-0.5">{{ comboModalItem.name }}</p>
+      </div>
+      <button (click)="closeComboModal()"
+              class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+        <i class="bi bi-x-lg text-textMuted"></i>
+      </button>
+    </div>
+    <div class="overflow-y-auto flex-1 px-5 py-4">
+      <div *ngIf="itemCombosLoading" class="flex justify-center py-8">
+        <div class="w-7 h-7 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+      </div>
+      <div *ngIf="!itemCombosLoading && itemCombos.length === 0" class="text-center py-8 text-textMuted text-sm">
+        No meal deals available for this item.
+      </div>
+      <div *ngFor="let combo of itemCombos"
+           class="mb-3 border border-borderColor rounded-2xl p-4 hover:border-primary hover:bg-primary-50 transition-all duration-150 cursor-pointer"
+           (click)="addComboToCart(combo)">
+        <div class="flex items-start justify-between gap-3 mb-2">
+          <h4 class="font-semibold text-sm text-textDark">{{ combo.name }}</h4>
+          <span class="flex-shrink-0 bg-success/10 text-success text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+            Save R{{ combo.savings.toFixed(0) }}
+          </span>
+        </div>
+        <div class="flex flex-wrap gap-1 mb-2">
+          <span *ngFor="let item of combo.items"
+                class="text-xs bg-surface px-2 py-0.5 rounded-full text-textMuted border border-borderColor">
+            {{ item.quantity }}× {{ item.name }}
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="font-numbers text-xs text-textLight line-through">R{{ combo.originalPrice.toFixed(2) }}</span>
+          <span class="font-numbers font-bold text-base text-primary">R{{ combo.comboPrice.toFixed(2) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Modifier selection modal -->
