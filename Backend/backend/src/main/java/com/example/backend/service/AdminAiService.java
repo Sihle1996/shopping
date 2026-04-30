@@ -77,11 +77,11 @@ public class AdminAiService {
                 "}\n" +
                 "Tags must be chosen only from: filling, comfort, healthy, light, premium, indulgent, quick, grilled, fried, spicy, sweet, vegan, value";
 
-        return parseJsonOrFallback(callClaude(prompt), Map.of(
-                "description", "",
-                "tags", List.of(),
-                "suggestedCategory", category != null ? category : ""
-        ));
+        String raw = callClaude(prompt);
+        if (raw != null && !raw.isBlank()) {
+            return parseJsonOrFallback(raw, buildDescribeFallback(name, price, category));
+        }
+        return buildDescribeFallback(name, price, category);
     }
 
     // ── Feature 2: Promotion Optimizer ─────────────────────────────────────
@@ -145,7 +145,10 @@ public class AdminAiService {
                 "}\n" +
                 "Menu items (name | price | category | orders in last 30 days):\n" + sb;
 
-        Map<String, Object> result = parseJsonOrFallback(callClaude(prompt), Map.of("suggestions", List.of()));
+        String promoRaw = callClaude(prompt);
+        Map<String, Object> result = (promoRaw != null && !promoRaw.isBlank())
+                ? parseJsonOrFallback(promoRaw, Map.of("suggestions", List.of()))
+                : buildRuleBasedPromoSuggestions(menuItems, itemCounts);
 
         // Resolve targetProductName → targetProductId
         Map<String, UUID> nameToId = menuItems.stream()
@@ -379,6 +382,43 @@ public class AdminAiService {
                 yield Map.of("orderCount", count, "revenue", Math.round(revenue));
             }
         };
+    }
+
+    private Map<String, Object> buildDescribeFallback(String name, BigDecimal price, String category) {
+        String cat = category != null ? category.toLowerCase() : "";
+        List<String> tags = new ArrayList<>();
+        if (cat.contains("burger") || cat.contains("meal") || cat.contains("pizza")) tags.addAll(List.of("filling", "comfort"));
+        else if (cat.contains("salad") || cat.contains("healthy") || cat.contains("wrap")) tags.addAll(List.of("healthy", "light"));
+        else if (cat.contains("drink") || cat.contains("juice") || cat.contains("smoothie")) tags.addAll(List.of("quick"));
+        else if (cat.contains("side") || cat.contains("fries")) tags.addAll(List.of("comfort", "quick"));
+        else tags.add("value");
+        String desc = String.format("A tasty %s for just R%.0f — a great choice any time.",
+                category != null ? category.toLowerCase() : "item",
+                price != null ? price : BigDecimal.ZERO);
+        return Map.of("description", desc, "tags", tags, "suggestedCategory", category != null ? category : "");
+    }
+
+    private Map<String, Object> buildRuleBasedPromoSuggestions(List<MenuItem> menuItems, Map<UUID, Long> itemCounts) {
+        String today = LocalDate.now().toString();
+        String endDate = LocalDate.now().plusDays(5).toString();
+        // Suggest discount on lowest-ordered available item
+        List<Map<String, Object>> suggestions = new ArrayList<>();
+        menuItems.stream()
+                .filter(i -> i.getPrice() != null)
+                .min(Comparator.comparingLong(i -> itemCounts.getOrDefault(i.getId(), 0L)))
+                .ifPresent(item -> suggestions.add(Map.of(
+                        "reason", item.getName() + " has low order volume — a discount could drive visibility.",
+                        "proposedPromo", Map.of(
+                                "title", item.getName() + " Special",
+                                "discountPercent", 15,
+                                "appliesTo", "PRODUCT",
+                                "targetProductName", item.getName(),
+                                "targetProductId", item.getId().toString(),
+                                "startAt", today,
+                                "endAt", endDate
+                        )
+                )));
+        return Map.of("suggestions", suggestions);
     }
 
     private String buildFallbackAnswer(String intent, String period, Map<String, Object> data) {
