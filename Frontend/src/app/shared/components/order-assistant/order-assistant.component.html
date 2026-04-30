@@ -114,15 +114,10 @@
       </div>
 
       <ng-container *ngIf="isLoggedIn && response && !loading">
-        <div class="bg-primary-50 rounded-xl px-4 py-3 mb-4 text-sm text-textDark">
-          <span class="font-semibold text-primary">Understood:</span>
-          {{ response.interpretation.servings }} person(s)
-          <ng-container *ngIf="response.interpretation.totalBudget">
-            · budget R{{ response.interpretation.totalBudget.toFixed(0) }}
-          </ng-container>
-          <ng-container *ngIf="response.interpretation.tags.length">
-            · {{ response.interpretation.tags.join(', ') }}
-          </ng-container>
+        <!-- AI reason — shown when Claude picked the item -->
+        <div *ngIf="response.suggestion.message" class="flex gap-3 mb-4 px-1">
+          <span class="text-xl flex-shrink-0">✨</span>
+          <p class="text-sm text-textDark italic leading-relaxed">{{ response.suggestion.message }}</p>
         </div>
 
         <div class="space-y-2 mb-4">

@@ -39,85 +39,148 @@ public class OrderAssistantService {
                 "I can only help with food orders! Try something like \"something filling under R80\" or \"healthy food for 2 people\".");
         }
 
-        IntentParser.ParsedIntent parsed = parseIntent(prompt);
-
-        List<MenuItem> candidates = menuItemRepository.findByTenant_Id(tenantId)
+        List<MenuItem> available = menuItemRepository.findByTenant_Id(tenantId)
                 .stream().filter(i -> Boolean.TRUE.equals(i.getIsAvailable())).collect(Collectors.toList());
 
+        if (available.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No items are available right now.");
+        }
+
+        // Try Claude first — it reads the real menu and picks intelligently
+        if (anthropicClient.isConfigured()) {
+            Map<String, Object> result = interpretWithClaude(prompt, available, tenantId, userId);
+            if (result != null) return result;
+        }
+
+        // Fallback: rules-based engine
+        return interpretWithRules(prompt, available, tenantId, userId);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> interpretWithClaude(String prompt, List<MenuItem> items, UUID tenantId, UUID userId) {
+        String menuText = items.stream()
+                .map(i -> String.format("- %s | R%.0f | %s", i.getName(), i.getPrice(),
+                        i.getDescription() != null && !i.getDescription().isBlank() ? i.getDescription() : i.getCategory()))
+                .collect(Collectors.joining("\n"));
+
+        String aiPrompt =
+            "You are a food ordering assistant for a South African restaurant.\n" +
+            "Pick the single best menu item for the customer's request.\n\n" +
+            "Menu (name | price | description):\n" + menuText + "\n\n" +
+            "Customer request: \"" + prompt.replace("\"", "'") + "\"\n\n" +
+            "Return JSON only, no markdown:\n" +
+            "{\n" +
+            "  \"pickedItem\": \"<exact item name from the menu above>\",\n" +
+            "  \"servings\": <how many people, default 1>,\n" +
+            "  \"reason\": \"<one warm, personal sentence explaining your choice>\",\n" +
+            "  \"alternatives\": [\"<item name>\", \"<item name>\"]\n" +
+            "}\n\n" +
+            "Rules:\n" +
+            "- pickedItem MUST be copied exactly as it appears in the menu\n" +
+            "- Be thoughtful: 'something my gran would like' means comfort food, 'watching the game' means snacks, etc.\n" +
+            "- alternatives must also be exact names from the menu";
+
+        String raw = anthropicClient.call(aiPrompt, 400);
+        if (raw == null) return null;
+
+        try {
+            String cleaned = raw.trim()
+                    .replaceAll("(?s)^```json\\s*", "").replaceAll("(?s)^```\\s*", "").replaceAll("(?s)\\s*```$", "");
+            Map<String, Object> parsed = new com.fasterxml.jackson.databind.ObjectMapper().readValue(cleaned, Map.class);
+
+            String pickedName = (String) parsed.get("pickedItem");
+            int servings = parsed.get("servings") instanceof Number n ? n.intValue() : 1;
+            String reason = (String) parsed.getOrDefault("reason", "");
+            List<String> altNames = parsed.get("alternatives") instanceof List<?> l
+                    ? l.stream().map(Object::toString).collect(Collectors.toList()) : List.of();
+
+            // Resolve picked item by name (case-insensitive)
+            MenuItem picked = items.stream()
+                    .filter(i -> i.getName().equalsIgnoreCase(pickedName))
+                    .findFirst().orElse(null);
+            if (picked == null) return null; // Claude hallucinated a name — fall back to rules
+
+            List<Map<String, Object>> altList = altNames.stream()
+                    .map(name -> items.stream().filter(i -> i.getName().equalsIgnoreCase(name)).findFirst().orElse(null))
+                    .filter(Objects::nonNull)
+                    .map(i -> (Map<String, Object>) Map.of("menuItemId", i.getId(), "name", i.getName(), "price", i.getPrice()))
+                    .collect(Collectors.toList());
+
+            double total = picked.getPrice() * servings;
+            String token = UUID.randomUUID().toString();
+            pendingSuggestions.put(token, new SuggestedOrder(token, picked.getId(), servings, tenantId, userId,
+                    System.currentTimeMillis() + 10 * 60 * 1000L));
+
+            Map<String, Object> suggestion = new LinkedHashMap<>();
+            suggestion.put("suggestionToken", token);
+            suggestion.put("mode", "SINGLE_ITEM");
+            suggestion.put("items", List.of(Map.of(
+                    "menuItemId", picked.getId(), "name", picked.getName(),
+                    "quantity", servings, "unitPrice", picked.getPrice(), "totalPrice", total)));
+            suggestion.put("totalEstimate", total);
+            suggestion.put("message", reason.isBlank() ? picked.getName() + " — R" + String.format("%.0f", total) : reason);
+
+            return Map.of(
+                    "interpretation", Map.of("servings", servings, "budgetPerPerson", (Object) null,
+                            "totalBudget", (Object) null, "tags", List.of(), "confidence", 0.95),
+                    "suggestion", suggestion,
+                    "alternatives", altList
+            );
+        } catch (Exception e) {
+            return null; // parse failure — fall through to rules
+        }
+    }
+
+    private Map<String, Object> interpretWithRules(String prompt, List<MenuItem> available, UUID tenantId, UUID userId) {
+        IntentParser.ParsedIntent parsed = parseIntent(prompt);
+
+        List<MenuItem> candidates = available;
         if (parsed.budgetPerPerson() != null) {
             candidates = candidates.stream()
-                    .filter(i -> i.getPrice() <= parsed.budgetPerPerson())
-                    .collect(Collectors.toList());
+                    .filter(i -> i.getPrice() <= parsed.budgetPerPerson()).collect(Collectors.toList());
         }
 
         Map<String, List<String>> tagMap = intentProfileService.buildTagMap(tenantId);
-
         Set<UUID> promotedIds = collectPromotedItemIds(tenantId);
-
         RecommendationContext ctx = new RecommendationContext(
-                userId, tenantId, null, null,
-                parsed.budgetPerPerson(),
-                ZonedDateTime.now(SAST).getHour(),
-                null, promotedIds, Collections.emptySet()
-        );
+                userId, tenantId, null, null, parsed.budgetPerPerson(),
+                ZonedDateTime.now(SAST).getHour(), null, promotedIds, Collections.emptySet());
 
         List<ScoredItem> ranked = recommendationEngine.rank(ctx, candidates, tagMap);
-
-        // Boost items whose tags match parsed preferences
         if (!parsed.preferredTags().isEmpty()) {
-            ranked = ranked.stream()
-                    .sorted(Comparator.comparingInt((ScoredItem si) -> {
-                        List<String> itemTags = tagMap.getOrDefault(si.id().toString(), Collections.emptyList());
-                        long matches = parsed.preferredTags().stream().filter(t ->
-                                itemTags.stream().anyMatch(it -> it.equalsIgnoreCase(t))).count();
-                        return -(int) matches; // negative for descending
-                    }).thenComparingInt(si -> -si.score()))
-                    .collect(Collectors.toList());
+            ranked = ranked.stream().sorted(Comparator.comparingInt((ScoredItem si) -> {
+                List<String> itemTags = tagMap.getOrDefault(si.id().toString(), Collections.emptyList());
+                long matches = parsed.preferredTags().stream()
+                        .filter(t -> itemTags.stream().anyMatch(it -> it.equalsIgnoreCase(t))).count();
+                return -(int) matches;
+            }).thenComparingInt(si -> -si.score())).collect(Collectors.toList());
         }
 
-        if (ranked.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "No items matched your request. Try broadening your criteria.");
-        }
+        if (ranked.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "No items matched your request. Try broadening your criteria.");
 
         ScoredItem top = ranked.get(0);
-        List<ScoredItem> alternatives = ranked.stream().skip(1).limit(2).collect(Collectors.toList());
-
         double total = top.price() * parsed.servings();
-        String message = buildMessage(top, parsed);
-
         String token = UUID.randomUUID().toString();
         pendingSuggestions.put(token, new SuggestedOrder(token, top.id(), parsed.servings(), tenantId, userId,
                 System.currentTimeMillis() + 10 * 60 * 1000L));
 
-        Map<String, Object> interpretation = new LinkedHashMap<>();
-        interpretation.put("servings",       parsed.servings());
-        interpretation.put("budgetPerPerson", parsed.budgetPerPerson());
-        interpretation.put("totalBudget",    parsed.budgetPerPerson() != null ? parsed.budgetPerPerson() * parsed.servings() : null);
-        interpretation.put("tags",           parsed.preferredTags());
-        interpretation.put("confidence",     parsed.confidence());
-
         Map<String, Object> suggestion = new LinkedHashMap<>();
         suggestion.put("suggestionToken", token);
-        suggestion.put("mode",  "SINGLE_ITEM");
-        suggestion.put("items", List.of(Map.of(
-                "menuItemId",  top.id(),
-                "name",        top.name(),
-                "quantity",    parsed.servings(),
-                "unitPrice",   top.price(),
-                "totalPrice",  total
-        )));
+        suggestion.put("mode", "SINGLE_ITEM");
+        suggestion.put("items", List.of(Map.of("menuItemId", top.id(), "name", top.name(),
+                "quantity", parsed.servings(), "unitPrice", top.price(), "totalPrice", total)));
         suggestion.put("totalEstimate", total);
-        suggestion.put("message", message);
+        suggestion.put("message", buildMessage(top, parsed));
 
         return Map.of(
-                "interpretation", interpretation,
-                "suggestion",     suggestion,
-                "alternatives",   alternatives.stream().map(a -> Map.of(
-                        "menuItemId", a.id(),
-                        "name",       a.name(),
-                        "price",      a.price()
-                )).collect(Collectors.toList())
+                "interpretation", Map.of("servings", parsed.servings(), "budgetPerPerson", (Object) parsed.budgetPerPerson(),
+                        "totalBudget", (Object)(parsed.budgetPerPerson() != null ? parsed.budgetPerPerson() * parsed.servings() : null),
+                        "tags", parsed.preferredTags(), "confidence", parsed.confidence()),
+                "suggestion", suggestion,
+                "alternatives", ranked.stream().skip(1).limit(2)
+                        .map(a -> Map.of("menuItemId", a.id(), "name", a.name(), "price", a.price()))
+                        .collect(Collectors.toList())
         );
     }
 
