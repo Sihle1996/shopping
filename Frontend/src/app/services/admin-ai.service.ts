@@ -23,6 +23,31 @@ export interface AiReviewDigestResponse {
   recommendation: string;
 }
 
+export interface AiProposedPromo {
+  title: string;
+  discountPercent: number;
+  appliesTo: string;
+  targetProductName?: string;
+  targetProductId?: string;
+  startAt: string;
+  endAt: string;
+}
+
+export interface AiPromoSuggestion {
+  reason: string;
+  proposedPromo: AiProposedPromo;
+}
+
+export interface AiPromoSuggestionsResponse {
+  suggestions: AiPromoSuggestion[];
+}
+
+export interface AiQueryResponse {
+  answer: string;
+  data: Record<string, any>;
+  question: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminAiService {
   private readonly base = `${environment.apiUrl}/api/admin/ai`;
@@ -36,5 +61,13 @@ export class AdminAiService {
   reviewDigest(since?: string): Observable<AiReviewDigestResponse> {
     const body = since ? { since } : {};
     return this.http.post<AiReviewDigestResponse>(`${this.base}/review-digest`, body);
+  }
+
+  suggestPromotions(): Observable<AiPromoSuggestionsResponse> {
+    return this.http.post<AiPromoSuggestionsResponse>(`${this.base}/suggest-promotions`, {});
+  }
+
+  query(question: string): Observable<AiQueryResponse> {
+    return this.http.post<AiQueryResponse>(`${this.base}/query`, { question });
   }
 }

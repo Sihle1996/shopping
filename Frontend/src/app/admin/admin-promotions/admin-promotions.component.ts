@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AdminPromotionService, PromotionRequest } from 'src/app/services/admin-promotion.service';
 import { AdminService } from 'src/app/services/admin.service';
+import { AdminAiService, AiPromoSuggestion } from 'src/app/services/admin-ai.service';
 import { Promotion, getPromoStatus, PromoStatus } from 'src/app/services/promotion.service';
 import { environment } from 'src/environments/environment';
 import { ToastrService } from 'ngx-toastr';
@@ -29,6 +30,12 @@ export class AdminPromotionsComponent implements OnInit {
 
   statusFilter: StatusFilter = 'All';
   statusTabs: StatusFilter[] = ['All', 'Active', 'Scheduled', 'Expired'];
+
+  // AI suggestions
+  aiSuggestions: AiPromoSuggestion[] = [];
+  aiSuggestionsLoading = false;
+  aiSuggestionsDismissed = new Set<number>();
+  applyingIndex: number | null = null;
 
   // Multi-product selection
   selectedProductIds: string[] = [];
@@ -86,6 +93,7 @@ export class AdminPromotionsComponent implements OnInit {
     private fb: FormBuilder,
     private api: AdminPromotionService,
     private adminService: AdminService,
+    private adminAiService: AdminAiService,
     private toastr: ToastrService
   ) {}
 
@@ -264,6 +272,52 @@ export class AdminPromotionsComponent implements OnInit {
   }
 
   getStatus(p: Promotion): PromoStatus { return getPromoStatus(p); }
+
+  loadAiSuggestions(): void {
+    this.aiSuggestionsLoading = true;
+    this.aiSuggestionsDismissed.clear();
+    this.adminAiService.suggestPromotions().subscribe({
+      next: (res) => { this.aiSuggestions = res.suggestions; this.aiSuggestionsLoading = false; },
+      error: () => { this.aiSuggestionsLoading = false; this.toastr.error('AI suggestions unavailable'); }
+    });
+  }
+
+  dismissSuggestion(index: number): void {
+    this.aiSuggestionsDismissed.add(index);
+  }
+
+  applySuggestion(index: number): void {
+    const s = this.aiSuggestions[index];
+    if (!s) return;
+    const p = s.proposedPromo;
+    this.applyingIndex = index;
+    const payload: PromotionRequest = {
+      title: p.title,
+      discountPercent: p.discountPercent,
+      appliesTo: (p.appliesTo as any) || 'ALL',
+      targetProductId: p.targetProductId || null,
+      startAt: p.startAt ? `${p.startAt}T00:00:00+02:00` : new Date().toISOString(),
+      endAt:   p.endAt   ? `${p.endAt}T23:59:59+02:00`   : new Date().toISOString(),
+      active: true,
+      featured: false,
+    };
+    this.api.create(payload).subscribe({
+      next: () => {
+        this.applyingIndex = null;
+        this.aiSuggestionsDismissed.add(index);
+        this.toastr.success(`Promotion "${p.title}" created`);
+        this.refresh();
+      },
+      error: (err) => {
+        this.applyingIndex = null;
+        if (err?.status === 402 || err?.status === 403) {
+          this.toastr.error(err?.error?.message || 'Plan limit reached');
+        } else {
+          this.toastr.error('Failed to create promotion');
+        }
+      }
+    });
+  }
 
   onImageSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];

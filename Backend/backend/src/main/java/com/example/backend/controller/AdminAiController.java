@@ -12,6 +12,8 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 
+// All endpoints require ADMIN role (set at class level)
+
 @RestController
 @RequestMapping("/api/admin/ai")
 @RequiredArgsConstructor
@@ -44,7 +46,31 @@ public class AdminAiController {
                 since = LocalDate.parse(body.get("since"));
             } catch (Exception ignored) {}
         }
-        Map<String, Object> result = adminAiService.reviewDigest(tenantId, since);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(adminAiService.reviewDigest(tenantId, since));
+    }
+
+    /** POST /api/admin/ai/suggest-promotions — AI-generated promotion suggestions */
+    @PostMapping("/suggest-promotions")
+    public ResponseEntity<Map<String, Object>> suggestPromotions() {
+        if (!adminAiService.isConfigured()) {
+            return ResponseEntity.status(503).body(Map.of("error", "AI service not configured"));
+        }
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        return ResponseEntity.ok(adminAiService.suggestPromotions(tenantId));
+    }
+
+    /** POST /api/admin/ai/query — conversational analytics */
+    @PostMapping("/query")
+    public ResponseEntity<Map<String, Object>> query(
+            @RequestBody Map<String, String> body) {
+        if (!adminAiService.isConfigured()) {
+            return ResponseEntity.status(503).body(Map.of("error", "AI service not configured"));
+        }
+        String question = body.getOrDefault("question", "").trim();
+        if (question.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "question is required"));
+        }
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        return ResponseEntity.ok(adminAiService.queryAnalytics(question, tenantId));
     }
 }
