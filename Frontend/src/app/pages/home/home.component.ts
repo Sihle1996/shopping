@@ -73,6 +73,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   intentItems: ScoredItem[] = [];
   intentLabel = '';
   intentLoading = false;
+  recommendations: ScoredItem[] = [];
   mealDeals: ComboSummary[] = [];
   comboItemIds = new Set<string>();
 
@@ -222,6 +223,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadStoreHours();
     this.loadIntents();
     this.loadMealDeals();
+    this.loadRecommendations();
   }
 
   private loadStoreHours(): void {
@@ -335,6 +337,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   // ── Intelligence layer ────────────────────────────────────────────────────
+
+  private loadRecommendations(): void {
+    this.intelligenceService.getRecommendations(8)
+      .pipe(takeUntil(this.destroy$), catchError(() => of({ items: [] })))
+      .subscribe(res => this.recommendations = res.items);
+  }
 
   private loadIntents(): void {
     this.intelligenceService.getIntents()

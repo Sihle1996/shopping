@@ -28,5 +28,7 @@ public interface ItemTagRepository extends JpaRepository<ItemTag, UUID> {
     @Query("DELETE FROM ItemTag t WHERE t.menuItem.id = :menuItemId")
     void deleteByMenuItem_Id(@Param("menuItemId") UUID menuItemId);
 
+    boolean existsByMenuItem_Id(UUID menuItemId);
+
     boolean existsByMenuItem_IdAndTag(UUID menuItemId, String tag);
 }

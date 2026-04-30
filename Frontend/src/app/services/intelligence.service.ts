@@ -52,6 +52,12 @@ export class IntelligenceService {
     });
   }
 
+  getRecommendations(limit = 8): Observable<{ items: ScoredItem[] }> {
+    return this.http.get<{ items: ScoredItem[] }>(`${this.base}/recommendations`, {
+      params: { limit: limit.toString() }
+    });
+  }
+
   getCombosForItem(itemId: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.base}/combos`, { params: { itemId } });
   }

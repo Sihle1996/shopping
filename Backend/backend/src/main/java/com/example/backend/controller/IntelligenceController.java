@@ -42,6 +42,14 @@ public class IntelligenceController {
         return ResponseEntity.ok(intentProfileService.getByIntent(intent, limit, tenantId));
     }
 
+    /** GET /api/intelligence/recommendations?limit=8 — passive top-N without intent filter */
+    @GetMapping("/recommendations")
+    public ResponseEntity<Map<String, Object>> getRecommendations(
+            @RequestParam(defaultValue = "8") int limit) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        return ResponseEntity.ok(intentProfileService.getRecommendations(limit, tenantId));
+    }
+
     /** GET /api/intelligence/combos?itemId=... */
     @GetMapping("/combos")
     public ResponseEntity<List<Map<String, Object>>> getCombos(

@@ -120,6 +120,30 @@ public class IntentProfileService {
                         "Unknown intent: " + intentKey));
     }
 
+    /** Returns top-N items ranked by the rules engine with no intent filter — used for "Recommended for you". */
+    public Map<String, Object> getRecommendations(int limit, UUID tenantId) {
+        List<MenuItem> allItems = tenantId != null
+                ? menuItemRepository.findByTenant_Id(tenantId)
+                : menuItemRepository.findAll();
+
+        Map<String, List<String>> tagsByItemId = buildTagMap(tenantId);
+        Set<UUID> promotedIds = collectPromotedItemIds(tenantId);
+
+        int hour = ZonedDateTime.now(SAST).getHour();
+        RecommendationContext ctx = new RecommendationContext(
+                null, tenantId, null, null, null,
+                hour, null, promotedIds, Collections.emptySet()
+        );
+
+        List<ScoredItem> ranked = recommendationEngine.rank(
+                ctx,
+                allItems.stream().filter(MenuItem::isAvailable).collect(Collectors.toList()),
+                tagsByItemId
+        );
+
+        return Map.of("items", ranked.stream().limit(limit).collect(Collectors.toList()));
+    }
+
     public Map<String, List<String>> buildTagMap(UUID tenantId) {
         List<ItemTag> tags = tenantId != null
                 ? itemTagRepository.findByTenant_Id(tenantId)

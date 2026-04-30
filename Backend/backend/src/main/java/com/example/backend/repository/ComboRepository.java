@@ -23,6 +23,8 @@ public interface ComboRepository extends JpaRepository<Combo, UUID> {
     @Query("SELECT c FROM Combo c JOIN c.items ci WHERE ci.menuItem.id = :menuItemId AND c.tenant.id = :tenantId AND c.active = true")
     List<Combo> findActiveByMenuItemAndTenant(@Param("menuItemId") UUID menuItemId, @Param("tenantId") UUID tenantId);
 
+    boolean existsByTenant_IdAndSource(UUID tenantId, String source);
+
     @Modifying
     @Query("DELETE FROM Combo c WHERE c.tenant.id = :tenantId AND c.source = 'SYSTEM'")
     void deleteSystemCombosByTenant(@Param("tenantId") UUID tenantId);

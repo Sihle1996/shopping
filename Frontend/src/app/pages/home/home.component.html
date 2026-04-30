@@ -154,6 +154,41 @@
         <app-promotion-grid [promotions]="visiblePromotions"></app-promotion-grid>
       </div>
 
+      <!-- Recommended for you -->
+      <div class="mb-6" *ngIf="recommendations.length && !selectedIntent && selectedCategory === 'All' && !searchQuery">
+        <h3 class="font-heading text-lg font-semibold text-textDark mb-3">
+          <i class="bi bi-stars text-primary mr-1"></i> Recommended for you
+        </h3>
+        <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          <div *ngFor="let item of recommendations"
+               class="flex-shrink-0 w-44 bg-white rounded-2xl shadow-card overflow-hidden border border-borderColor
+                      hover:shadow-card-hover transition-all duration-200 cursor-pointer"
+               (click)="goToProductDetails(item)">
+            <div class="relative aspect-square bg-gray-100 overflow-hidden">
+              <img [src]="item.image || 'assets/placeholder.png'" [alt]="item.name"
+                   class="w-full h-full object-cover" />
+              <span *ngIf="item.tags?.length"
+                    class="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[10px] font-medium
+                           px-1.5 py-0.5 rounded-full backdrop-blur-sm">
+                {{ item.tags[0] }}
+              </span>
+            </div>
+            <div class="p-2.5">
+              <p class="font-semibold text-xs text-textDark truncate mb-1">{{ item.name }}</p>
+              <div class="flex items-center justify-between">
+                <span class="font-numbers font-bold text-sm text-primary">R{{ item.price.toFixed(2) }}</span>
+                <button *ngIf="storeIsOpen && item.isAvailable"
+                        (click)="$event.stopPropagation(); quickAddToCart(item)"
+                        class="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center
+                               hover:brightness-110 active:scale-90 transition-all duration-150 shadow-sm">
+                  <i class="bi bi-plus text-sm"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Meal Deals -->
       <div class="mb-6" *ngIf="mealDeals.length && !selectedIntent && selectedCategory === 'All' && !searchQuery">
         <h3 class="font-heading text-lg font-semibold text-textDark mb-3">

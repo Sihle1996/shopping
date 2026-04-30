@@ -9,6 +9,9 @@ import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.TenantRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ComboGeneratorService {
 
     private static final double COMBO_DISCOUNT = 0.90;
@@ -31,6 +35,18 @@ public class ComboGeneratorService {
     private final MenuItemRepository menuItemRepository;
     private final ComboRepository comboRepository;
     private final TenantRepository tenantRepository;
+
+    /** On startup: generate system combos for any tenant that has none yet. */
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void generateOnStartupIfEmpty() {
+        tenantRepository.findByActiveTrue().forEach(t -> {
+            if (!comboRepository.existsByTenant_IdAndSource(t.getId(), "SYSTEM")) {
+                int n = generateForTenant(t.getId());
+                if (n > 0) log.info("ComboGeneratorService: generated {} system combos for tenant {}", n, t.getId());
+            }
+        });
+    }
 
     @Scheduled(cron = "0 0 3 * * *") // 3 AM daily
     @Transactional
