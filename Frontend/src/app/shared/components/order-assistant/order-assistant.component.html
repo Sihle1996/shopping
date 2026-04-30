@@ -69,7 +69,7 @@
         </a>
       </div>
 
-      <ng-container *ngIf="isLoggedIn && !response && !loading">
+      <ng-container *ngIf="isLoggedIn && !response && !loading && !orderError">
         <p class="text-xs text-textMuted mb-3">Tell me what you feel like eating</p>
         <div class="flex flex-wrap gap-2 mb-4">
           <button *ngFor="let chip of quickChips"
@@ -96,6 +96,17 @@
           </button>
         </div>
       </ng-container>
+
+      <!-- Error state -->
+      <div *ngIf="orderError" class="flex flex-col items-center gap-4 py-8 text-center px-4">
+        <span class="text-3xl">🤔</span>
+        <p class="text-sm text-textDark font-medium">{{ orderError }}</p>
+        <button (click)="retry()"
+                class="px-5 py-2 rounded-full border border-borderColor text-sm font-semibold
+                       text-textDark hover:bg-surface active:scale-95 transition-all duration-150">
+          Try again
+        </button>
+      </div>
 
       <div *ngIf="isLoggedIn && loading" class="flex flex-col items-center gap-3 py-8">
         <div class="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>

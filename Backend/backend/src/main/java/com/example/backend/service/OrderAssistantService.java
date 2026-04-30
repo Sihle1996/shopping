@@ -34,6 +34,11 @@ public class OrderAssistantService {
     private final CartService cartService;
 
     public Map<String, Object> interpret(String prompt, UUID tenantId, UUID userId, Double lat, Double lon) {
+        if (!isFoodOrderRequest(prompt)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "I can only help with food orders! Try something like \"something filling under R80\" or \"healthy food for 2 people\".");
+        }
+
         IntentParser.ParsedIntent parsed = parseIntent(prompt);
 
         List<MenuItem> candidates = menuItemRepository.findByTenant_Id(tenantId)
@@ -156,6 +161,28 @@ public class OrderAssistantService {
         } catch (Exception e) {
             return Collections.emptySet();
         }
+    }
+
+    private boolean isFoodOrderRequest(String prompt) {
+        if (anthropicClient.isConfigured()) {
+            String raw = anthropicClient.call(
+                "Is this a food or drink order request, or a question about what to eat/drink? Reply only YES or NO.\n" +
+                "Message: \"" + prompt.replace("\"", "'") + "\"", 5);
+            if (raw != null) return raw.trim().toUpperCase().startsWith("Y");
+        }
+        // Keyword fallback: reject obviously non-food input
+        String lower = prompt.toLowerCase();
+        boolean hasFood = containsAny(lower, "food", "eat", "drink", "hungry", "meal", "burger", "pizza",
+                "chicken", "something", "cheap", "filling", "healthy", "spicy", "vegan", "order",
+                "lunch", "dinner", "breakfast", "snack", "treat", "budget", "people", "person");
+        boolean hasNonFood = !hasFood && containsAny(lower, "weather", "sport", "soccer", "football",
+                "world cup", "news", "politics", "movie", "music", "game", "who", "when is", "what is the");
+        return hasFood || !hasNonFood;
+    }
+
+    private boolean containsAny(String text, String... keywords) {
+        for (String kw : keywords) if (text.contains(kw)) return true;
+        return false;
     }
 
     /** Tries Claude first for richer understanding, falls back to keyword parser. */

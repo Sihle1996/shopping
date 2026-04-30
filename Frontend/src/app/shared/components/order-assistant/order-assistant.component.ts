@@ -20,6 +20,7 @@ export class OrderAssistantComponent {
   loading = false;
   confirming = false;
   response: AssistantResponse | null = null;
+  orderError: string | null = null;
 
   // Menu chat state
   chatInput = '';
@@ -69,9 +70,13 @@ export class OrderAssistantComponent {
     if (!this.prompt.trim() || this.loading) return;
     this.loading = true;
     this.response = null;
+    this.orderError = null;
     this.assistantService.interpret(this.prompt.trim()).subscribe({
       next: res => { this.response = res; this.loading = false; },
-      error: () => { this.toastr.error('Could not process your request'); this.loading = false; }
+      error: (err) => {
+        this.loading = false;
+        this.orderError = err?.error?.message || err?.error || 'Could not process your request. Try describing what you want to eat.';
+      }
     });
   }
 
@@ -88,7 +93,7 @@ export class OrderAssistantComponent {
     });
   }
 
-  retry(): void { this.response = null; this.prompt = ''; }
+  retry(): void { this.response = null; this.prompt = ''; this.orderError = null; }
 
   // ── Menu chat ─────────────────────────────────────────────────────────────
 
