@@ -208,13 +208,19 @@ public class OrderAssistantService {
 
         if (anthropicClient.isConfigured()) {
             String aiPrompt =
-                "You are a friendly food ordering assistant for a South African restaurant.\n" +
-                "Answer the customer's question based only on our menu below.\n" +
-                "Be helpful, warm, and concise (max 2 sentences). If the item/category doesn't exist on the menu, say so honestly.\n\n" +
-                "Menu:\n" + menuText + "\n\n" +
-                "Customer question: " + question;
+                "You are a friendly, conversational AI assistant for a South African food delivery restaurant.\n" +
+                "Your job is to help customers with anything they ask — menu questions, recommendations, dietary needs, prices, or general chat.\n\n" +
+                "Rules:\n" +
+                "- If the question is about food, our menu, or ordering: answer using the menu data below.\n" +
+                "- If the question is off-topic (weather, sports, news, etc.): politely say you're here to help with food and gently redirect.\n" +
+                "- If the question is ambiguous: make a reasonable food-related assumption and answer helpfully.\n" +
+                "- If what they want doesn't exist on our menu: say so honestly and suggest the closest option.\n" +
+                "- Be warm, natural, and conversational — not robotic. Use South African context where appropriate.\n" +
+                "- Keep answers concise (1-3 sentences max) unless listing multiple items.\n\n" +
+                "Our menu:\n" + menuText + "\n\n" +
+                "Customer says: " + question;
 
-            String answer = anthropicClient.call(aiPrompt, 300);
+            String answer = anthropicClient.call(aiPrompt, 400);
             if (answer != null && !answer.isBlank()) {
                 return Map.of("answer", answer.trim());
             }
@@ -242,7 +248,11 @@ public class OrderAssistantService {
                     .map(i -> "A popular choice is " + i.getName() + " — try it out!")
                     .orElse("Everything on our menu is delicious — browse above to find something you like!");
         }
-        return "Great question! Browse our menu above and tap any item to add it to your cart. Need help? Ask us anything!";
+        // Generic fallback — list a few items so the user has something useful
+        String sample = items.stream().limit(3)
+                .map(i -> i.getName() + " (R" + String.format("%.0f", i.getPrice()) + ")")
+                .collect(Collectors.joining(", "));
+        return "I'm not sure about that one, but here are a few things on our menu: " + sample + ". Scroll up to see everything!";
     }
 
     record SuggestedOrder(String token, UUID menuItemId, int quantity, UUID tenantId, UUID userId, long expiresAt) {}
