@@ -116,7 +116,7 @@ public class OrderAssistantService {
         );
     }
 
-    public List<Map<String, Object>> confirm(String token, UUID userId) {
+    public List<com.example.backend.entity.CartItemDTO> confirm(String token, UUID userId) {
         SuggestedOrder suggestion = pendingSuggestions.remove(token);
         if (suggestion == null || suggestion.expiresAt() < System.currentTimeMillis()) {
             throw new ResponseStatusException(HttpStatus.GONE, "Suggestion expired — please try again");

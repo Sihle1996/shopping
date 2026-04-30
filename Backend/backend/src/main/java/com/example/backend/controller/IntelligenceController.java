@@ -80,7 +80,7 @@ public class IntelligenceController {
     /** POST /api/intelligence/order-for-me/confirm */
     @PostMapping("/order-for-me/confirm")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<Map<String, Object>>> confirmOrderForMe(
+    public ResponseEntity<List<com.example.backend.entity.CartItemDTO>> confirmOrderForMe(
             @RequestBody Map<String, Object> body,
             @AuthenticationPrincipal User principal) {
         String token = (String) body.get("suggestionToken");
