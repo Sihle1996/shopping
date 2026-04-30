@@ -1,6 +1,7 @@
 package com.example.backend.intelligence;
 
 import com.example.backend.entity.MenuItem;
+import com.example.backend.intelligence.ScoredItem;
 import org.springframework.stereotype.Service;
 
 import java.util.*;

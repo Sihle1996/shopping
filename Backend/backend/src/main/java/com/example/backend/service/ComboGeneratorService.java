@@ -79,9 +79,9 @@ public class ComboGeneratorService {
 
             if (bestDrink == null && bestSide == null) continue;
 
-            double original = main.getPrice()
-                    + (bestDrink != null ? bestDrink.getPrice() : 0)
-                    + (bestSide  != null ? bestSide.getPrice()  : 0);
+            double original = main.getPrice().doubleValue()
+                    + (bestDrink != null ? bestDrink.getPrice().doubleValue() : 0)
+                    + (bestSide  != null ? bestSide.getPrice().doubleValue()  : 0);
 
             double comboRaw = original * COMBO_DISCOUNT;
             double comboPrice = Math.round(comboRaw / 5.0) * 5.0; // round to nearest R5
