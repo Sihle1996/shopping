@@ -266,8 +266,10 @@ public class AdminAiService {
                 "{ \"intent\": \"<INTENT>\", \"period\": \"<PERIOD>\" }\n" +
                 "Question: \"" + question.replace("\"", "'") + "\"";
 
-        Map<String, Object> classification = parseJsonOrFallback(callClaude(classifyPrompt),
-                Map.of("intent", "ORDER_COUNT", "period", "THIS_MONTH"));
+        String classifyRaw = callClaude(classifyPrompt);
+        Map<String, Object> classification = (classifyRaw != null && !classifyRaw.isBlank())
+                ? parseJsonOrFallback(classifyRaw, classifyWithKeywords(question))
+                : classifyWithKeywords(question);
 
         String intent = String.valueOf(classification.getOrDefault("intent", "ORDER_COUNT"));
         String period = String.valueOf(classification.getOrDefault("period", "THIS_MONTH"));
@@ -382,6 +384,40 @@ public class AdminAiService {
                 yield Map.of("orderCount", count, "revenue", Math.round(revenue));
             }
         };
+    }
+
+    private Map<String, Object> classifyWithKeywords(String question) {
+        String q = question.toLowerCase();
+
+        String intent;
+        if (q.contains("top") && (q.contains("revenue") || q.contains("earning") || q.contains("money"))) {
+            intent = "TOP_ITEM_REVENUE";
+        } else if (q.contains("top") || q.contains("best") || q.contains("most ordered") || q.contains("most popular") || q.contains("popular")) {
+            intent = "TOP_ITEM_ORDERS";
+        } else if (q.contains("peak") || q.contains("busiest") || q.contains("rush hour") || q.contains("busy hour")) {
+            intent = "PEAK_HOUR";
+        } else if (q.contains("new customer") || q.contains("unique customer") || q.contains("how many customer") || q.contains("customers did")) {
+            intent = "NEW_CUSTOMERS";
+        } else if (q.contains("compar") || q.contains(" vs ") || q.contains("versus") || q.contains("better than") || q.contains("more than last")) {
+            intent = "REVENUE_COMPARISON";
+        } else {
+            intent = "ORDER_COUNT";
+        }
+
+        String period;
+        if (q.contains("today") || q.contains("so far today")) {
+            period = "TODAY";
+        } else if (q.contains("last week") || q.contains("previous week")) {
+            period = "LAST_WEEK";
+        } else if (q.contains("last month") || q.contains("previous month")) {
+            period = "LAST_MONTH";
+        } else if (q.contains("this week") || q.contains("this week") || q.contains("week")) {
+            period = "THIS_WEEK";
+        } else {
+            period = "THIS_MONTH";
+        }
+
+        return Map.of("intent", intent, "period", period);
     }
 
     private Map<String, Object> buildDescribeFallback(String name, BigDecimal price, String category) {
