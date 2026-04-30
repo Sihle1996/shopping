@@ -283,9 +283,15 @@ public class AdminAiService {
                 question.replace("\"", "'") + "\"\n" +
                 "Use South African Rand (R) for currency. Return only the sentence.";
 
-        String answer = callClaude(formatPrompt).trim()
-                .replaceAll("(?s)^```[a-z]*\\s*", "")
-                .replaceAll("(?s)\\s*```$", "");
+        String raw = callClaude(formatPrompt);
+        String answer;
+        if (raw != null && !raw.isBlank() && !raw.equals("{}")) {
+            answer = raw.trim()
+                    .replaceAll("(?s)^```[a-z]*\\s*", "")
+                    .replaceAll("(?s)\\s*```$", "");
+        } else {
+            answer = buildFallbackAnswer(intent, period, data);
+        }
 
         return Map.of("answer", answer, "data", data, "question", question);
     }
@@ -375,6 +381,24 @@ public class AdminAiService {
         };
     }
 
+    private String buildFallbackAnswer(String intent, String period, Map<String, Object> data) {
+        String when = switch (period) {
+            case "TODAY"      -> "today";
+            case "THIS_WEEK"  -> "this week";
+            case "LAST_WEEK"  -> "last week";
+            case "LAST_MONTH" -> "last month";
+            default           -> "this month";
+        };
+        return switch (intent) {
+            case "TOP_ITEM_ORDERS"   -> "Your top item by orders " + when + " was " + data.getOrDefault("item", "unknown") + " with " + data.getOrDefault("orders", 0) + " orders.";
+            case "TOP_ITEM_REVENUE"  -> "Your top item by revenue " + when + " was " + data.getOrDefault("item", "unknown") + " earning R" + data.getOrDefault("revenue", 0) + ".";
+            case "REVENUE_COMPARISON"-> "Revenue " + when + ": R" + data.getOrDefault("currentRevenue", 0) + " vs R" + data.getOrDefault("previousRevenue", 0) + " the prior period.";
+            case "PEAK_HOUR"         -> "Your peak hour " + when + " was " + data.getOrDefault("peakHour", "N/A") + ":00 with " + data.getOrDefault("orderCount", 0) + " orders.";
+            case "NEW_CUSTOMERS"     -> "You had " + data.getOrDefault("newCustomers", 0) + " unique customers " + when + ".";
+            default                  -> "You received " + data.getOrDefault("orderCount", 0) + " orders " + when + " with R" + data.getOrDefault("revenue", 0) + " in revenue.";
+        };
+    }
+
     private String toJson(Object obj) {
         try { return objectMapper.writeValueAsString(obj); } catch (Exception e) { return obj.toString(); }
     }
@@ -406,19 +430,20 @@ public class AdminAiService {
 
             if (response.statusCode() != 200) {
                 log.error("Anthropic API returned {}: {}", response.statusCode(), response.body());
-                return "{}";
+                return null;
             }
 
             JsonNode root = objectMapper.readTree(response.body());
             return root.path("content").get(0).path("text").asText();
         } catch (Exception e) {
             log.error("Anthropic API call failed: {}", e.getMessage());
-            return "{}";
+            return null;
         }
     }
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> parseJsonOrFallback(String raw, Map<String, Object> fallback) {
+        if (raw == null || raw.isBlank()) return new HashMap<>(fallback);
         try {
             String cleaned = raw.trim()
                     .replaceAll("(?s)^```json\\s*", "")
