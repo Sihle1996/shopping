@@ -1,6 +1,4 @@
-<ng-container *ngIf="isLoggedIn">
-
-  <!-- Floating trigger button -->
+  <!-- Floating trigger button — visible to all users -->
   <button *ngIf="!isOpen"
           (click)="open()"
           class="fixed bottom-24 right-4 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full
@@ -60,7 +58,18 @@
     <!-- ── ORDER FOR ME ───────────────────────────────────────────────────── -->
     <div *ngIf="mode === 'order'" class="overflow-y-auto flex-1 px-5 py-4">
 
-      <ng-container *ngIf="!response && !loading">
+      <!-- Guest prompt -->
+      <div *ngIf="!isLoggedIn" class="flex flex-col items-center gap-4 py-10 text-center">
+        <span class="text-4xl">🍽️</span>
+        <p class="text-sm font-semibold text-textDark">Sign in to use Order for me</p>
+        <p class="text-xs text-textMuted">Create an account or log in to get AI-powered meal suggestions added straight to your cart.</p>
+        <a routerLink="/login" (click)="close()"
+           class="px-6 py-2.5 rounded-full bg-primary text-white text-sm font-semibold hover:brightness-110 active:scale-95 transition-all">
+          Sign in
+        </a>
+      </div>
+
+      <ng-container *ngIf="isLoggedIn && !response && !loading">
         <p class="text-xs text-textMuted mb-3">Tell me what you feel like eating</p>
         <div class="flex flex-wrap gap-2 mb-4">
           <button *ngFor="let chip of quickChips"
@@ -88,12 +97,12 @@
         </div>
       </ng-container>
 
-      <div *ngIf="loading" class="flex flex-col items-center gap-3 py-8">
+      <div *ngIf="isLoggedIn && loading" class="flex flex-col items-center gap-3 py-8">
         <div class="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
         <p class="text-sm text-textMuted">Finding the perfect meal for you...</p>
       </div>
 
-      <ng-container *ngIf="response && !loading">
+      <ng-container *ngIf="isLoggedIn && response && !loading">
         <div class="bg-primary-50 rounded-xl px-4 py-3 mb-4 text-sm text-textDark">
           <span class="font-semibold text-primary">Understood:</span>
           {{ response.interpretation.servings }} person(s)
@@ -203,4 +212,4 @@
     </div>
 
   </div>
-</ng-container>
+

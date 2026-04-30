@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 
 import { LoadersModule } from './loaders/loaders.module';
 import { PaginationComponent } from '../components/pagination/pagination.component';
@@ -44,12 +45,14 @@ import { OrderAssistantComponent } from './components/order-assistant/order-assi
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    RouterModule,
     LoadersModule,
   ],
   exports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    RouterModule,
     LoadersModule,
     PaginationComponent,
     PromotionBannerComponent,
