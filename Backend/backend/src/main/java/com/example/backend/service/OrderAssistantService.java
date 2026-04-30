@@ -120,12 +120,18 @@ public class OrderAssistantService {
             suggestion.put("totalEstimate", total);
             suggestion.put("message", reason.isBlank() ? picked.getName() + " — R" + String.format("%.0f", total) : reason);
 
-            return Map.of(
-                    "interpretation", Map.of("servings", servings, "budgetPerPerson", (Object) null,
-                            "totalBudget", (Object) null, "tags", List.of(), "confidence", 0.95),
-                    "suggestion", suggestion,
-                    "alternatives", altList
-            );
+            Map<String, Object> interp = new LinkedHashMap<>();
+            interp.put("servings", servings);
+            interp.put("budgetPerPerson", null);
+            interp.put("totalBudget", null);
+            interp.put("tags", List.of());
+            interp.put("confidence", 0.95);
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("interpretation", interp);
+            result.put("suggestion", suggestion);
+            result.put("alternatives", altList);
+            return result;
         } catch (Exception e) {
             return null; // parse failure — fall through to rules
         }
@@ -173,15 +179,26 @@ public class OrderAssistantService {
         suggestion.put("totalEstimate", total);
         suggestion.put("message", buildMessage(top, parsed));
 
-        return Map.of(
-                "interpretation", Map.of("servings", parsed.servings(), "budgetPerPerson", (Object) parsed.budgetPerPerson(),
-                        "totalBudget", (Object)(parsed.budgetPerPerson() != null ? parsed.budgetPerPerson() * parsed.servings() : null),
-                        "tags", parsed.preferredTags(), "confidence", parsed.confidence()),
-                "suggestion", suggestion,
-                "alternatives", ranked.stream().skip(1).limit(2)
-                        .map(a -> Map.of("menuItemId", a.id(), "name", a.name(), "price", a.price()))
-                        .collect(Collectors.toList())
-        );
+        Map<String, Object> interp = new LinkedHashMap<>();
+        interp.put("servings", parsed.servings());
+        interp.put("budgetPerPerson", parsed.budgetPerPerson());
+        interp.put("totalBudget", parsed.budgetPerPerson() != null ? parsed.budgetPerPerson() * parsed.servings() : null);
+        interp.put("tags", parsed.preferredTags());
+        interp.put("confidence", parsed.confidence());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("interpretation", interp);
+        result.put("suggestion", suggestion);
+        result.put("alternatives", ranked.stream().skip(1).limit(2)
+                .map(a -> {
+                    Map<String, Object> alt = new LinkedHashMap<>();
+                    alt.put("menuItemId", a.id());
+                    alt.put("name", a.name());
+                    alt.put("price", a.price());
+                    return alt;
+                })
+                .collect(Collectors.toList()));
+        return result;
     }
 
     public List<com.example.backend.entity.CartItemDTO> confirm(String token, UUID userId) {
