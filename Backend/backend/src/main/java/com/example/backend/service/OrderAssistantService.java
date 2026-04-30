@@ -103,7 +103,13 @@ public class OrderAssistantService {
             List<Map<String, Object>> altList = altNames.stream()
                     .map(name -> items.stream().filter(i -> i.getName().equalsIgnoreCase(name)).findFirst().orElse(null))
                     .filter(Objects::nonNull)
-                    .map(i -> (Map<String, Object>) Map.of("menuItemId", i.getId(), "name", i.getName(), "price", i.getPrice()))
+                    .map(i -> {
+                        Map<String, Object> alt = new LinkedHashMap<>();
+                        alt.put("menuItemId", i.getId());
+                        alt.put("name", i.getName());
+                        alt.put("price", i.getPrice());
+                        return alt;
+                    })
                     .collect(Collectors.toList());
 
             double total = picked.getPrice() * servings;
@@ -114,9 +120,13 @@ public class OrderAssistantService {
             Map<String, Object> suggestion = new LinkedHashMap<>();
             suggestion.put("suggestionToken", token);
             suggestion.put("mode", "SINGLE_ITEM");
-            suggestion.put("items", List.of(Map.of(
-                    "menuItemId", picked.getId(), "name", picked.getName(),
-                    "quantity", servings, "unitPrice", picked.getPrice(), "totalPrice", total)));
+            Map<String, Object> itemRow = new LinkedHashMap<>();
+            itemRow.put("menuItemId", picked.getId());
+            itemRow.put("name", picked.getName());
+            itemRow.put("quantity", servings);
+            itemRow.put("unitPrice", picked.getPrice());
+            itemRow.put("totalPrice", total);
+            suggestion.put("items", List.of(itemRow));
             suggestion.put("totalEstimate", total);
             suggestion.put("message", reason.isBlank() ? picked.getName() + " — R" + String.format("%.0f", total) : reason);
 
@@ -174,8 +184,13 @@ public class OrderAssistantService {
         Map<String, Object> suggestion = new LinkedHashMap<>();
         suggestion.put("suggestionToken", token);
         suggestion.put("mode", "SINGLE_ITEM");
-        suggestion.put("items", List.of(Map.of("menuItemId", top.id(), "name", top.name(),
-                "quantity", parsed.servings(), "unitPrice", top.price(), "totalPrice", total)));
+        Map<String, Object> itemRow = new LinkedHashMap<>();
+        itemRow.put("menuItemId", top.id());
+        itemRow.put("name", top.name());
+        itemRow.put("quantity", parsed.servings());
+        itemRow.put("unitPrice", top.price());
+        itemRow.put("totalPrice", total);
+        suggestion.put("items", List.of(itemRow));
         suggestion.put("totalEstimate", total);
         suggestion.put("message", buildMessage(top, parsed));
 
