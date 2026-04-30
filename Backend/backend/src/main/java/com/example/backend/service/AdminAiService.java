@@ -319,7 +319,7 @@ public class AdminAiService {
                 var top = orderRepository.findTopProducts(start, end, tenantId, PageRequest.of(0, 1));
                 yield top.isEmpty()
                         ? Map.of("item", "none", "orders", 0)
-                        : Map.of("item", top.get(0).getName(), "orders", top.get(0).getCount());
+                        : Map.of("item", top.get(0).getName(), "orders", top.get(0).getQuantity());
             }
             case "TOP_ITEM_REVENUE" -> {
                 List<Order> orders = orderRepository.findByOrderDateBetweenAndTenant_Id(start, end, tenantId)
