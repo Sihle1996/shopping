@@ -28,7 +28,7 @@ public class RulesRecommendationEngine implements RecommendationEngine {
         List<ScoredItem> scored = new ArrayList<>();
 
         for (MenuItem item : candidates) {
-            if (!item.isAvailable()) continue;
+            if (!Boolean.TRUE.equals(item.getIsAvailable())) continue;
 
             List<String> tags = tagsByItemId.getOrDefault(item.getId().toString(), Collections.emptyList());
 

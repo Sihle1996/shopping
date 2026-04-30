@@ -37,7 +37,7 @@ public class OrderAssistantService {
         IntentParser.ParsedIntent parsed = intentParser.parse(prompt);
 
         List<MenuItem> candidates = menuItemRepository.findByTenant_Id(tenantId)
-                .stream().filter(MenuItem::isAvailable).collect(Collectors.toList());
+                .stream().filter(i -> Boolean.TRUE.equals(i.getIsAvailable())).collect(Collectors.toList());
 
         if (parsed.budgetPerPerson() != null) {
             candidates = candidates.stream()

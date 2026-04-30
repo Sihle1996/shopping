@@ -68,7 +68,7 @@ public class IntentProfileService {
 
         // Pre-filter by intent constraints
         List<MenuItem> filtered = allItems.stream()
-                .filter(i -> i.isAvailable())
+                .filter(i -> Boolean.TRUE.equals(i.getIsAvailable()))
                 .filter(i -> profile.getMaxPriceRand() == null
                         || i.getPrice() <= profile.getMaxPriceRand().doubleValue())
                 .filter(i -> {
@@ -137,7 +137,7 @@ public class IntentProfileService {
 
         List<ScoredItem> ranked = recommendationEngine.rank(
                 ctx,
-                allItems.stream().filter(MenuItem::isAvailable).collect(Collectors.toList()),
+                allItems.stream().filter(i -> Boolean.TRUE.equals(i.getIsAvailable())).collect(Collectors.toList()),
                 tagsByItemId
         );
 

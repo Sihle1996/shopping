@@ -62,7 +62,7 @@ public class ComboGeneratorService {
         if (tenant == null) return 0;
 
         List<MenuItem> items = menuItemRepository.findByTenant_Id(tenantId)
-                .stream().filter(MenuItem::isAvailable).collect(Collectors.toList());
+                .stream().filter(i -> Boolean.TRUE.equals(i.getIsAvailable())).collect(Collectors.toList());
 
         List<MenuItem> mains  = filter(items, MAIN_CATEGORIES);
         List<MenuItem> drinks = filter(items, DRINK_CATEGORIES);
