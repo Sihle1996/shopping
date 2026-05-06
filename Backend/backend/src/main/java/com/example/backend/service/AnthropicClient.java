@@ -12,6 +12,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +38,9 @@ public class AnthropicClient {
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("ANTHROPIC_API_KEY not set — AI features will use rule-based fallbacks");
         }
-        httpClient = HttpClient.newHttpClient();
+        httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(5))
+                .build();
     }
 
     public boolean isConfigured() {
@@ -63,6 +66,7 @@ public class AnthropicClient {
                     .header("x-api-key", apiKey)
                     .header("anthropic-version", "2023-06-01")
                     .header("content-type", "application/json")
+                    .timeout(Duration.ofSeconds(30))
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
 
