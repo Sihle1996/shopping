@@ -232,14 +232,15 @@ public class AdminAiService {
     // ── Feature 4: Conversational Analytics ────────────────────────────────
 
     public Map<String, Object> queryAnalytics(String question, UUID tenantId) {
-        // Step 1 — classify intent
+        // Step 1 — classify intent (includes CONVERSATIONAL for chitchat)
         String classifyPrompt =
-                "Classify this analytics question into one of these intents:\n" +
-                "TOP_ITEM_ORDERS, TOP_ITEM_REVENUE, REVENUE_COMPARISON, PEAK_HOUR, ORDER_COUNT, NEW_CUSTOMERS\n" +
-                "Also extract the time period: THIS_WEEK, THIS_MONTH, LAST_WEEK, LAST_MONTH, TODAY\n" +
+                "Classify this message from a restaurant owner into one of these intents:\n" +
+                "TOP_ITEM_ORDERS, TOP_ITEM_REVENUE, REVENUE_COMPARISON, PEAK_HOUR, ORDER_COUNT, NEW_CUSTOMERS, CONVERSATIONAL\n" +
+                "Use CONVERSATIONAL for greetings, follow-up reactions, thank-yous, general questions about capabilities, or anything that is not a specific data query.\n" +
+                "Also extract the time period if relevant: THIS_WEEK, THIS_MONTH, LAST_WEEK, LAST_MONTH, TODAY (use THIS_MONTH as default for data queries).\n" +
                 "Return JSON only:\n" +
                 "{ \"intent\": \"<INTENT>\", \"period\": \"<PERIOD>\" }\n" +
-                "Question: \"" + question.replace("\"", "'") + "\"";
+                "Message: \"" + question.replace("\"", "'") + "\"";
 
         String classifyRaw = anthropicClient.call(classifyPrompt);
         Map<String, Object> classification = (classifyRaw != null && !classifyRaw.isBlank())
@@ -249,19 +250,37 @@ public class AdminAiService {
         String intent = String.valueOf(classification.getOrDefault("intent", "ORDER_COUNT"));
         String period = String.valueOf(classification.getOrDefault("period", "THIS_MONTH"));
 
-        // Step 2 — resolve date range
+        // Step 2 — for conversational messages, skip data lookup and reply naturally
+        if ("CONVERSATIONAL".equals(intent)) {
+            String chatPrompt =
+                "You are an analytics assistant for a South African restaurant owner.\n" +
+                "Reply naturally and helpfully in 1-2 sentences.\n" +
+                "If they ask what you can do, mention: top-selling items, revenue totals, order counts, " +
+                "revenue comparisons, peak hours, and customer counts — across any time period.\n" +
+                "Do NOT mention zeros, data, or revenue figures unless they asked for them.\n" +
+                "Message: \"" + question.replace("\"", "'") + "\"";
+            String raw = anthropicClient.call(chatPrompt);
+            String answer = (raw != null && !raw.isBlank())
+                    ? raw.trim() : "I'm here to help! Ask me about your top items, revenue, peak hours, or order trends.";
+            return Map.of("answer", answer, "data", Map.of(), "question", question);
+        }
+
+        // Step 3 — resolve date range and run the matched query
         Instant[] range = resolveDateRange(period);
-        Instant start = range[0], end = range[1];
+        Map<String, Object> data = runQuery(intent, range[0], range[1], tenantId);
 
-        // Step 3 — run the matched query
-        Map<String, Object> data = runQuery(intent, start, end, tenantId);
-
-        // Step 4 — format answer
+        // Step 4 — format answer, let Claude decide when to include numbers
         String formatPrompt =
-                "Given this data: " + toJson(data) + "\n" +
-                "Answer this question in one natural, friendly sentence (include the numbers): \"" +
-                question.replace("\"", "'") + "\"\n" +
-                "Use South African Rand (R) for currency. Return only the sentence.";
+                "You are an analytics assistant for a South African restaurant owner.\n" +
+                "Answer the following question using this data: " + toJson(data) + "\n" +
+                "Question: \"" + question.replace("\"", "'") + "\"\n" +
+                "Rules:\n" +
+                "- Reply in one natural, friendly sentence\n" +
+                "- Include the relevant numbers from the data\n" +
+                "- Use South African Rand (R) for currency\n" +
+                "- Do NOT say 'I've been away' or adopt the user's words as your own\n" +
+                "- If the data shows zero, say so factually without being presumptuous about why\n" +
+                "Return only the sentence.";
 
         String raw = anthropicClient.call(formatPrompt);
         String answer;
