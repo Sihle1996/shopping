@@ -32,6 +32,7 @@
               { "glob": "sw-push.js", "input": "src", "output": "/" }
             ],
             "styles": [
+              "node_modules/apexcharts/dist/apexcharts.css",
               "node_modules/leaflet/dist/leaflet.css",
               "node_modules/leaflet.awesome-markers/dist/leaflet.awesome-markers.css",
               "node_modules/maplibre-gl/dist/maplibre-gl.css",
@@ -110,6 +111,7 @@
               "src/assets"
             ],
             "styles": [
+              "node_modules/apexcharts/dist/apexcharts.css",
               "node_modules/leaflet/dist/leaflet.css",
               "node_modules/leaflet.awesome-markers/dist/leaflet.awesome-markers.css",
               "node_modules/font-awesome/css/font-awesome.min.css",
