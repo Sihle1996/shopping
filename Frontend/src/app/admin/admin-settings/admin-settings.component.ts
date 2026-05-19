@@ -6,6 +6,7 @@ import { AuthService } from 'src/app/services/auth.service';
 import { TenantService } from 'src/app/services/tenant.service';
 import { AdminService } from 'src/app/services/admin.service';
 import { SubscriptionService } from 'src/app/services/subscription.service';
+import { GeocodingService, AddressSuggestion } from 'src/app/services/geocoding.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 
@@ -18,6 +19,8 @@ interface TenantSettings {
   phone: string;
   email: string;
   address: string;
+  latitude?: number | null;
+  longitude?: number | null;
   deliveryRadiusKm: number;
   deliveryFeeBase: number;
   isOpen: boolean;
@@ -41,6 +44,8 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     phone: '',
     email: '',
     address: '',
+    latitude: null,
+    longitude: null,
     deliveryRadiusKm: 10,
     deliveryFeeBase: 0,
     isOpen: true,
@@ -52,6 +57,12 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   isSaving = false;
   isUploadingLogo = false;
   settingsSubmitted = false;
+
+  addressSuggestions: AddressSuggestion[] = [];
+  addressLoading = false;
+  showAddressSuggestions = false;
+  locating = false;
+  private addressDebounce: any;
 
   get settingsEmailValid(): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.settings.email?.trim() || '');
@@ -88,6 +99,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     private tenantService: TenantService,
     private adminService: AdminService,
     private subscriptionService: SubscriptionService,
+    private geocodingService: GeocodingService,
     private toastr: ToastrService,
     private route: ActivatedRoute
   ) {}
@@ -259,6 +271,70 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
         this.toastr.error('Failed to save store hours');
       }
     });
+  }
+
+  onAddressInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    clearTimeout(this.addressDebounce);
+    this.settings.latitude = null;
+    this.settings.longitude = null;
+    if (value.length < 3) { this.addressSuggestions = []; this.showAddressSuggestions = false; return; }
+    this.addressLoading = true;
+    this.addressDebounce = setTimeout(() => {
+      this.geocodingService.autocomplete(value).subscribe({
+        next: (suggestions) => {
+          this.addressSuggestions = suggestions;
+          this.showAddressSuggestions = suggestions.length > 0;
+          this.addressLoading = false;
+        },
+        error: () => { this.addressLoading = false; }
+      });
+    }, 300);
+  }
+
+  onAddressBlur(): void {
+    setTimeout(() => { this.showAddressSuggestions = false; }, 200);
+  }
+
+  selectAddressSuggestion(s: AddressSuggestion): void {
+    this.settings.address = s.label;
+    this.settings.latitude = s.lat;
+    this.settings.longitude = s.lon;
+    this.addressSuggestions = [];
+    this.showAddressSuggestions = false;
+  }
+
+  useCurrentLocation(): void {
+    if (!navigator.geolocation) {
+      this.toastr.error('Geolocation is not supported by your browser');
+      return;
+    }
+    this.locating = true;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        this.geocodingService.reverseGeocode(lat, lon).subscribe({
+          next: (res) => {
+            this.settings.address = res?.display_name || `${lat}, ${lon}`;
+            this.settings.latitude = lat;
+            this.settings.longitude = lon;
+            this.locating = false;
+            this.toastr.success('Location detected');
+          },
+          error: () => {
+            this.settings.latitude = lat;
+            this.settings.longitude = lon;
+            this.locating = false;
+            this.toastr.info('Coordinates set — enter address text manually');
+          }
+        });
+      },
+      () => {
+        this.locating = false;
+        this.toastr.error('Could not get your location — check browser permissions');
+      }
+    );
   }
 
   saveSettings(): void {
