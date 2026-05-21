@@ -75,6 +75,8 @@ public class GroupCartController {
             @PathVariable String token,
             @AuthenticationPrincipal User user) {
         groupCartService.close(token, user);
-        return ResponseEntity.ok(Map.of("status", "CHECKED_OUT"));
+        Map<String, Object> summary = groupCartService.summarize(token);
+        messagingTemplate.convertAndSend("/topic/group-cart/" + token, summary);
+        return ResponseEntity.ok(summary);
     }
 }

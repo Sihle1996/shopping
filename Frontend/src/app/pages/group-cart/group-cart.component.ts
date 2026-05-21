@@ -24,6 +24,9 @@ export class GroupCartComponent implements OnInit, OnDestroy {
 
   private token = '';
   private pollInterval: any = null;
+  private statusPollInterval: any = null;
+  private waitingTimeout: any = null;
+  waitingTooLong = false;
   private stompClient: Client | null = null;
   private stompSub: any = null;
 
@@ -45,7 +48,9 @@ export class GroupCartComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopPolling();
+    this.stopStatusPoll();
     this.disconnectWs();
+    if (this.waitingTimeout) clearTimeout(this.waitingTimeout);
   }
 
   load(): void {
@@ -59,6 +64,7 @@ export class GroupCartComponent implements OnInit, OnDestroy {
             localStorage.setItem('groupCartToken', this.token);
             this.checkPersonalCart();
             this.connectWs();
+            if (!this.isOwner) this.startStatusPoll();
           } else {
             this.startPolling();
           }
@@ -75,7 +81,7 @@ export class GroupCartComponent implements OnInit, OnDestroy {
     this.stompClient = new Client({
       webSocketFactory: () => new SockJS(`${environment.apiUrl}/ws`),
       connectHeaders: { Authorization: `Bearer ${authToken}` },
-      reconnectDelay: 0,
+      reconnectDelay: 5000,
       onConnect: () => {
         this.stopPolling();
         this.stompSub = this.stompClient!.subscribe(
@@ -83,8 +89,13 @@ export class GroupCartComponent implements OnInit, OnDestroy {
           (msg) => {
             this.zone.run(() => {
               const updated: GroupCartSummary = JSON.parse(msg.body);
+              // Don't replace cart mid-remove — wait for the remove's own broadcast
+              if (this.removingId && updated.items.some((i: any) => i.id === this.removingId)) return;
               this.cart = updated;
-              if (updated.status !== 'OPEN') this.disconnectWs();
+              if (updated.status !== 'OPEN') {
+                this.disconnectWs();
+                this.stopPolling();
+              }
             });
           }
         );
@@ -117,6 +128,33 @@ export class GroupCartComponent implements OnInit, OnDestroy {
 
   private stopPolling(): void {
     if (this.pollInterval) { clearInterval(this.pollInterval); this.pollInterval = null; }
+  }
+
+  private startStatusPoll(): void {
+    if (this.statusPollInterval) return;
+    this.statusPollInterval = setInterval(() => {
+      this.groupCartService.get(this.token).subscribe({
+        next: cart => {
+          this.zone.run(() => {
+            if (cart.status !== 'OPEN') {
+              this.cart = cart;
+              this.stopStatusPoll();
+              this.disconnectWs();
+            }
+          });
+        },
+        error: () => {}
+      });
+    }, 5000);
+    // Show "taking too long" message after 3 minutes
+    this.waitingTimeout = setTimeout(() => {
+      this.zone.run(() => { this.waitingTooLong = true; });
+    }, 3 * 60 * 1000);
+  }
+
+  private stopStatusPoll(): void {
+    if (this.statusPollInterval) { clearInterval(this.statusPollInterval); this.statusPollInterval = null; }
+    if (this.waitingTimeout) { clearTimeout(this.waitingTimeout); this.waitingTimeout = null; }
   }
 
   private checkPersonalCart(): void {

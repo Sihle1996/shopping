@@ -171,10 +171,17 @@
               class="w-full py-3 bg-primary text-white font-semibold rounded-xl text-sm hover:opacity-90 transition-opacity">
         Proceed to Checkout
       </button>
-      <p *ngIf="!isOwner && cart.status === 'OPEN' && isLoggedIn"
-         class="text-xs text-center text-textMuted">
-        Waiting for the host ({{ cart.ownerName }}) to checkout
-      </p>
+      <div *ngIf="!isOwner && cart.status === 'OPEN' && isLoggedIn" class="text-center space-y-1">
+        <p class="text-xs text-textMuted flex items-center justify-center gap-1.5">
+          <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          Waiting for {{ cart.ownerName }} to checkout...
+        </p>
+        <p *ngIf="waitingTooLong" class="text-xs text-amber-600">
+          This is taking longer than usual. You can
+          <a (click)="load()" class="underline cursor-pointer font-medium">refresh</a>
+          or come back later.
+        </p>
+      </div>
     </div>
 
   </div>
