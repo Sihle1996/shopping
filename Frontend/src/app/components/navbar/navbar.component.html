@@ -5,7 +5,7 @@
     <!-- Logo + Store Name -->
     <a (click)="goHome()" class="flex items-center gap-2 cursor-pointer">
       <img *ngIf="storeLogo" [src]="storeLogo" class="w-8 h-8 rounded-lg object-cover" />
-      <img *ngIf="!storeLogo" src="assets/craveit-logo-transparent.png" alt="CraveIt" class="h-8 w-auto" />
+      <img *ngIf="!storeLogo" src="assets/craveit-logo-transparent.png" alt="CraveIt" class="h-6 w-auto md:h-8" />
       <div *ngIf="storeLogo" class="flex flex-col">
         <span class="font-heading text-lg font-bold text-textDark leading-tight">{{ storeName }}</span>
         <span *ngIf="isAdmin && router.url.startsWith('/admin')" class="text-[10px] text-textMuted leading-tight">Admin Panel</span>
@@ -99,7 +99,7 @@
     <div class="flex items-center justify-between px-5 py-4 border-b border-borderColor">
       <div class="flex items-center gap-2">
         <img *ngIf="storeLogo" [src]="storeLogo" class="w-8 h-8 rounded-lg object-cover" />
-        <img *ngIf="!storeLogo" src="assets/craveit-logo-transparent.png" alt="CraveIt" class="h-8 w-auto" />
+        <img *ngIf="!storeLogo" src="assets/craveit-logo-transparent.png" alt="CraveIt" class="h-6 w-auto md:h-8" />
         <span *ngIf="storeLogo" class="font-heading font-bold text-textDark">{{ storeName }}</span>
       </div>
       <button (click)="toggleMenu()" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
