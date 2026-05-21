@@ -5,15 +5,11 @@
     <!-- Logo + Store Name -->
     <a (click)="goHome()" class="flex items-center gap-2 cursor-pointer">
       <img *ngIf="storeLogo" [src]="storeLogo" class="w-8 h-8 rounded-lg object-cover" />
-      <div *ngIf="!storeLogo" class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-        <i class="bi bi-fire text-white text-sm"></i>
-      </div>
-      <div class="flex flex-col">
-        <span class="font-heading text-lg font-bold text-textDark leading-tight">
-          {{ storeName || 'CraveIt' }}
-        </span>
-        <span *ngIf="storeName && isAdmin && router.url.startsWith('/admin')" class="text-[10px] text-textMuted leading-tight">Admin Panel</span>
-        <span *ngIf="storeName && !(isAdmin && router.url.startsWith('/admin'))" class="text-[10px] text-textMuted leading-tight">Powered by CraveIt</span>
+      <img *ngIf="!storeLogo" src="assets/craveit-logo-transparent.png" alt="CraveIt" class="h-8 w-auto" />
+      <div *ngIf="storeLogo" class="flex flex-col">
+        <span class="font-heading text-lg font-bold text-textDark leading-tight">{{ storeName }}</span>
+        <span *ngIf="isAdmin && router.url.startsWith('/admin')" class="text-[10px] text-textMuted leading-tight">Admin Panel</span>
+        <span *ngIf="!(isAdmin && router.url.startsWith('/admin'))" class="text-[10px] text-textMuted leading-tight">Powered by CraveIt</span>
       </div>
     </a>
 
@@ -103,10 +99,8 @@
     <div class="flex items-center justify-between px-5 py-4 border-b border-borderColor">
       <div class="flex items-center gap-2">
         <img *ngIf="storeLogo" [src]="storeLogo" class="w-8 h-8 rounded-lg object-cover" />
-        <div *ngIf="!storeLogo" class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-          <i class="bi bi-fire text-white text-sm"></i>
-        </div>
-        <span class="font-heading font-bold text-textDark">{{ storeName || 'CraveIt' }}</span>
+        <img *ngIf="!storeLogo" src="assets/craveit-logo-transparent.png" alt="CraveIt" class="h-8 w-auto" />
+        <span *ngIf="storeLogo" class="font-heading font-bold text-textDark">{{ storeName }}</span>
       </div>
       <button (click)="toggleMenu()" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
         <i class="bi bi-x-lg text-textDark text-sm"></i>
