@@ -1207,3 +1207,278 @@ Chips map to pre-baked prompts so users don't need to type at all — the AI-fee
 | Add Combo to Cart | `POST /api/cart/add-combo` → all 3 items appear in cart as separate CartItems |
 | Order for Me | POST "cheap filling for 2" → interpretation returns servings=2, budget=80, tag=filling; confirm → 2 items added to cart |
 | Phase 2 events | Click item → `user_events` row with `event_type=CLICK` persisted |
+
+---
+
+# Production Readiness — Missing Critical Features
+
+Items not yet built, derived from platform review. Build these before public launch.
+
+---
+
+## 1. Auto-Reject Timer (Order Timeout)
+
+If a restaurant doesn't accept an order within 5 minutes, automatically cancel it, trigger a PayFast refund, and send the customer a Resend notification email.
+
+**Backend:**
+- `@Scheduled` job runs every 60 seconds
+- Query: `orders WHERE status = 'PENDING' AND created_at < NOW() - INTERVAL '5 minutes'`
+- For each: set `status = 'CANCELLED'`, trigger PayFast refund API call, send "Order cancelled — restaurant did not respond" email via Resend
+- Log cancellation reason: `AUTO_REJECTED_TIMEOUT`
+
+**Frontend (admin):**
+- Countdown timer on pending orders in admin orders list (5:00 → 0:00)
+- Order auto-removes from list when timer expires
+
+---
+
+## 2. Pre-Checkout Inventory Sanity Check
+
+Re-verify stock for every cart item immediately after the user clicks "Pay" but before redirecting to PayFast. Catches race conditions where stock depletes between "Add to Cart" and checkout.
+
+**Backend — in `CheckoutService` or `OrderService`, before PayFast redirect:**
+```java
+// For each cart item:
+MenuItem item = menuItemRepository.findById(cartItem.getMenuItemId());
+if (!item.isAvailable() || item.getStock() < cartItem.getQuantity()) {
+    throw new InsufficientStockException(item.getName());
+}
+```
+
+Return HTTP 409 Conflict with item name. Frontend shows "Sorry, [item] just sold out — please update your cart."
+
+---
+
+## 3. Payout Reconciliation Ledger
+
+Track all money movements per restaurant so payouts are auditable and disputable.
+
+**Database — new migration:**
+```sql
+CREATE TABLE payout_ledger (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id     UUID NOT NULL REFERENCES tenants(id),
+  order_id      UUID REFERENCES orders(id),
+  entry_type    VARCHAR(16) NOT NULL,  -- CREDIT | DEBIT | PAYOUT | FEE | REFUND
+  amount_rand   NUMERIC(10,2) NOT NULL,
+  balance_after NUMERIC(10,2) NOT NULL,
+  description   VARCHAR(256),
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_ledger_tenant ON payout_ledger(tenant_id, created_at DESC);
+```
+
+**Logic:**
+- On order DELIVERED: `CREDIT` entry (order total minus platform fee %)
+- On refund: `DEBIT` entry
+- On weekly payout: `PAYOUT` entry (batch EFT via Stitch or Peach Payments)
+- Platform fee: `FEE` entry per order
+
+**Admin endpoint:** `GET /api/admin/payouts/ledger` → paginated ledger with running balance  
+**SuperAdmin endpoint:** `GET /api/superadmin/payouts` → all tenants, pending payout totals
+
+---
+
+## 4. Automated Payout Split
+
+Weekly batch EFT to restaurant bank accounts. Use **Stitch** (ZA-native, lower fees) or **Peach Payments Marketplace** as the payout provider.
+
+**Integration points:**
+- Each tenant stores `bankAccountNumber`, `bankName`, `accountHolder` (encrypted at rest)
+- `@Scheduled` weekly job: sum `CREDIT` entries minus `DEBIT` entries since last `PAYOUT` entry
+- Call Stitch Disbursements API (or Peach batch transfer) with amount + account details
+- Record `PAYOUT` entry in ledger on success; flag as `PAYOUT_FAILED` on error + alert SuperAdmin
+
+---
+
+## 5. Support Ticket Routing
+
+**Currently built:** basic support ticket submission. **Missing:** routing logic (who handles what), escalation, internal notes, and ticket type classification.
+
+**Database — add columns to `support_tickets` table:**
+```sql
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS ticket_type VARCHAR(32) DEFAULT 'GENERAL';
+-- REFUND | COMPLAINT | LATE_DELIVERY | WRONG_ORDER | GENERAL | DRIVER_ISSUE
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS current_handler VARCHAR(16) DEFAULT 'STORE_ADMIN';
+-- STORE_ADMIN | SUPER_ADMIN
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS creator_role VARCHAR(16) DEFAULT 'CUSTOMER';
+-- CUSTOMER | STORE_ADMIN
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS internal_notes TEXT;
+ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS escalated_at TIMESTAMPTZ;
+```
+
+**Routing rules:**
+- New ticket from customer → assigned to `STORE_ADMIN` of that tenant
+- If StoreAdmin can't resolve in 48h OR ticket_type = `REFUND` → escalate to `SUPER_ADMIN`
+- Driver complaints always go to `SUPER_ADMIN`
+
+**Frontend:**
+- StoreAdmin support page: shows only their tickets, can add `internal_notes`, can escalate
+- SuperAdmin support page: shows escalated tickets + all `REFUND` tickets
+
+---
+
+## 6. OTP Security Fix
+
+**Problem:** Driver can see the delivery OTP in the driver interface before the customer shows it, enabling fraudulent "Force Deliver" without customer consent.
+
+**Fix:**
+- Remove OTP display from driver view entirely — driver should only see a confirmation field
+- Driver types in the OTP the customer reads aloud
+- Backend validates: if OTP matches, mark as DELIVERED
+
+**SuperAdmin override "Force Deliver":**
+- SuperAdmin endpoint: `POST /api/superadmin/orders/{id}/force-deliver` with reason field
+- Records: `deliveredBy = 'ADMIN_OVERRIDE'`, `forceDeliverReason`, `forceDeliveredBy` (admin user ID)
+- For cases where customer is unreachable / OTP lost
+
+---
+
+## 7. Store Heartbeat / Auto-Offline
+
+Detect when a store's admin app is closed or offline and automatically flip the store to "Temporarily Offline" so customers don't place orders into a void.
+
+**Backend:**
+- New endpoint: `POST /api/admin/heartbeat` — updates `tenant.lastHeartbeatAt = NOW()`
+- `@Scheduled` job every 60s: query tenants where `isOpen = true AND lastHeartbeatAt < NOW() - INTERVAL '3 minutes'`
+- For each: set `isOpen = false`, `autoOfflineReason = 'HEARTBEAT_TIMEOUT'`
+- When admin app reconnects and sends heartbeat: auto-flip back to online + notify admin
+
+**Frontend (admin):**
+- `setInterval` every 60s calls `POST /api/admin/heartbeat` silently
+- On page visibility change to visible: send immediate heartbeat
+- Small status indicator in admin navbar: green dot = online, amber = heartbeat warning
+
+---
+
+## 8. Service Workers (Offline Capability)
+
+Cache the core UI shell and queue driver location pings during connectivity gaps.
+
+**Implementation:**
+- Angular Service Worker (`@angular/service-worker`) — add to `app.module.ts` + `ngsw-config.json`
+- Cache strategy: `freshness` for API calls, `performance` for static assets
+- Background sync: driver location coordinates queued in IndexedDB when offline, flushed when connection restored
+- Offline page: show cached menu (read-only) with "You're offline — ordering paused" banner
+
+**`ngsw-config.json` (key entries):**
+```json
+{
+  "dataGroups": [{
+    "name": "api-freshness",
+    "urls": ["/api/menu", "/api/store"],
+    "cacheConfig": { "strategy": "freshness", "maxAge": "1h", "timeout": "10s" }
+  }]
+}
+```
+
+---
+
+## 9. Thermal Receipt Printing
+
+Allow kitchen/restaurant staff to print orders without a POS system using any thermal printer connected via browser print dialog.
+
+**Implementation:**
+- Add `print-receipt.css` stylesheet: narrow width (80mm), monospace font, large item names, dashed dividers
+- "Print" button on each order detail in admin orders page
+- `window.print()` triggered via Angular — browser opens print dialog with thermal-optimized layout
+- Receipt layout: store name, order #, timestamp, items + quantities + prices, total, delivery address, customer name
+
+**No backend changes needed** — purely a frontend CSS + print trigger.
+
+---
+
+## 10. SMS / WhatsApp High-Urgency Notifications
+
+For critical time-sensitive alerts that can't rely on email (driver assigned, order ready, OTP).
+
+**Provider:** **BulkSMS SA** (local, cheap, POPIA-compliant) or **Twilio** (global, WhatsApp Business API support).
+
+**Trigger points:**
+- Customer: order confirmed (SMS), driver assigned + ETA (SMS), order out for delivery (WhatsApp if available)
+- Driver: new order assigned (SMS with address), customer OTP reminder if unresponsive
+- Restaurant: new order received (SMS as backup to push notification)
+
+**Backend:**
+- `SmsService.java` — wraps BulkSMS REST API
+- `send(String to, String message)` — single method, fire-and-forget (async `@Async`)
+- Called from `OrderService` at state transitions
+
+---
+
+## 11. Cloudinary Security for Compliance Documents
+
+Restaurant verification documents (ID, business registration) must NOT be publicly accessible via Cloudinary URL.
+
+**Current risk:** documents uploaded with `upload_type = upload` (public) — anyone with the URL can access them.
+
+**Fix:**
+- Create a separate Cloudinary folder: `craveit/compliance/` with **authenticated** delivery type
+- Upload compliance docs with `type: "authenticated"` in Cloudinary SDK call
+- Store only the `public_id` in the DB, not the URL
+- SuperAdmin viewing a document: backend generates a **signed URL** (30–60 second expiry) via Cloudinary Java SDK:
+  ```java
+  cloudinary.url().signed(true).expireAt(Instant.now().plusSeconds(60))
+      .generate("craveit/compliance/" + publicId);
+  ```
+- Return the expiring URL in `GET /api/superadmin/tenants/{id}/documents` response
+- Never store or log the signed URL
+
+---
+
+## 12. Partial Order Mutation ("Modify Order")
+
+Restaurant marks a specific item as out-of-stock after the order is placed. Customer gets a live alert and can accept the modification or cancel for a full refund.
+
+**Flow:**
+1. Restaurant clicks "Item unavailable" on a specific line item in admin order detail
+2. Backend: sets `orderItem.status = 'REMOVED'`, recalculates order total, pushes WebSocket event to customer
+3. Customer sees: "Gasa Grills removed [item] — new total: R95. Accept or Cancel?"
+4. If customer accepts: order proceeds with reduced total, difference refunded via PayFast partial refund API
+5. If customer cancels: full order cancelled, full refund issued
+
+**Backend changes:**
+- `OrderItem` entity: add `status` column (`INCLUDED` / `REMOVED`)
+- `PATCH /api/admin/orders/{id}/items/{itemId}/remove` → removes item, recalculates, broadcasts WebSocket
+- `POST /api/orders/{id}/accept-modification` and `POST /api/orders/{id}/cancel-after-modification`
+
+**Frontend (customer):**
+- WebSocket listener on order status page catches `ORDER_MODIFIED` event
+- Shows modal with modified item list + new total + accept/cancel buttons
+
+---
+
+## 13. POPIA Compliance + Legal Pages
+
+Required for operating in South Africa under the Protection of Personal Information Act.
+
+**Pages to add:**
+- `/privacy` — Privacy Policy (data collected, retention, user rights, contact for deletion requests)
+- `/terms` — Customer Terms & Conditions (ordering, refunds, delivery, liability)
+- `/restaurant-terms` — Restaurant Partner Agreement (commission, payout terms, prohibited items, suspension policy)
+
+**In-app requirements:**
+- Registration checkbox: "I agree to the [Terms & Conditions] and [Privacy Policy]" (required, not pre-ticked)
+- Restaurant onboarding: accept Restaurant Partner Agreement before going live
+- Data deletion: `DELETE /api/user/account` endpoint — anonymises personal data, retains financial records for 5 years (SARS requirement)
+- Cookie consent banner on landing page
+
+---
+
+## Build Priority
+
+| Priority | Feature | Why |
+|----------|---------|-----|
+| P0 | Pre-checkout inventory check | Prevents overselling — blocks launch without it |
+| P0 | OTP security fix | Active security vulnerability |
+| P0 | POPIA + legal pages | Legal requirement for SA launch |
+| P1 | Auto-reject timer | Bad UX without it — orders hang forever |
+| P1 | Store heartbeat | Prevents orders going to closed stores |
+| P1 | Support ticket routing | Needed once volume > 10 tickets/day |
+| P2 | Payout ledger | Needed before first restaurant payout |
+| P2 | Automated payout split | Manual payouts don't scale past 5 restaurants |
+| P2 | Cloudinary compliance security | Before onboarding real restaurants with real IDs |
+| P3 | Thermal printing | Nice-to-have for kitchen workflow |
+| P3 | Service workers | Nice-to-have for driver reliability |
+| P3 | SMS/WhatsApp notifications | Enhances reliability but email covers the basics |
+| P3 | Partial order mutation | Complex — defer until order volume proves the need |
