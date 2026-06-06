@@ -223,7 +223,10 @@ export class CartService {
     });
 
     return forkJoin(requests).pipe(
-      tap(() => localStorage.removeItem(this.LOCAL_CART_KEY)),
+      tap({
+        next: () => localStorage.removeItem(this.LOCAL_CART_KEY),
+        error: () => {}
+      }),
       map(() => undefined)
     );
   }
@@ -244,14 +247,13 @@ export class CartService {
       return;
     }
 
+    this.cartItems.next([]);
+    this.totalPrice.next(0);
+    this.cartItemCount.next(0);
     this.http.delete(`${this.apiUrl}/clear`, {
       headers: this.getAuthHeaders()
     }).subscribe({
-      next: () => {
-        this.cartItems.next([]);
-        this.totalPrice.next(0);
-        this.cartItemCount.next(0);
-      }
+      error: () => this.getCartItems().subscribe()
     });
   }
 }

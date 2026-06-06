@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { GroupCartService, GroupCartSummary } from 'src/app/services/group-cart.service';
 import { CartService, CartItem } from 'src/app/services/cart.service';
@@ -26,6 +26,8 @@ export class GroupCartComponent implements OnInit, OnDestroy {
   private pollInterval: any = null;
   private statusPollInterval: any = null;
   private waitingTimeout: any = null;
+  private pollSub: Subscription | null = null;
+  private statusPollSub: Subscription | null = null;
   waitingTooLong = false;
   private stompClient: Client | null = null;
   private stompSub: any = null;
@@ -76,7 +78,7 @@ export class GroupCartComponent implements OnInit, OnDestroy {
   }
 
   private connectWs(): void {
-    if (this.stompClient?.active) return;
+    if (this.stompClient) return;
     const authToken = this.authService.getToken();
     this.stompClient = new Client({
       webSocketFactory: () => new SockJS(`${environment.apiUrl}/ws`),
@@ -118,7 +120,8 @@ export class GroupCartComponent implements OnInit, OnDestroy {
   private startPolling(): void {
     if (this.pollInterval) return;
     this.pollInterval = setInterval(() => {
-      this.groupCartService.get(this.token).subscribe({
+      this.pollSub?.unsubscribe();
+      this.pollSub = this.groupCartService.get(this.token).subscribe({
         next: cart => {
           this.cart = cart;
           if (cart.status !== 'OPEN') this.stopPolling();
@@ -130,12 +133,15 @@ export class GroupCartComponent implements OnInit, OnDestroy {
 
   private stopPolling(): void {
     if (this.pollInterval) { clearInterval(this.pollInterval); this.pollInterval = null; }
+    this.pollSub?.unsubscribe();
+    this.pollSub = null;
   }
 
   private startStatusPoll(): void {
     if (this.statusPollInterval) return;
     this.statusPollInterval = setInterval(() => {
-      this.groupCartService.get(this.token).subscribe({
+      this.statusPollSub?.unsubscribe();
+      this.statusPollSub = this.groupCartService.get(this.token).subscribe({
         next: cart => {
           this.zone.run(() => {
             if (cart.status !== 'OPEN') {
@@ -157,6 +163,8 @@ export class GroupCartComponent implements OnInit, OnDestroy {
   private stopStatusPoll(): void {
     if (this.statusPollInterval) { clearInterval(this.statusPollInterval); this.statusPollInterval = null; }
     if (this.waitingTimeout) { clearTimeout(this.waitingTimeout); this.waitingTimeout = null; }
+    this.statusPollSub?.unsubscribe();
+    this.statusPollSub = null;
   }
 
   private checkPersonalCart(): void {

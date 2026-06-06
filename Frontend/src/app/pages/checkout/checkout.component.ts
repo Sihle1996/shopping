@@ -154,7 +154,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     this.loadCartAndPromos();
     this.loyaltyService.getBalance().subscribe({
       next: b => this.loyaltyBalance = b,
-      error: () => {}
+      error: () => { this.loyaltyBalance = null; }
     });
     this.addressService.list().subscribe({
       next: addresses => {
@@ -574,13 +574,20 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     this.submitting = true;
     this.http.post<any>(`${environment.apiUrl}/api/orders/place`, orderData, { headers }).subscribe({
       next: (res) => {
+        if (!res?.id) {
+          this.submitting = false;
+          this.toastr.error('Order was created but no order ID returned. Please contact support.');
+          return;
+        }
         if (groupToken) {
-          this.groupCartService.close(groupToken).subscribe();
+          this.groupCartService.close(groupToken).subscribe({
+            error: () => this.toastr.warning('Order placed, but could not close the group cart.')
+          });
           this.groupCheckoutToken = null;
         }
         this.cartService.clearCart();
         const summary = {
-          orderId: res?.id,
+          orderId: res.id,
           items: orderData.items,
           total: this.totalPrice,
           subtotal: this.subtotal,
@@ -590,7 +597,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
           estimatedDeliveryMinutes: this.estimatedDeliveryMinutes
         };
         localStorage.setItem('lastOrderSummary', JSON.stringify(summary));
-        this.initiatePayFast(res?.id, this.totalPrice);
+        this.initiatePayFast(res.id, this.totalPrice);
       },
       error: (err) => {
         this.submitting = false;

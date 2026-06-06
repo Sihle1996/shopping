@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { CartService } from 'src/app/services/cart.service';
@@ -16,7 +16,7 @@ import { environment } from 'src/environments/environment';
   templateUrl: './product.component.html',
   styleUrls: ['./product.component.scss']
 })
-export class ProductComponent implements OnInit {
+export class ProductComponent implements OnInit, OnDestroy {
   product: MenuItem | null = null;
   relatedItems: MenuItem[] = [];
   quantity = 1;
@@ -252,6 +252,10 @@ export class ProductComponent implements OnInit {
 
   get cartRoute(): string {
     return this.slug ? `/store/${this.slug}/cart` : '/cart';
+  }
+
+  ngOnDestroy(): void {
+    clearTimeout(this.addedBannerTimer);
   }
 
   goBack(): void { this.location.back(); }
