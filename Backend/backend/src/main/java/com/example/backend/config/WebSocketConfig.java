@@ -1,5 +1,6 @@
 package com.example.backend.config;
 
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -38,7 +39,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").setAllowedOrigins(allowedOrigins.split(",")).withSockJS();
+        String[] origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(o -> !o.isEmpty())
+                .toArray(String[]::new);
+        registry.addEndpoint("/ws").setAllowedOrigins(origins).withSockJS();
     }
 
     @Override

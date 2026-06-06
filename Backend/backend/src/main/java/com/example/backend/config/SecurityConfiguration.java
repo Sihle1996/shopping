@@ -41,7 +41,10 @@ public class SecurityConfiguration {
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowCredentials(true);
-                    List<String> origins = Arrays.asList(allowedOrigins.split(","));
+                    List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                            .map(String::trim)
+                            .filter(o -> !o.isEmpty())
+                            .toList();
                     config.setAllowedOrigins(origins);
                     config.addAllowedHeader("*");
                     config.addAllowedMethod("*");
