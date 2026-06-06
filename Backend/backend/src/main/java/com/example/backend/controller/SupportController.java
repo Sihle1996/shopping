@@ -49,23 +49,27 @@ public class SupportController {
             tenantRepository.findById(tenantId).ifPresent(ticket::setTenant);
         }
 
-        return ResponseEntity.ok(ticketRepository.save(ticket));
+        return ResponseEntity.ok(toDto(ticketRepository.save(ticket)));
     }
 
     /** Customer: view their own tickets */
     @GetMapping("/api/support/my")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<SupportTicket>> myTickets(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(ticketRepository.findByUser_IdOrderByCreatedAtDesc(user.getId()));
+    public ResponseEntity<List<TicketDTO>> myTickets(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(
+            ticketRepository.findByUser_IdOrderByCreatedAtDesc(user.getId())
+                .stream().map(this::toDto).toList());
     }
 
     /** Admin: list all tickets for their tenant */
     @GetMapping("/api/admin/support")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<SupportTicket>> adminTickets() {
+    public ResponseEntity<List<TicketDTO>> adminTickets() {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId == null) return ResponseEntity.badRequest().build();
-        return ResponseEntity.ok(ticketRepository.findByTenant_IdOrderByCreatedAtDesc(tenantId));
+        return ResponseEntity.ok(
+            ticketRepository.findByTenant_IdOrderByCreatedAtDesc(tenantId)
+                .stream().map(this::toDto).toList());
     }
 
     /** Admin: update ticket status and notes */
@@ -86,7 +90,30 @@ public class SupportController {
             if (body.containsKey("adminNotes")) {
                 ticket.setAdminNotes(body.get("adminNotes"));
             }
-            return ResponseEntity.ok(ticketRepository.save(ticket));
+            return ResponseEntity.ok(toDto(ticketRepository.save(ticket)));
         }).orElse(ResponseEntity.notFound().build());
     }
+
+    /** Map entity -> DTO to avoid serializing lazy Hibernate proxies (user/tenant). */
+    private TicketDTO toDto(SupportTicket t) {
+        TicketUserDTO userDto = null;
+        try {
+            if (t.getUser() != null) {
+                userDto = new TicketUserDTO(t.getUser().getEmail(), t.getUser().getFullName());
+            }
+        } catch (Exception ignored) {
+            // lazy association unavailable — omit user rather than failing the request
+        }
+        return new TicketDTO(
+            t.getId(), t.getSubject(), t.getMessage(),
+            t.getStatus() != null ? t.getStatus().name() : null,
+            t.getAdminNotes(), t.getOrderId(),
+            t.getCreatedAt(), t.getResolvedAt(), userDto);
+    }
+
+    record TicketUserDTO(String email, String fullName) {}
+
+    record TicketDTO(UUID id, String subject, String message, String status,
+                     String adminNotes, UUID orderId, Instant createdAt,
+                     Instant resolvedAt, TicketUserDTO user) {}
 }
