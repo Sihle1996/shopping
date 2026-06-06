@@ -132,6 +132,8 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
   private mapReady = false;
   private geocodingInProgress = false;
   private routeAnnounced = false;
+  private routeLineCoords: [number, number][] = [];  // current route polyline, for off-route detection
+  private lastRerouteAt = 0;
 
   optimizedStops: (DeliveryStop & { coords: [number, number] })[] = [];
   eta: string | null = null;
@@ -286,43 +288,103 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
     if (changed && this.mapReady) { this.clearStopMarkers(); this.addStopMarkers(); }
   }
 
-  /** Unified route fetcher — Directions API handles 1–25 waypoints on all Mapbox plans. */
-  private fetchRoute(): void {
+  /**
+   * Build the route. On the first build with 2–11 stops it uses the Mapbox
+   * Optimization API to solve the best visiting order (TSP); otherwise (single
+   * stop, >11 stops, or a reroute) it uses a fixed-order Directions route.
+   * @param reroute true when recomputing because the driver left the route —
+   *        keeps the current stop order and just re-paths from the new position.
+   */
+  private fetchRoute(reroute = false): void {
     if (!this.driverCoords || !this.optimizedStops.length) return;
     if (this.routeSub) { this.routeSub.unsubscribe(); this.routeSub = null; }
 
-    this.orderStopsNearestFirst();
+    const optimize = !reroute && this.optimizedStops.length >= 2 && this.optimizedStops.length <= 11;
+    if (optimize) {
+      this.runOptimized(reroute);
+    } else {
+      if (!reroute) this.orderStopsNearestFirst();
+      this.runDirections(reroute);
+    }
+  }
 
-    const waypoints = [
-      `${this.driverCoords[0]},${this.driverCoords[1]}`,
-      ...this.optimizedStops.map(s => `${s.coords[0]},${s.coords[1]}`)
-    ].join(';');
-    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${waypoints}` +
-      `?geometries=geojson&overview=full&steps=true&access_token=${environment.mapboxToken}`;
-
+  /** Mapbox Optimization API — reorders stops into the optimal visiting sequence. */
+  private runOptimized(reroute: boolean): void {
+    const coordStr = [this.driverCoords!, ...this.optimizedStops.map(s => s.coords)]
+      .map(c => `${c[0]},${c[1]}`).join(';');
+    const url = `https://api.mapbox.com/optimized-trips/v1/mapbox/driving/${coordStr}` +
+      `?source=first&roundtrip=false&geometries=geojson&overview=full&steps=true&access_token=${environment.mapboxToken}`;
     this.routeSub = this.http.get<any>(url).pipe(takeUntil(this.destroy$)).subscribe({
       next: (res) => {
-        if (!res.routes?.length) {
-          this.eta = 'No route';
-          return;
+        const trip = res.trips?.[0];
+        if (!trip) { this.runDirections(reroute); return; }  // fall back, keep order
+        // res.waypoints is in input order; waypoint_index gives the optimal position.
+        if (res.waypoints?.length) {
+          const ordered = this.optimizedStops
+            .map((s, i) => ({ s, idx: res.waypoints[i + 1]?.waypoint_index ?? i + 1 }))
+            .sort((a, b) => a.idx - b.idx)
+            .map(x => x.s);
+          const changed = ordered.some((s, i) => s.id !== this.optimizedStops[i].id);
+          this.optimizedStops = ordered;
+          if (changed && this.mapReady) { this.clearStopMarkers(); this.addStopMarkers(); }
         }
-        const route = res.routes[0];
-        const durationMin = Math.round(route.duration / 60);
-        this.eta = durationMin < 60 ? `${durationMin} min` : `${Math.floor(durationMin / 60)}h ${durationMin % 60}m`;
-        this.distance = `${(route.distance / 1000).toFixed(1)} km`;
-        this.routeSteps = route.legs?.flatMap((leg: any) => leg.steps || []) || [];
-        if (this.routeSteps.length) this.nextInstruction = this.routeSteps[0].maneuver?.instruction || null;
-        this.drawMultiLegRoute({ geometry: route.geometry, legs: route.legs });
-        if (!this.routeAnnounced) {
-          this.routeAnnounced = true;
-          const stopWord = this.optimizedStops.length > 1 ? `${this.optimizedStops.length} stops` : '1 stop';
-          this.speak(`Route loaded. ${stopWord}, ${this.distance}, ${this.eta}.`);
-        }
+        this.applyTrip(trip, reroute);
       },
-      error: () => {
-        this.eta = 'Route unavailable';
-      }
+      error: () => this.runDirections(reroute),  // optimization unavailable → plain route
     });
+  }
+
+  /** Plain fixed-order Directions route. */
+  private runDirections(reroute: boolean): void {
+    if (!this.driverCoords) return;
+    const coordStr = [this.driverCoords, ...this.optimizedStops.map(s => s.coords)]
+      .map(c => `${c[0]},${c[1]}`).join(';');
+    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordStr}` +
+      `?geometries=geojson&overview=full&steps=true&access_token=${environment.mapboxToken}`;
+    this.routeSub = this.http.get<any>(url).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res) => {
+        const trip = res.routes?.[0];
+        if (!trip) { this.eta = 'No route'; return; }
+        this.applyTrip(trip, reroute);
+      },
+      error: () => { this.eta = 'Route unavailable'; },
+    });
+  }
+
+  /** Apply a route/trip result to the UI and map. */
+  private applyTrip(trip: any, reroute: boolean): void {
+    const durationMin = Math.round(trip.duration / 60);
+    this.eta = durationMin < 60 ? `${durationMin} min` : `${Math.floor(durationMin / 60)}h ${durationMin % 60}m`;
+    this.distance = `${(trip.distance / 1000).toFixed(1)} km`;
+    this.routeSteps = trip.legs?.flatMap((leg: any) => leg.steps || []) || [];
+    this.lastSpokenStep = -1;  // restart turn-by-turn for the new route
+    if (this.routeSteps.length) this.nextInstruction = this.routeSteps[0].maneuver?.instruction || null;
+    this.routeLineCoords = (trip.geometry?.coordinates as [number, number][]) || [];
+    this.drawMultiLegRoute({ geometry: trip.geometry, legs: trip.legs });
+    if (reroute) {
+      this.speak('Re-routing.');
+    } else if (!this.routeAnnounced) {
+      this.routeAnnounced = true;
+      const stopWord = this.optimizedStops.length > 1 ? `${this.optimizedStops.length} stops` : '1 stop';
+      this.speak(`Route loaded. ${stopWord}, ${this.distance}, ${this.eta}.`);
+    }
+  }
+
+  /** If the driver has strayed off the planned line, recompute the route. */
+  private maybeReroute(coords: [number, number]): void {
+    if (this.routeLineCoords.length < 2 || this.optimizedStops.length === 0) return;
+    if (this.arrivedStops.size >= this.optimizedStops.length) return;  // all delivered
+    if (Date.now() - this.lastRerouteAt < 12000) return;               // throttle reroutes
+    let min = Infinity;
+    for (const v of this.routeLineCoords) {
+      const d = this.distBetween(coords, v);
+      if (d < min) min = d;
+      if (min < 0.05) return;  // within ~50 m of the route — still on track
+    }
+    if (min > 0.06) {  // ~60 m+ off the route → recompute from here
+      this.lastRerouteAt = Date.now();
+      this.fetchRoute(true);
+    }
   }
 
   private drawMultiLegRoute(trip: any): void {
@@ -404,6 +466,7 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
       }
 
       this.checkArrivals(newCoords);
+      this.maybeReroute(newCoords);
       this.updateVoiceNavigation();
       this.sendLocationUpdate(newCoords, speed);
     }, () => {}, { enableHighAccuracy: true, timeout: 8000, maximumAge: 2000 });
