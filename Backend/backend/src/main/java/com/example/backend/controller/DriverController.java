@@ -117,8 +117,15 @@ public class DriverController {
         User driver = authUtil.getCurrentUser(authentication);
         List<Order> delivered = orderRepository.findByDriver(driver)
                 .stream().filter(o -> "Delivered".equals(o.getStatus())).toList();
+        // Driver earns the store-configured percentage of each order's delivery fee.
         double total = delivered.stream()
-                .mapToDouble(o -> o.getTotalAmount() != null ? o.getTotalAmount() * 0.1 : 0)
+                .mapToDouble(o -> {
+                    double fee = o.getDeliveryFee() != null ? o.getDeliveryFee() : 0.0;
+                    java.math.BigDecimal pct = (o.getTenant() != null && o.getTenant().getDriverEarningPercent() != null)
+                            ? o.getTenant().getDriverEarningPercent()
+                            : new java.math.BigDecimal("10.00");
+                    return fee * pct.doubleValue() / 100.0;
+                })
                 .sum();
         return ResponseEntity.ok(new EarningsResponse(delivered.size(), Math.round(total * 100.0) / 100.0));
     }

@@ -50,6 +50,7 @@ public class LoyaltyService {
     @Transactional
     public void awardPoints(User user, Order order) {
         if (user == null || order.getTenant() == null) return;
+        if (Boolean.FALSE.equals(order.getTenant().getLoyaltyEnabled())) return;  // store disabled loyalty
         int points = (int) (order.getTotalAmount() / RANDS_DIVISOR) * POINTS_PER_RAND;
         if (points <= 0) return;
 
@@ -72,6 +73,10 @@ public class LoyaltyService {
      *  caller doesn't leave the outer transaction marked rollback-only. */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public double redeemPoints(User user, UUID tenantId, int pointsToRedeem) {
+        if (tenantRepository.findById(tenantId)
+                .map(t -> Boolean.FALSE.equals(t.getLoyaltyEnabled())).orElse(false)) {
+            throw new IllegalArgumentException("This store's loyalty program is not available.");
+        }
         if (pointsToRedeem < POINTS_PER_REDEMPTION) {
             throw new IllegalArgumentException("Minimum redemption is " + POINTS_PER_REDEMPTION + " points.");
         }

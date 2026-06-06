@@ -61,6 +61,8 @@ public class TenantService {
         if (updates.getEstimatedDeliveryMinutes() != null) tenant.setEstimatedDeliveryMinutes(updates.getEstimatedDeliveryMinutes());
         if (updates.getOpeningHours() != null) tenant.setOpeningHours(updates.getOpeningHours());
         if (updates.getCuisineType() != null) tenant.setCuisineType(updates.getCuisineType());
+        if (updates.getDriverEarningPercent() != null) tenant.setDriverEarningPercent(updates.getDriverEarningPercent());
+        if (updates.getLoyaltyEnabled() != null) tenant.setLoyaltyEnabled(updates.getLoyaltyEnabled());
 
         return tenantRepository.save(tenant);
     }

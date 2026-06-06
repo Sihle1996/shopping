@@ -315,7 +315,7 @@
         </div>
 
         <!-- Loyalty Points Card -->
-        <div *ngIf="loyaltyBalance && loyaltyBalance.balance >= 100"
+        <div *ngIf="loyaltyEnabled && loyaltyBalance && loyaltyBalance.balance >= 100"
              class="bg-white rounded-2xl brand-trim shadow-card p-6">
           <h2 class="font-heading text-sm font-semibold text-textDark mb-4 flex items-center gap-2">
             <i class="bi bi-gift text-amber-500"></i> Loyalty Points

@@ -88,6 +88,16 @@ public class Tenant {
     @Column(length = 50)
     private String cuisineType;
 
+    // Share of each delivery fee paid to the driver (store-configurable)
+    @Column(precision = 5, scale = 2)
+    @Builder.Default
+    private BigDecimal driverEarningPercent = new BigDecimal("10.00");
+
+    // Whether this store runs its own loyalty-points program
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean loyaltyEnabled = true;
+
     // Enrollment — structured details (captured via form, not just document uploads)
     @Column(length = 20)
     private String cipcNumber;

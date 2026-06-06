@@ -53,6 +53,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   promoError: string = '';
 
   // Loyalty
+  loyaltyEnabled = true;  // set from the store's setting
   loyaltyBalance: LoyaltyBalance | null = null;
   loyaltyPointsInput = 0;
   loyaltyDiscount = 0;
@@ -148,15 +149,18 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
           this.deliveryFee = Number(t.deliveryFeeBase) || 0;
           this.estimatedDeliveryMinutes = Number(t.estimatedDeliveryMinutes) || 30;
           this.storeHasCoords = !!(t.latitude && t.longitude);
+          this.loyaltyEnabled = t.loyaltyEnabled !== false;
+          if (this.loyaltyEnabled) {
+            this.loyaltyService.getBalance().subscribe({
+              next: b => this.loyaltyBalance = b,
+              error: () => { this.loyaltyBalance = null; }
+            });
+          }
         },
         error: () => {}
       });
     }
     this.loadCartAndPromos();
-    this.loyaltyService.getBalance().subscribe({
-      next: b => this.loyaltyBalance = b,
-      error: () => { this.loyaltyBalance = null; }
-    });
     this.addressService.list().subscribe({
       next: addresses => {
         this.savedAddresses = addresses;
