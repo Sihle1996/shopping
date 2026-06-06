@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
@@ -19,6 +19,7 @@ import { ThankYouComponent } from './components/thank-you/thank-you.component';
 import { AuthInterceptor } from './authInterceptor/auth.interceptor';
 import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
 import { ErrorInterceptor } from './shared/error.interceptor';
+import { GlobalErrorHandler } from './shared/global-error.handler';
 import { SharedModule } from './shared/shared.module';
 import { HistoryordersComponent } from './pages/historyorders/historyorders.component';
 import { RegisterRestaurantComponent } from './pages/register-restaurant/register-restaurant.component';
@@ -99,7 +100,8 @@ import { RestaurantTermsComponent } from './pages/legal/restaurant-terms/restaur
       provide: HTTP_INTERCEPTORS,
       useClass: ErrorInterceptor,
       multi: true
-    }
+    },
+    { provide: ErrorHandler, useClass: GlobalErrorHandler }
   ],
   bootstrap: [AppComponent]
 })
