@@ -1,5 +1,7 @@
 package com.example.backend.controller;
 
+import com.example.backend.config.PlanLimitExceededException;
+import com.example.backend.config.PlanFeatureNotAvailableException;
 import com.example.backend.entity.OrderDTO;
 import com.example.backend.entity.OrderRequestDTO;
 import com.example.backend.repository.OrderRepository;
@@ -31,7 +33,7 @@ public class OrderController {
         try {
             OrderDTO orderDTO = orderService.placeOrderFromPayment(request, authenticatedUser);
             return ResponseEntity.ok(orderDTO);
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException | PlanLimitExceededException | PlanFeatureNotAvailableException e) {
             return ResponseEntity.badRequest().body(
                 Map.of("error", e.getMessage())
             );
