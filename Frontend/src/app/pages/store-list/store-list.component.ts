@@ -116,6 +116,10 @@ export class StoreListComponent implements OnInit, OnDestroy {
       this.addressError = 'Geolocation is not supported by your browser.';
       return;
     }
+    if (!window.isSecureContext) {
+      this.addressError = 'Location needs a secure (https) connection. Please type your address.';
+      return;
+    }
     this.gpsLoading = true;
     this.addressError = '';
     navigator.geolocation.getCurrentPosition(
@@ -136,11 +140,26 @@ export class StoreListComponent implements OnInit, OnDestroy {
           }
         });
       },
-      () => {
+      (err) => {
         this.gpsLoading = false;
-        this.addressError = 'Could not get your location. Please type your address.';
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            this.addressError = 'Location access is blocked. Enable it in your browser settings, or type your address below.';
+            break;
+          case err.POSITION_UNAVAILABLE:
+            this.addressError = 'Your location is unavailable right now. Please type your address below.';
+            break;
+          case err.TIMEOUT:
+            this.addressError = 'Getting your location took too long. Try again, or type your address below.';
+            break;
+          default:
+            this.addressError = 'Could not get your location. Please type your address below.';
+        }
       },
-      { timeout: 10000, enableHighAccuracy: true }
+      // Rough location is enough to find nearby stores. Low accuracy is much
+      // faster and far less likely to time out on mobile; allow a recent
+      // cached fix and give the device a generous window before timing out.
+      { timeout: 20000, enableHighAccuracy: false, maximumAge: 300000 }
     );
   }
 
