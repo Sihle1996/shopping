@@ -11,9 +11,10 @@ export interface MenuItem {
   image: string;
   category: string;
   isAvailable: boolean;
-  soldOut?: boolean;   // computed server-side: no free stock after reservations
+  soldOut?: boolean;        // computed server-side: no free stock after reservations
   stock?: number;
   reservedStock?: number;
+  availableStock?: number;  // computed server-side: stock − reserved (sellable)
   lowStockThreshold?: number;
   quantity?: number;
 }
@@ -27,7 +28,8 @@ export class MenuService {
   constructor(private http: HttpClient) {}
 
   getMenuItems(): Observable<MenuItem[]> {
-    return this.http.get<MenuItem[]>(this.apiUrl);
+    // Cache-bust so stock/availability tags are always current (no stale 304/disk cache).
+    return this.http.get<MenuItem[]>(this.apiUrl, { params: { _: Date.now() } });
   }
 
   getProductById(productId: string): Observable<MenuItem> {

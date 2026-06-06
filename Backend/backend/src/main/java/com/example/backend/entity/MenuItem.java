@@ -68,6 +68,12 @@ public class MenuItem {
         return stock >= 0 && (stock - reservedStock) <= 0;
     }
 
+    /** Computed (not stored): units actually sellable now (total minus reserved). */
+    @Transient
+    public int getAvailableStock() {
+        return stock < 0 ? stock : Math.max(0, stock - reservedStock);
+    }
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id")
     @JsonIgnore

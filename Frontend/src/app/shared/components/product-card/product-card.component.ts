@@ -11,8 +11,9 @@ export interface ProductCardItem {
   image: string;
   category: string;
   isAvailable: boolean;
-  soldOut?: boolean;   // computed server-side: no free stock after reservations
+  soldOut?: boolean;          // computed server-side: no free stock after reservations
   stock?: number;
+  availableStock?: number;    // computed server-side: stock − reserved (what's sellable)
   lowStockThreshold?: number;
 }
 
@@ -47,7 +48,7 @@ export interface ProductCardItem {
               class="absolute px-2 py-0.5 rounded-full text-xs font-semibold bg-warning/90 text-white"
               [class.top-3]="!showFavorite" [class.right-3]="!showFavorite"
               [class.top-12]="showFavorite" [class.right-2]="showFavorite">
-          Only {{ item.stock }} left
+          Only {{ freeStock }} left
         </span>
         <!-- Unavailable / sold-out overlay -->
         <div *ngIf="!item.isAvailable || item.soldOut"
@@ -108,8 +109,14 @@ export class ProductCardComponent implements OnChanges {
     }
   }
 
+  /** Sellable units = server-computed availableStock, falling back to raw stock. */
+  get freeStock(): number | null {
+    const a = this.item?.availableStock;
+    return a != null ? a : (this.item?.stock ?? null);
+  }
+
   get isLowStock(): boolean {
-    const s = this.item?.stock;
+    const s = this.freeStock;
     const t = this.item?.lowStockThreshold ?? 5;
     return s != null && s > 0 && s <= t;
   }

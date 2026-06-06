@@ -83,7 +83,7 @@ orders$ = this.ordersSubject.asObservable();
 
   public loadMenuItems(): Observable<any[]> {
     return this.http
-      .get<any[]>(`${this.baseUrl}/menu`, { headers: this.getAuthHeaders() })
+      .get<any[]>(`${this.baseUrl}/menu`, { headers: this.getAuthHeaders(), params: { _: Date.now() } })
       .pipe(
         map(items => {
           this.menuItemsSubject.next(items);
