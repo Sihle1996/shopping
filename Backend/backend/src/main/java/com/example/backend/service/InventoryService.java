@@ -4,9 +4,12 @@ import com.example.backend.entity.InventoryAdjustmentDTO;
 import com.example.backend.entity.InventoryLog;
 import com.example.backend.entity.InventoryLogDTO;
 import com.example.backend.entity.MenuItem;
+import com.example.backend.entity.Order;
+import com.example.backend.entity.OrderItem;
 import com.example.backend.entity.Tenant;
 import com.example.backend.repository.InventoryLogRepository;
 import com.example.backend.repository.MenuItemRepository;
+import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.TenantRepository;
 import com.example.backend.tenant.TenantContext;
 import jakarta.transaction.Transactional;
@@ -31,6 +34,7 @@ public class InventoryService {
     private final MenuItemRepository menuItemRepository;
     private final InventoryLogRepository inventoryLogRepository;
     private final TenantRepository tenantRepository;
+    private final OrderRepository orderRepository;
     private final EmailService emailService;
 
     @Transactional
@@ -142,6 +146,45 @@ public class InventoryService {
             }
         }
         return count;
+    }
+
+    /**
+     * Recompute each item's reservedStock from the orders genuinely held right now
+     * (Pending + Scheduled). Clears orphaned reservations left by orders that were
+     * abandoned without being confirmed, cancelled, or auto-rejected — which would
+     * otherwise make sellable items look sold out forever.
+     */
+    @Transactional
+    public int reconcileReservations() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return 0;
+
+        List<MenuItem> items = getTenantMenuItems();
+        java.util.Map<UUID, Integer> correct = new java.util.HashMap<>();
+        for (MenuItem mi : items) correct.put(mi.getId(), 0);
+
+        List<Order> held = new ArrayList<>();
+        held.addAll(orderRepository.findByStatusAndTenant_IdOrderByOrderDateDesc("Pending", tenantId));
+        held.addAll(orderRepository.findByStatusAndTenant_IdOrderByOrderDateDesc("Scheduled", tenantId));
+        for (Order o : held) {
+            for (OrderItem oi : o.getOrderItems()) {
+                MenuItem mi = oi.getMenuItem();
+                if (mi != null && correct.containsKey(mi.getId())) {
+                    correct.merge(mi.getId(), oi.getQuantity(), Integer::sum);
+                }
+            }
+        }
+
+        int changed = 0;
+        for (MenuItem mi : items) {
+            int want = correct.getOrDefault(mi.getId(), 0);
+            if (mi.getReservedStock() != want) {
+                mi.setReservedStock(want);
+                menuItemRepository.save(mi);
+                changed++;
+            }
+        }
+        return changed;
     }
 
     @Transactional

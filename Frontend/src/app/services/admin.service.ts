@@ -277,6 +277,12 @@ orders$ = this.ordersSubject.asObservable();
     });
   }
 
+  reconcileReservations(): Observable<{ updated: number }> {
+    return this.http.post<{ updated: number }>(`${this.baseUrl}/inventory/reconcile-reservations`, null, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
   setItemAvailability(id: string, isAvailable: boolean): Observable<any> {
     return this.http.patch(`${this.baseUrl}/inventory/${id}/availability`, { isAvailable }, {
       headers: this.getAuthHeaders()

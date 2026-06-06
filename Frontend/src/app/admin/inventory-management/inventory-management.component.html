@@ -6,6 +6,11 @@
       <app-button actions variant="outline" size="md" iconLeft="bi bi-arrow-repeat" [loading]="syncing" (clicked)="syncAvailability()">
         Sync Availability
       </app-button>
+      <app-button actions variant="ghost" size="md" iconLeft="bi bi-unlock" [loading]="reconciling"
+                  title="Recompute reserved stock from current pending orders — clears stuck reservations"
+                  (clicked)="reconcileReservations()">
+        Fix Reservations
+      </app-button>
       <app-button actions variant="secondary" size="md"
         [iconLeft]="hasInventoryExport ? 'bi bi-download' : 'bi bi-lock'"
         [title]="hasInventoryExport ? '' : 'Export CSV requires PRO or higher'"

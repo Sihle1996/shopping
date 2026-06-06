@@ -134,6 +134,24 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
     });
   }
 
+  reconciling = false;
+  reconcileReservations(): void {
+    this.reconciling = true;
+    this.adminService.reconcileReservations().subscribe({
+      next: (res) => {
+        this.reconciling = false;
+        this.toastr.success(res.updated > 0
+          ? `Reservations fixed (${res.updated} item${res.updated === 1 ? '' : 's'} updated)`
+          : 'Reservations already up to date');
+        this.fetchInventory();
+      },
+      error: () => {
+        this.reconciling = false;
+        this.toastr.error('Failed to fix reservations');
+      }
+    });
+  }
+
   toggleAvailability(item: any): void {
     const next = !item.isAvailable;
     this.togglingId = item.id;

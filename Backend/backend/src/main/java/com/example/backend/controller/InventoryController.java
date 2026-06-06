@@ -56,6 +56,12 @@ public class InventoryController {
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PostMapping("/reconcile-reservations")
+    public java.util.Map<String, Integer> reconcileReservations() {
+        return java.util.Map.of("updated", inventoryService.reconcileReservations());
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PatchMapping("/{id}/availability")
     public ResponseEntity<MenuItem> setAvailability(@PathVariable UUID id,
                                                      @RequestBody java.util.Map<String, Boolean> body) {
