@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,12 @@ public class OrderController {
         try {
             OrderDTO orderDTO = orderService.placeOrderFromPayment(request, authenticatedUser);
             return ResponseEntity.ok(orderDTO);
+        } catch (ResponseStatusException e) {
+            // Inventory/availability conflicts carry their own HTTP status (e.g. 409)
+            String reason = e.getReason() != null ? e.getReason() : "Request failed";
+            return ResponseEntity.status(e.getStatusCode()).body(
+                Map.of("error", reason, "message", reason)
+            );
         } catch (IllegalStateException | PlanLimitExceededException | PlanFeatureNotAvailableException e) {
             return ResponseEntity.badRequest().body(
                 Map.of("error", e.getMessage())
