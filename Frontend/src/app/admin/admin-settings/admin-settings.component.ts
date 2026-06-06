@@ -277,9 +277,11 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   }
 
   saveStoreHours(): void {
-    const invalid = this.storeHours.find(h => !h.closed && h.openTime && h.closeTime && h.openTime >= h.closeTime);
+    // open later than close is a valid overnight window (e.g. 08:00 → 03:00).
+    // Only equal open/close is invalid (zero-length / ambiguous).
+    const invalid = this.storeHours.find(h => !h.closed && h.openTime && h.closeTime && h.openTime === h.closeTime);
     if (invalid) {
-      this.toastr.error(`${this.DAY_NAMES[invalid.dayOfWeek - 1]}: opening time must be before closing time`);
+      this.toastr.error(`${this.DAY_NAMES[invalid.dayOfWeek - 1]}: opening and closing time can't be the same`);
       return;
     }
     this.hoursSaving = true;
