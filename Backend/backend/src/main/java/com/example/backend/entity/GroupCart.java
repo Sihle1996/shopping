@@ -25,7 +25,7 @@ public class GroupCart {
     @EqualsAndHashCode.Include
     private UUID id;
 
-    @Column(unique = true, nullable = false, length = 12)
+    @Column(unique = true, nullable = false, length = 24)
     private String token;
 
     @ManyToOne(fetch = FetchType.LAZY)
