@@ -26,6 +26,7 @@ interface EnrollmentState {
   bankBranchCode: string;
   menuItemCount: number;
   categoryCount: number;
+  active: boolean;
 }
 
 @Component({
@@ -38,11 +39,12 @@ export class AdminEnrollmentComponent implements OnInit {
     approvalStatus: 'DRAFT', rejectionReason: '', documents: [],
     cipcNumber: '', bankName: '', bankAccountNumber: '',
     bankAccountType: 'Cheque', bankBranchCode: '',
-    menuItemCount: 0, categoryCount: 0
+    menuItemCount: 0, categoryCount: 0, active: false
   };
   loading = true;
   submitting = false;
   savingDetails = false;
+  goingLive = false;
 
   uploading: Record<string, boolean> = {};
 
@@ -75,7 +77,7 @@ export class AdminEnrollmentComponent implements OnInit {
         next: s => {
           this.state = s;
           this.loading = false;
-          if (s.approvalStatus === 'APPROVED') {
+          if (s.approvalStatus === 'APPROVED' && s.active) {
             this.router.navigate(['/admin/dashboard']);
           }
         },
@@ -152,7 +154,7 @@ export class AdminEnrollmentComponent implements OnInit {
   canSubmit(): boolean {
     const required = this.DOC_TYPES.filter(t => t.required).map(t => t.type);
     const docsDone = required.every(type => this.state.documents.some(d => d.documentType === type));
-    return docsDone && this.bankDetailsFilled && this.menuReady;
+    return docsDone && this.bankDetailsFilled;
   }
 
   docLabel(type: string): string {
@@ -172,6 +174,23 @@ export class AdminEnrollmentComponent implements OnInit {
         error: err => {
           this.submitting = false;
           this.toastr.error(err?.error?.error || 'Submission failed');
+        }
+      });
+  }
+
+  goLive(): void {
+    if (!this.menuReady) return;
+    this.goingLive = true;
+    this.http.post<any>(`${environment.apiUrl}/api/admin/enrollment/go-live`, {}, { headers: this.headers() })
+      .subscribe({
+        next: () => {
+          this.goingLive = false;
+          this.toastr.success('Your store is now live!');
+          this.router.navigate(['/admin/dashboard']);
+        },
+        error: err => {
+          this.goingLive = false;
+          this.toastr.error(err?.error?.error || 'Failed to go live');
         }
       });
   }

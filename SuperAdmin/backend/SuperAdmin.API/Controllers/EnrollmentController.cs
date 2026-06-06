@@ -59,7 +59,7 @@ public class EnrollmentController(AppDbContext db) : ControllerBase
         if (tenant == null) return NotFound();
 
         tenant.ApprovalStatus = "APPROVED";
-        tenant.Active = true;
+        tenant.Active = false;
         tenant.ApprovedAt = DateTime.UtcNow;
         tenant.RejectionReason = null;
         await db.SaveChangesAsync();

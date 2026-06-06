@@ -25,13 +25,15 @@ export class EnrollmentGuard implements CanActivate {
 
     return this.adminService.getStoreSettings().pipe(
       map(settings => {
-        if (settings?.approvalStatus && settings.approvalStatus !== 'APPROVED') {
+        const approved = settings?.approvalStatus === 'APPROVED';
+        const active = settings?.active === true;
+        if (!approved || !active) {
           this.router.navigate(['/admin/enrollment']);
           return false;
         }
         return true;
       }),
-      catchError(() => of(true)) // on error, let through (network issue shouldn't block admin)
+      catchError(() => of(true))
     );
   }
 }

@@ -36,27 +36,82 @@
         </div>
       </div>
 
-      <!-- ── APPROVED ───────────────────────────────────────────────────── -->
-      <div *ngIf="state.approvalStatus === 'APPROVED'"
-           class="bg-white rounded-2xl shadow-card p-8 text-center">
-        <div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <i class="bi bi-check-circle-fill text-green-500 text-2xl"></i>
+      <!-- ── PHASE 2: APPROVED BUT NOT LIVE ─────────────────────────────── -->
+      <div *ngIf="state.approvalStatus === 'APPROVED' && !state.active">
+
+        <!-- Success banner -->
+        <div class="bg-white rounded-2xl shadow-card p-8 text-center mb-6">
+          <div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="bi bi-check-circle-fill text-green-500 text-2xl"></i>
+          </div>
+          <h2 class="font-heading text-xl font-bold text-textDark mb-2">Store Approved!</h2>
+          <p class="text-textMuted text-sm">
+            Your documents have been verified. Set up your menu below and go live when you're ready.
+          </p>
         </div>
-        <h2 class="font-heading text-xl font-bold text-textDark mb-2">Store Approved</h2>
-        <p class="text-textMuted text-sm">Your store is live. Head to the dashboard to start accepting orders.</p>
-        <a routerLink="/admin/dashboard"
-           class="mt-6 inline-block bg-primary text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-primary-600 transition-colors">
-          Go to Dashboard
-        </a>
+
+        <!-- Menu readiness checklist -->
+        <div class="bg-white rounded-2xl shadow-card p-5 mb-8">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
+                  [class]="menuReady ? 'bg-green-500 text-white' : 'bg-primary text-white'">
+              <i class="bi" [class]="menuReady ? 'bi-check' : 'bi-list-ul'"></i>
+            </span>
+            <h3 class="font-semibold text-textDark">Set Up Your Menu</h3>
+          </div>
+          <p class="text-xs text-textMuted mb-4">Add at least one category and one item to go live.</p>
+          <div class="space-y-2">
+            <div class="flex items-center gap-3 text-sm"
+                 [class]="state.categoryCount > 0 ? 'text-green-700' : 'text-textMuted'">
+              <i class="bi flex-shrink-0" [class]="state.categoryCount > 0 ? 'bi-check-circle-fill text-green-500' : 'bi-circle text-gray-300'"></i>
+              <span>At least one menu category</span>
+              <span *ngIf="state.categoryCount > 0" class="ml-auto text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">
+                {{ state.categoryCount }} added
+              </span>
+            </div>
+            <div class="flex items-center gap-3 text-sm"
+                 [class]="state.menuItemCount > 0 ? 'text-green-700' : 'text-textMuted'">
+              <i class="bi flex-shrink-0" [class]="state.menuItemCount > 0 ? 'bi-check-circle-fill text-green-500' : 'bi-circle text-gray-300'"></i>
+              <span>At least one menu item</span>
+              <span *ngIf="state.menuItemCount > 0" class="ml-auto text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">
+                {{ state.menuItemCount }} added
+              </span>
+            </div>
+          </div>
+          <div *ngIf="!menuReady" class="mt-4 flex flex-wrap gap-3">
+            <a routerLink="/admin/settings"
+               class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600 transition-colors">
+              <i class="bi bi-plus-circle"></i> Add Categories
+            </a>
+            <a routerLink="/admin/menu"
+               class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 text-textDark text-sm font-semibold hover:bg-gray-200 transition-colors">
+              <i class="bi bi-plus-circle"></i> Add Menu Items
+            </a>
+          </div>
+        </div>
+
+        <!-- Go Live button -->
+        <div class="flex flex-col items-center gap-3">
+          <button (click)="goLive()"
+                  [disabled]="!menuReady || goingLive"
+                  class="w-full max-w-sm py-4 bg-green-600 text-white rounded-xl font-bold text-sm hover:bg-green-700 transition-colors disabled:opacity-50">
+            <span *ngIf="!goingLive"><i class="bi bi-rocket-takeoff mr-2"></i>Go Live</span>
+            <span *ngIf="goingLive"><span class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin align-middle mr-2"></span>Going live…</span>
+          </button>
+          <p *ngIf="!menuReady" class="text-xs text-textMuted text-center">
+            Add at least one category and one menu item to go live.
+          </p>
+        </div>
+
       </div>
 
-      <!-- ── DRAFT / REJECTED ───────────────────────────────────────────── -->
+      <!-- ── DRAFT / REJECTED — Phase 1: Document submission ────────────── -->
       <div *ngIf="state.approvalStatus === 'DRAFT' || state.approvalStatus === 'REJECTED'">
 
         <!-- Header -->
         <div class="mb-8">
           <h1 class="font-heading text-2xl font-bold text-textDark mb-1">Store Verification</h1>
-          <p class="text-textMuted text-sm">Complete all steps below to submit your store for review.</p>
+          <p class="text-textMuted text-sm">Upload your business documents below. Once approved, you'll set up your menu.</p>
         </div>
 
         <!-- Rejection alert -->
@@ -199,7 +254,7 @@
             </div>
           </div>
 
-          <!-- Supporting bank document (optional) -->
+          <!-- Supporting bank document -->
           <div class="flex flex-col sm:flex-row sm:items-center gap-3 border-t border-borderColor pt-4">
             <div class="flex items-start gap-3 flex-1">
               <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -239,7 +294,7 @@
         </div>
 
         <!-- ── Step 4: Storefront Photo (optional) ────────────────────────── -->
-        <div class="bg-white rounded-2xl shadow-card p-5 mb-4">
+        <div class="bg-white rounded-2xl shadow-card p-5 mb-8">
           <div class="flex items-center gap-2 mb-4">
             <span class="w-6 h-6 rounded-full bg-gray-200 text-textMuted text-xs font-bold flex items-center justify-center flex-shrink-0">4</span>
             <h3 class="font-semibold text-textDark">Storefront Photo <span class="text-xs text-textMuted font-normal">(optional)</span></h3>
@@ -272,44 +327,7 @@
           </div>
         </div>
 
-        <!-- ── Step 5: Menu readiness ─────────────────────────────────────── -->
-        <div class="bg-white rounded-2xl shadow-card p-5 mb-8">
-          <div class="flex items-center gap-2 mb-4">
-            <span class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
-                  [class]="menuReady ? 'bg-green-500 text-white' : 'bg-primary text-white'">5</span>
-            <h3 class="font-semibold text-textDark">Menu Readiness</h3>
-          </div>
-          <p class="text-xs text-textMuted mb-4">Your menu must be set up before you can submit.</p>
-          <div class="space-y-2">
-            <div class="flex items-center gap-3 text-sm"
-                 [class]="state.categoryCount > 0 ? 'text-green-700' : 'text-textMuted'">
-              <i class="bi flex-shrink-0" [class]="state.categoryCount > 0 ? 'bi-check-circle-fill text-green-500' : 'bi-circle text-gray-300'"></i>
-              <span>At least one menu category</span>
-              <span *ngIf="state.categoryCount > 0" class="ml-auto text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">
-                {{ state.categoryCount }} added
-              </span>
-            </div>
-            <div class="flex items-center gap-3 text-sm"
-                 [class]="state.menuItemCount > 0 ? 'text-green-700' : 'text-textMuted'">
-              <i class="bi flex-shrink-0" [class]="state.menuItemCount > 0 ? 'bi-check-circle-fill text-green-500' : 'bi-circle text-gray-300'"></i>
-              <span>At least one menu item</span>
-              <span *ngIf="state.menuItemCount > 0" class="ml-auto text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">
-                {{ state.menuItemCount }} added
-              </span>
-            </div>
-          </div>
-          <div *ngIf="!menuReady" class="mt-4">
-            <a routerLink="/admin/settings" class="text-sm text-primary hover:underline font-medium">
-              <i class="bi bi-arrow-right mr-1"></i>Go to Settings to add categories
-            </a>
-            <span class="text-textMuted mx-2">·</span>
-            <a routerLink="/admin/menu" class="text-sm text-primary hover:underline font-medium">
-              Go to Menu to add items
-            </a>
-          </div>
-        </div>
-
-        <!-- Submit -->
+        <!-- Submit for Review -->
         <div class="flex flex-col items-center gap-3">
           <button (click)="submit()"
                   [disabled]="!canSubmit() || submitting"
@@ -318,11 +336,10 @@
             <span *ngIf="submitting"><span class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin align-middle mr-2 flex-shrink-0"></span>Submitting…</span>
           </button>
           <div *ngIf="!canSubmit()" class="text-xs text-textMuted text-center space-y-0.5">
-            <p *ngIf="!getDoc('CIPC')">• Upload CIPC Certificate</p>
-            <p *ngIf="!getDoc('COA')">• Upload Certificate of Acceptability</p>
-            <p *ngIf="!getDoc('BANK_DETAILS')">• Upload bank confirmation document</p>
-            <p *ngIf="!bankDetailsFilled">• Fill in bank account details</p>
-            <p *ngIf="!menuReady">• Add at least one category and one menu item</p>
+            <p *ngIf="!getDoc('CIPC')">Upload CIPC Certificate</p>
+            <p *ngIf="!getDoc('COA')">Upload Certificate of Acceptability</p>
+            <p *ngIf="!getDoc('BANK_DETAILS')">Upload bank confirmation document</p>
+            <p *ngIf="!bankDetailsFilled">Fill in bank account details</p>
           </div>
         </div>
 

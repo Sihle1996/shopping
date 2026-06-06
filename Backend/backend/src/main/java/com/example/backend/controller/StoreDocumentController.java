@@ -60,6 +60,7 @@ public class StoreDocumentController {
         resp.put("bankBranchCode", tenant.getBankBranchCode() != null ? tenant.getBankBranchCode() : "");
         resp.put("menuItemCount", menuItemCount);
         resp.put("categoryCount", categoryCount);
+        resp.put("active", tenant.isActive());
         return ResponseEntity.ok(resp);
     }
 
@@ -152,19 +153,6 @@ public class StoreDocumentController {
                     "Please upload CIPC Certificate, Certificate of Acceptability, and Bank Details before submitting"));
         }
 
-        // Require at least one menu category and one menu item
-        long categoryCount = categoryRepository.findByTenant_Id(tenantId).size();
-        long menuItemCount = menuItemRepository.countByTenant_Id(tenantId);
-        if (categoryCount == 0) {
-            return ResponseEntity.badRequest().body(Map.of("error",
-                    "Add at least one menu category before submitting"));
-        }
-        if (menuItemCount == 0) {
-            return ResponseEntity.badRequest().body(Map.of("error",
-                    "Add at least one menu item before submitting"));
-        }
-
-        // Require structured bank details
         if (tenant.getBankName() == null || tenant.getBankName().isBlank() ||
                 tenant.getBankAccountNumber() == null || tenant.getBankAccountNumber().isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error",
@@ -179,5 +167,31 @@ public class StoreDocumentController {
         emailService.sendDocumentsReceivedEmail(tenant.getName(), tenant.getEmail());
 
         return ResponseEntity.ok(Map.of("message", "Application submitted for review"));
+    }
+
+    @PostMapping("/go-live")
+    @Transactional
+    public ResponseEntity<?> goLive() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return ResponseEntity.badRequest().build();
+        Tenant tenant = tenantRepository.findById(tenantId).orElse(null);
+        if (tenant == null) return ResponseEntity.notFound().build();
+
+        if (tenant.getApprovalStatus() != Tenant.ApprovalStatus.APPROVED) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Store must be approved before going live"));
+        }
+
+        long categoryCount = categoryRepository.findByTenant_Id(tenantId).size();
+        long menuItemCount = menuItemRepository.countByTenant_Id(tenantId);
+        if (categoryCount == 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Add at least one menu category before going live"));
+        }
+        if (menuItemCount == 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Add at least one menu item before going live"));
+        }
+
+        tenant.setActive(true);
+        tenantRepository.save(tenant);
+        return ResponseEntity.ok(Map.of("message", "Your store is now live!"));
     }
 }
