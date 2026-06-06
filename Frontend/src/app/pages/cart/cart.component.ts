@@ -133,7 +133,8 @@ export class CartComponent implements OnInit {
       })
     ).subscribe({
       next: token => {
-        this.cartService.clearCart();
+        // Keep the personal cart intact — it's only cleared at checkout. Clearing
+        // here made the cart appear empty when returning from the group-order page.
         const url = `${window.location.origin}/store/${slug}/group-cart/${token}`;
         navigator.clipboard.writeText(url)
           .then(() => this.toastr.success('Group order link copied! Share it with your friends.'))
