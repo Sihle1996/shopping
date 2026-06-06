@@ -1,5 +1,6 @@
 package com.example.backend.entity;
 
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public class OrderRequestDTO {
     private Double deliveryLon;
     private UUID tenantId;
     private String promoCode;
+    @Size(max = 500, message = "Order notes must be 500 characters or fewer")
     private String orderNotes;
     private String guestEmail;
     private String guestPhone;

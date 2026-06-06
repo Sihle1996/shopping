@@ -10,6 +10,7 @@ export class PushNotificationService {
   private api = environment.apiUrl;
   private vapidPublicKey = '';
   private swReg: ServiceWorkerRegistration | null = null;
+  initFailed = false;
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 
@@ -26,10 +27,14 @@ export class PushNotificationService {
     try {
       const res = await this.http.get<{ publicKey: string }>(`${this.api}/api/push/public-key`).toPromise();
       this.vapidPublicKey = res?.publicKey || '';
-      if (!this.vapidPublicKey) return;
+      if (!this.vapidPublicKey) {
+        this.initFailed = true;
+        return;
+      }
 
       this.swReg = await navigator.serviceWorker.register('/sw-push.js', { scope: '/' });
     } catch (e) {
+      this.initFailed = true;
       console.warn('Push init failed:', e);
     }
   }

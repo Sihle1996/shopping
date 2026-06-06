@@ -553,6 +553,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
           : null
       })),
       total: this.subtotal,
+      deliveryFee: this.deliveryFee,
       promoCode: this.appliedPromo?.code?.trim() || null,
       orderNotes: this.orderNotes?.trim() || null,
       loyaltyPointsRedeemed: this.loyaltyPointsToRedeem || 0,

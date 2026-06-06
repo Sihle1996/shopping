@@ -31,7 +31,7 @@ public class GroupCartService {
     private final ObjectMapper objectMapper;
 
     private static final String CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-    private static final int TOKEN_LEN = 8;
+    private static final int TOKEN_LEN = 16;
     private static final SecureRandom RNG = new SecureRandom();
 
     @Transactional

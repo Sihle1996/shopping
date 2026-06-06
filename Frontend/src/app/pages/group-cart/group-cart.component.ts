@@ -95,6 +95,8 @@ export class GroupCartComponent implements OnInit, OnDestroy {
               if (updated.status !== 'OPEN') {
                 this.disconnectWs();
                 this.stopPolling();
+                localStorage.removeItem('groupCartToken');
+                sessionStorage.removeItem('groupAddMode');
               }
             });
           }

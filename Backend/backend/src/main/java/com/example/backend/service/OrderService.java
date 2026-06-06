@@ -207,7 +207,11 @@ public class OrderService {
         }
         order.setOrderDate(Instant.now());
         if (request.getScheduledDeliveryTime() != null && !request.getScheduledDeliveryTime().isBlank()) {
-            order.setScheduledDeliveryTime(Instant.parse(request.getScheduledDeliveryTime()));
+            Instant scheduled = Instant.parse(request.getScheduledDeliveryTime());
+            if (scheduled.isBefore(Instant.now().plusSeconds(900))) {
+                throw new IllegalStateException("Scheduled delivery time must be at least 15 minutes in the future.");
+            }
+            order.setScheduledDeliveryTime(scheduled);
             order.setStatus("Scheduled");
         } else {
             order.setStatus("Pending");
@@ -217,7 +221,9 @@ public class OrderService {
         order.setDeliveryLon(request.getDeliveryLon());
         order.setPaymentId(request.getPaymentId());
         order.setPayerId(request.getPayerId());
-        order.setOrderNotes(request.getOrderNotes());
+        String notes = request.getOrderNotes();
+        if (notes != null && notes.length() > 500) notes = notes.substring(0, 500);
+        order.setOrderNotes(notes);
 
         // Set tenant from context and compute platform commission fee
         UUID tenantId = TenantContext.getCurrentTenantId();
@@ -245,11 +251,13 @@ public class OrderService {
                     }
                 }
                 order.setTenant(tenant);
-                // Set delivery fee from tenant's configured base fee (server-authoritative)
-                if (tenant.getDeliveryFeeBase() != null) {
-                    order.setDeliveryFee(tenant.getDeliveryFeeBase().doubleValue());
+                // Use frontend-calculated distance-based fee if provided, with server-side bounds check
+                double baseFee = tenant.getDeliveryFeeBase() != null ? tenant.getDeliveryFeeBase().doubleValue() : 0.0;
+                if (request.getDeliveryFee() != null && request.getDeliveryFee() >= baseFee) {
+                    double maxAllowed = baseFee * 5 + 100;
+                    order.setDeliveryFee(Math.min(request.getDeliveryFee(), maxAllowed));
                 } else {
-                    order.setDeliveryFee(0.0);
+                    order.setDeliveryFee(baseFee);
                 }
                 if (tenant.getPlatformCommissionPercent() != null) {
                     double fee = BigDecimal.valueOf(totalAmount)

@@ -58,9 +58,13 @@ export class UserProfileComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.pushService.init().then(() =>
-      this.pushService.getSubscriptionState().then(s => this.pushState = s)
-    );
+    this.pushService.init().then(() => {
+      if (this.pushService.initFailed) {
+        this.pushState = 'unsupported';
+      } else {
+        this.pushService.getSubscriptionState().then(s => this.pushState = s);
+      }
+    });
     this.http.get<any>(`${environment.apiUrl}/api/me`).subscribe({
       next: p => {
         this.email = p.email;

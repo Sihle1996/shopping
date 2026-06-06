@@ -197,8 +197,9 @@ export class ProductComponent implements OnInit {
 
     const choicesJson = choices.length ? JSON.stringify(choices) : null;
     const groupToken = localStorage.getItem('groupCartToken');
+    const groupAddMode = sessionStorage.getItem('groupAddMode') === 'true';
 
-    if (groupToken) {
+    if (groupToken && groupAddMode) {
       if (!this.authService.isLoggedIn()) {
         this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
         return;

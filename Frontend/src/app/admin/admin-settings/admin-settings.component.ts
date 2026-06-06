@@ -259,6 +259,11 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   }
 
   saveStoreHours(): void {
+    const invalid = this.storeHours.find(h => !h.closed && h.openTime && h.closeTime && h.openTime >= h.closeTime);
+    if (invalid) {
+      this.toastr.error(`${this.DAY_NAMES[invalid.dayOfWeek - 1]}: opening time must be before closing time`);
+      return;
+    }
     this.hoursSaving = true;
     this.http.put<any[]>(`${environment.apiUrl}/api/admin/store-hours`, this.storeHours, { headers: this.getHeaders() }).subscribe({
       next: (saved) => {

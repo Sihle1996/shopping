@@ -60,10 +60,13 @@ public class PromotionService {
     public Optional<Promotion> validateCode(String code) {
         if (code == null || code.isBlank()) return Optional.empty();
         UUID tenantId = TenantContext.getCurrentTenantId();
+        Optional<Promotion> result;
         if (tenantId != null) {
-            return promotionRepository.findByCodeAndActiveTrueAndTenant_Id(code.trim(), tenantId);
+            result = promotionRepository.findByCodeAndActiveTrueAndTenant_Id(code.trim(), tenantId);
+        } else {
+            result = promotionRepository.findByCodeAndActiveTrue(code.trim());
         }
-        return promotionRepository.findByCodeAndActiveTrue(code.trim());
+        return result.filter(p -> p.getEndAt() == null || p.getEndAt().isAfter(OffsetDateTime.now()));
     }
 
     /**
