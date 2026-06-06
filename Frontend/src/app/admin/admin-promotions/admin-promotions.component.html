@@ -163,21 +163,21 @@
 
           <!-- Product list -->
           <div class="border border-borderColor rounded-xl overflow-hidden max-h-56 overflow-y-auto">
-            <label *ngFor="let item of filteredMenuItemsForPicker"
+            <div *ngFor="let item of filteredMenuItemsForPicker"
                    class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-surface transition-colors border-b border-borderColor last:border-0"
-                   [class.bg-primary-50]="isProductSelected(item.id)">
+                   [class.bg-primary-50]="isProductSelected(item.id)"
+                   (click)="toggleProductSelection(item.id)">
               <div class="w-5 h-5 rounded flex items-center justify-center border-2 flex-shrink-0 transition-colors"
                    [class.border-primary]="isProductSelected(item.id)"
                    [class.bg-primary]="isProductSelected(item.id)"
-                   [class.border-gray-300]="!isProductSelected(item.id)"
-                   (click)="toggleProductSelection(item.id)">
+                   [class.border-gray-300]="!isProductSelected(item.id)">
                 <i *ngIf="isProductSelected(item.id)" class="bi bi-check text-white text-[10px]"></i>
               </div>
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-textDark truncate">{{ item.name }}</p>
                 <p class="text-[10px] text-textMuted">{{ item.category }} · R{{ item.price | number:'1.2-2' }}</p>
               </div>
-            </label>
+            </div>
             <div *ngIf="filteredMenuItemsForPicker.length === 0"
                  class="px-4 py-6 text-center text-xs text-textMuted">
               No products match your search
