@@ -113,8 +113,12 @@ export class CartComponent implements OnInit {
   }
 
   shareGroupCart(): void {
-    this.sharingCart = true;
     const slug = localStorage.getItem('storeSlug');
+    if (!slug) {
+      this.toastr.error('Unable to determine store');
+      return;
+    }
+    this.sharingCart = true;
     this.groupCartService.create().pipe(
       switchMap(res => {
         localStorage.setItem('groupCartToken', res.token);

@@ -43,6 +43,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   }
 
   payFastLoading: boolean = false;
+  submitting: boolean = false;
 
   // Promo code
   promoCode: string = '';
@@ -507,6 +508,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   }
 
   onSubmit(): void {
+    if (this.submitting || this.payFastLoading) return;
     this.formSubmitted = true;
     const d = this.deliveryDetails;
     if (!this.storeIsOpen) {
@@ -568,6 +570,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     const tenantId = localStorage.getItem('tenantId');
     if (tenantId) headers['X-Tenant-Id'] = tenantId;
 
+    this.submitting = true;
     this.http.post<any>(`${environment.apiUrl}/api/orders/place`, orderData, { headers }).subscribe({
       next: (res) => {
         if (groupToken) {
@@ -589,6 +592,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
         this.initiatePayFast(res?.id, this.totalPrice);
       },
       error: (err) => {
+        this.submitting = false;
         if (err?.status === 429) {
           this.toastr.error('Too many requests. Please wait a moment before placing another order.');
         } else {

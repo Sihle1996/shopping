@@ -171,9 +171,8 @@ export class UserProfileComponent implements OnInit {
     this.deletingAccount = true;
     this.http.delete(`${environment.apiUrl}/api/me`).subscribe({
       next: () => {
-        this.authService.logout();
-        this.router.navigate(['/']);
         this.toastr.success('Account deleted');
+        this.authService.logout();
       },
       error: () => {
         this.deletingAccount = false;

@@ -95,10 +95,8 @@ public class OrderService {
             MenuItem menuItem = menuItemRepository.findById(itemDTO.getProductId())
                     .orElseThrow(() -> new RuntimeException("Menu item not found: " + itemDTO.getProductId()));
 
-            // Only adjust stock if it's being tracked (stock > 0)
-            int newStock = menuItem.getStock() - itemDTO.getQuantity();
-            if (newStock >= 0) {
-                menuItem.setStock(newStock);
+            // Reserve stock (don't deduct yet — deducted when order is confirmed via ITN)
+            if (menuItem.getStock() >= 0) {
                 menuItem.setReservedStock(menuItem.getReservedStock() + itemDTO.getQuantity());
             }
             menuItemRepository.save(menuItem);
@@ -106,9 +104,9 @@ public class OrderService {
 
             InventoryLog log = new InventoryLog();
             log.setMenuItem(menuItem);
-            log.setStockChange(-itemDTO.getQuantity());
+            log.setStockChange(0);
             log.setReservedChange(itemDTO.getQuantity());
-            log.setType("ORDER_PAYMENT");
+            log.setType("ORDER_RESERVED");
             UUID logTenantId = TenantContext.getCurrentTenantId();
             if (logTenantId != null) {
                 tenantRepository.findById(logTenantId).ifPresent(log::setTenant);
@@ -179,17 +177,14 @@ public class OrderService {
         }
 
         // Apply loyalty points redemption (authenticated users only)
+        double loyaltyDiscount = 0.0;
         if (user != null && request.getLoyaltyPointsRedeemed() > 0) {
-            try {
-                UUID loyaltyTenantId = TenantContext.getCurrentTenantId();
-                if (loyaltyTenantId != null) {
-                    double loyaltyDiscount = loyaltyService.redeemPoints(user, loyaltyTenantId, request.getLoyaltyPointsRedeemed());
-                    discountAmount = BigDecimal.valueOf(discountAmount + loyaltyDiscount)
-                            .setScale(2, RoundingMode.HALF_UP)
-                            .doubleValue();
-                }
-            } catch (Exception ignored) {
-                // redemption failure doesn't block order
+            UUID loyaltyTenantId = TenantContext.getCurrentTenantId();
+            if (loyaltyTenantId != null) {
+                loyaltyDiscount = loyaltyService.redeemPoints(user, loyaltyTenantId, request.getLoyaltyPointsRedeemed());
+                discountAmount = BigDecimal.valueOf(discountAmount + loyaltyDiscount)
+                        .setScale(2, RoundingMode.HALF_UP)
+                        .doubleValue();
             }
         }
 
@@ -381,24 +376,52 @@ public class OrderService {
                 : orderRepository.findById(orderId)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
 
-        boolean isCancelling = ("Cancelled".equals(status) || "Rejected".equals(status))
-                && !"Cancelled".equals(order.getStatus())
-                && !"Rejected".equals(order.getStatus());
-
-        if (isCancelling) {
+        boolean isConfirming = "Confirmed".equals(status) && "Pending".equals(order.getStatus());
+        if (isConfirming) {
             for (OrderItem oi : order.getOrderItems()) {
                 MenuItem menuItem = oi.getMenuItem();
                 if (menuItem == null) continue;
-                // Only restore stock if it was being tracked
                 if (menuItem.getStock() >= 0) {
-                    menuItem.setStock(menuItem.getStock() + oi.getQuantity());
+                    menuItem.setStock(menuItem.getStock() - oi.getQuantity());
                     menuItem.setReservedStock(Math.max(0, menuItem.getReservedStock() - oi.getQuantity()));
                     menuItemRepository.save(menuItem);
 
                     InventoryLog log = new InventoryLog();
                     log.setMenuItem(menuItem);
-                    log.setStockChange(oi.getQuantity());
+                    log.setStockChange(-oi.getQuantity());
                     log.setReservedChange(-oi.getQuantity());
+                    log.setType("ORDER_CONFIRMED");
+                    if (tenantId != null) {
+                        tenantRepository.findById(tenantId).ifPresent(log::setTenant);
+                    }
+                    inventoryLogRepository.save(log);
+                }
+            }
+        }
+
+        boolean isCancelling = ("Cancelled".equals(status) || "Rejected".equals(status))
+                && !"Cancelled".equals(order.getStatus())
+                && !"Rejected".equals(order.getStatus());
+
+        if (isCancelling) {
+            boolean wasConfirmed = !"Pending".equals(order.getStatus()) && !"Scheduled".equals(order.getStatus());
+            for (OrderItem oi : order.getOrderItems()) {
+                MenuItem menuItem = oi.getMenuItem();
+                if (menuItem == null) continue;
+                if (menuItem.getStock() >= 0) {
+                    if (wasConfirmed) {
+                        // Stock was deducted at confirmation — restore it
+                        menuItem.setStock(menuItem.getStock() + oi.getQuantity());
+                    } else {
+                        // Stock was only reserved — release reservation
+                        menuItem.setReservedStock(Math.max(0, menuItem.getReservedStock() - oi.getQuantity()));
+                    }
+                    menuItemRepository.save(menuItem);
+
+                    InventoryLog log = new InventoryLog();
+                    log.setMenuItem(menuItem);
+                    log.setStockChange(wasConfirmed ? oi.getQuantity() : 0);
+                    log.setReservedChange(wasConfirmed ? 0 : -oi.getQuantity());
                     log.setType("ORDER_CANCELLED");
                     if (tenantId != null) {
                         tenantRepository.findById(tenantId).ifPresent(log::setTenant);
@@ -656,19 +679,18 @@ public class OrderService {
             throw new IllegalStateException("Only pending orders can be cancelled");
         }
 
-        // Restore stock and reserved stock for each item, and log the cancellation
+        // Pending orders only had stock reserved (not deducted) — release reservation
         UUID cancelTenantId = TenantContext.getCurrentTenantId();
         for (OrderItem item : order.getOrderItems()) {
             MenuItem menuItem = item.getMenuItem();
             if (menuItem != null) {
-                menuItem.setStock(menuItem.getStock() + item.getQuantity());
                 menuItem.setReservedStock(Math.max(0, menuItem.getReservedStock() - item.getQuantity()));
                 menuItemRepository.save(menuItem);
 
                 InventoryLog log = new InventoryLog();
                 log.setMenuItem(menuItem);
                 log.setMenuItemNameSnapshot(menuItem.getName());
-                log.setStockChange(item.getQuantity());
+                log.setStockChange(0);
                 log.setReservedChange(-item.getQuantity());
                 log.setType("ORDER_CANCELLED");
                 if (cancelTenantId != null) {

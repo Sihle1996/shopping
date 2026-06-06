@@ -38,7 +38,15 @@ public class GroupCartController {
 
     @GetMapping("/{token}")
     public ResponseEntity<?> get(@PathVariable String token) {
-        return ResponseEntity.ok(groupCartService.summarize(token));
+        Map<String, Object> summary = groupCartService.summarize(token);
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId != null) {
+            String cartTenantId = groupCartService.getByToken(token).getTenant().getId().toString();
+            if (!tenantId.toString().equals(cartTenantId)) {
+                return ResponseEntity.status(403).body(Map.of("error", "Access denied"));
+            }
+        }
+        return ResponseEntity.ok(summary);
     }
 
     @PostMapping("/{token}/items")
@@ -66,7 +74,7 @@ public class GroupCartController {
         groupCartService.removeItem(token, itemId, user);
         Map<String, Object> summary = groupCartService.summarize(token);
         messagingTemplate.convertAndSend("/topic/group-cart/" + token, summary);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(summary);
     }
 
     @PostMapping("/{token}/close")

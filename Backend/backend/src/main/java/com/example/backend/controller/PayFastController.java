@@ -1,5 +1,7 @@
 package com.example.backend.controller;
 
+import com.example.backend.entity.Order;
+import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.TenantRepository;
 import com.example.backend.service.PayFastService;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +19,7 @@ public class PayFastController {
 
     private final PayFastService payFastService;
     private final TenantRepository tenantRepository;
+    private final OrderRepository orderRepository;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -24,9 +27,11 @@ public class PayFastController {
     @Value("${app.backend-url:http://localhost:8080}")
     private String backendUrl;
 
-    public PayFastController(PayFastService payFastService, TenantRepository tenantRepository) {
+    public PayFastController(PayFastService payFastService, TenantRepository tenantRepository,
+                             OrderRepository orderRepository) {
         this.payFastService = payFastService;
         this.tenantRepository = tenantRepository;
+        this.orderRepository = orderRepository;
     }
 
     /**
@@ -93,11 +98,11 @@ public class PayFastController {
                 + " amount=" + amountGross);
 
         if ("COMPLETE".equalsIgnoreCase(paymentStatus)) {
-            // Subscription payment: m_payment_id = "sub-{tenantId}-{planName}"
             if (mPaymentId != null && mPaymentId.startsWith("sub-")) {
                 activateSubscription(mPaymentId);
+            } else if (mPaymentId != null) {
+                confirmOrderPayment(mPaymentId, pfPaymentId);
             }
-            // Order payments: already handled optimistically on the frontend
         }
 
         return ResponseEntity.ok("OK");
@@ -127,6 +132,24 @@ public class PayFastController {
             }, () -> System.err.println("PayFast ITN: tenant not found: " + tenantIdStr));
         } catch (IllegalArgumentException e) {
             System.err.println("PayFast ITN: invalid tenantId in m_payment_id: " + mPaymentId);
+        }
+    }
+
+    private void confirmOrderPayment(String mPaymentId, String pfPaymentId) {
+        try {
+            UUID orderId = UUID.fromString(mPaymentId);
+            orderRepository.findById(orderId).ifPresentOrElse(order -> {
+                if ("Pending".equals(order.getStatus()) || "Scheduled".equals(order.getStatus())) {
+                    order.setPaymentId(pfPaymentId != null ? pfPaymentId : mPaymentId);
+                    orderRepository.save(order);
+                    System.out.println("PayFast ITN: confirmed payment for order " + orderId
+                            + " (pf_payment_id=" + pfPaymentId + ")");
+                } else {
+                    System.out.println("PayFast ITN: order " + orderId + " already in status " + order.getStatus());
+                }
+            }, () -> System.err.println("PayFast ITN: order not found: " + mPaymentId));
+        } catch (IllegalArgumentException e) {
+            System.err.println("PayFast ITN: invalid order ID in m_payment_id: " + mPaymentId);
         }
     }
 

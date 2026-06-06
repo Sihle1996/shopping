@@ -1,6 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
 interface TrackResult {
@@ -29,6 +31,7 @@ export class TrackOrderComponent implements OnInit, OnDestroy {
   error = '';
   requiresLogin = false;
   private pollInterval: any = null;
+  private destroy$ = new Subject<void>();
 
   constructor(private route: ActivatedRoute, private http: HttpClient) {}
 
@@ -44,6 +47,8 @@ export class TrackOrderComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopPolling();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   track(): void {
@@ -61,7 +66,7 @@ export class TrackOrderComponent implements OnInit, OnDestroy {
     let url = `${environment.apiUrl}/api/orders/track/${id}`;
     if (this.email.trim()) url += `?email=${encodeURIComponent(this.email.trim())}`;
 
-    this.http.get<TrackResult>(url).subscribe({
+    this.http.get<TrackResult>(url).pipe(takeUntil(this.destroy$)).subscribe({
       next: r => {
         this.result = r;
         this.loading = false;
@@ -91,12 +96,12 @@ export class TrackOrderComponent implements OnInit, OnDestroy {
     this.pollInterval = setInterval(() => {
       let url = `${environment.apiUrl}/api/orders/track/${id}`;
       if (this.email.trim()) url += `?email=${encodeURIComponent(this.email.trim())}`;
-      this.http.get<TrackResult>(url).subscribe({
+      this.http.get<TrackResult>(url).pipe(takeUntil(this.destroy$)).subscribe({
         next: r => {
           this.result = r;
           if (TERMINAL_STATUSES.includes(r.status)) this.stopPolling();
         },
-        error: () => { /* silently ignore poll errors */ }
+        error: () => {}
       });
     }, 30000);
   }
