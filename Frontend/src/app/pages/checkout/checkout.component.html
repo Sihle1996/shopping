@@ -250,6 +250,14 @@
               </div>
             </div>
 
+            <!-- Persistent error (stays until resolved — toasts are too fleeting) -->
+            <div *ngIf="checkoutError"
+                 class="flex items-start gap-2 bg-red-50 border border-red-200 text-danger text-sm rounded-xl px-4 py-3"
+                 role="alert">
+              <i class="bi bi-exclamation-triangle-fill mt-0.5 flex-shrink-0"></i>
+              <span>{{ checkoutError }}</span>
+            </div>
+
             <!-- Submit -->
             <app-button
               variant="primary"

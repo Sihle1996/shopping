@@ -18,6 +18,7 @@ import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { ThankYouComponent } from './components/thank-you/thank-you.component';
 import { AuthInterceptor } from './authInterceptor/auth.interceptor';
 import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
+import { ErrorInterceptor } from './shared/error.interceptor';
 import { SharedModule } from './shared/shared.module';
 import { HistoryordersComponent } from './pages/historyorders/historyorders.component';
 import { RegisterRestaurantComponent } from './pages/register-restaurant/register-restaurant.component';
@@ -76,9 +77,11 @@ import { RestaurantTermsComponent } from './pages/legal/restaurant-terms/restaur
     AppRoutingModule,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',
-      timeOut: 4000,
+      timeOut: 6000,
+      extendedTimeOut: 3000,
       closeButton: true,
-      progressBar: true
+      progressBar: true,
+      preventDuplicates: true
     })
   ],
   providers: [
@@ -90,6 +93,11 @@ import { RestaurantTermsComponent } from './pages/legal/restaurant-terms/restaur
     {
       provide: HTTP_INTERCEPTORS,
       useClass: LoaderInterceptor,
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ErrorInterceptor,
       multi: true
     }
   ],

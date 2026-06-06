@@ -44,6 +44,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
 
   payFastLoading: boolean = false;
   submitting: boolean = false;
+  checkoutError: string = '';  // persistent inline error (toasts are too fleeting for a checkout blocker)
 
   // Promo code
   promoCode: string = '';
@@ -510,20 +511,27 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   onSubmit(): void {
     if (this.submitting || this.payFastLoading) return;
     this.formSubmitted = true;
+    this.checkoutError = '';
     const d = this.deliveryDetails;
     if (!this.storeIsOpen) {
-      this.toastr.error('This store is currently closed and not accepting orders.');
+      this.checkoutError = 'This store is currently closed and not accepting orders.';
+      this.toastr.error(this.checkoutError);
       return;
     }
     if (this.belowMinimum) {
-      this.toastr.warning(`Minimum order amount is R${this.minimumOrderAmount!.toFixed(2)}. Add more items to continue.`);
+      this.checkoutError = `Minimum order amount is R${this.minimumOrderAmount!.toFixed(2)}. Add more items to continue.`;
+      this.toastr.warning(this.checkoutError);
       return;
     }
     if (this.deliveryFeeError) {
-      this.toastr.error(this.deliveryFeeError);
+      this.checkoutError = this.deliveryFeeError;
+      this.toastr.error(this.checkoutError);
       return;
     }
-    if (!this.isCheckoutValid) return;
+    if (!this.isCheckoutValid) {
+      this.checkoutError = 'Please fill in your delivery address, city, postal code and phone number.';
+      return;
+    }
 
     const groupToken = this.groupCheckoutToken;
 
@@ -602,12 +610,15 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       error: (err) => {
         this.submitting = false;
         if (err?.status === 409) {
-          this.toastr.error(err?.error?.message || 'Some items in your cart are no longer available. Please update your cart.');
+          this.checkoutError = err?.error?.message || 'Some items in your cart are no longer available. Please update your cart.';
         } else if (err?.status === 429) {
-          this.toastr.error('Too many requests. Please wait a moment before placing another order.');
+          this.checkoutError = 'Too many requests. Please wait a moment before placing another order.';
+        } else if (err?.status === 0) {
+          this.checkoutError = 'Could not reach the server. Check your connection and try again.';
         } else {
-          this.toastr.error(err?.error?.error || 'Failed to place order. Please try again.');
+          this.checkoutError = err?.error?.error || err?.error?.message || 'Failed to place order. Please try again.';
         }
+        this.toastr.error(this.checkoutError);
       }
     });
   }
