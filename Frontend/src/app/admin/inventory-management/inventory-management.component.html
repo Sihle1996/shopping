@@ -185,8 +185,9 @@
     <div class="md:hidden grid grid-cols-1 gap-3">
       <div *ngFor="let item of filteredInventory; trackBy: trackById"
            class="bg-white rounded-2xl shadow-card p-4 animate-fade-in"
-           [class.border-l-4]="isLowStock(item)"
-           [class.border-warning]="isLowStock(item)">
+           [class.border-l-4]="isLowStock(item) || soldOut(item)"
+           [class.border-danger]="soldOut(item)"
+           [class.border-warning]="isLowStock(item) && !soldOut(item)">
         <div class="flex items-start justify-between mb-2">
           <div>
             <h4 class="font-semibold text-sm text-textDark">{{ item.name }}</h4>
@@ -204,15 +205,18 @@
                [class.bg-danger]="soldOut(item)"
                [style.width.%]="stockPercent(item)"></div>
         </div>
-        <div class="grid grid-cols-2 gap-2 text-sm text-textLight mb-3">
-          <div>Available: <strong [class.text-danger]="soldOut(item)" [class.text-textDark]="!soldOut(item)" class="font-numbers">{{ freeStock(item) }}</strong> <span class="text-xs text-textMuted">of {{ item.stock }}</span></div>
-          <div>Reserved: <strong class="text-textDark font-numbers">{{ item.reservedStock }}</strong></div>
-          <div class="col-span-2 flex items-center gap-2">
-            <span class="text-xs">Alert at:</span>
-            <input type="number" [(ngModel)]="item.lowStockThreshold" min="0"
-                   class="w-16 px-2 py-1 rounded-lg border border-borderColor text-center text-sm outline-none" />
-            <span class="text-xs text-textMuted">units</span>
-          </div>
+        <div class="flex items-center justify-between text-sm text-textLight mb-3">
+          <span>Available
+            <strong [class.text-danger]="soldOut(item)" [class.text-textDark]="!soldOut(item)" class="font-numbers ml-1">{{ freeStock(item) }}</strong>
+            <span class="text-xs text-textMuted">of {{ item.stock }}</span>
+          </span>
+          <span>Reserved <strong class="text-textDark font-numbers ml-1">{{ item.reservedStock }}</strong></span>
+        </div>
+        <div class="flex items-center gap-2 text-sm text-textLight mb-3">
+          <span class="text-xs">Alert at</span>
+          <input type="number" [(ngModel)]="item.lowStockThreshold" min="0"
+                 class="w-16 px-2 py-1 rounded-lg border border-borderColor text-center text-sm outline-none" />
+          <span class="text-xs text-textMuted">units</span>
         </div>
         <div class="flex items-center justify-between mb-2">
           <span class="text-sm text-textLight">Visible to customers</span>
@@ -226,12 +230,12 @@
                   [class.translate-x-1]="!item.isAvailable"></span>
           </button>
         </div>
-        <div class="flex items-center gap-2">
-          <div class="inline-flex items-center rounded-xl border border-borderColor overflow-hidden">
-            <button type="button" (click)="step(item, -1)" [disabled]="adjustingId === item.id" class="px-3 py-2 hover:bg-surface font-bold disabled:opacity-40">−</button>
-            <input type="number" [(ngModel)]="item.adjustStock"
-                   class="w-16 border-x border-borderColor bg-white px-2 py-2 text-center text-sm outline-none" />
-            <button type="button" (click)="step(item, 1)" [disabled]="adjustingId === item.id" class="px-3 py-2 hover:bg-surface font-bold disabled:opacity-40">+</button>
+        <div class="flex items-stretch gap-2">
+          <div class="flex flex-1 items-center rounded-xl border border-borderColor overflow-hidden">
+            <button type="button" (click)="step(item, -1)" [disabled]="adjustingId === item.id" class="px-4 py-2 hover:bg-surface font-bold disabled:opacity-40">−</button>
+            <input type="number" [(ngModel)]="item.adjustStock" placeholder="Qty"
+                   class="min-w-0 flex-1 border-x border-borderColor bg-white px-2 py-2 text-center text-sm outline-none" />
+            <button type="button" (click)="step(item, 1)" [disabled]="adjustingId === item.id" class="px-4 py-2 hover:bg-surface font-bold disabled:opacity-40">+</button>
           </div>
           <app-button variant="primary" size="sm" [loading]="adjustingId === item.id" (clicked)="adjust(item)">Save</app-button>
         </div>
