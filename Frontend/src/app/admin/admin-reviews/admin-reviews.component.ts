@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ReviewService, ReviewDTO } from 'src/app/services/review.service';
 import { ToastrService } from 'ngx-toastr';
+import { ConfirmService } from 'src/app/shared/services/confirm.service';
 
 @Component({
   selector: 'app-admin-reviews',
@@ -11,7 +12,8 @@ export class AdminReviewsComponent implements OnInit {
   loading = true;
   deletingId: string | null = null;
 
-  constructor(private reviewService: ReviewService, private toastr: ToastrService) {}
+  constructor(private reviewService: ReviewService, private toastr: ToastrService,
+              private confirm: ConfirmService) {}
 
   ngOnInit(): void {
     this.load();
@@ -26,6 +28,17 @@ export class AdminReviewsComponent implements OnInit {
   }
 
   deleteReview(id: string): void {
+    this.confirm.ask({
+      title: 'Delete review?',
+      message: 'This review will be permanently removed.',
+      confirmLabel: 'Delete',
+    }).subscribe(ok => {
+      if (!ok) return;
+      this.performDeleteReview(id);
+    });
+  }
+
+  private performDeleteReview(id: string): void {
     this.deletingId = id;
     this.reviewService.adminDeleteReview(id).subscribe({
       next: () => {

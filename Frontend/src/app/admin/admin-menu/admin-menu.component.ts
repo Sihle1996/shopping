@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, filter, takeUntil } from 'rxjs/operators';
 import { driver } from 'driver.js';
 import { AdminService } from 'src/app/services/admin.service';
+import { ConfirmService } from 'src/app/shared/services/confirm.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ToastrService } from 'ngx-toastr';
@@ -88,7 +89,8 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private authService: AuthService,
     private notificationService: NotificationService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private confirm: ConfirmService
   ) {}
 
   ngOnInit(): void {
@@ -358,12 +360,19 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
   }
 
   deleteGroup(itemId: string, groupId: string): void {
-    this.http.delete(
-      `${environment.apiUrl}/api/admin/menu-items/${itemId}/options/${groupId}`,
-      { headers: this.authHeaders }
-    ).subscribe({
-      next: () => this.loadOptions(itemId),
-      error: () => this.toastr.error('Failed to delete group')
+    this.confirm.ask({
+      title: 'Delete option group?',
+      message: 'This option group and all its choices will be removed from the item.',
+      confirmLabel: 'Delete',
+    }).subscribe(ok => {
+      if (!ok) return;
+      this.http.delete(
+        `${environment.apiUrl}/api/admin/menu-items/${itemId}/options/${groupId}`,
+        { headers: this.authHeaders }
+      ).subscribe({
+        next: () => this.loadOptions(itemId),
+        error: () => this.toastr.error('Failed to delete group')
+      });
     });
   }
 
@@ -382,12 +391,19 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
   }
 
   deleteChoice(itemId: string, groupId: string, choiceId: string): void {
-    this.http.delete(
-      `${environment.apiUrl}/api/admin/menu-items/${itemId}/options/${groupId}/choices/${choiceId}`,
-      { headers: this.authHeaders }
-    ).subscribe({
-      next: () => this.loadOptions(itemId),
-      error: () => this.toastr.error('Failed to delete choice')
+    this.confirm.ask({
+      title: 'Delete choice?',
+      message: 'This choice will be removed from the option group.',
+      confirmLabel: 'Delete',
+    }).subscribe(ok => {
+      if (!ok) return;
+      this.http.delete(
+        `${environment.apiUrl}/api/admin/menu-items/${itemId}/options/${groupId}/choices/${choiceId}`,
+        { headers: this.authHeaders }
+      ).subscribe({
+        next: () => this.loadOptions(itemId),
+        error: () => this.toastr.error('Failed to delete choice')
+      });
     });
   }
 }

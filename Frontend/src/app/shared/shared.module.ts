@@ -21,6 +21,7 @@ import { FloatingCartBarComponent } from './components/floating-cart-bar/floatin
 import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.component';
 import { CookieConsentComponent } from './components/cookie-consent/cookie-consent.component';
 import { PageHeaderComponent } from './components/page-header/page-header.component';
+import { ConfirmHostComponent } from './components/confirm-host/confirm-host.component';
 
 @NgModule({
   declarations: [
@@ -40,6 +41,7 @@ import { PageHeaderComponent } from './components/page-header/page-header.compon
     ConfirmModalComponent,
     CookieConsentComponent,
     PageHeaderComponent,
+    ConfirmHostComponent,
   ],
   imports: [
     CommonModule,
@@ -69,6 +71,7 @@ import { PageHeaderComponent } from './components/page-header/page-header.compon
     ConfirmModalComponent,
     CookieConsentComponent,
     PageHeaderComponent,
+    ConfirmHostComponent,
   ],
 })
 export class SharedModule {}

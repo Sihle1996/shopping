@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { driver } from 'driver.js';
 import { AdminService } from 'src/app/services/admin.service';
+import { ConfirmService } from 'src/app/shared/services/confirm.service';
 
 @Component({
   selector: 'app-admin-drivers',
@@ -31,7 +32,8 @@ export class AdminDriversComponent implements OnInit, OnDestroy {
     try { this.activeDriver?.destroy(); } catch { /* ignore */ }
   }
 
-  constructor(private adminService: AdminService, private route: ActivatedRoute) {}
+  constructor(private adminService: AdminService, private route: ActivatedRoute,
+              private confirm: ConfirmService) {}
 
   ngOnInit(): void {
     this.loadDrivers();
@@ -89,6 +91,17 @@ export class AdminDriversComponent implements OnInit, OnDestroy {
   }
 
   deleteDriver(id: string): void {
+    this.confirm.ask({
+      title: 'Remove driver?',
+      message: 'This driver will be removed from your store. This cannot be undone.',
+      confirmLabel: 'Remove',
+    }).subscribe(ok => {
+      if (!ok) return;
+      this.performDeleteDriver(id);
+    });
+  }
+
+  private performDeleteDriver(id: string): void {
     this.deletingId = id;
     this.adminService.deleteDriver(id).subscribe({
       next: () => {

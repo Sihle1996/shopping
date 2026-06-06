@@ -8,6 +8,7 @@ import { AdminService } from 'src/app/services/admin.service';
 import { SubscriptionService } from 'src/app/services/subscription.service';
 import { GeocodingService, AddressSuggestion } from 'src/app/services/geocoding.service';
 import { ToastrService } from 'ngx-toastr';
+import { ConfirmService } from 'src/app/shared/services/confirm.service';
 import { environment } from 'src/environments/environment';
 
 interface TenantSettings {
@@ -101,7 +102,8 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     private subscriptionService: SubscriptionService,
     private geocodingService: GeocodingService,
     private toastr: ToastrService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private confirm: ConfirmService
   ) {}
 
   ngOnInit(): void {
@@ -236,6 +238,17 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   }
 
   removeCategory(id: string): void {
+    this.confirm.ask({
+      title: 'Remove category?',
+      message: 'Items in this category will no longer be grouped under it.',
+      confirmLabel: 'Remove',
+    }).subscribe(ok => {
+      if (!ok) return;
+      this.performRemoveCategory(id);
+    });
+  }
+
+  private performRemoveCategory(id: string): void {
     this.removingCategoryId = id;
     this.adminService.deleteCategory(id).subscribe({
       next: () => {
