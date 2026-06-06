@@ -161,7 +161,16 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
       return;
     }
     this.showForm = !this.showForm;
-    if (!this.showForm) this.resetForm();
+    if (this.showForm) this.scrollToForm();
+    else this.resetForm();
+  }
+
+  /** Bring the (top-of-page) form into view so the admin sees it open. */
+  private scrollToForm(): void {
+    setTimeout(() => {
+      document.getElementById('menu-item-form')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
   }
 
   submitForm(): void {
@@ -181,6 +190,7 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
     this.showForm = true;
     this.isEditing = true;
     this.menuFormSubmitted = false;
+    this.scrollToForm();
   }
 
   confirmDelete(id: string): void {
