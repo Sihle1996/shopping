@@ -112,6 +112,18 @@
              class="text-danger text-xs mt-1">Passwords do not match</p>
         </div>
 
+        <!-- Terms & Privacy -->
+        <div class="flex items-start gap-2">
+          <input type="checkbox" formControlName="acceptTerms" id="acceptTerms"
+                 class="mt-1 h-4 w-4 rounded border-borderColor text-primary focus:ring-primary-400" />
+          <label for="acceptTerms" class="text-sm text-textLight">
+            I agree to the <a routerLink="/terms" target="_blank" class="text-primary font-semibold hover:underline">Terms &amp; Conditions</a>
+            and <a routerLink="/privacy" target="_blank" class="text-primary font-semibold hover:underline">Privacy Policy</a>
+          </label>
+        </div>
+        <p *ngIf="registerForm.get('acceptTerms')?.touched && registerForm.get('acceptTerms')?.hasError('required')"
+           class="text-danger text-xs -mt-3">You must accept the terms to continue</p>
+
         <!-- Error -->
         <div *ngIf="errorMessage"
              data-testid="register-error"

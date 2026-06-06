@@ -34,6 +34,9 @@ import { VerifyEmailComponent } from './pages/verify-email/verify-email.componen
 import { SupportComponent } from './pages/support/support.component';
 import { FavouritesComponent } from './pages/favourites/favourites.component';
 import { GroupCartComponent } from './pages/group-cart/group-cart.component';
+import { TermsComponent } from './pages/legal/terms/terms.component';
+import { PrivacyComponent } from './pages/legal/privacy/privacy.component';
+import { RestaurantTermsComponent } from './pages/legal/restaurant-terms/restaurant-terms.component';
 
 @NgModule({
   declarations: [
@@ -60,6 +63,9 @@ import { GroupCartComponent } from './pages/group-cart/group-cart.component';
     SupportComponent,
     FavouritesComponent,
     GroupCartComponent,
+    TermsComponent,
+    PrivacyComponent,
+    RestaurantTermsComponent,
   ],
   imports: [
     BrowserModule,

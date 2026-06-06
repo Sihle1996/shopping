@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/me")
 @RequiredArgsConstructor
@@ -32,6 +34,20 @@ public class UserProfileController {
         if (req.marketingEmailOptIn() != null) user.setMarketingEmailOptIn(req.marketingEmailOptIn());
         userRepository.save(user);
         return ResponseEntity.ok(ProfileResponse.from(user));
+    }
+
+    @DeleteMapping("/account")
+    public ResponseEntity<Void> deleteAccount(Authentication authentication) {
+        User user = authUtil.getCurrentUser(authentication);
+        String anon = "deleted-" + UUID.randomUUID();
+        user.setEmail(anon + "@removed.local");
+        user.setFullName(null);
+        user.setPhone(null);
+        user.setPassword("");
+        user.setActive(false);
+        user.setMarketingEmailOptIn(false);
+        userRepository.save(user);
+        return ResponseEntity.noContent().build();
     }
 
     record ProfileRequest(String fullName, String phone, Boolean marketingEmailOptIn) {}

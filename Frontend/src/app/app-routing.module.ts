@@ -25,6 +25,9 @@ import { VerifyEmailComponent } from './pages/verify-email/verify-email.componen
 import { SupportComponent } from './pages/support/support.component';
 import { FavouritesComponent } from './pages/favourites/favourites.component';
 import { GroupCartComponent } from './pages/group-cart/group-cart.component';
+import { TermsComponent } from './pages/legal/terms/terms.component';
+import { PrivacyComponent } from './pages/legal/privacy/privacy.component';
+import { RestaurantTermsComponent } from './pages/legal/restaurant-terms/restaurant-terms.component';
 
 const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -65,6 +68,9 @@ const routes: Routes = [
   { path: 'profile', component: UserProfileComponent, canActivate: [UserGuard] },
   { path: 'support', component: SupportComponent, canActivate: [UserGuard] },
   { path: 'track', component: TrackOrderComponent },
+  { path: 'terms', component: TermsComponent },
+  { path: 'privacy', component: PrivacyComponent },
+  { path: 'restaurant-terms', component: RestaurantTermsComponent },
 
   { path: '**', redirectTo: '' },
 ];

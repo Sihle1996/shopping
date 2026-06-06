@@ -1,0 +1,13 @@
+<div *ngIf="visible"
+     class="fixed bottom-0 left-0 right-0 z-50 bg-gray-900 text-white px-4 py-4 shadow-float">
+  <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+    <p class="text-sm text-gray-300 text-center sm:text-left">
+      We use essential cookies to keep you logged in and improve your experience.
+      See our <a routerLink="/privacy" class="text-primary hover:underline font-semibold">Privacy Policy</a> for details.
+    </p>
+    <button (click)="accept()"
+            class="flex-shrink-0 px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary-600 transition-colors">
+      Got it
+    </button>
+  </div>
+</div>

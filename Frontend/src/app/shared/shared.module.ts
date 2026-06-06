@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 
 import { LoadersModule } from './loaders/loaders.module';
 import { PaginationComponent } from '../components/pagination/pagination.component';
@@ -18,6 +19,7 @@ import { EmptyStateComponent } from './components/empty-state/empty-state.compon
 import { CartDrawerComponent } from './components/cart-drawer/cart-drawer.component';
 import { FloatingCartBarComponent } from './components/floating-cart-bar/floating-cart-bar.component';
 import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.component';
+import { CookieConsentComponent } from './components/cookie-consent/cookie-consent.component';
 
 @NgModule({
   declarations: [
@@ -35,11 +37,13 @@ import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.
     CartDrawerComponent,
     FloatingCartBarComponent,
     ConfirmModalComponent,
+    CookieConsentComponent,
   ],
   imports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    RouterModule,
     LoadersModule,
   ],
   exports: [
@@ -61,6 +65,7 @@ import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.
     CartDrawerComponent,
     FloatingCartBarComponent,
     ConfirmModalComponent,
+    CookieConsentComponent,
   ],
 })
 export class SharedModule {}
