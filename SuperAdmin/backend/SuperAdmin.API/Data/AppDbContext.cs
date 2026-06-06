@@ -21,33 +21,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(u => u.TenantId)
             .IsRequired(false);
 
-        // PlatformCommissionPercent may be stored as numeric in Postgres
         modelBuilder.Entity<Tenant>()
             .Property(t => t.PlatformCommissionPercent)
             .HasColumnType("numeric");
 
-        // DeliveryFeeBase
         modelBuilder.Entity<Tenant>()
             .Property(t => t.DeliveryFeeBase)
             .HasColumnType("numeric");
 
-        // Unique constraints
-        modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
-        modelBuilder.Entity<Tenant>().HasIndex(t => t.Slug).IsUnique();
-        modelBuilder.Entity<SubscriptionPlan>().HasIndex(p => p.Name).IsUnique();
-
-        // Performance indexes
-        modelBuilder.Entity<User>().HasIndex(u => u.Role);
-        modelBuilder.Entity<User>().HasIndex(u => u.TenantId);
-        modelBuilder.Entity<Order>().HasIndex(o => o.TenantId);
-        modelBuilder.Entity<Order>().HasIndex(o => o.OrderDate);
-        modelBuilder.Entity<Order>().HasIndex(o => o.Status);
+        modelBuilder.Entity<Tenant>()
+            .Property(t => t.MinimumOrderAmount)
+            .HasColumnType("numeric");
 
         // StoreDocuments
         modelBuilder.Entity<StoreDocument>()
             .HasOne(d => d.Tenant)
             .WithMany(t => t.StoreDocuments)
             .HasForeignKey(d => d.TenantId);
-        modelBuilder.Entity<StoreDocument>().HasIndex(d => d.TenantId);
     }
 }

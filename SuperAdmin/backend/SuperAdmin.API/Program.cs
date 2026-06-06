@@ -93,39 +93,10 @@ using (var scope = app.Services.CreateScope())
     var startupLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-    // Apply indexes individually so one failure doesn't block the rest
-    // Note: User model maps to "_user" table
-    var indexes = new[]
-    {
-        @"CREATE UNIQUE INDEX IF NOT EXISTS ix_users_email ON ""_user""(email)",
-        @"CREATE UNIQUE INDEX IF NOT EXISTS ix_tenants_slug ON tenants(slug)",
-        @"CREATE INDEX IF NOT EXISTS ix_users_role ON ""_user""(role)",
-        @"CREATE INDEX IF NOT EXISTS ix_users_tenant_id ON ""_user""(tenant_id)",
-        @"CREATE INDEX IF NOT EXISTS ix_orders_tenant_id ON orders(tenant_id)",
-        @"CREATE INDEX IF NOT EXISTS ix_orders_order_date ON orders(order_date)",
-        @"CREATE INDEX IF NOT EXISTS ix_orders_status ON orders(status)",
-    };
-    foreach (var sql in indexes)
-    {
-        try { db.Database.ExecuteSqlRaw(sql); }
-        catch (Exception ex) { startupLogger.LogWarning("[Startup] Index skipped: {Message}", ex.Message); }
-    }
-
-    // Add enrollment columns + store_documents table (idempotent)
+    // Ensure store_documents table exists (Hibernate manages tenants schema)
     try
     {
         db.Database.ExecuteSqlRaw(@"
-            ALTER TABLE tenants
-                ADD COLUMN IF NOT EXISTS approval_status VARCHAR(20) NOT NULL DEFAULT 'APPROVED',
-                ADD COLUMN IF NOT EXISTS rejection_reason TEXT,
-                ADD COLUMN IF NOT EXISTS submitted_for_review_at TIMESTAMP,
-                ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP,
-                ADD COLUMN IF NOT EXISTS cipc_number VARCHAR(20),
-                ADD COLUMN IF NOT EXISTS bank_name VARCHAR(60),
-                ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(30),
-                ADD COLUMN IF NOT EXISTS bank_account_type VARCHAR(20),
-                ADD COLUMN IF NOT EXISTS bank_branch_code VARCHAR(10);
-
             CREATE TABLE IF NOT EXISTS store_documents (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -142,7 +113,7 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        startupLogger.LogWarning(ex, "[Startup] Enrollment migration warning");
+        startupLogger.LogWarning(ex, "[Startup] store_documents migration warning");
     }
 
     try
@@ -172,7 +143,7 @@ using (var scope = app.Services.CreateScope())
         try { db.Database.ExecuteSqlRaw(@"CREATE UNIQUE INDEX IF NOT EXISTS ix_subscription_plans_name ON subscription_plans(name)"); }
         catch (Exception idxEx) { startupLogger.LogWarning("[Startup] Index skipped: {Message}", idxEx.Message); }
 
-        // Expand plan table with feature-gate columns (idempotent)
+        // Expand plan table with feature-gate columns (idempotent, does NOT overwrite existing values)
         db.Database.ExecuteSqlRaw(@"
             ALTER TABLE subscription_plans
                 ADD COLUMN IF NOT EXISTS max_promotions INT NOT NULL DEFAULT 3,
@@ -188,24 +159,6 @@ using (var scope = app.Services.CreateScope())
             UPDATE tenants
                 SET trial_started_at = created_at
                 WHERE subscription_status = 'TRIAL' AND trial_started_at IS NULL;
-
-            UPDATE subscription_plans SET
-                max_promotions = 3, max_delivery_radius_km = 10,
-                has_analytics = FALSE, has_custom_branding = FALSE,
-                has_inventory_export = FALSE, commission_percent = 4.00
-            WHERE name = 'BASIC';
-
-            UPDATE subscription_plans SET
-                max_promotions = 20, max_delivery_radius_km = 25,
-                has_analytics = TRUE, has_custom_branding = TRUE,
-                has_inventory_export = TRUE, commission_percent = 3.00
-            WHERE name = 'PRO';
-
-            UPDATE subscription_plans SET
-                max_promotions = 999, max_delivery_radius_km = 50,
-                has_analytics = TRUE, has_custom_branding = TRUE,
-                has_inventory_export = TRUE, commission_percent = 2.00
-            WHERE name = 'ENTERPRISE';
         ");
     }
     catch (Exception ex)

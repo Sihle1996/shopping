@@ -110,6 +110,11 @@ public class StoresController(AppDbContext db) : ControllerBase
             SubscriptionPlan = plan,
             SubscriptionStatus = status,
             Active = true,
+            IsOpen = false,
+            IsArchived = false,
+            EstimatedDeliveryMinutes = 30,
+            DeliveryRadiusKm = 10,
+            ApprovalStatus = "APPROVED",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             TrialStartedAt = status == "TRIAL" ? DateTime.UtcNow : null
