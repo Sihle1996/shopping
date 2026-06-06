@@ -18,6 +18,7 @@ type Section = 'personal' | 'security' | 'privacy' | 'wallet';
 export class UserProfileComponent implements OnInit {
   form: FormGroup;
   passwordForm: FormGroup;
+  profileEditing = false;  // form stays read-only until the user taps Edit
   loading = true;
   saving = false;
   changingPassword = false;
@@ -72,6 +73,7 @@ export class UserProfileComponent implements OnInit {
         this.role = p.role;
         this.joinedAt = p.createdAt || '';
         this.form.patchValue({ fullName: p.fullName, phone: p.phone, marketingEmailOptIn: p.marketingEmailOptIn });
+        this.form.disable();
         this.loading = false;
       },
       error: () => { this.loading = false; this.toastr.error('Failed to load profile'); }
@@ -141,10 +143,28 @@ export class UserProfileComponent implements OnInit {
     this.router.navigate(slug ? ['/store', slug] : ['/stores']);
   }
 
+  editProfile() {
+    this.profileEditing = true;
+    this.form.enable();
+  }
+
+  cancelProfileEdit() {
+    this.profileEditing = false;
+    this.form.disable();
+    // Re-pull saved values so any unsaved edits are discarded
+    this.http.get<any>(`${environment.apiUrl}/api/me`).subscribe(p =>
+      this.form.patchValue({ fullName: p.fullName, phone: p.phone, marketingEmailOptIn: p.marketingEmailOptIn }));
+  }
+
   save() {
     this.saving = true;
     this.http.put<any>(`${environment.apiUrl}/api/me`, this.form.value).subscribe({
-      next: () => { this.saving = false; this.toastr.success('Profile saved'); },
+      next: () => {
+        this.saving = false;
+        this.profileEditing = false;
+        this.form.disable();
+        this.toastr.success('Profile saved');
+      },
       error: () => { this.saving = false; this.toastr.error('Failed to save'); }
     });
   }

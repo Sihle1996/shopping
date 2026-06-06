@@ -83,6 +83,13 @@
       <div class="lg:col-span-2">
         <form [formGroup]="form" (ngSubmit)="save()" class="space-y-4">
 
+          <div *ngIf="!profileEditing" class="flex justify-end">
+            <button type="button" (click)="editProfile()"
+                    class="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-borderColor text-sm font-medium text-textDark hover:bg-gray-50 transition-colors">
+              <i class="bi bi-pencil"></i> Edit
+            </button>
+          </div>
+
           <!-- Personal Info -->
           <div class="bg-white rounded-2xl border border-borderColor p-5 shadow-card">
             <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-4">Personal Info</p>
@@ -123,11 +130,17 @@
             </div>
           </div>
 
-          <button type="submit" [disabled]="saving"
-                  class="w-full py-3 rounded-xl bg-primary hover:bg-primary-600 text-white text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-            <i class="bi bi-check-lg"></i>
-            {{ saving ? 'Saving...' : 'Save Profile' }}
-          </button>
+          <div *ngIf="profileEditing" class="flex flex-col sm:flex-row gap-3">
+            <button type="submit" [disabled]="saving"
+                    class="flex-1 py-3 rounded-xl bg-primary hover:bg-primary-600 text-white text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              <i class="bi bi-check-lg"></i>
+              {{ saving ? 'Saving...' : 'Save Profile' }}
+            </button>
+            <button type="button" (click)="cancelProfileEdit()"
+                    class="flex-1 py-3 rounded-xl border border-borderColor text-sm font-medium text-textDark hover:bg-gray-50 transition-colors">
+              Cancel
+            </button>
+          </div>
 
         </form>
 

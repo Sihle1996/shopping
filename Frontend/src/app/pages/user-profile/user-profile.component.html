@@ -72,7 +72,10 @@
               <p class="text-sm font-semibold text-textDark">Personal Information</p>
               <p class="text-xs text-textMuted mt-0.5">Update your name and contact details</p>
             </div>
-            <i class="bi bi-person-circle text-2xl text-primary/30"></i>
+            <button *ngIf="!profileEditing" type="button" (click)="editProfile()"
+                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-borderColor text-sm text-textDark hover:bg-gray-50 transition-colors">
+              <i class="bi bi-pencil"></i> Edit
+            </button>
           </div>
 
           <div class="grid sm:grid-cols-2 gap-4">
@@ -115,11 +118,15 @@
           </div>
 
           <div class="flex flex-col sm:flex-row gap-3 pt-1">
-            <button type="submit" [disabled]="saving"
+            <button *ngIf="profileEditing" type="submit" [disabled]="saving"
                     class="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary-600 text-white text-sm font-semibold
                            transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
               <i class="bi bi-check-lg"></i>
               {{ saving ? 'Saving...' : 'Save Changes' }}
+            </button>
+            <button *ngIf="profileEditing" type="button" (click)="cancelProfileEdit()"
+                    class="flex-1 py-2.5 rounded-xl border border-borderColor text-sm text-textDark hover:bg-gray-50 transition-colors">
+              Cancel
             </button>
             <a routerLink="/profile/addresses"
                class="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-borderColor

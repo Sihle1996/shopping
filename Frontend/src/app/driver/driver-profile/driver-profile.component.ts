@@ -12,6 +12,7 @@ import { environment } from 'src/environments/environment';
 export class DriverProfileComponent implements OnInit {
   form: FormGroup;
   passwordForm: FormGroup;
+  profileEditing = false;  // form stays read-only until the driver taps Edit
   earnings: { deliveredCount: number; totalEarnings: number } | null = null;
   loading = true;
   saving = false;
@@ -62,6 +63,7 @@ export class DriverProfileComponent implements OnInit {
     this.driverService.getProfile().subscribe({
       next: p => {
         this.form.patchValue(p);
+        this.form.disable();
         this.loading = false;
       },
       error: () => { this.loading = false; this.showToast('Failed to load profile', 'error'); }
@@ -71,10 +73,26 @@ export class DriverProfileComponent implements OnInit {
     });
   }
 
+  editProfile() {
+    this.profileEditing = true;
+    this.form.enable();
+  }
+
+  cancelProfileEdit() {
+    this.profileEditing = false;
+    this.form.disable();
+    this.driverService.getProfile().subscribe(p => this.form.patchValue(p));
+  }
+
   save() {
     this.saving = true;
     this.driverService.updateProfile(this.form.value).subscribe({
-      next: () => { this.saving = false; this.showToast('Profile saved'); },
+      next: () => {
+        this.saving = false;
+        this.profileEditing = false;
+        this.form.disable();
+        this.showToast('Profile saved');
+      },
       error: () => { this.saving = false; this.showToast('Failed to save', 'error'); }
     });
   }

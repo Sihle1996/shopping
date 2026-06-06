@@ -56,6 +56,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   };
   isLoading = false;
   isSaving = false;
+  settingsEditing = false;  // store profile/branding/delivery stay read-only until Edit
   isUploadingLogo = false;
   settingsSubmitted = false;
 
@@ -355,6 +356,16 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     );
   }
 
+  editSettings(): void {
+    this.settingsEditing = true;
+  }
+
+  cancelSettings(): void {
+    this.settingsEditing = false;
+    this.settingsSubmitted = false;
+    this.loadSettings();  // discard unsaved edits
+  }
+
   saveSettings(): void {
     this.settingsSubmitted = true;
     const s = this.settings;
@@ -380,6 +391,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
         }
         this.toastr.success('Settings saved successfully');
         this.isSaving = false;
+        this.settingsEditing = false;
       },
       error: () => {
         this.toastr.error('Failed to save settings');

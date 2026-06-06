@@ -2,7 +2,12 @@
   <div class="w-full">
 
     <!-- Header -->
-    <app-page-header title="Settings" subtitle="Configure your restaurant's profile and delivery options"></app-page-header>
+    <app-page-header title="Settings" subtitle="Configure your restaurant's profile and delivery options">
+      <button actions *ngIf="!settingsEditing && !isLoading" type="button" (click)="editSettings()"
+              class="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-borderColor text-sm font-medium text-textDark hover:bg-gray-50 transition-colors">
+        <i class="bi bi-pencil"></i> Edit
+      </button>
+    </app-page-header>
 
     <!-- Loading -->
     <div *ngIf="isLoading" class="bg-white rounded-2xl shadow-card p-8 text-center">
@@ -10,6 +15,10 @@
     </div>
 
     <div *ngIf="!isLoading" class="space-y-6">
+
+      <!-- Store profile / branding / delivery — read-only until Edit -->
+      <fieldset [disabled]="!settingsEditing" class="space-y-6 border-0 p-0 m-0 min-w-0"
+                [class.opacity-70]="!settingsEditing">
 
       <!-- Store Info Card -->
       <div id="store-info-section" class="bg-white rounded-2xl shadow-card p-6">
@@ -248,6 +257,9 @@
 
       </div>
 
+      </fieldset>
+      <!-- /end read-only settings fieldset -->
+
       <!-- Categories Card -->
       <div id="category-section" class="bg-white rounded-2xl shadow-card p-6">
         <h3 class="font-heading text-base font-semibold text-textDark mb-1">
@@ -345,8 +357,11 @@
         </p>
       </div>
 
-      <!-- Save -->
-      <div class="flex justify-end">
+      <!-- Save / Cancel — only while editing -->
+      <div *ngIf="settingsEditing" class="flex flex-col sm:flex-row justify-end gap-3">
+        <app-button variant="ghost" size="lg" (clicked)="cancelSettings()">
+          Cancel
+        </app-button>
         <app-button
           variant="primary"
           size="lg"
