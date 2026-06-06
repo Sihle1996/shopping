@@ -27,6 +27,9 @@ public class PayFastController {
     @Value("${app.backend-url:http://localhost:8080}")
     private String backendUrl;
 
+    @Value("${app.cors.allowed-origins:}")
+    private String allowedOrigins;
+
     public PayFastController(PayFastService payFastService, TenantRepository tenantRepository,
                              OrderRepository orderRepository) {
         this.payFastService = payFastService;
@@ -40,10 +43,15 @@ public class PayFastController {
      */
     @PostMapping("/initiate")
     public ResponseEntity<Map<String, Object>> initiatePayment(@RequestBody Map<String, String> request,
-                                                                @RequestHeader(value = "X-Store-Slug", required = false) String storeSlug) {
+                                                                @RequestHeader(value = "X-Store-Slug", required = false) String storeSlug,
+                                                                @RequestHeader(value = "Origin", required = false) String origin) {
         double total = Double.parseDouble(request.getOrDefault("total", "0"));
         String itemName = request.getOrDefault("itemName", "Food Order");
         String paymentId = request.getOrDefault("paymentId", "order-" + System.currentTimeMillis());
+
+        // Return the customer to the exact domain they checked out from (crave-it.co.za,
+        // www, or the Vercel URL) so their session/order context survives the round-trip.
+        String base = resolveFrontendBase(origin);
 
         // Build return/cancel/notify URLs
         String returnUrl, cancelUrl;
@@ -52,13 +60,13 @@ public class PayFastController {
             String payload = paymentId.substring(4); // strip "sub-"
             int lastDash = payload.lastIndexOf('-');
             String planName = lastDash >= 0 ? payload.substring(lastDash + 1) : "";
-            returnUrl = frontendUrl + "/admin/subscription?payment=success&plan=" + planName;
-            cancelUrl = frontendUrl + "/admin/subscription?payment=cancelled";
+            returnUrl = base + "/admin/subscription?payment=success&plan=" + planName;
+            cancelUrl = base + "/admin/subscription?payment=cancelled";
         } else {
             // Food order — send customer to thank-you page
             String basePath = (storeSlug != null && !storeSlug.isEmpty())
-                    ? frontendUrl + "/store/" + storeSlug
-                    : frontendUrl;
+                    ? base + "/store/" + storeSlug
+                    : base;
             returnUrl = basePath + "/thank-you?pf_payment_id=" + paymentId;
             cancelUrl = basePath + "/checkout?payment=cancelled&orderId=" + paymentId;
         }
@@ -73,6 +81,18 @@ public class PayFastController {
         response.put("formData", formData);
 
         return ResponseEntity.ok(response);
+    }
+
+    /** Use the request Origin if it's an allowed front-end domain, else the configured default. */
+    private String resolveFrontendBase(String origin) {
+        if (origin != null && !origin.isBlank() && allowedOrigins != null) {
+            for (String allowed : allowedOrigins.split(",")) {
+                if (origin.trim().equalsIgnoreCase(allowed.trim())) {
+                    return origin.trim();
+                }
+            }
+        }
+        return frontendUrl;
     }
 
     /**
