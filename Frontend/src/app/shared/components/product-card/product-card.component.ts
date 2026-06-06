@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnChanges, SimpleChanges } from '@angular/core';
 import { environment } from 'src/environments/environment';
+import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
 import { FavouriteService } from 'src/app/services/favourite.service';
 
 export interface ProductCardItem {
@@ -121,7 +122,8 @@ export class ProductCardComponent implements OnChanges {
 
   getImageUrl(path: string | null): string {
     if (!path) return 'assets/placeholder.png';
-    return path.startsWith('http') ? path : `${environment.apiUrl}${path}`;
+    const full = path.startsWith('http') ? path : `${environment.apiUrl}${path}`;
+    return cloudinaryUrl(full, 400);
   }
 
   onAddToCart(event: MouseEvent): void {

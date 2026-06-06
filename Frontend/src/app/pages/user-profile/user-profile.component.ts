@@ -3,6 +3,7 @@ import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/fo
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from 'src/environments/environment';
+import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/app/services/auth.service';
 import { LoyaltyService, WalletEntry } from 'src/app/services/loyalty.service';
@@ -103,6 +104,10 @@ export class UserProfileComponent implements OnInit {
   setSection(s: string) {
     this.activeSection = s as Section;
     if (s === 'wallet' && !this.wallet.length) this.loadWallet();
+  }
+
+  logoUrl(url?: string | null): string {
+    return url ? cloudinaryUrl(url, 80) : '';
   }
 
   private loadWallet(): void {

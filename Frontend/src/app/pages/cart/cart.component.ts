@@ -9,6 +9,7 @@ import { GroupCartService } from 'src/app/services/group-cart.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
+import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
 
 @Component({
   selector: 'app-cart',
@@ -172,7 +173,8 @@ export class CartComponent implements OnInit {
 
   getImageUrl(path: string | null | undefined): string {
     if (!path) return 'assets/placeholder.png';
-    return path.startsWith('http') ? path : `${environment.apiUrl}${path}`;
+    const full = path.startsWith('http') ? path : `${environment.apiUrl}${path}`;
+    return cloudinaryUrl(full, 160);
   }
 
   trackById(_: number, item: CartItem): string {

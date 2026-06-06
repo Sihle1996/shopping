@@ -7,6 +7,7 @@ import { TenantService } from 'src/app/services/tenant.service';
 import { CartService } from 'src/app/services/cart.service';
 import { LoyaltyService } from 'src/app/services/loyalty.service';
 import { environment } from 'src/environments/environment';
+import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
 
 @Component({
   selector: 'app-navbar',
@@ -135,7 +136,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   private resolveLogoUrl(url?: string): string | null {
     if (!url) return null;
-    return url.startsWith('http') ? url : `${environment.apiUrl}${url}`;
+    const full = url.startsWith('http') ? url : `${environment.apiUrl}${url}`;
+    return cloudinaryUrl(full, 96);
   }
 
   goHome(): void {

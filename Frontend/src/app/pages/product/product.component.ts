@@ -10,6 +10,7 @@ import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
+import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
 
 @Component({
   selector: 'app-product',
@@ -262,6 +263,7 @@ export class ProductComponent implements OnInit, OnDestroy {
 
   getImageUrl(path?: string): string {
     if (!path) return 'assets/placeholder.png';
-    return path.startsWith('http') ? path : `${environment.apiUrl}${path}`;
+    const full = path.startsWith('http') ? path : `${environment.apiUrl}${path}`;
+    return cloudinaryUrl(full, 700);
   }
 }

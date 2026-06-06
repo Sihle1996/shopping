@@ -241,7 +241,7 @@
             <li *ngFor="let entry of wallet"
                 class="flex items-center gap-3 p-3 rounded-xl bg-surface border border-borderColor hover:border-primary/30 transition-colors cursor-pointer"
                 (click)="goToStore(entry.tenantSlug)">
-              <img *ngIf="entry.logoUrl" [src]="entry.logoUrl" alt="" class="w-10 h-10 rounded-xl object-cover flex-shrink-0">
+              <img *ngIf="entry.logoUrl" [src]="logoUrl(entry.logoUrl)" alt="" class="w-10 h-10 rounded-xl object-cover flex-shrink-0">
               <div *ngIf="!entry.logoUrl"
                    class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <i class="bi bi-shop text-primary text-base"></i>

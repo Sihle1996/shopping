@@ -6,6 +6,7 @@ import { GroupCartService, GroupCartSummary } from 'src/app/services/group-cart.
 import { CartService, CartItem } from 'src/app/services/cart.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { environment } from 'src/environments/environment';
+import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
@@ -256,6 +257,7 @@ export class GroupCartComponent implements OnInit, OnDestroy {
 
   getImageUrl(path?: string): string {
     if (!path) return 'assets/placeholder.png';
-    return path.startsWith('http') ? path : `${environment.apiUrl}${path}`;
+    const full = path.startsWith('http') ? path : `${environment.apiUrl}${path}`;
+    return cloudinaryUrl(full, 160);
   }
 }

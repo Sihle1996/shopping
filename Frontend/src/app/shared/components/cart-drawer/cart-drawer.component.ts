@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CartItem } from 'src/app/services/cart.service';
 import { environment } from 'src/environments/environment';
+import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
 
 @Component({
   selector: 'app-cart-drawer',
@@ -100,7 +101,8 @@ export class CartDrawerComponent {
 
   getImageUrl(path: string | null | undefined): string {
     if (!path) return 'assets/placeholder.png';
-    return path.startsWith('http') ? path : `${environment.apiUrl}${path}`;
+    const full = path.startsWith('http') ? path : `${environment.apiUrl}${path}`;
+    return cloudinaryUrl(full, 160);
   }
 
   onQuantityChange(item: CartItem, quantity: number): void {
