@@ -1,7 +1,9 @@
 package com.example.backend.service;
 
 import com.example.backend.auth.RegisterRequest;
+import com.example.backend.config.EmailAlreadyExistsException;
 import com.example.backend.entity.DriverDTO;
+import com.example.backend.repository.TenantRepository;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.user.DriverStatus;
 import com.example.backend.user.Role;
@@ -28,6 +30,12 @@ class AdminDriverServiceTest {
     private UserRepository userRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private TenantRepository tenantRepository;
+    @Mock
+    private SubscriptionEnforcementService subscriptionEnforcementService;
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private AdminDriverService adminDriverService;
@@ -71,7 +79,7 @@ class AdminDriverServiceTest {
         when(request.getEmail()).thenReturn("driver@example.com");
         when(userRepository.findByEmail("driver@example.com")).thenReturn(Optional.of(new User()));
 
-        assertThrows(IllegalArgumentException.class, () -> adminDriverService.createDriver(request));
+        assertThrows(EmailAlreadyExistsException.class, () -> adminDriverService.createDriver(request));
     }
 
     @Test
