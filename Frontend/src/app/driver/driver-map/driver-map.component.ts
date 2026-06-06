@@ -261,10 +261,37 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
 
   private clearStopMarkers(): void { this.stopMarkers.forEach(m => m.remove()); this.stopMarkers = []; }
 
+  /**
+   * Greedy nearest-first ordering of the stops, starting from the driver.
+   * Turns "visit in the order the orders were placed" into a sensible route
+   * (driver → closest stop → next closest → …). Renumbers the pins to match.
+   */
+  private orderStopsNearestFirst(): void {
+    if (!this.driverCoords || this.optimizedStops.length < 2) return;
+    const remaining = [...this.optimizedStops];
+    const ordered: typeof remaining = [];
+    let cursor: [number, number] = this.driverCoords;
+    while (remaining.length) {
+      let best = 0, bestDist = Infinity;
+      remaining.forEach((s, i) => {
+        const d = this.distBetween(cursor, s.coords);
+        if (d < bestDist) { bestDist = d; best = i; }
+      });
+      const next = remaining.splice(best, 1)[0];
+      ordered.push(next);
+      cursor = next.coords;
+    }
+    const changed = ordered.some((s, i) => s.id !== this.optimizedStops[i].id);
+    this.optimizedStops = ordered;
+    if (changed && this.mapReady) { this.clearStopMarkers(); this.addStopMarkers(); }
+  }
+
   /** Unified route fetcher — Directions API handles 1–25 waypoints on all Mapbox plans. */
   private fetchRoute(): void {
     if (!this.driverCoords || !this.optimizedStops.length) return;
     if (this.routeSub) { this.routeSub.unsubscribe(); this.routeSub = null; }
+
+    this.orderStopsNearestFirst();
 
     const waypoints = [
       `${this.driverCoords[0]},${this.driverCoords[1]}`,
