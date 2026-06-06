@@ -50,6 +50,7 @@ public class OrderService {
     private final PayFastService payFastService;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final WebPushService webPushService;
+    private final PayoutLedgerService payoutLedgerService;
 
     private void checkLowStock(MenuItem menuItem) {
         if (menuItem.getStock() >= 0 && menuItem.getStock() <= menuItem.getLowStockThreshold()) {
@@ -94,6 +95,18 @@ public class OrderService {
 
             MenuItem menuItem = menuItemRepository.findById(itemDTO.getProductId())
                     .orElseThrow(() -> new RuntimeException("Menu item not found: " + itemDTO.getProductId()));
+
+            if (Boolean.FALSE.equals(menuItem.getIsAvailable())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        menuItem.getName() + " is no longer available");
+            }
+            int availableStock = menuItem.getStock() - menuItem.getReservedStock();
+            if (menuItem.getStock() >= 0 && availableStock < itemDTO.getQuantity()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        availableStock <= 0
+                                ? menuItem.getName() + " just sold out"
+                                : "Only " + availableStock + " of " + menuItem.getName() + " left in stock");
+            }
 
             // Reserve stock (don't deduct yet — deducted when order is confirmed via ITN)
             if (menuItem.getStock() >= 0) {
@@ -447,6 +460,9 @@ public class OrderService {
             if (order.getUser() != null) {
                 loyaltyService.refundPoints(order.getUser(), order);
             }
+            if (wasConfirmed) {
+                payoutLedgerService.recordRefundDebit(order);
+            }
         }
 
         order.setStatus(status);
@@ -474,6 +490,7 @@ public class OrderService {
         String customerEmail = updated.getUser() != null ? updated.getUser().getEmail() : updated.getGuestEmail();
 
         if ("Delivered".equals(status)) {
+            payoutLedgerService.recordOrderCredit(updated);
             if (updated.getUser() != null) {
                 loyaltyService.awardPoints(updated.getUser(), updated);
                 webPushService.sendToUser(updated.getUser().getId(),

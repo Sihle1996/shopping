@@ -39,4 +39,6 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     List<Order> findByTenant_Id(UUID tenantId);
     java.util.Optional<Order> findByIdAndTenant_Id(UUID id, UUID tenantId);
     List<Order> findByOrderDateBetweenAndTenant_Id(Instant start, Instant end, UUID tenantId);
+
+    List<Order> findByStatusAndOrderDateBefore(String status, Instant cutoff);
 }

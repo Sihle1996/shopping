@@ -601,7 +601,9 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       },
       error: (err) => {
         this.submitting = false;
-        if (err?.status === 429) {
+        if (err?.status === 409) {
+          this.toastr.error(err?.error?.message || 'Some items in your cart are no longer available. Please update your cart.');
+        } else if (err?.status === 429) {
           this.toastr.error('Too many requests. Please wait a moment before placing another order.');
         } else {
           this.toastr.error(err?.error?.error || 'Failed to place order. Please try again.');
