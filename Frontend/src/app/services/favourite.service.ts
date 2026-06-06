@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, map, of, tap } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 export interface FavouriteItem {
@@ -20,6 +20,11 @@ export class FavouriteService {
   constructor(private http: HttpClient) {}
 
   load(): Observable<void> {
+    // Favourites require auth — skip the call for guests to avoid a 403.
+    if (!localStorage.getItem('token')) {
+      this.favouriteIds = new Set();
+      return of(void 0);
+    }
     return this.http.get<FavouriteItem[]>(`${environment.apiUrl}/api/favourites`).pipe(
       map(items => { this.favouriteIds = new Set(items.map(i => i.id)); })
     );

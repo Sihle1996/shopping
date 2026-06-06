@@ -3,6 +3,6 @@ builder = "nixpacks"
 buildCommand = "chmod +x mvnw && ./mvnw clean package -DskipTests"
 
 [deploy]
-startCommand = "java -jar target/*.jar --spring.profiles.active=prod"
+startCommand = "java -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -jar target/*.jar --spring.profiles.active=prod"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
