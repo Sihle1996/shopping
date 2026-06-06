@@ -20,7 +20,7 @@ import { AdminPayoutsComponent } from './admin-payouts/admin-payouts.component';
 
 const routes: Routes = [
   {
-    path: 'admin',
+    path: '',
     canActivate: [AdminGuard],
     component: AdminLayoutComponent,
     children: [

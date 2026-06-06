@@ -1,4 +1,3 @@
-import { NgApexchartsModule } from 'ng-apexcharts';
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
@@ -17,7 +16,6 @@ import { FooterComponent } from './components/footer/footer.component';
 import { ProductComponent } from './pages/product/product.component';
 import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { ThankYouComponent } from './components/thank-you/thank-you.component';
-import { AdminDashboardModule } from './admin/admin-dashboard/admin-dashboard.module';
 import { AuthInterceptor } from './authInterceptor/auth.interceptor';
 import { LoaderInterceptor } from './shared/loaders/loader.interceptor';
 import { SharedModule } from './shared/shared.module';
@@ -74,8 +72,6 @@ import { RestaurantTermsComponent } from './pages/legal/restaurant-terms/restaur
     BrowserAnimationsModule,
     FormsModule,
     ReactiveFormsModule,
-    NgApexchartsModule,
-    AdminDashboardModule,
     SharedModule,
     AppRoutingModule,
     ToastrModule.forRoot({

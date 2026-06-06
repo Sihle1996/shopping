@@ -8,9 +8,6 @@ import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { ThankYouComponent } from './components/thank-you/thank-you.component';
 import { HistoryordersComponent } from './pages/historyorders/historyorders.component';
 import { UserGuard } from './guards/user.guard';
-import { DriverDashboardComponent } from './driver/driver-dashboard/driver-dashboard.component';
-import { DriverProfileComponent } from './driver/driver-profile/driver-profile.component';
-import { DriverGuard } from './guards/driver.guard';
 import { AddressBookComponent } from './pages/address-book/address-book.component';
 import { UserProfileComponent } from './pages/user-profile/user-profile.component';
 import { RegisterRestaurantComponent } from './pages/register-restaurant/register-restaurant.component';
@@ -62,8 +59,8 @@ const routes: Routes = [
   { path: 'verify-email', component: VerifyEmailComponent },
   { path: 'register-restaurant', component: RegisterRestaurantComponent },
 
-  { path: 'driver/dashboard', component: DriverDashboardComponent, canActivate: [DriverGuard] },
-  { path: 'driver/profile', component: DriverProfileComponent, canActivate: [DriverGuard] },
+  { path: 'driver', loadChildren: () => import('./driver/driver.module').then(m => m.DriverModule) },
+  { path: 'admin', loadChildren: () => import('./admin/admin-dashboard/admin-dashboard.module').then(m => m.AdminDashboardModule) },
   { path: 'profile/addresses', component: AddressBookComponent, canActivate: [UserGuard] },
   { path: 'profile', component: UserProfileComponent, canActivate: [UserGuard] },
   { path: 'support', component: SupportComponent, canActivate: [UserGuard] },
