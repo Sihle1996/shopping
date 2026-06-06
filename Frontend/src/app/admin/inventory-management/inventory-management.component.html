@@ -115,20 +115,24 @@
                       class="px-2 py-0.5 rounded-full text-xs font-semibold bg-warning/15 text-warning">
                   Low Stock
                 </span>
-                <span *ngIf="item.stock === 0"
+                <span *ngIf="soldOut(item)"
                       class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-danger">
-                  Out of Stock
+                  Sold Out
                 </span>
               </div>
               <div class="h-1.5 w-44 overflow-hidden rounded-full bg-gray-100">
                 <div class="h-full rounded-full transition-all"
-                     [class.bg-success]="!isLowStock(item) && item.stock > 0"
-                     [class.bg-warning]="isLowStock(item)"
-                     [class.bg-danger]="item.stock === 0"
+                     [class.bg-success]="!isLowStock(item) && !soldOut(item)"
+                     [class.bg-warning]="isLowStock(item) && !soldOut(item)"
+                     [class.bg-danger]="soldOut(item)"
                      [style.width.%]="stockPercent(item)"></div>
               </div>
             </td>
-            <td class="px-5 py-4 font-numbers text-sm font-semibold text-textDark">{{ item.stock }}</td>
+            <td class="px-5 py-4">
+              <span class="font-numbers text-sm font-semibold"
+                    [class.text-danger]="soldOut(item)" [class.text-textDark]="!soldOut(item)">{{ freeStock(item) }}</span>
+              <span class="text-xs text-textMuted ml-1">of {{ item.stock }}</span>
+            </td>
             <td class="px-5 py-4 font-numbers text-sm text-textMuted">{{ item.reservedStock }}</td>
             <td class="px-5 py-4">
               <div class="flex items-center gap-1.5">
@@ -183,20 +187,20 @@
             <h4 class="font-semibold text-sm text-textDark">{{ item.name }}</h4>
             <p class="text-xs text-textMuted mt-0.5">{{ item.category }}</p>
           </div>
-          <span *ngIf="isLowStock(item)"
+          <span *ngIf="isLowStock(item) && !soldOut(item)"
                 class="px-2 py-0.5 rounded-full text-xs font-semibold bg-warning/15 text-warning">Low</span>
-          <span *ngIf="item.stock === 0"
-                class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-danger">Out</span>
+          <span *ngIf="soldOut(item)"
+                class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-danger">Sold Out</span>
         </div>
         <div class="h-1.5 overflow-hidden rounded-full bg-gray-100 mb-3">
           <div class="h-full rounded-full"
-               [class.bg-success]="!isLowStock(item) && item.stock > 0"
-               [class.bg-warning]="isLowStock(item)"
-               [class.bg-danger]="item.stock === 0"
+               [class.bg-success]="!isLowStock(item) && !soldOut(item)"
+               [class.bg-warning]="isLowStock(item) && !soldOut(item)"
+               [class.bg-danger]="soldOut(item)"
                [style.width.%]="stockPercent(item)"></div>
         </div>
         <div class="grid grid-cols-2 gap-2 text-sm text-textLight mb-3">
-          <div>Available: <strong class="text-textDark font-numbers">{{ item.stock }}</strong></div>
+          <div>Available: <strong [class.text-danger]="soldOut(item)" [class.text-textDark]="!soldOut(item)" class="font-numbers">{{ freeStock(item) }}</strong> <span class="text-xs text-textMuted">of {{ item.stock }}</span></div>
           <div>Reserved: <strong class="text-textDark font-numbers">{{ item.reservedStock }}</strong></div>
           <div class="col-span-2 flex items-center gap-2">
             <span class="text-xs">Alert at:</span>

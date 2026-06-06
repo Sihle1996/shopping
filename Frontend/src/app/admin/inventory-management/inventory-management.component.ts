@@ -69,6 +69,18 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
     return item.stock <= item.lowStockThreshold;
   }
 
+  /** Units actually free to sell = total stock minus what pending orders have reserved. */
+  freeStock(item: any): number {
+    if (item.stock == null || item.stock < 0) return item.stock; // untracked / unlimited
+    return Math.max(0, item.stock - (item.reservedStock || 0));
+  }
+
+  /** Sold out to customers: tracked stock with nothing free after reservations. */
+  soldOut(item: any): boolean {
+    return item.stock != null && item.stock >= 0
+        && (item.stock - (item.reservedStock || 0)) <= 0;
+  }
+
   get filteredInventory(): any[] {
     return this.inventory
       .filter(item => {
