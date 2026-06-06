@@ -157,9 +157,13 @@ public class InventoryService {
     @Transactional
     public int reconcileReservations() {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        if (tenantId == null) return 0;
+        return tenantId == null ? 0 : reconcileForTenant(tenantId);
+    }
 
-        List<MenuItem> items = getTenantMenuItems();
+    /** Reconcile a single tenant's reservedStock — used by the admin action and the nightly job. */
+    @Transactional
+    public int reconcileForTenant(UUID tenantId) {
+        List<MenuItem> items = menuItemRepository.findByTenant_Id(tenantId);
         java.util.Map<UUID, Integer> correct = new java.util.HashMap<>();
         for (MenuItem mi : items) correct.put(mi.getId(), 0);
 

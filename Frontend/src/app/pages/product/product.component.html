@@ -114,13 +114,13 @@
               <p class="text-textLight text-sm mt-2 leading-relaxed">{{ product.description }}</p>
             </div>
 
-            <!-- Out of stock -->
-            <div *ngIf="!product.isAvailable"
+            <!-- Out of stock / sold out -->
+            <div *ngIf="!canOrder"
                  class="flex items-center gap-3 rounded-xl bg-red-50 border border-red-200 px-4 py-3 mb-4">
               <i class="bi bi-x-circle-fill text-danger text-lg flex-shrink-0"></i>
               <div>
-                <p class="text-sm font-semibold text-danger">Out of Stock</p>
-                <p class="text-xs text-red-500 mt-0.5">This item is currently unavailable</p>
+                <p class="text-sm font-semibold text-danger">{{ product.soldOut && product.isAvailable ? 'Sold Out' : 'Out of Stock' }}</p>
+                <p class="text-xs text-red-500 mt-0.5">{{ product.soldOut && product.isAvailable ? 'No stock available right now — check back soon' : 'This item is currently unavailable' }}</p>
               </div>
             </div>
 
@@ -206,8 +206,8 @@
                   R{{ lineTotal.toFixed(2) }}
                 </p>
                 <p class="font-numbers text-2xl font-bold leading-tight"
-                   [class.text-primary]="product.isAvailable"
-                   [class.text-textMuted]="!product.isAvailable">
+                   [class.text-primary]="canOrder"
+                   [class.text-textMuted]="!canOrder">
                   R{{ discountedTotal.toFixed(2) }}
                 </p>
                 <p *ngIf="autoDiscountPercent" class="text-xs font-medium text-primary mt-0.5">
@@ -217,9 +217,9 @@
               <app-button
                 variant="primary" size="lg" iconLeft="bi bi-cart-plus"
                 [loading]="isAddingToCart"
-                [disabled]="!product.isAvailable || !requiredSatisfied"
+                [disabled]="!canOrder || !requiredSatisfied"
                 (clicked)="addToCart()">
-                {{ product.isAvailable ? 'Add to Cart' : 'Unavailable' }}
+                {{ canOrder ? 'Add to Cart' : (product.soldOut && product.isAvailable ? 'Sold Out' : 'Unavailable') }}
               </app-button>
             </div>
           </div>

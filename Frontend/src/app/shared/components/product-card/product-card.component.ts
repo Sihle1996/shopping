@@ -11,6 +11,7 @@ export interface ProductCardItem {
   image: string;
   category: string;
   isAvailable: boolean;
+  soldOut?: boolean;   // computed server-side: no free stock after reservations
   stock?: number;
   lowStockThreshold?: number;
 }
@@ -42,16 +43,18 @@ export interface ProductCardItem {
              [class.text-red-500]="isFav" [class.text-textMuted]="!isFav"></i>
         </button>
         <!-- Low stock badge -->
-        <span *ngIf="isLowStock"
+        <span *ngIf="isLowStock && !item.soldOut && item.isAvailable"
               class="absolute px-2 py-0.5 rounded-full text-xs font-semibold bg-warning/90 text-white"
               [class.top-3]="!showFavorite" [class.right-3]="!showFavorite"
               [class.top-12]="showFavorite" [class.right-2]="showFavorite">
           Only {{ item.stock }} left
         </span>
-        <!-- Unavailable overlay -->
-        <div *ngIf="!item.isAvailable"
+        <!-- Unavailable / sold-out overlay -->
+        <div *ngIf="!item.isAvailable || item.soldOut"
              class="absolute inset-0 bg-black/40 flex items-center justify-center">
-          <span class="text-white font-semibold text-sm bg-black/60 px-3 py-1 rounded-full">Out of Stock</span>
+          <span class="text-white font-semibold text-sm bg-black/60 px-3 py-1 rounded-full">
+            {{ item.soldOut && item.isAvailable ? 'Sold Out' : 'Out of Stock' }}
+          </span>
         </div>
       </div>
       <!-- Content -->
@@ -68,7 +71,7 @@ export interface ProductCardItem {
             </span>
           </div>
           <button
-            *ngIf="showAddToCart && item.isAvailable"
+            *ngIf="showAddToCart && item.isAvailable && !item.soldOut"
             (click)="onAddToCart($event)"
             data-testid="add-to-cart-btn"
             class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center

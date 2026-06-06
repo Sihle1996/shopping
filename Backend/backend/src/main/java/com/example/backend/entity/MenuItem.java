@@ -62,6 +62,12 @@ public class MenuItem {
     @Transient
     private int quantity = 1;
 
+    /** Computed (not stored): no free stock left to sell after reservations. */
+    @Transient
+    public boolean isSoldOut() {
+        return stock >= 0 && (stock - reservedStock) <= 0;
+    }
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id")
     @JsonIgnore

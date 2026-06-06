@@ -11,7 +11,9 @@ export interface MenuItem {
   image: string;
   category: string;
   isAvailable: boolean;
+  soldOut?: boolean;   // computed server-side: no free stock after reservations
   stock?: number;
+  reservedStock?: number;
   lowStockThreshold?: number;
   quantity?: number;
 }

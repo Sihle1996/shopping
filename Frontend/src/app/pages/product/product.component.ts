@@ -181,9 +181,13 @@ export class ProductComponent implements OnInit, OnDestroy {
     return (this.modifierSelections[groupId] || []).includes(choiceId);
   }
 
+  get canOrder(): boolean {
+    return !!this.product?.isAvailable && !this.product?.soldOut;
+  }
+
   addToCart(): void {
     if (!this.product?.id) return;
-    if (!this.product.isAvailable) { this.showOutOfStockModal = true; return; }
+    if (!this.canOrder) { this.showOutOfStockModal = true; return; }
     if (!this.requiredSatisfied) { this.toastr.warning('Please make all required selections'); return; }
 
     const choices: any[] = [];
