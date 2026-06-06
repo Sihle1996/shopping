@@ -2,36 +2,30 @@
   <div class="w-full">
 
     <!-- Header -->
-    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-6">
-      <div>
-        <h1 class="font-heading text-2xl font-bold text-textDark">Menu Management</h1>
-        <p class="text-textLight text-sm mt-1">Add, edit, and manage your menu items</p>
-      </div>
-      <div id="add-menu-item-btn" class="flex flex-wrap items-center gap-2">
-        <!-- Hidden CSV file input -->
-        <input id="csvImportInput" type="file" accept=".csv" class="hidden"
-               (change)="onCsvSelected($event)" />
-        <app-button variant="ghost" size="md" iconLeft="bi bi-upload"
-                    [disabled]="importLoading"
-                    (clicked)="triggerCsvImport()">
-          {{ importLoading ? 'Importing...' : 'Import CSV' }}
-        </app-button>
-        <app-button
-          [variant]="bulkMode ? 'ghost' : 'outline'"
-          size="md"
-          [iconLeft]="bulkMode ? 'bi bi-x-lg' : 'bi bi-pencil-square'"
-          (clicked)="toggleBulkMode()">
-          {{ bulkMode ? 'Cancel' : 'Bulk Edit' }}
-        </app-button>
-        <app-button
-          [variant]="showForm ? 'ghost' : 'primary'"
-          size="md"
-          [iconLeft]="showForm ? 'bi bi-x-lg' : 'bi bi-plus-lg'"
-          (clicked)="toggleForm()">
-          {{ showForm ? 'Cancel' : 'Add Item' }}
-        </app-button>
-      </div>
-    </div>
+    <app-page-header title="Menu Management" subtitle="Add, edit, and manage your menu items">
+      <!-- Hidden CSV file input -->
+      <input actions id="csvImportInput" type="file" accept=".csv" class="hidden"
+             (change)="onCsvSelected($event)" />
+      <app-button actions variant="ghost" size="md" iconLeft="bi bi-upload"
+                  [disabled]="importLoading"
+                  (clicked)="triggerCsvImport()">
+        {{ importLoading ? 'Importing...' : 'Import CSV' }}
+      </app-button>
+      <app-button actions
+        [variant]="bulkMode ? 'ghost' : 'outline'"
+        size="md"
+        [iconLeft]="bulkMode ? 'bi bi-x-lg' : 'bi bi-pencil-square'"
+        (clicked)="toggleBulkMode()">
+        {{ bulkMode ? 'Cancel' : 'Bulk Edit' }}
+      </app-button>
+      <app-button actions
+        [variant]="showForm ? 'ghost' : 'primary'"
+        size="md"
+        [iconLeft]="showForm ? 'bi bi-x-lg' : 'bi bi-plus-lg'"
+        (clicked)="toggleForm()">
+        {{ showForm ? 'Cancel' : 'Add Item' }}
+      </app-button>
+    </app-page-header>
 
     <!-- Import result banner -->
     <div *ngIf="importResult"

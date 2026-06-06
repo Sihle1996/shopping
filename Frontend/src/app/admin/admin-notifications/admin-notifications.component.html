@@ -2,22 +2,19 @@
   <div class="w-full">
 
     <!-- Header -->
-    <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
-      <div class="flex items-center gap-3">
-        <h1 class="font-heading text-2xl font-bold text-textDark">Notifications</h1>
-        <span *ngIf="unreadCount > 0"
-              class="inline-flex items-center justify-center min-w-[1.4rem] h-[1.4rem] px-1.5 rounded-full bg-primary text-white text-xs font-bold leading-none">
-          {{ unreadCount > 99 ? '99+' : unreadCount }}
-        </span>
-      </div>
-      <button *ngIf="unreadCount > 0"
+    <app-page-header title="Notifications">
+      <span titleSuffix *ngIf="unreadCount > 0"
+            class="inline-flex items-center justify-center min-w-[1.4rem] h-[1.4rem] px-1.5 rounded-full bg-primary text-white text-xs font-bold leading-none">
+        {{ unreadCount > 99 ? '99+' : unreadCount }}
+      </span>
+      <button actions *ngIf="unreadCount > 0"
               (click)="markAllRead()"
               class="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-700
                      bg-primary-50 hover:bg-primary-100 px-4 py-2 rounded-xl transition-colors">
         <i class="bi bi-check2-all text-base"></i>
         Mark all read
       </button>
-    </div>
+    </app-page-header>
 
     <!-- Empty state -->
     <div *ngIf="notifications.length === 0"

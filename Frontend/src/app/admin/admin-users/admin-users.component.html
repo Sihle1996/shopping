@@ -2,17 +2,13 @@
   <div class="w-full">
 
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h1 class="font-heading text-2xl font-bold text-textDark">Users</h1>
-        <p class="text-textLight text-sm mt-1">Manage customers and drivers for your store</p>
-      </div>
-      <span *ngIf="!loading"
+    <app-page-header title="Users" subtitle="Manage customers and drivers for your store">
+      <span actions *ngIf="!loading"
             class="inline-flex items-center gap-1.5 text-sm text-textMuted bg-white border border-borderColor px-3 py-1.5 rounded-xl">
         <i class="bi bi-people text-primary"></i>
         {{ filtered.length }} users
       </span>
-    </div>
+    </app-page-header>
 
     <!-- Filters -->
     <div class="flex flex-col sm:flex-row gap-3 mb-6">

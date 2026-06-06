@@ -2,17 +2,13 @@
   <div class="w-full">
 
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h1 class="font-heading text-2xl font-bold text-textDark">Customer Reviews</h1>
-        <p class="text-textLight text-sm mt-1">View and moderate customer feedback</p>
-      </div>
-      <span *ngIf="!loading && reviews.length > 0"
+    <app-page-header title="Reviews" subtitle="View and moderate customer feedback">
+      <span actions *ngIf="!loading && reviews.length > 0"
             class="inline-flex items-center gap-1.5 text-sm text-textMuted bg-white border border-borderColor px-3 py-1.5 rounded-xl">
         <i class="bi bi-star-fill text-amber-400 text-xs"></i>
         {{ reviews.length }} {{ reviews.length === 1 ? 'review' : 'reviews' }}
       </span>
-    </div>
+    </app-page-header>
 
     <!-- Loading -->
     <div *ngIf="loading" class="grid grid-cols-1 md:grid-cols-2 gap-4">

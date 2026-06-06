@@ -2,18 +2,14 @@
   <div class="w-full">
 
     <!-- Header -->
-    <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
-      <div>
-        <h1 class="font-heading text-2xl font-bold text-textDark">Promotions</h1>
-        <p class="text-textLight text-sm mt-1">Create time-limited discounts for your store</p>
-      </div>
-      <button *ngIf="!formOpen"
+    <app-page-header title="Promotions" subtitle="Create time-limited discounts for your store">
+      <button actions *ngIf="!formOpen"
               (click)="openForm()"
               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors"
               style="background: var(--brand-primary)">
         <i class="bi bi-plus-lg"></i> New Promotion
       </button>
-    </div>
+    </app-page-header>
 
     <!-- Create / Edit Form (collapsible) -->
     <div *ngIf="formOpen" class="bg-white rounded-2xl shadow-card p-6 mb-8">

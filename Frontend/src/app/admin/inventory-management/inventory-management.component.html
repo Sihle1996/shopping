@@ -2,24 +2,18 @@
   <div class="px-4 pt-6 pb-28 lg:px-8">
 
     <!-- Header -->
-    <header class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h1 class="font-heading text-2xl font-bold text-textDark">Inventory Management</h1>
-        <p class="text-textLight text-sm mt-1">Track stock, spot low items, and adjust in real time</p>
-      </div>
-      <div class="flex gap-2">
-        <app-button variant="outline" size="md" iconLeft="bi bi-arrow-repeat" [loading]="syncing" (clicked)="syncAvailability()">
-          Sync Availability
-        </app-button>
-        <app-button variant="secondary" size="md"
-          [iconLeft]="hasInventoryExport ? 'bi bi-download' : 'bi bi-lock'"
-          [title]="hasInventoryExport ? '' : 'Export CSV requires PRO or higher'"
-          (clicked)="exportCsv()">
-          Export CSV
-          <span *ngIf="!hasInventoryExport" class="ml-1 text-xs opacity-70">PRO</span>
-        </app-button>
-      </div>
-    </header>
+    <app-page-header title="Inventory" subtitle="Track stock, spot low items, and adjust in real time">
+      <app-button actions variant="outline" size="md" iconLeft="bi bi-arrow-repeat" [loading]="syncing" (clicked)="syncAvailability()">
+        Sync Availability
+      </app-button>
+      <app-button actions variant="secondary" size="md"
+        [iconLeft]="hasInventoryExport ? 'bi bi-download' : 'bi bi-lock'"
+        [title]="hasInventoryExport ? '' : 'Export CSV requires PRO or higher'"
+        (clicked)="exportCsv()">
+        Export CSV
+        <span *ngIf="!hasInventoryExport" class="ml-1 text-xs opacity-70">PRO</span>
+      </app-button>
+    </app-page-header>
 
     <!-- KPI Cards -->
     <div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

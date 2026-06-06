@@ -18,12 +18,8 @@
     <div *ngIf="!loading && info">
 
       <!-- Page header -->
-      <div class="flex items-start justify-between mb-6">
-        <div>
-          <h1 class="font-heading text-2xl font-bold text-textDark">Subscription</h1>
-          <p class="text-textLight text-sm mt-1">Manage your plan, usage &amp; billing</p>
-        </div>
-        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+      <app-page-header title="Subscription" subtitle="Manage your plan, usage &amp; billing">
+        <span actions class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
           [ngClass]="{
             'bg-yellow-100 text-yellow-700': info.status === 'TRIAL',
             'bg-green-100 text-green-700': info.status === 'ACTIVE',
@@ -36,7 +32,7 @@
           }"></i>
           {{ info.status }}
         </span>
-      </div>
+      </app-page-header>
 
       <!-- SUSPENDED alert -->
       <div *ngIf="info.status === 'SUSPENDED'"
