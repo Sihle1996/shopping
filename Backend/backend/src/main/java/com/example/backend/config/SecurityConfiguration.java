@@ -2,6 +2,7 @@ package com.example.backend.config;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -14,7 +15,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -24,6 +26,9 @@ public class SecurityConfiguration {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
+
+    @Value("${app.cors.allowed-origins:http://localhost:4200}")
+    private String allowedOrigins;
 
     @Bean
     public RateLimitFilter rateLimitFilter() {
@@ -36,13 +41,9 @@ public class SecurityConfiguration {
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowCredentials(true);
-                    String origin = request.getHeader("Origin");
-                    if (origin != null && !origin.isEmpty()) {
-                        config.setAllowedOrigins(Collections.singletonList(origin));
-                    } else {
-                        config.setAllowedOriginPatterns(Collections.singletonList("*"));
-                    }
-                    config.addAllowedHeader("*"); // includes X-Tenant-Id, Authorization, Content-Type etc.
+                    List<String> origins = Arrays.asList(allowedOrigins.split(","));
+                    config.setAllowedOrigins(origins);
+                    config.addAllowedHeader("*");
                     config.addAllowedMethod("*");
                     config.addExposedHeader("Authorization");
                     return config;

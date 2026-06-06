@@ -79,7 +79,7 @@ public class LoyaltyService {
             throw new IllegalArgumentException("Points must be a multiple of " + POINTS_PER_REDEMPTION + ".");
         }
 
-        LoyaltyAccount acc = accountRepo.findByUser_IdAndTenant_Id(user.getId(), tenantId)
+        LoyaltyAccount acc = accountRepo.findByUser_IdAndTenant_IdForUpdate(user.getId(), tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("No loyalty account found."));
         if (acc.getBalance() < pointsToRedeem) {
             throw new IllegalArgumentException("Insufficient points. Balance: " + acc.getBalance());

@@ -24,10 +24,9 @@ public class AdminUserController {
     @GetMapping
     public List<UserSummary> listUsers() {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        List<User> users = (tenantId != null)
-                ? userRepository.findByTenant_Id(tenantId)
-                : userRepository.findAll();
-        return users.stream().map(UserSummary::from).toList();
+        if (tenantId == null) throw new SecurityException("Tenant context required");
+        return userRepository.findByTenant_Id(tenantId).stream()
+                .map(UserSummary::from).toList();
     }
 
     @PatchMapping("/{id}/role")
@@ -62,8 +61,11 @@ public class AdminUserController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
-        if (!userRepository.existsById(id)) return ResponseEntity.notFound().build();
-        userRepository.deleteById(id);
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        User user = (tenantId != null ? userRepository.findByIdAndTenant_Id(id, tenantId) : userRepository.findById(id))
+                .orElse(null);
+        if (user == null) return ResponseEntity.notFound().build();
+        userRepository.delete(user);
         return ResponseEntity.noContent().build();
     }
 

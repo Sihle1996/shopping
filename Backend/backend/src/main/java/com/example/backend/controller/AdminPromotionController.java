@@ -16,6 +16,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -26,6 +27,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/promotions")
+@PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
 @RequiredArgsConstructor
 public class AdminPromotionController {
 
@@ -40,10 +42,9 @@ public class AdminPromotionController {
     @Transactional
     public List<PromotionDTO> list() {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        List<Promotion> promotions = (tenantId != null)
-                ? promotionRepository.findByTenant_Id(tenantId)
-                : promotionRepository.findAll();
-        return promotions.stream().map(PromotionDTO::from).toList();
+        if (tenantId == null) throw new SecurityException("Tenant context required");
+        return promotionRepository.findByTenant_Id(tenantId).stream()
+                .map(PromotionDTO::from).toList();
     }
 
     @PostMapping
@@ -113,8 +114,13 @@ public class AdminPromotionController {
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        if (!promotionRepository.existsById(id)) return ResponseEntity.notFound().build();
-        promotionRepository.deleteById(id);
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        Promotion promo = (tenantId != null
+                ? promotionRepository.findByIdAndTenant_Id(id, tenantId)
+                : promotionRepository.findById(id))
+                .orElse(null);
+        if (promo == null) return ResponseEntity.notFound().build();
+        promotionRepository.delete(promo);
         return ResponseEntity.noContent().build();
     }
 

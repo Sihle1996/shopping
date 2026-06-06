@@ -67,33 +67,28 @@ public class AdminDriverService {
 
     public List<DriverDTO> getAllDrivers() {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        List<User> drivers;
-        if (tenantId != null) {
-            drivers = userRepository.findByRoleAndTenant_Id(Role.DRIVER, tenantId);
-        } else {
-            drivers = userRepository.findByRole(Role.DRIVER);
-        }
-        return drivers.stream()
+        if (tenantId == null) throw new SecurityException("Tenant context required");
+        return userRepository.findByRoleAndTenant_Id(Role.DRIVER, tenantId).stream()
                 .map(u -> new DriverDTO(u.getId(), u.getEmail(), u.getDriverStatus()))
                 .toList();
     }
 
     public void deleteDriver(UUID id) {
-        if (!userRepository.existsById(id)) {
-            throw new RuntimeException("Driver not found");
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        User driver = (tenantId != null
+                ? userRepository.findByIdAndTenant_Id(id, tenantId)
+                : userRepository.findById(id))
+                .orElseThrow(() -> new RuntimeException("Driver not found"));
+        if (driver.getRole() != Role.DRIVER) {
+            throw new RuntimeException("User is not a driver");
         }
-        userRepository.deleteById(id);
+        userRepository.delete(driver);
     }
 
     public List<DriverLocationDTO> getDriverLocations() {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        List<User> drivers;
-        if (tenantId != null) {
-            drivers = userRepository.findByRoleAndTenant_Id(Role.DRIVER, tenantId);
-        } else {
-            drivers = userRepository.findByRole(Role.DRIVER);
-        }
-        return drivers.stream()
+        if (tenantId == null) throw new SecurityException("Tenant context required");
+        return userRepository.findByRoleAndTenant_Id(Role.DRIVER, tenantId).stream()
                 .map(u -> new DriverLocationDTO(
                         u.getId(), u.getEmail(), u.getDriverStatus(),
                         u.getLatitude(), u.getLongitude(), u.getSpeed(), u.getLastPing()

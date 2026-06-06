@@ -101,7 +101,7 @@ public class PayFastController {
             if (mPaymentId != null && mPaymentId.startsWith("sub-")) {
                 activateSubscription(mPaymentId);
             } else if (mPaymentId != null) {
-                confirmOrderPayment(mPaymentId, pfPaymentId);
+                confirmOrderPayment(mPaymentId, pfPaymentId, amountGross);
             }
         }
 
@@ -135,11 +135,27 @@ public class PayFastController {
         }
     }
 
-    private void confirmOrderPayment(String mPaymentId, String pfPaymentId) {
+    private void confirmOrderPayment(String mPaymentId, String pfPaymentId, String amountGross) {
         try {
             UUID orderId = UUID.fromString(mPaymentId);
             orderRepository.findById(orderId).ifPresentOrElse(order -> {
+                // Idempotency: already processed
+                if (order.getPaymentId() != null && order.getPaymentId().equals(pfPaymentId)) {
+                    System.out.println("PayFast ITN: duplicate for order " + orderId + ", skipping");
+                    return;
+                }
                 if ("Pending".equals(order.getStatus()) || "Scheduled".equals(order.getStatus())) {
+                    // Validate payment amount matches order total
+                    if (amountGross != null) {
+                        double paidAmount = Double.parseDouble(amountGross);
+                        double expectedTotal = order.getTotalAmount()
+                                + (order.getDeliveryFee() != null ? order.getDeliveryFee() : 0.0);
+                        if (Math.abs(paidAmount - expectedTotal) > 1.0) {
+                            System.err.println("PayFast ITN: amount mismatch for order " + orderId
+                                    + " — expected " + expectedTotal + " got " + paidAmount);
+                            return;
+                        }
+                    }
                     order.setPaymentId(pfPaymentId != null ? pfPaymentId : mPaymentId);
                     orderRepository.save(order);
                     System.out.println("PayFast ITN: confirmed payment for order " + orderId

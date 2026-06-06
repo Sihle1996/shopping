@@ -117,7 +117,11 @@ public class OrderService {
             orderItems.add(item);
         }
 
-        double subtotal = BigDecimal.valueOf(request.getTotal())
+        double calculatedSubtotal = 0;
+        for (OrderItem oi : orderItems) {
+            calculatedSubtotal += oi.getTotalPrice();
+        }
+        double subtotal = BigDecimal.valueOf(calculatedSubtotal)
                 .setScale(2, RoundingMode.HALF_UP)
                 .doubleValue();
 
@@ -336,10 +340,12 @@ public class OrderService {
 
     @Transactional
     public void deleteOrder(UUID orderId) {
-        if (!orderRepository.existsById(orderId)) {
-            throw new RuntimeException("Order not found");
-        }
-        orderRepository.deleteById(orderId);
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        Order order = (tenantId != null
+                ? orderRepository.findByIdAndTenant_Id(orderId, tenantId)
+                : orderRepository.findById(orderId))
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        orderRepository.delete(order);
     }
 
     public List<OrderDTO> getOrdersByStatus(String status) {
@@ -499,7 +505,10 @@ public class OrderService {
 
     @Transactional
     public OrderDTO assignDriverToOrder(UUID orderId, UUID driverId) {
-        Order order = orderRepository.findById(orderId)
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        Order order = (tenantId != null
+                ? orderRepository.findByIdAndTenant_Id(orderId, tenantId)
+                : orderRepository.findById(orderId))
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
         String currentStatus = order.getStatus();
@@ -508,7 +517,9 @@ public class OrderService {
                     "Cannot assign a driver to a " + currentStatus + " order");
         }
 
-        User driver = userRepository.findById(driverId)
+        User driver = (tenantId != null
+                ? userRepository.findByIdAndTenant_Id(driverId, tenantId)
+                : userRepository.findById(driverId))
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
 
         if (driver.getRole() != Role.DRIVER) {
