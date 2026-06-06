@@ -176,16 +176,16 @@
             </div>
             <span class="font-numbers font-bold text-primary text-sm">R{{ item.price.toFixed(2) }}</span>
           </div>
-          <div *ngIf="!bulkMode" class="flex gap-2 mt-3 flex-wrap">
-            <app-button variant="outline" size="sm" iconLeft="bi bi-pencil" (clicked)="editItem(item)">
+          <div *ngIf="!bulkMode" class="grid grid-cols-3 gap-2 mt-3">
+            <app-button variant="outline" size="sm" [fullWidth]="true" iconLeft="bi bi-pencil" (clicked)="editItem(item)">
               Edit
             </app-button>
-            <app-button variant="secondary" size="sm"
+            <app-button variant="secondary" size="sm" [fullWidth]="true"
               [iconLeft]="expandedOptionsItemId === item.id ? 'bi bi-chevron-up' : 'bi bi-sliders'"
               (clicked)="toggleOptions(item)">
               Options
             </app-button>
-            <app-button variant="danger" size="sm" iconLeft="bi bi-trash" (clicked)="confirmDelete(item.id)">
+            <app-button variant="danger" size="sm" [fullWidth]="true" iconLeft="bi bi-trash" (clicked)="confirmDelete(item.id)">
               Delete
             </app-button>
           </div>
