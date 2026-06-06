@@ -15,18 +15,16 @@ export interface Tenant {
   address?: string;
   latitude?: number;
   longitude?: number;
-  deliveryRadiusKm: number;
-  deliveryFeeBase: number;
-  platformCommissionPercent: number;
-  stripeAccountId?: string;
-  subscriptionStatus: string;
-  subscriptionPlan: string;
-  active: boolean;
+  deliveryRadiusKm?: number;
+  deliveryFeeBase?: number;
   isOpen?: boolean;
   minimumOrderAmount?: number | null;
   estimatedDeliveryMinutes?: number;
   openingHours?: string;
   cuisineType?: string;
+  loyaltyEnabled?: boolean;
+  // Internal/financial fields (commission, subscription, etc.) are intentionally
+  // NOT exposed by the public /api/tenants/{slug} endpoint.
 }
 
 export interface TenantRegistration {

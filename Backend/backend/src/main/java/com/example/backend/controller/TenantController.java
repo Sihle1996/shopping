@@ -92,16 +92,34 @@ public class TenantController {
             Integer estimatedDeliveryMinutes, String cuisineType, Boolean isOpen
     ) {}
 
-    // Public - get tenant config by slug
+    // Public - get tenant config by slug (DTO: only customer-safe fields,
+    // never commission/driver%/subscription/enrollment data)
     @GetMapping("/api/tenants/{slug}")
-    public ResponseEntity<Tenant> getTenantBySlug(@PathVariable String slug) {
+    public ResponseEntity<PublicTenantDto> getTenantBySlug(@PathVariable String slug) {
         // Guard against "active" being treated as a slug
         if ("active".equals(slug)) {
             return ResponseEntity.notFound().build();
         }
         return tenantRepository.findBySlug(slug)
-                .map(ResponseEntity::ok)
+                .map(t -> ResponseEntity.ok(PublicTenantDto.from(t)))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    /** Customer-facing store config. Excludes internal/financial fields. */
+    public record PublicTenantDto(
+            UUID id, String name, String slug, String logoUrl, String primaryColor,
+            String phone, String email, String address, Double latitude, Double longitude,
+            Integer deliveryRadiusKm, java.math.BigDecimal deliveryFeeBase, Boolean isOpen,
+            java.math.BigDecimal minimumOrderAmount, Integer estimatedDeliveryMinutes,
+            String openingHours, String cuisineType, Boolean loyaltyEnabled) {
+        static PublicTenantDto from(Tenant t) {
+            return new PublicTenantDto(
+                t.getId(), t.getName(), t.getSlug(), t.getLogoUrl(), t.getPrimaryColor(),
+                t.getPhone(), t.getEmail(), t.getAddress(), t.getLatitude(), t.getLongitude(),
+                t.getDeliveryRadiusKm(), t.getDeliveryFeeBase(), t.getIsOpen(),
+                t.getMinimumOrderAmount(), t.getEstimatedDeliveryMinutes(),
+                t.getOpeningHours(), t.getCuisineType(), t.getLoyaltyEnabled());
+        }
     }
 
     // Public - calculate delivery fee based on customer coordinates
