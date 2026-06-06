@@ -189,7 +189,20 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   get setupDoneCount() { return this.setupSteps.filter(s => s.done).length; }
   get setupProgress()  { return Math.round((this.setupDoneCount / this.setupSteps.length) * 100); }
   get setupComplete()  { return this.setupDoneCount === this.setupSteps.length; }
-  get showOnboarding() { return !this.onboardingDismissed; }
+
+  /** Core setup = everything except the ongoing "Open your store" toggle. */
+  get coreSetupComplete() {
+    return this.setupSteps
+      .filter(s => s.tourParam !== 'store-toggle')
+      .every(s => s.done);
+  }
+
+  /**
+   * Show onboarding only to stores that haven't finished core setup yet.
+   * Once the store is set up (or the owner dismisses it), it stays hidden —
+   * keeping the store closed shouldn't keep nagging an established store.
+   */
+  get showOnboarding() { return !this.onboardingDismissed && !this.coreSetupComplete; }
 
   dismissOnboarding(): void {
     this.onboardingDismissed = true;
