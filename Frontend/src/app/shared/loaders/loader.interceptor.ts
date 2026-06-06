@@ -19,6 +19,7 @@ const SILENT_PATTERNS = [
   '/api/driver/',
   '/api/promotions/',
   '/api/tenants/',
+  '/api/group-cart',
   '/ws',
 ];
 

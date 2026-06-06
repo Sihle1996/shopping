@@ -1,0 +1,1 @@
+ALTER TABLE group_carts ALTER COLUMN token TYPE VARCHAR(24);
