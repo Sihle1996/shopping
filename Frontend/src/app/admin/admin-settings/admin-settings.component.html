@@ -1,4 +1,4 @@
-<div class="px-4 pt-6 pb-28 lg:px-8 lg:pb-8">
+<div class="px-4 pt-6 lg:px-8 lg:pb-8">
   <div class="w-full">
 
     <!-- Header -->
@@ -382,13 +382,13 @@
       </div>
 
       <!-- Save / Cancel — only while editing -->
-      <div *ngIf="settingsEditing" class="flex flex-col sm:flex-row justify-end gap-3">
-        <app-button variant="ghost" size="lg" (clicked)="cancelSettings()">
+      <div *ngIf="settingsEditing" class="flex items-center justify-end gap-3">
+        <app-button variant="ghost" size="md" (clicked)="cancelSettings()">
           Cancel
         </app-button>
         <app-button
           variant="primary"
-          size="lg"
+          size="md"
           [loading]="isSaving"
           (clicked)="saveSettings()">
           Save Settings

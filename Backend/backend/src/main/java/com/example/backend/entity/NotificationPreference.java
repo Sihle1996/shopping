@@ -1,6 +1,7 @@
 package com.example.backend.entity;
 
 import com.example.backend.user.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,7 @@ public class NotificationPreference {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", unique = true)
+    @JsonIgnore
     private User user;
 
     private boolean emailOnNewOrder = true;
