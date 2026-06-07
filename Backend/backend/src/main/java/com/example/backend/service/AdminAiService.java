@@ -232,9 +232,14 @@ public class AdminAiService {
             change.put("unitsPercent", before[0] > 0 ? Math.round((during[0] - before[0]) / before[0] * 100.0) : null);
             change.put("revenuePercent", before[1] > 0 ? Math.round((during[1] - before[1]) / before[1] * 100.0) : null);
 
+            String targetName = p.getTargetProductName();
+            if (targetName == null || targetName.isBlank()) {
+                targetName = menuItemRepository.findByIdAndTenant_Id(p.getTargetProductId(), tenantId)
+                        .map(MenuItem::getName).orElse("Item");
+            }
             Map<String, Object> r = new LinkedHashMap<>();
             r.put("title", p.getTitle());
-            r.put("target", p.getTargetProductName());
+            r.put("target", targetName);
             r.put("discountPercent", p.getDiscountPercent());
             r.put("status", ended ? "ended" : "running");
             r.put("windowDays", Math.max(1, len.toDays()));
