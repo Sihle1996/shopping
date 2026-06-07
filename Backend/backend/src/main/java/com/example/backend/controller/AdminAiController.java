@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.dto.AiDescribeItemRequest;
 import com.example.backend.service.AdminAiService;
+import com.example.backend.service.AdminAgentService;
 import com.example.backend.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class AdminAiController {
 
     private final AdminAiService adminAiService;
+    private final AdminAgentService adminAgentService;
 
     /** POST /api/admin/ai/describe-item — generate description + tags for a menu item */
     @PostMapping("/describe-item")
@@ -59,6 +61,16 @@ public class AdminAiController {
             return ResponseEntity.badRequest().body(Map.of("error", "question is required"));
         }
         UUID tenantId = TenantContext.getCurrentTenantId();
+        // Prefer the agentic copilot (tool use); fall back to the rule-based path
+        // when AI isn't configured or the agent can't answer.
+        String answer = adminAgentService.chat(question);
+        if (answer != null && !answer.isBlank()) {
+            Map<String, Object> res = new java.util.LinkedHashMap<>();
+            res.put("answer", answer);
+            res.put("question", question);
+            res.put("data", Map.of());
+            return ResponseEntity.ok(res);
+        }
         return ResponseEntity.ok(adminAiService.queryAnalytics(question, tenantId));
     }
 }

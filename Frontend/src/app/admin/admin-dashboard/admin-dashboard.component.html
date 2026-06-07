@@ -448,8 +448,8 @@
       <div class="flex items-center gap-2">
         <span class="text-base">✨</span>
         <div>
-          <p class="text-sm font-semibold text-textDark">Ask your data</p>
-          <p class="text-xs text-textMuted">Powered by Claude AI</p>
+          <p class="text-sm font-semibold text-textDark">Store Copilot</p>
+          <p class="text-xs text-textMuted">Knows your store · powered by Claude</p>
         </div>
       </div>
       <button (click)="toggleChat()" class="text-textMuted hover:text-textDark transition-colors">
@@ -461,9 +461,10 @@
       <div *ngIf="chatMessages.length === 0" class="flex flex-col gap-2 mt-4">
         <p class="text-xs text-textMuted text-center mb-3">Try asking:</p>
         <button *ngFor="let q of [
-          'Which item made the most money this month?',
-          'How many orders did I get this week?',
-          'What is my busiest hour?'
+          'What should I focus on today?',
+          'Which items are slow this month?',
+          'Am I low on any stock?',
+          'How are my reviews looking?'
         ]" (click)="chatInput = q; sendChatMessage()"
                 class="text-left text-xs px-3 py-2 rounded-xl border border-borderColor hover:bg-primary-50
                        hover:border-primary text-textDark transition-colors">
