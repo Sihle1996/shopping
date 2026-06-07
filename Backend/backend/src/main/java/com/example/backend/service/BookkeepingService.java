@@ -9,22 +9,25 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.time.Instant;
+import java.time.*;
 import java.util.*;
 
 /**
- * CraveIt Books — Phase 1 "Money In".
+ * CraveIt Books — the honest profit loop for a store.
  *
- * The simplest honest profit loop: for realised (Delivered) orders over a
- * period, take food revenue from the order lines, subtract what each item
- * costs the store to make ({@link MenuItem#getCost()}), and report gross
- * profit + margin. When an item has no cost captured yet, COGS is ESTIMATED
- * at a restaurant benchmark (~30% of price, the midpoint of the industry
- * 28–35% food-cost range) and we flag how much of the picture is estimated
- * so the owner knows to add real costs for accuracy.
+ * For realised (Delivered) orders over a period it builds a real income
+ * statement from actual data:
+ *   Revenue (food sales)
+ *   − COGS (item {@link MenuItem#getCost()}, broken out by category)
+ *   = Gross profit
+ *   − Platform commission (the real {@code order.platformFee} CraveIt takes)
+ *   = Net profit
+ * When an item has no cost captured yet, COGS is ESTIMATED at a restaurant
+ * benchmark (~30% of price, the midpoint of the industry 28–35% food-cost
+ * range) and we flag how much of the picture is estimated so the owner knows
+ * to add real costs for accuracy. Plus a per-day series for the trend chart.
  *
- * No ledger, no recipes, no OCR — that's the premium roadmap, not the MVP.
+ * No recipes, no OCR, no VAT — that's the premium roadmap, not this.
  */
 @Service
 @RequiredArgsConstructor
@@ -36,6 +39,7 @@ public class BookkeepingService {
     private static final double BENCHMARK_COST_RATIO = 0.30;
     /** Fallback look-back window when the caller doesn't specify one. */
     static final int DEFAULT_WINDOW_DAYS = 30;
+    private static final ZoneId SAST = ZoneId.of("Africa/Johannesburg");
 
     @Transactional(readOnly = true)
     public MoneyIn moneyIn(UUID tenantId, int days) {
@@ -44,13 +48,18 @@ public class BookkeepingService {
         Instant from = now.minus(Duration.ofDays(window));
         List<Order> orders = orderRepository.findByOrderDateBetweenAndTenant_Id(from, now, tenantId);
 
-        double revenue = 0, cogs = 0, estimatedRevenue = 0;
+        double revenue = 0, cogs = 0, estimatedRevenue = 0, platformCommission = 0;
         int realisedOrders = 0;
         Map<UUID, ItemLine> byItem = new LinkedHashMap<>();
+        Map<String, CategoryLine> byCategory = new LinkedHashMap<>();
+        Map<LocalDate, double[]> byDay = new TreeMap<>(); // value = [revenue, cogs]
 
         for (Order o : orders) {
             if (!OrderStatus.DELIVERED.matches(o.getStatus())) continue;
             realisedOrders++;
+            platformCommission += o.getPlatformFee() != null ? o.getPlatformFee() : 0.0;
+            LocalDate day = o.getOrderDate() != null ? o.getOrderDate().atZone(SAST).toLocalDate() : null;
+
             for (OrderItem oi : o.getOrderItems()) {
                 double lineRevenue = oi.getTotalPrice() != null ? oi.getTotalPrice() : 0.0;
                 int qty = oi.getQuantity() != null ? oi.getQuantity() : 0;
@@ -74,18 +83,42 @@ public class BookkeepingService {
                 line.revenue += lineRevenue;
                 line.cogs += lineCogs;
                 line.costKnown = line.costKnown && costKnown; // est if any line was estimated
+
+                String category = mi != null && mi.getCategory() != null && !mi.getCategory().isBlank()
+                        ? mi.getCategory() : "Other";
+                CategoryLine cl = byCategory.computeIfAbsent(category, CategoryLine::new);
+                cl.revenue += lineRevenue;
+                cl.cogs += lineCogs;
+
+                if (day != null) {
+                    double[] d = byDay.computeIfAbsent(day, k -> new double[2]);
+                    d[0] += lineRevenue;
+                    d[1] += lineCogs;
+                }
             }
         }
 
         double grossProfit = revenue - cogs;
         Double margin = revenue > 0 ? grossProfit / revenue * 100.0 : null;
         double estimatedShare = revenue > 0 ? estimatedRevenue / revenue * 100.0 : 0.0;
+        double netProfit = grossProfit - platformCommission;
+        Double netMargin = revenue > 0 ? netProfit / revenue * 100.0 : null;
 
         List<ItemLine> items = new ArrayList<>(byItem.values());
         items.sort(Comparator.comparingDouble((ItemLine l) -> l.revenue - l.cogs).reversed());
 
+        List<CategoryLine> categories = new ArrayList<>(byCategory.values());
+        categories.sort(Comparator.comparingDouble((CategoryLine c) -> c.cogs).reversed());
+
+        List<DayPoint> dailyProfit = new ArrayList<>();
+        for (Map.Entry<LocalDate, double[]> e : byDay.entrySet()) {
+            double dRev = e.getValue()[0], dCogs = e.getValue()[1];
+            dailyProfit.add(new DayPoint(e.getKey().toString(), round(dRev), round(dCogs), round(dRev - dCogs)));
+        }
+
         return new MoneyIn(window, round(revenue), round(cogs), round(grossProfit),
-                margin, round(estimatedShare), realisedOrders, items);
+                margin, round(estimatedShare), realisedOrders, items,
+                categories, round(platformCommission), round(netProfit), netMargin, dailyProfit);
     }
 
     private static double round(double v) {
@@ -107,7 +140,22 @@ public class BookkeepingService {
         public boolean isEstimated() { return !costKnown; }
     }
 
-    /** Period money-in summary. */
+    /** COGS + revenue rolled up by menu category (research: never show a single COGS line). */
+    public static class CategoryLine {
+        public final String category;
+        public double revenue;
+        public double cogs;
+        CategoryLine(String category) { this.category = category; }
+        public double getRevenue() { return round(revenue); }
+        public double getCogs() { return round(cogs); }
+        public double getProfit() { return round(revenue - cogs); }
+        public Double getMarginPercent() { return revenue > 0 ? round((revenue - cogs) / revenue * 100.0) : null; }
+    }
+
+    /** One day's totals for the trend chart. */
+    public record DayPoint(String date, double revenue, double cogs, double profit) {}
+
+    /** Period income statement. */
     public record MoneyIn(
             int days,
             double revenue,
@@ -116,6 +164,11 @@ public class BookkeepingService {
             Double marginPercent,
             double estimatedSharePercent,
             int orders,
-            List<ItemLine> items
+            List<ItemLine> items,
+            List<CategoryLine> cogsByCategory,
+            double platformCommission,
+            double netProfit,
+            Double netMarginPercent,
+            List<DayPoint> dailyProfit
     ) {}
 }

@@ -78,6 +78,83 @@
         </p>
       </div>
 
+      <!-- Profit & Loss + category breakdown -->
+      <div class="mt-5 grid lg:grid-cols-2 gap-3">
+        <!-- P&L statement -->
+        <div class="rounded-2xl border border-borderColor bg-white shadow-card overflow-hidden">
+          <div class="px-4 py-3 border-b border-borderColor flex items-center gap-2">
+            <i class="bi bi-clipboard-data text-primary"></i>
+            <h2 class="text-sm font-semibold text-textDark">Profit &amp; Loss</h2>
+          </div>
+          <div class="p-4 space-y-2 text-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-textDark">Revenue</span>
+              <span class="price font-semibold text-textDark">R{{ d.revenue | number:'1.0-0' }}</span>
+            </div>
+            <div class="flex items-center justify-between text-textMuted">
+              <span>− Food cost (COGS)</span>
+              <span class="price">−R{{ d.cogs | number:'1.0-0' }}</span>
+            </div>
+            <div class="flex items-center justify-between border-t border-borderColor pt-2">
+              <span class="text-textDark font-medium">Gross profit</span>
+              <span class="price font-semibold text-emerald-700">R{{ d.grossProfit | number:'1.0-0' }}
+                <span class="text-textMuted font-normal text-xs">({{ d.marginPercent != null ? (d.marginPercent | number:'1.0-0') + '%' : '—' }})</span></span>
+            </div>
+            <div class="flex items-center justify-between text-textMuted">
+              <span>− Platform commission<span *ngIf="commissionPercent != null"> ({{ commissionPercent | number:'1.0-0' }}%)</span></span>
+              <span class="price">−R{{ d.platformCommission | number:'1.0-0' }}</span>
+            </div>
+            <div class="flex items-center justify-between border-t-2 border-borderColor pt-2 mt-1">
+              <span class="text-textDark font-bold">Net profit</span>
+              <span class="price font-bold text-base" [ngClass]="d.netProfit >= 0 ? 'text-emerald-700' : 'text-red-600'">
+                R{{ d.netProfit | number:'1.0-0' }}
+                <span class="text-textMuted font-normal text-xs">({{ d.netMarginPercent != null ? (d.netMarginPercent | number:'1.0-0') + '%' : '—' }})</span>
+              </span>
+            </div>
+            <p class="text-[11px] text-textMuted pt-1">Commission is the real fee CraveIt deducts per order. Net profit is before rent, staff &amp; other running costs.</p>
+          </div>
+        </div>
+
+        <!-- Sales & cost by category -->
+        <div class="rounded-2xl border border-borderColor bg-white shadow-card overflow-hidden">
+          <div class="px-4 py-3 border-b border-borderColor flex items-center gap-2">
+            <i class="bi bi-grid-1x2 text-primary"></i>
+            <h2 class="text-sm font-semibold text-textDark">Sales &amp; margin by category</h2>
+          </div>
+          <div class="p-4 space-y-3">
+            <div *ngFor="let c of (d.cogsByCategory || [])">
+              <div class="flex items-center justify-between text-xs mb-1">
+                <span class="font-medium text-textDark">{{ c.category }}</span>
+                <span class="text-textMuted">R{{ c.revenue | number:'1.0-0' }} ·
+                  <span [ngClass]="marginClass(c.marginPercent)">{{ c.marginPercent != null ? (c.marginPercent | number:'1.0-0') + '%' : '—' }}</span></span>
+              </div>
+              <div class="h-2 rounded-full bg-surface overflow-hidden">
+                <div class="h-full rounded-full bg-primary opacity-70" [style.width.%]="catBarWidth(c)"></div>
+              </div>
+            </div>
+            <div *ngIf="!d.cogsByCategory || d.cogsByCategory.length === 0" class="text-xs text-textMuted text-center py-4">No category data yet.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily gross-profit trend -->
+      <div *ngIf="d.dailyProfit && d.dailyProfit.length > 0" class="mt-3 rounded-2xl border border-borderColor bg-white shadow-card overflow-hidden">
+        <div class="px-4 py-3 border-b border-borderColor flex items-center gap-2">
+          <i class="bi bi-bar-chart-line-fill text-primary"></i>
+          <h2 class="text-sm font-semibold text-textDark">Daily gross profit</h2>
+        </div>
+        <div class="p-4">
+          <div class="flex items-end gap-1 h-32">
+            <div *ngFor="let day of d.dailyProfit" class="flex-1 flex flex-col items-center justify-end h-full">
+              <div class="w-full rounded-t bg-primary opacity-80 hover:opacity-100 transition-all min-h-[2px]"
+                   [style.height.%]="dayBarHeight(day)"
+                   [title]="day.date + ': R' + (day.profit | number:'1.0-0')"></div>
+              <span class="text-[9px] text-textMuted mt-1 truncate w-full text-center">{{ dayLabel(day.date) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Per-item profitability -->
       <div class="mt-5 rounded-2xl border border-borderColor bg-white shadow-card overflow-hidden">
         <div class="px-4 py-3 border-b border-borderColor flex items-center gap-2">

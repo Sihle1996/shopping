@@ -13,6 +13,21 @@ interface BookItem {
   estimated: boolean;
 }
 
+interface CategoryLine {
+  category: string;
+  revenue: number;
+  cogs: number;
+  profit: number;
+  marginPercent: number | null;
+}
+
+interface DayPoint {
+  date: string;
+  revenue: number;
+  cogs: number;
+  profit: number;
+}
+
 interface MoneyIn {
   days: number;
   revenue: number;
@@ -22,6 +37,11 @@ interface MoneyIn {
   estimatedSharePercent: number;
   orders: number;
   items: BookItem[];
+  cogsByCategory: CategoryLine[];
+  platformCommission: number;
+  netProfit: number;
+  netMarginPercent: number | null;
+  dailyProfit: DayPoint[];
 }
 
 @Component({
@@ -77,6 +97,30 @@ export class AdminBooksComponent implements OnInit {
   barWidth(item: BookItem): number {
     const max = Math.max(1, ...(this.data?.items || []).map(i => Math.max(0, i.profit)));
     return Math.max(2, Math.round(Math.max(0, item.profit) / max * 100));
+  }
+
+  /** Bar width (0–100%) for a category's COGS, relative to the largest category. */
+  catBarWidth(cat: CategoryLine): number {
+    const max = Math.max(1, ...(this.data?.cogsByCategory || []).map(c => c.revenue));
+    return Math.max(2, Math.round(cat.revenue / max * 100));
+  }
+
+  /** Vertical bar height (0–100%) for a day's profit in the trend chart. */
+  dayBarHeight(d: DayPoint): number {
+    const max = Math.max(1, ...(this.data?.dailyProfit || []).map(p => Math.max(0, p.profit)));
+    return Math.max(3, Math.round(Math.max(0, d.profit) / max * 100));
+  }
+
+  /** Short day-of-month label for a trend bar (e.g. "7 Jun"). */
+  dayLabel(iso: string): string {
+    const d = new Date(iso + 'T00:00:00');
+    return isNaN(d.getTime()) ? iso : `${d.getDate()}`;
+  }
+
+  /** Commission as a % of revenue, for the P&L line. */
+  get commissionPercent(): number | null {
+    if (!this.data || this.data.revenue <= 0) return null;
+    return this.data.platformCommission / this.data.revenue * 100;
   }
 
   marginClass(m: number | null): string {
