@@ -37,6 +37,15 @@ export class AdminSupportComponent implements OnInit {
 
   readonly statuses = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
 
+  // Status filter for the list
+  statusFilter = 'ALL';
+  get filteredTickets(): SupportTicket[] {
+    return this.statusFilter === 'ALL' ? this.tickets : this.tickets.filter(t => t.status === this.statusFilter);
+  }
+  countByStatus(s: string): number {
+    return this.tickets.filter(t => t.status === s).length;
+  }
+
   private get headers(): HttpHeaders {
     const h: any = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.auth.getToken()}` };
     const tid = localStorage.getItem('tenantId');

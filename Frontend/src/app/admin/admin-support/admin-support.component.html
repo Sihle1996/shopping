@@ -3,6 +3,21 @@
 
     <app-page-header title="Support" subtitle="Review and respond to customer support tickets"></app-page-header>
 
+    <!-- Status filter -->
+    <div *ngIf="!loading && tickets.length" class="flex flex-wrap gap-2 mb-4">
+      <button (click)="statusFilter = 'ALL'"
+              class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors"
+              [ngClass]="statusFilter === 'ALL' ? 'bg-primary text-white border-primary' : 'bg-white text-textMuted border-borderColor hover:bg-surface'">
+        All <span class="opacity-70">{{ tickets.length }}</span>
+      </button>
+      <button *ngFor="let s of statuses" (click)="statusFilter = s"
+              [disabled]="countByStatus(s) === 0"
+              class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors disabled:opacity-40"
+              [ngClass]="statusFilter === s ? 'bg-primary text-white border-primary' : 'bg-white text-textMuted border-borderColor hover:bg-surface'">
+        {{ statusLabel(s) }} <span class="opacity-70">{{ countByStatus(s) }}</span>
+      </button>
+    </div>
+
     <!-- Loading -->
     <div *ngIf="loading" class="space-y-3">
       <div *ngFor="let i of [1,2,3]" class="h-16 bg-white rounded-2xl animate-pulse shadow-card"></div>
@@ -10,10 +25,12 @@
 
     <p *ngIf="!loading && !tickets.length"
        class="text-textMuted text-sm text-center py-12">No support tickets yet.</p>
+    <p *ngIf="!loading && tickets.length && !filteredTickets.length"
+       class="text-textMuted text-sm text-center py-12">No {{ statusLabel(statusFilter) | lowercase }} tickets.</p>
 
     <!-- Ticket list -->
     <div *ngIf="!loading" class="space-y-3">
-      <div *ngFor="let t of tickets"
+      <div *ngFor="let t of filteredTickets"
            (click)="open(t)"
            class="bg-white rounded-2xl shadow-card p-4 cursor-pointer hover:shadow-md transition-shadow">
         <div class="flex items-center justify-between gap-2">

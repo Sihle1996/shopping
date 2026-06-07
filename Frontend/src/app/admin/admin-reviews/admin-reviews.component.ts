@@ -94,6 +94,16 @@ export class AdminReviewsComponent implements OnInit {
     return Array.from({ length: 5 }, (_, i) => i + 1);
   }
 
+  // ── Rating summary ──────────────────────────────────────────────────────
+  get avgRating(): number {
+    return this.reviews.length ? this.reviews.reduce((s, r) => s + r.rating, 0) / this.reviews.length : 0;
+  }
+  get avgStars(): number { return Math.round(this.avgRating); }
+  ratingCount(star: number): number { return this.reviews.filter(r => r.rating === star).length; }
+  ratingPct(star: number): number {
+    return this.reviews.length ? Math.round(this.ratingCount(star) / this.reviews.length * 100) : 0;
+  }
+
   /** Ask the AI to draft a short public reply to this review. */
   draftReply(r: ReviewDTO): void {
     if (this.replyingId) return;
