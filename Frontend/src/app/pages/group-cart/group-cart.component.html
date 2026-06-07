@@ -30,7 +30,7 @@
     <p class="text-textDark font-semibold">{{ error }}</p>
   </div>
 
-  <div *ngIf="cart && !loading" class="max-w-lg mx-auto px-4 pt-4 space-y-4">
+  <div *ngIf="cart && !loading" class="max-w-5xl mx-auto px-4 pt-4 space-y-4">
 
     <!-- Checked out banner -->
     <div *ngIf="cart.status === 'CHECKED_OUT'"
@@ -97,17 +97,11 @@
       </button>
     </div>
 
-    <!-- Share link -->
-    <div class="bg-white rounded-2xl shadow-card p-4">
-      <p class="text-xs font-semibold text-textMuted uppercase tracking-wider mb-2">Share with friends</p>
-      <div class="flex items-center gap-2 bg-surface rounded-xl px-3 py-2">
-        <i class="bi bi-link-45deg text-primary flex-shrink-0"></i>
-        <span class="text-xs text-textMuted truncate flex-1">{{ shareUrl }}</span>
-        <button (click)="copyLink()" class="text-primary text-xs font-semibold hover:underline flex-shrink-0">Copy</button>
-      </div>
-      <p class="text-xs text-textMuted mt-2">Friends open this link, add their items, then you checkout together.</p>
-    </div>
+    <!-- Two-column on desktop: items (main) + share & checkout (sidebar) -->
+    <div class="lg:grid lg:grid-cols-3 lg:gap-6 lg:items-start space-y-4 lg:space-y-0">
 
+    <!-- Main column: items -->
+    <div class="lg:col-span-2">
     <!-- Items list -->
     <div class="bg-white rounded-2xl shadow-card overflow-hidden">
       <div class="px-4 pt-4 pb-2 border-b border-borderColor flex items-center justify-between">
@@ -159,30 +153,48 @@
         </li>
       </ul>
     </div>
+    </div><!-- end main column -->
 
-    <!-- Total + checkout (owner only) -->
-    <div class="bg-white rounded-2xl shadow-card p-4 space-y-3">
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-textMuted">Group total</span>
-        <span class="text-base font-bold text-textDark">R{{ cart.total.toFixed(2) }}</span>
+    <!-- Sidebar: share + checkout (sticky on desktop) -->
+    <div class="space-y-4 lg:sticky lg:top-4">
+
+      <!-- Share link -->
+      <div class="bg-white rounded-2xl shadow-card p-4">
+        <p class="text-xs font-semibold text-textMuted uppercase tracking-wider mb-2">Share with friends</p>
+        <div class="flex items-center gap-2 bg-surface rounded-xl px-3 py-2">
+          <i class="bi bi-link-45deg text-primary flex-shrink-0"></i>
+          <span class="text-xs text-textMuted truncate flex-1">{{ shareUrl }}</span>
+          <button (click)="copyLink()" class="text-primary text-xs font-semibold hover:underline flex-shrink-0">Copy</button>
+        </div>
+        <p class="text-xs text-textMuted mt-2">Friends open this link, add their items, then you checkout together.</p>
       </div>
-      <button *ngIf="isOwner && cart.status === 'OPEN' && cart.items.length"
-              (click)="goToCheckout()"
-              class="w-full py-3 bg-primary text-white font-semibold rounded-xl text-sm hover:opacity-90 transition-opacity">
-        Proceed to Checkout
-      </button>
-      <div *ngIf="!isOwner && cart.status === 'OPEN' && isLoggedIn" class="text-center space-y-1">
-        <p class="text-xs text-textMuted flex items-center justify-center gap-1.5">
-          <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-          Waiting for {{ cart.ownerName }} to checkout...
-        </p>
-        <p *ngIf="waitingTooLong" class="text-xs text-amber-600">
-          This is taking longer than usual. You can
-          <a (click)="load()" class="underline cursor-pointer font-medium">refresh</a>
-          or come back later.
-        </p>
+
+      <!-- Total + checkout (owner only) -->
+      <div class="bg-white rounded-2xl shadow-card p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-textMuted">Group total</span>
+          <span class="font-numbers text-lg font-bold text-primary">R{{ cart.total.toFixed(2) }}</span>
+        </div>
+        <button *ngIf="isOwner && cart.status === 'OPEN' && cart.items.length"
+                (click)="goToCheckout()"
+                class="w-full py-3 bg-primary text-white font-semibold rounded-xl text-sm hover:opacity-90 transition-opacity">
+          <i class="bi bi-bag-check mr-1.5"></i> Proceed to Checkout
+        </button>
+        <div *ngIf="!isOwner && cart.status === 'OPEN' && isLoggedIn" class="text-center space-y-1">
+          <p class="text-xs text-textMuted flex items-center justify-center gap-1.5">
+            <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            Waiting for {{ cart.ownerName }} to checkout...
+          </p>
+          <p *ngIf="waitingTooLong" class="text-xs text-amber-600">
+            This is taking longer than usual. You can
+            <a (click)="load()" class="underline cursor-pointer font-medium">refresh</a>
+            or come back later.
+          </p>
+        </div>
       </div>
-    </div>
+
+    </div><!-- end sidebar -->
+    </div><!-- end grid -->
 
   </div>
 </div>

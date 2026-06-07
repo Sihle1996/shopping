@@ -1,96 +1,86 @@
-<div class="min-h-screen flex flex-col items-center justify-center bg-surface p-6">
+<div class="min-h-screen flex items-center justify-center bg-surface p-4 sm:p-6">
+  <div class="w-full max-w-md bg-white rounded-3xl shadow-float overflow-hidden animate-fade-in">
 
-  <!-- Success icon -->
-  <div class="w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-lg"
-       style="background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)">
-    <i class="bi bi-check-lg text-white text-4xl"></i>
+    <!-- Celebration header -->
+    <div class="px-6 pt-8 pb-12 text-center text-white"
+         style="background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)">
+      <div class="w-16 h-16 mx-auto rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-3">
+        <i class="bi bi-check-lg text-white text-4xl"></i>
+      </div>
+      <h1 class="font-heading text-2xl font-extrabold mb-1">Order Placed!</h1>
+      <p class="text-white/80 text-sm">Payment successful — we're preparing your order.</p>
+    </div>
+
+    <!-- Body -->
+    <div class="px-5 sm:px-6 py-5 -mt-6 bg-white rounded-t-3xl relative space-y-4">
+
+      <!-- Order summary -->
+      <div *ngIf="summary" class="bg-surface rounded-2xl p-4 space-y-2.5">
+        <div *ngIf="summary.orderId" class="flex items-center justify-between">
+          <span class="text-xs text-textMuted">Order</span>
+          <span class="font-mono text-sm font-semibold text-textDark">#{{ summary.orderId | slice:0:8 | uppercase }}</span>
+        </div>
+        <div *ngIf="itemsSummary" class="flex items-start justify-between gap-3">
+          <span class="text-xs text-textMuted flex-shrink-0">Items</span>
+          <span class="text-xs text-textDark text-right">{{ itemsSummary }}</span>
+        </div>
+        <div *ngIf="summary.deliveryFee && summary.deliveryFee > 0" class="flex items-center justify-between">
+          <span class="text-xs text-textMuted flex items-center gap-1"><i class="bi bi-truck text-xs"></i> Delivery</span>
+          <span class="font-numbers text-xs text-textDark">R{{ summary.deliveryFee.toFixed(2) }}</span>
+        </div>
+        <div class="flex items-center justify-between border-t border-borderColor pt-2.5">
+          <span class="text-sm font-medium text-textDark">Total paid</span>
+          <span class="font-numbers font-bold text-primary text-base">R{{ summary.total.toFixed(2) }}</span>
+        </div>
+        <div class="flex items-start gap-2 pt-1">
+          <i class="bi bi-geo-alt text-textMuted text-xs mt-0.5 flex-shrink-0"></i>
+          <span class="text-xs text-textMuted">{{ summary.address }}</span>
+        </div>
+      </div>
+
+      <!-- Loyalty earned -->
+      <div *ngIf="summary && summary.loyaltyEarned > 0"
+           class="flex items-center gap-2 bg-amber-50 rounded-xl px-3 py-2.5 border border-amber-100">
+        <i class="bi bi-star-fill text-amber-400 text-sm flex-shrink-0"></i>
+        <span class="text-xs font-medium text-amber-700">
+          You earned <strong>{{ summary.loyaltyEarned }}</strong> loyalty points!
+        </span>
+      </div>
+
+      <!-- ETA -->
+      <div *ngIf="summary?.estimatedDeliveryMinutes"
+           class="flex items-center gap-3 bg-primary-50 border border-primary-100 rounded-xl px-3 py-2.5">
+        <i class="bi bi-clock-history text-primary text-lg flex-shrink-0"></i>
+        <div>
+          <p class="text-sm font-semibold text-primary-700 leading-tight">Estimated delivery</p>
+          <p class="text-xs text-primary-500">~{{ summary!.estimatedDeliveryMinutes }} minutes</p>
+        </div>
+      </div>
+
+      <p class="text-xs text-textMuted text-center">
+        <i class="bi bi-bell mr-1"></i>We'll notify you when your order status changes.
+      </p>
+
+      <!-- Actions -->
+      <div class="flex flex-col sm:flex-row gap-3 pt-1">
+        <button (click)="goToOrders()"
+                class="flex-1 px-6 py-3 rounded-2xl text-white font-semibold text-sm shadow-md transition-all active:scale-95"
+                style="background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)">
+          <i class="bi bi-receipt mr-2"></i>View My Orders
+        </button>
+        <button (click)="goToMenu()"
+                class="flex-1 px-6 py-3 rounded-2xl font-semibold text-sm border-2 border-primary text-primary bg-white hover:bg-surface transition-all active:scale-95">
+          <i class="bi bi-shop mr-2"></i>Back to Menu
+        </button>
+      </div>
+
+      <!-- Track link (especially useful for guests) -->
+      <a *ngIf="summary?.orderId"
+         [routerLink]="['/track']"
+         [queryParams]="{ id: summary!.orderId }"
+         class="block text-center text-xs text-primary hover:underline pt-1">
+        <i class="bi bi-search"></i> Track this order
+      </a>
+    </div>
   </div>
-
-  <h1 class="font-heading text-2xl font-extrabold text-textDark mb-1 text-center">
-    Order Placed!
-  </h1>
-  <p class="text-textLight text-sm text-center max-w-xs mb-6">
-    Your payment was successful. Your order is being prepared.
-  </p>
-
-  <!-- Order summary card -->
-  <div *ngIf="summary" class="w-full max-w-sm bg-white rounded-2xl shadow-card p-5 mb-6 space-y-3">
-
-    <!-- Order ID -->
-    <div *ngIf="summary.orderId" class="flex items-center justify-between">
-      <span class="text-xs text-textMuted">Order</span>
-      <span class="font-mono text-sm font-semibold text-textDark">#{{ summary.orderId | slice:0:8 | uppercase }}</span>
-    </div>
-
-    <!-- Items -->
-    <div *ngIf="itemsSummary" class="flex items-start justify-between gap-3">
-      <span class="text-xs text-textMuted flex-shrink-0">Items</span>
-      <span class="text-xs text-textDark text-right">{{ itemsSummary }}</span>
-    </div>
-
-    <!-- Delivery fee -->
-    <div *ngIf="summary.deliveryFee && summary.deliveryFee > 0"
-         class="flex items-center justify-between">
-      <span class="text-xs text-textMuted flex items-center gap-1"><i class="bi bi-truck text-xs"></i> Delivery</span>
-      <span class="font-numbers text-xs text-textDark">R{{ summary.deliveryFee.toFixed(2) }}</span>
-    </div>
-
-    <!-- Total -->
-    <div class="flex items-center justify-between border-t border-borderColor pt-3">
-      <span class="text-xs text-textMuted">Total paid</span>
-      <span class="font-numbers font-bold text-textDark">R{{ summary.total.toFixed(2) }}</span>
-    </div>
-
-    <!-- Address -->
-    <div class="flex items-start gap-2">
-      <i class="bi bi-geo-alt text-textMuted text-xs mt-0.5 flex-shrink-0"></i>
-      <span class="text-xs text-textMuted">{{ summary.address }}</span>
-    </div>
-
-    <!-- Loyalty earned -->
-    <div *ngIf="summary.loyaltyEarned > 0"
-         class="flex items-center gap-2 bg-amber-50 rounded-xl px-3 py-2 border border-amber-100">
-      <i class="bi bi-star-fill text-amber-400 text-sm"></i>
-      <span class="text-xs font-medium text-amber-700">
-        You earned <strong>{{ summary.loyaltyEarned }}</strong> loyalty points from this order!
-      </span>
-    </div>
-  </div>
-
-  <!-- ETA banner -->
-  <div *ngIf="summary?.estimatedDeliveryMinutes"
-       class="w-full max-w-sm flex items-center gap-3 bg-primary-50 border border-primary-100 rounded-2xl px-4 py-3 mb-4">
-    <i class="bi bi-clock-history text-primary text-lg flex-shrink-0"></i>
-    <div>
-      <p class="text-sm font-semibold text-primary-700">Estimated delivery time</p>
-      <p class="text-xs text-primary-500 mt-0.5">~{{ summary!.estimatedDeliveryMinutes }} minutes</p>
-    </div>
-  </div>
-
-  <p class="text-xs text-textMuted mb-3 text-center">
-    <i class="bi bi-bell mr-1"></i>We'll notify you when your order status changes.
-  </p>
-
-  <!-- Track link (especially useful for guests) -->
-  <a *ngIf="summary?.orderId"
-     [routerLink]="['/track']"
-     [queryParams]="{ id: summary!.orderId }"
-     class="text-xs text-primary hover:underline mb-6 flex items-center gap-1">
-    <i class="bi bi-search"></i> Track this order
-  </a>
-
-  <div class="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
-    <button (click)="goToOrders()"
-            class="flex-1 px-6 py-3 rounded-2xl text-white font-semibold text-sm shadow-md
-                   transition-all active:scale-95"
-            style="background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)">
-      <i class="bi bi-receipt mr-2"></i>View My Orders
-    </button>
-    <button (click)="goToMenu()"
-            class="flex-1 px-6 py-3 rounded-2xl font-semibold text-sm border-2 border-primary text-primary
-                   bg-white hover:bg-surface transition-all active:scale-95">
-      <i class="bi bi-shop mr-2"></i>Back to Menu
-    </button>
-  </div>
-
 </div>
