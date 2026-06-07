@@ -57,6 +57,50 @@ public class MenuService {
         return menuItemRepository.save(menuItem);
     }
 
+    /**
+     * CSV import upsert: match an item by name within the current tenant. If it
+     * exists, update ONLY the fields the CSV supplied (price/category/description/
+     * stock/cost) and leave image, reserved stock, threshold and availability
+     * untouched — so re-importing to add costs never wipes existing data. If it
+     * doesn't exist, create it (subject to the plan's item limit).
+     * Returns true when a new item was created, false when an existing one was updated.
+     */
+    @Transactional
+    public boolean importMenuItem(String name, Double price, String category,
+                                  String description, Integer stock, Double cost) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        MenuItem existing = (tenantId != null && name != null)
+                ? menuItemRepository.findByTenant_Id(tenantId).stream()
+                        .filter(m -> name.equalsIgnoreCase(m.getName()))
+                        .findFirst().orElse(null)
+                : null;
+
+        if (existing != null) {
+            if (price != null) existing.setPrice(price);
+            if (category != null && !category.isBlank()) existing.setCategory(category);
+            if (description != null && !description.isBlank()) existing.setDescription(description);
+            if (stock != null) existing.setStock(stock);
+            if (cost != null) existing.setCost(cost);
+            menuItemRepository.save(existing);
+            return false;
+        }
+
+        if (tenantId != null) {
+            subscriptionEnforcementService.assertMenuItemLimit(tenantId);
+        }
+        MenuItem item = new MenuItem();
+        item.setName(name);
+        item.setPrice(price);
+        item.setCategory(category);
+        if (description != null && !description.isBlank()) item.setDescription(description);
+        if (stock != null) item.setStock(stock);
+        if (cost != null) item.setCost(cost);
+        item.setIsAvailable(true);
+        setTenantOnEntity(item);
+        menuItemRepository.save(item);
+        return true;
+    }
+
     @Transactional
     public void deleteMenuItem(UUID id) {
         UUID tenantId = TenantContext.getCurrentTenantId();

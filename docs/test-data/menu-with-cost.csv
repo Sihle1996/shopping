@@ -1,0 +1,15 @@
+name,price,category,description,stock,cost
+Classic Burger,89,Burgers,Beef patty with lettuce tomato and house sauce,40,31
+Cheese Burger,99,Burgers,Beef patty with melted cheddar and pickles,40,36
+Bacon Deluxe Burger,119,Burgers,Double beef with bacon cheese and crispy onions,30,46
+Chicken Burger,95,Burgers,Grilled chicken breast with mayo and lettuce,35,34
+Veggie Burger,85,Burgers,Spiced chickpea patty with avo and rocket,25,27
+Crispy Fries,35,Sides,Golden hand-cut fries with sea salt,80,9
+Cheese Fries,49,Sides,Fries loaded with melted cheese sauce,60,15
+Onion Rings,45,Sides,Beer-battered onion rings,50,14
+Chicken Wrap,79,Wraps,Grilled chicken with salad in a soft tortilla,30,28
+Beef Wrap,89,Wraps,Seasoned beef strips with peri mayo,30,33
+Coca-Cola 330ml,22,Drinks,Ice-cold can of Coke,120,8
+Still Water 500ml,18,Drinks,Bottled still water,120,6
+Chocolate Milkshake,45,Drinks,Thick chocolate shake with cream,40,16
+Iced Coffee,39,Drinks,Cold brew with milk and ice,40,13

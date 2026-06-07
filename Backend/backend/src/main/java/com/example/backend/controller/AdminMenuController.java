@@ -81,14 +81,16 @@ public class AdminMenuController {
     }
 
     /**
-     * CSV import — expected header row: name,price,category,description,stock
-     * Returns { created, skipped, errors }
+     * CSV import — header row: name,price,category,description,stock,cost
+     * (description, stock and cost are optional). Existing items are matched by
+     * name and updated in place, so you can re-import to fill in cost without
+     * losing images or stock. Returns { created, updated, skipped, errors }.
      */
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/import-csv")
     public ResponseEntity<?> importCsv(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) return ResponseEntity.badRequest().body("CSV file is empty.");
-        int created = 0, skipped = 0;
+        int created = 0, updated = 0, skipped = 0;
         List<String> errors = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
@@ -101,15 +103,14 @@ public class AdminMenuController {
                 String[] cols = line.split(",", -1);
                 if (cols.length < 3) { errors.add("Row " + row + ": need at least name,price,category"); skipped++; continue; }
                 try {
-                    MenuItem item = new MenuItem();
-                    item.setName(cols[0].trim());
-                    item.setPrice(Double.parseDouble(cols[1].trim()));
-                    item.setCategory(cols[2].trim());
-                    if (cols.length > 3) item.setDescription(cols[3].trim());
-                    if (cols.length > 4 && !cols[4].isBlank()) item.setStock(Integer.parseInt(cols[4].trim()));
-                    item.setIsAvailable(true);
-                    menuService.saveMenuItem(item);
-                    created++;
+                    String name = cols[0].trim();
+                    Double price = Double.parseDouble(cols[1].trim());
+                    String category = cols[2].trim();
+                    String description = cols.length > 3 ? cols[3].trim() : null;
+                    Integer stock = (cols.length > 4 && !cols[4].isBlank()) ? Integer.parseInt(cols[4].trim()) : null;
+                    Double cost = (cols.length > 5 && !cols[5].isBlank()) ? Double.parseDouble(cols[5].trim()) : null;
+                    boolean isNew = menuService.importMenuItem(name, price, category, description, stock, cost);
+                    if (isNew) created++; else updated++;
                 } catch (Exception e) {
                     errors.add("Row " + row + ": " + e.getMessage());
                     skipped++;
@@ -120,6 +121,7 @@ public class AdminMenuController {
         }
         Map<String, Object> result = new HashMap<>();
         result.put("created", created);
+        result.put("updated", updated);
         result.put("skipped", skipped);
         result.put("errors", errors);
         return ResponseEntity.ok(result);

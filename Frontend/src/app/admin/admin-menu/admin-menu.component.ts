@@ -311,9 +311,10 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (res) => {
         this.importLoading = false;
-        this.importResult = `${res.created} items imported, ${res.skipped} skipped`;
-        if (res.created > 0) {
-          this.toastr.success(`${res.created} items imported`);
+        const updated = res.updated || 0;
+        this.importResult = `${res.created} created, ${updated} updated, ${res.skipped} skipped`;
+        if (res.created > 0 || updated > 0) {
+          this.toastr.success(`${res.created} created, ${updated} updated`);
           this.fetchMenuItems();
         } else {
           this.toastr.warning('No items were imported');
