@@ -4,7 +4,6 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { AdminService } from 'src/app/services/admin.service';
 import { NotificationService } from 'src/app/services/notification.service';
-import { CopilotService } from 'src/app/services/copilot.service';
 import { ToastrService } from 'ngx-toastr';
 
 /** Strict status unions */
@@ -86,14 +85,8 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private toastr: ToastrService,
-    private notificationService: NotificationService,
-    private copilotService: CopilotService
+    private notificationService: NotificationService
   ) {}
-
-  /** Hand a context question to the global Store Copilot. */
-  askCopilot(question: string): void {
-    this.copilotService.ask(question);
-  }
 
   ngOnInit(): void {
     this.fetchOrders(1);
