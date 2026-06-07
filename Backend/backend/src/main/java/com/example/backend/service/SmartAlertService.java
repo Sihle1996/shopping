@@ -62,13 +62,15 @@ public class SmartAlertService {
                 }
             }
         }
-        Double medianMargin = medianMargin(items);
+        Double medianMargin = marginPercentile(items, 0.50);
+        Double q1Margin = marginPercentile(items, 0.25); // "low margin" = bottom quartile of THIS store
 
         int created = 0;
+        Set<String> activeKeys = new HashSet<>(); // keys whose condition holds right now
 
         // 0) Store closed — you're not taking orders. One tap to open.
         if (Boolean.FALSE.equals(tenant.getIsOpen())) {
-            created += raise(tenant, "store-closed", "high",
+            created += raise(activeKeys, tenant, "store-closed", "high",
                     "Your store is closed",
                     "You're not accepting orders right now. Open the store to start receiving them.",
                     action("set_store_open", "Open the store", Map.of("open", true)));
@@ -83,7 +85,7 @@ public class SmartAlertService {
             if (free <= 0 || !available) {
                 double avgDaily = units / 30.0;
                 int restock = Math.max(5, (int) Math.ceil(avgDaily * 7));
-                created += raise(tenant, "soldout:" + mi.getId(), "high",
+                created += raise(activeKeys, tenant, "soldout:" + mi.getId(), "high",
                         mi.getName() + " is sold out",
                         String.format(Locale.UK, "It sells about %.1f/day — restock to stop losing orders.", avgDaily),
                         action("adjust_stock", "Restock " + mi.getName() + " +" + restock,
@@ -104,26 +106,27 @@ public class SmartAlertService {
                 fix = action("set_item_price", "Set " + mi.getName() + " to R" + String.format(Locale.UK, "%.2f", target),
                         Map.of("itemId", mi.getId().toString(), "price", target));
             }
-            created += raise(tenant, "below-cost:" + mi.getId(), "high",
+            created += raise(activeKeys, tenant, "below-cost:" + mi.getId(), "high",
                     mi.getName() + " is selling at a loss",
                     String.format(Locale.UK, "Sold %d in 30 days at R%.2f but it costs R%.2f to make — you lose money on every order.",
                             units, mi.getPrice(), mi.getCost()),
                     fix);
         }
 
-        // 3) Thin-margin bestseller — your busiest item earns BELOW your own median margin.
-        if (medianMargin != null) {
+        // 3) Thin-margin bestseller — your busiest item sits in the BOTTOM QUARTILE of
+        //    your own margins (a genuine outlier for this store, not 1% below median).
+        if (q1Margin != null && medianMargin != null) {
             MenuItem worst = null; int worstUnits = 0; double worstMargin = 0;
             for (MenuItem mi : items) {
                 int units = sold.getOrDefault(mi.getId(), 0);
                 Double margin = mi.getMarginPercent();
                 if (units <= 0 || margin == null || margin <= 0) continue;
-                if (margin < medianMargin && units > worstUnits) { worst = mi; worstUnits = units; worstMargin = margin; }
+                if (margin < q1Margin && units > worstUnits) { worst = mi; worstUnits = units; worstMargin = margin; }
             }
             if (worst != null) {
-                created += raise(tenant, "thin-margin:" + worst.getId(), "medium",
-                        worst.getName() + " earns below-average margin",
-                        String.format(Locale.UK, "It's a top seller (%d sold) at %.0f%% margin vs your typical %.0f%%. A small price rise lifts profit the most here.",
+                created += raise(activeKeys, tenant, "thin-margin:" + worst.getId(), "medium",
+                        worst.getName() + " is a low-margin bestseller",
+                        String.format(Locale.UK, "Sells well (%d in 30 days) but its %.0f%% margin is in the bottom 25%% for your store (typical %.0f%%). A small price rise lifts profit most here.",
                                 worstUnits, worstMargin, medianMargin),
                         null);
             }
@@ -134,7 +137,7 @@ public class SmartAlertService {
                 .filter(mi -> sold.getOrDefault(mi.getId(), 0) > 0 && mi.getCost() == null)
                 .count();
         if (missingCost > 0) {
-            created += raise(tenant, "missing-cost:" + missingCost, "info",
+            created += raise(activeKeys, tenant, "missing-cost", "info",
                     "Add cost to " + missingCost + " selling item" + (missingCost > 1 ? "s" : ""),
                     "Books is estimating their cost (~30% of price). Add real costs so your profit is exact.",
                     null);
@@ -154,7 +157,7 @@ public class SmartAlertService {
         if (activePromos == 0 && revPrior7 > 0 && rev7 < revPrior7 && canAddPromotion(tenantId, activePromos)) {
             double dropPct = (revPrior7 - rev7) / revPrior7 * 100.0;
             if (dropPct >= MIN_SALES_DIP_PCT) {
-                created += raise(tenant, "sales-dip", "medium",
+                created += raise(activeKeys, tenant, "sales-dip", "medium",
                         String.format(Locale.UK, "Sales are down %.0f%% vs last week", dropPct),
                         String.format(Locale.UK, "You took R%.0f this week vs R%.0f last week, with no deal live. A short discount can win customers back.", rev7, revPrior7),
                         action("create_promotion", "Launch 15% off for 3 days",
@@ -174,7 +177,7 @@ public class SmartAlertService {
             }
         }
         if (awaiting > 0 && oldestPending >= PREP_SLA_MINUTES) {
-            created += raise(tenant, "pending-aging", "high",
+            created += raise(activeKeys, tenant, "pending-aging", "high",
                     awaiting + " order" + (awaiting > 1 ? "s" : "") + " awaiting prep",
                     "Oldest is " + oldestPending + " min old and not started. Check the kitchen.",
                     null);
@@ -192,17 +195,29 @@ public class SmartAlertService {
         double maxPrior = daily.entrySet().stream().filter(e -> !e.getKey().equals(today))
                 .mapToDouble(Map.Entry::getValue).max().orElse(0);
         if (todayRev > 0 && maxPrior > 0 && todayRev > maxPrior) {
-            created += raise(tenant, "milestone:" + today, "info",
+            created += raise(activeKeys, tenant, "milestone:" + today, "info",
                     "Best sales day in two weeks",
                     String.format(Locale.UK, "R%.0f today beats your recent best of R%.0f. Keep it going.", todayRev, maxPrior),
                     null);
         }
 
+        // Self-clear: any alert still showing (NEW) or dismissed whose condition no longer
+        // holds this scan is resolved — so the bell always reflects current data and never
+        // says e.g. "awaiting prep" after the orders moved on. Dated milestones are left as-is.
+        for (AiAlert a : aiAlertRepository.findByTenant_IdAndStatusIn(tenantId, List.of("NEW", "DISMISSED"))) {
+            String key = a.getAlertKey();
+            if (key == null || key.startsWith("milestone:")) continue;
+            if (!activeKeys.contains(key)) {
+                a.setStatus("RESOLVED");
+                aiAlertRepository.save(a);
+            }
+        }
+
         return created;
     }
 
-    /** The store's own median gross margin %, from items that have a cost set. */
-    private Double medianMargin(List<MenuItem> items) {
+    /** A percentile (0–1) of the store's own gross margins, from items with a cost set. */
+    private Double marginPercentile(List<MenuItem> items, double p) {
         List<Double> margins = new ArrayList<>();
         for (MenuItem mi : items) {
             Double m = mi.getMarginPercent();
@@ -210,15 +225,45 @@ public class SmartAlertService {
         }
         if (margins.isEmpty()) return null;
         Collections.sort(margins);
-        return margins.get(margins.size() / 2);
+        int idx = (int) Math.floor(p * (margins.size() - 1));
+        return margins.get(Math.max(0, Math.min(margins.size() - 1, idx)));
     }
 
     private static double round2(double v) {
         return Math.round(v * 100.0) / 100.0;
     }
 
-    private int raise(Tenant tenant, String key, String severity, String title, String body, Map<String, Object> action) {
-        if (aiAlertRepository.existsByTenant_IdAndAlertKeyAndStatus(tenant.getId(), key, "NEW")) return 0;
+    /**
+     * Upsert an alert so it always reflects the latest data:
+     *  - records the key as "active" this scan (so it isn't auto-resolved);
+     *  - if a NEW alert with this key exists, REFRESH its title/body/action
+     *    (e.g. "3 orders" → "2 orders", "25 min" → "32 min") instead of duplicating;
+     *  - if the owner DISMISSED it, stay quiet until the condition clears;
+     *  - otherwise create a fresh NEW alert.
+     */
+    private int raise(Set<String> activeKeys, Tenant tenant, String key, String severity,
+                      String title, String body, Map<String, Object> action) {
+        activeKeys.add(key);
+        String actionJson = null;
+        if (action != null) {
+            try { actionJson = objectMapper.writeValueAsString(action); } catch (Exception ignored) {}
+        }
+        AiAlert existing = aiAlertRepository
+                .findFirstByTenant_IdAndAlertKeyOrderByCreatedAtDesc(tenant.getId(), key).orElse(null);
+        if (existing != null) {
+            if ("NEW".equals(existing.getStatus())) {
+                existing.setSeverity(severity);
+                existing.setTitle(title);
+                existing.setBody(body);
+                existing.setAction(actionJson);
+                aiAlertRepository.save(existing);
+                return 0; // refreshed, not newly created
+            }
+            if ("DISMISSED".equals(existing.getStatus())) {
+                return 0; // respect the dismissal until the condition clears
+            }
+            // RESOLVED / DONE → condition has recurred; fall through to raise a fresh one
+        }
         AiAlert a = new AiAlert();
         a.setTenant(tenant);
         a.setAlertKey(key);
@@ -226,9 +271,7 @@ public class SmartAlertService {
         a.setTitle(title);
         a.setBody(body);
         a.setStatus("NEW");
-        if (action != null) {
-            try { a.setAction(objectMapper.writeValueAsString(action)); } catch (Exception ignored) {}
-        }
+        a.setAction(actionJson);
         aiAlertRepository.save(a);
         return 1;
     }
