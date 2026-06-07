@@ -113,20 +113,24 @@ public class SmartAlertService {
                     fix);
         }
 
-        // 3) Thin-margin bestseller — your busiest item sits in the BOTTOM QUARTILE of
-        //    your own margins (a genuine outlier for this store, not 1% below median).
-        if (q1Margin != null && medianMargin != null) {
+        // 3) Thin-margin bestseller — a POPULAR item (above the store's own median sales
+        //    volume) whose margin sits in the store's BOTTOM QUARTILE. Both bars are the
+        //    store's own distribution, so this only fires on a genuine low-margin seller.
+        Double medianUnits = medianSoldUnits(sold);
+        if (q1Margin != null && medianMargin != null && medianUnits != null) {
             MenuItem worst = null; int worstUnits = 0; double worstMargin = 0;
             for (MenuItem mi : items) {
                 int units = sold.getOrDefault(mi.getId(), 0);
                 Double margin = mi.getMarginPercent();
                 if (units <= 0 || margin == null || margin <= 0) continue;
-                if (margin < q1Margin && units > worstUnits) { worst = mi; worstUnits = units; worstMargin = margin; }
+                if (margin < q1Margin && units >= medianUnits && units > worstUnits) {
+                    worst = mi; worstUnits = units; worstMargin = margin;
+                }
             }
             if (worst != null) {
                 created += raise(activeKeys, tenant, "thin-margin:" + worst.getId(), "medium",
                         worst.getName() + " is a low-margin bestseller",
-                        String.format(Locale.UK, "Sells well (%d in 30 days) but its %.0f%% margin is in the bottom 25%% for your store (typical %.0f%%). A small price rise lifts profit most here.",
+                        String.format(Locale.UK, "Popular (%d sold in 30 days) but its %.0f%% margin is in your bottom 25%% (your typical is %.0f%%). A small price rise lifts profit most here.",
                                 worstUnits, worstMargin, medianMargin),
                         null);
             }
@@ -227,6 +231,15 @@ public class SmartAlertService {
         Collections.sort(margins);
         int idx = (int) Math.floor(p * (margins.size() - 1));
         return margins.get(Math.max(0, Math.min(margins.size() - 1, idx)));
+    }
+
+    /** Median units sold across items that sold at least one — this store's own "popular" bar. */
+    private Double medianSoldUnits(Map<UUID, Integer> sold) {
+        List<Integer> units = new ArrayList<>();
+        for (int u : sold.values()) if (u > 0) units.add(u);
+        if (units.isEmpty()) return null;
+        Collections.sort(units);
+        return (double) units.get(units.size() / 2);
     }
 
     private static double round2(double v) {
