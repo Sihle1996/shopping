@@ -141,13 +141,26 @@ public class AdminAiService {
                 .limit(3)
                 .collect(Collectors.toList());
 
+        // Decision gradient — score each candidate so the cards differ instead of cloning.
+        // Both inputs are real signals: demand (units, vs the strongest) and margin headroom
+        // (how far above the store median). NO behavioural claims (no "drives baskets").
+        long maxUnits = candidates.stream().mapToLong(i -> itemCounts.getOrDefault(i.getId(), 0L)).max().orElse(1);
+        double medM = medianMargin != null ? medianMargin : 0;
+        double maxMargin = candidates.stream().mapToDouble(MenuItem::getMarginPercent).max().orElse(medM);
+
         String today = LocalDate.now().toString();
         String endAt = LocalDate.now().plusDays(5).toString();
         List<Map<String, Object>> suggestions = new ArrayList<>();
+        int rank = 0;
         for (MenuItem item : candidates) {
+            rank++;
             long units = itemCounts.getOrDefault(item.getId(), 0L);
             double margin = item.getMarginPercent();
-            int discount = (int) Math.min(15, Math.max(5, Math.round(margin / 4.0))); // safely below margin
+            double demandScore = maxUnits > 0 ? (double) units / maxUnits : 0;                  // 0..1
+            double marginScore = maxMargin > medM ? (margin - medM) / (maxMargin - medM) : 0.5; // 0..1
+            double composite = demandScore * 0.6 + marginScore * 0.4;
+            String strength = composite >= 0.66 ? "STRONG" : composite >= 0.33 ? "MODERATE" : "WEAK";
+            int discount = (int) Math.min(18, Math.max(5, Math.round(margin * 0.20)));          // varies, below margin
 
             Map<String, Object> promo = new LinkedHashMap<>();
             promo.put("title", item.getName() + " — featured");
@@ -158,22 +171,28 @@ public class AdminAiService {
             promo.put("startAt", today);
             promo.put("endAt", endAt);
 
+            String hypothesis = switch (strength) {
+                case "STRONG"   -> "Strongest test candidate — high demand with a clear margin buffer.";
+                case "MODERATE" -> "Solid secondary test — good demand with an adequate margin buffer.";
+                default          -> "Optional test — a moderate signal worth a small experiment.";
+            };
+
             Map<String, Object> s = new LinkedHashMap<>();
             // FACTS — observed, immutable (the data layer)
             s.put("facts", List.of(
-                    units + " orders in the last 30 days",
-                    String.format(Locale.UK, "%.0f%% gross margin", margin),
+                    "#" + rank + " by volume — " + units + " orders in 30 days",
+                    String.format(Locale.UK, "%.0f%% margin (store median %.0f%%)", margin, medM),
                     String.format(Locale.UK, "R%.2f current price", item.getPrice())));
-            // ANALYSIS — generated as STRUCTURED TOKENS, not prose (the epistemic layer).
-            // recommendationType is the SEMANTIC confidence (an enum), not a cosmetic label.
+            // ANALYSIS — structured tokens (epistemic layer). insightStrength + recommendationType
+            // are the SEMANTIC signals; the global uncertainty note lives once in the UI banner.
             Map<String, Object> analysis = new LinkedHashMap<>();
-            analysis.put("hypothesis", "High-rotation item the store can afford to discount");
+            analysis.put("hypothesis", hypothesis);
             analysis.put("evidence", List.of(
-                    "Among the store's most-ordered items (" + units + " in 30 days)",
-                    String.format(Locale.UK, "%.0f%% margin — at or above the store median", margin),
+                    units + " orders in the last 30 days (rank #" + rank + ")",
+                    String.format(Locale.UK, "%.0f%% margin — %s the store median",
+                            margin, margin >= medM ? "at or above" : "below"),
                     "In stock now"));
-            analysis.put("uncertainty",
-                    "No price-elasticity or past-promotion-response data for this item — the effect on volume is unknown.");
+            analysis.put("insightStrength", strength);
             analysis.put("recommendationType", "EXPERIMENT");
             s.put("analysis", analysis);
             s.put("proposedPromo", promo);

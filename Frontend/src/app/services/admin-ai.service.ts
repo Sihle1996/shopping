@@ -37,8 +37,9 @@ export interface AiProposedPromo {
 export interface AiPromoAnalysis {
   hypothesis: string;
   evidence: string[];
-  uncertainty: string;
+  insightStrength?: string;   // STRONG | MODERATE | WEAK — the decision gradient
   recommendationType: string; // 'EXPERIMENT' — the SEMANTIC confidence, not a label
+  uncertainty?: string;       // legacy; the uncertainty note now lives in one global banner
 }
 
 export interface AiPromoSuggestion {

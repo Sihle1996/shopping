@@ -35,6 +35,15 @@ export class AdminPromotionsComponent implements OnInit {
   aiSuggestions: AiPromoSuggestion[] = [];
   aiSuggestionsLoading = false;
   aiSuggestionsDismissed = new Set<number>();
+
+  /** Colour for the STRONG/MODERATE/WEAK decision-gradient badge. */
+  tierClass(s?: string): string {
+    return ({
+      STRONG: 'bg-emerald-100 text-emerald-700',
+      MODERATE: 'bg-amber-100 text-amber-700',
+      WEAK: 'bg-sky-100 text-sky-700'
+    } as any)[s || ''] ?? 'bg-gray-100 text-gray-600';
+  }
   applyingIndex: number | null = null;
 
   // Multi-product selection
