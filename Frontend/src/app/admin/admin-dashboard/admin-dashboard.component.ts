@@ -359,6 +359,16 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.loadAnalytics();
   }
 
+  /**
+   * ApexCharts can measure a 0-width container the moment the charts enter the
+   * DOM (they're gated behind *ngIf + a fade-in inside a lazy module), drawing
+   * blank until something forces a re-measure — which is why a hard refresh
+   * "fixed" it. Dispatch a resize once the layout has settled so they redraw.
+   */
+  private nudgeCharts(): void {
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 150);
+  }
+
   loadAnalytics(): void {
     this.analyticsLoading = true;
     const { startDate: start, endDate: end } = this;
@@ -382,8 +392,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           data.map(d => d.quantity)
         );
         this.analyticsLoading = false;
+        this.nudgeCharts();
       },
-      error: () => { this.analyticsLoading = false; }
+      error: () => { this.analyticsLoading = false; this.nudgeCharts(); }
     });
 
     this.analyticsService.getAverageOrderValue(start, end).subscribe(v => this.aov = v);
