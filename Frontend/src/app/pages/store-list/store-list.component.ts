@@ -82,11 +82,22 @@ export class StoreListComponent implements OnInit, OnDestroy {
       switchMap(q => q.length >= 3 ? this.geocoding.autocomplete(q) : Promise.resolve([]))
     ).subscribe(results => this.suggestions = results);
 
-    // Pre-fill the address field from last session but don't auto-search —
-    // location may have changed, so the user must confirm with "Find Stores" or GPS
+    // Pre-fill the address field from last session.
     const savedAddress = localStorage.getItem('customer_address');
     if (savedAddress) {
       this.addressInput = savedAddress;
+    }
+
+    // If there's an active search this session (e.g. the user browsed a store
+    // and hit Back / "All stores"), restore the results list instead of the
+    // empty search — and re-fetch so the list stays current as they move.
+    const lat = localStorage.getItem('customer_lat');
+    const lon = localStorage.getItem('customer_lon');
+    if (sessionStorage.getItem('stores_active_search') === '1' && lat && lon) {
+      this.selectedLat = parseFloat(lat);
+      this.selectedLon = parseFloat(lon);
+      this.selectedAddress = savedAddress || 'Current location';
+      this.loadNearbyStores();
     }
   }
 
@@ -197,12 +208,14 @@ export class StoreListComponent implements OnInit, OnDestroy {
     localStorage.removeItem('customer_lat');
     localStorage.removeItem('customer_lon');
     localStorage.removeItem('customer_address');
+    sessionStorage.removeItem('stores_active_search');
   }
 
   private saveAndLoad(): void {
     localStorage.setItem('customer_lat', String(this.selectedLat));
     localStorage.setItem('customer_lon', String(this.selectedLon));
     localStorage.setItem('customer_address', this.selectedAddress);
+    sessionStorage.setItem('stores_active_search', '1');  // remember results on Back
     this.loadNearbyStores();
   }
 
