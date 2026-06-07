@@ -33,7 +33,8 @@ public class AdminAiService {
     private final ObjectMapper objectMapper;
     private final AnthropicClient anthropicClient;
 
-    private final ConcurrentHashMap<UUID, CachedDigest> digestCache = new ConcurrentHashMap<>();
+    // Keyed by tenant + since-window so different periods don't share a cache entry.
+    private final ConcurrentHashMap<String, CachedDigest> digestCache = new ConcurrentHashMap<>();
 
     public boolean isConfigured() {
         return anthropicClient.isConfigured();
@@ -203,7 +204,8 @@ public class AdminAiService {
     // ── Feature 3: Review Digest ────────────────────────────────────────────
 
     public Map<String, Object> reviewDigest(UUID tenantId, LocalDate since) {
-        CachedDigest cached = digestCache.get(tenantId);
+        String cacheKey = tenantId + "|" + (since != null ? since.toString() : "last7");
+        CachedDigest cached = digestCache.get(cacheKey);
         if (cached != null && cached.isValid()) {
             return cached.result;
         }
@@ -259,7 +261,7 @@ public class AdminAiService {
         result = new HashMap<>(result);
         result.putIfAbsent("period", formatPeriod(sinceDateTime));
 
-        digestCache.put(tenantId, new CachedDigest(result));
+        digestCache.put(cacheKey, new CachedDigest(result));
         return result;
     }
 

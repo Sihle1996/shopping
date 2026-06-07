@@ -33,6 +33,7 @@ public class SmartAlertService {
     private final TenantRepository tenantRepository;
     private final AiAlertRepository aiAlertRepository;
     private final ObjectMapper objectMapper;
+    private final SubscriptionEnforcementService subscriptionEnforcementService;
 
     private static final ZoneId SAST = ZoneId.of("Africa/Johannesburg");
     /** A store needs at least this many orders in the last 30 days before promo advice is relevant. */
@@ -92,7 +93,9 @@ public class SmartAlertService {
         // a track record.
         long activePromos = promotionRepository.findActiveByTenantId(OffsetDateTime.now(), tenantId).size();
         long ordersRecent = last30.stream().filter(o -> !isVoided(o.getStatus())).count();
-        if (activePromos == 0 && ordersRecent >= ESTABLISHED_ORDERS_30D) {
+        // Only nag to launch a promo if the plan can actually accept one — otherwise the
+        // "Launch 15% off" action would always fail the plan-limit check and re-surface forever.
+        if (activePromos == 0 && ordersRecent >= ESTABLISHED_ORDERS_30D && canAddPromotion(tenantId, activePromos)) {
             created += raise(tenant, "promo-drought", "medium",
                     "No promotion is running",
                     "You're trading steadily with no deal live. A short discount is a quick way to lift orders.",
@@ -166,5 +169,14 @@ public class SmartAlertService {
     private boolean isVoided(String status) {
         OrderStatus s = OrderStatus.fromLabel(status);
         return s != null && s.isVoided();
+    }
+
+    /** True only if the store's plan still has room for another active promotion. */
+    private boolean canAddPromotion(UUID tenantId, long activePromos) {
+        try {
+            return activePromos < subscriptionEnforcementService.getPlan(tenantId).getMaxPromotions();
+        } catch (Exception e) {
+            return false; // unknown plan — don't suggest an action that may fail
+        }
     }
 }

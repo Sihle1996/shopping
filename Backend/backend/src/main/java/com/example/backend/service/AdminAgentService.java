@@ -4,6 +4,7 @@ import com.example.backend.entity.AiActionLog;
 import com.example.backend.entity.InventoryAdjustmentDTO;
 import com.example.backend.entity.MenuItem;
 import com.example.backend.entity.Order;
+import com.example.backend.entity.OrderStatus;
 import com.example.backend.entity.Review;
 import com.example.backend.entity.SalesTrendDTO;
 import com.example.backend.entity.TopProductDTO;
@@ -89,7 +90,9 @@ public class AdminAgentService {
         Instant startToday = LocalDate.now(SAST).atStartOfDay(SAST).toInstant();
         List<Order> today = orderRepository.findByOrderDateBetweenAndTenant_Id(startToday, Instant.now(), tenantId);
         long ordersToday = today.stream().filter(o -> !isVoided(o.getStatus())).count();
-        double revToday = today.stream().filter(o -> !isVoided(o.getStatus()))
+        // Revenue = realised (Delivered) money, consistent with analytics/get_analytics,
+        // sumRevenue() below and CraveIt Books — NOT in-progress orders that may still cancel.
+        double revToday = today.stream().filter(o -> OrderStatus.DELIVERED.matches(o.getStatus()))
                 .mapToDouble(o -> o.getTotalAmount() != null ? o.getTotalAmount() : 0).sum();
 
         // revenue trend: last 7 days vs the 7 before that
@@ -377,8 +380,9 @@ public class AdminAgentService {
         Tenant t = tenantRepository.findById(tenantId).orElse(null);
         Instant startToday = LocalDate.now(SAST).atStartOfDay(SAST).toInstant();
         List<Order> today = orderRepository.findByOrderDateBetweenAndTenant_Id(startToday, Instant.now(), tenantId);
+        // Realised (Delivered) revenue, consistent with the briefing, analytics and Books.
         double todayRevenue = today.stream()
-                .filter(o -> !isVoided(o.getStatus()))
+                .filter(o -> OrderStatus.DELIVERED.matches(o.getStatus()))
                 .mapToDouble(o -> o.getTotalAmount() != null ? o.getTotalAmount() : 0).sum();
         long activePromos = promotionRepository.findActiveByTenantId(OffsetDateTime.now(), tenantId).size();
 
@@ -389,7 +393,7 @@ public class AdminAgentService {
         m.put("isOpen", t != null ? t.getIsOpen() : null);
         m.put("deliveryFeeBase", t != null ? t.getDeliveryFeeBase() : null);
         m.put("minimumOrderAmount", t != null ? t.getMinimumOrderAmount() : null);
-        m.put("ordersToday", today.size());
+        m.put("ordersToday", today.stream().filter(o -> !isVoided(o.getStatus())).count());
         m.put("revenueToday", round2(todayRevenue));
         m.put("menuItemCount", menuItemRepository.findByTenant_Id(tenantId).size());
         m.put("activePromotions", activePromos);
@@ -855,7 +859,8 @@ public class AdminAgentService {
     }
 
     private boolean isVoided(String status) {
-        return "Cancelled".equalsIgnoreCase(status) || "Rejected".equalsIgnoreCase(status);
+        OrderStatus s = OrderStatus.fromLabel(status);
+        return s != null && s.isVoided();
     }
 
     private String shortId(UUID id) {
