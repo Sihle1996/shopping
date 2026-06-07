@@ -47,6 +47,7 @@ public class MenuService {
         if (updatedMenuItem.getCategory() != null) menuItem.setCategory(updatedMenuItem.getCategory());
         menuItem.setDescription(updatedMenuItem.getDescription());
         menuItem.setPrice(updatedMenuItem.getPrice());
+        menuItem.setCost(updatedMenuItem.getCost());
         if (updatedMenuItem.getIsAvailable() != null) menuItem.setIsAvailable(updatedMenuItem.getIsAvailable());
         menuItem.setImage(updatedMenuItem.getImage());
         menuItem.setStock(updatedMenuItem.getStock());

@@ -195,6 +195,13 @@ public class AdminAgentService {
             practical, cite real figures, and proactively call out what matters (low stock, sold-out
             items, sales dips, standout or slow products, bad reviews).
 
+            PROFIT AWARENESS (CraveIt Books): get_menu gives each item's cost and marginPercent.
+            When advising on prices or promotions, reason from MARGIN, not just price. Never recommend
+            a discount that pushes an item below its cost (negative margin); for a %% off, check the
+            worst-margin affected item still clears cost. If costKnown is false the margin is unknown —
+            say so and suggest the owner add the item's cost in Books for exact advice; do NOT guess a
+            cost. Prefer protecting margin over chasing volume unless the owner says otherwise.
+
             You can also PROPOSE changes using the propose_* tools: open/close the store, set an item's
             availability, adjust stock, change a price, create a promotion (a %% off everything for N days),
             or change a store setting (delivery fee, minimum order, driver earning %%, loyalty on/off,
@@ -235,7 +242,8 @@ public class AdminAgentService {
                 List.of()));
 
         tools.add(tool("get_menu",
-                "Full menu: each item's name, category, price, availability, and stock/reserved counts.",
+                "Full menu: each item's name, category, price, cost, marginPercent (gross), costKnown flag, "
+                + "availability, and stock/reserved counts. Use cost/marginPercent for profit-aware pricing & promo advice.",
                 Map.of(), List.of()));
 
         tools.add(tool("inventory_alerts",
@@ -448,6 +456,11 @@ public class AdminAgentService {
             r.put("name", mi.getName());
             r.put("category", mi.getCategory());
             r.put("price", mi.getPrice());
+            // Economics from CraveIt Books: real cost & margin when captured, else null.
+            r.put("cost", mi.getCost());
+            Double margin = mi.getMarginPercent();
+            r.put("marginPercent", margin != null ? Math.round(margin * 10.0) / 10.0 : null);
+            r.put("costKnown", mi.getCost() != null);
             r.put("available", !Boolean.FALSE.equals(mi.getIsAvailable()));
             r.put("stock", mi.getStock());
             r.put("reserved", mi.getReservedStock());

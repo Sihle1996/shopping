@@ -3,6 +3,7 @@ package com.example.backend.service;
 import com.example.backend.entity.AiAlert;
 import com.example.backend.entity.MenuItem;
 import com.example.backend.entity.Order;
+import com.example.backend.entity.OrderStatus;
 import com.example.backend.entity.Tenant;
 import com.example.backend.repository.AiAlertRepository;
 import com.example.backend.repository.MenuItemRepository;
@@ -104,7 +105,8 @@ public class SmartAlertService {
         for (Order o : last30) {
             String s = o.getStatus();
             if (s == null || o.getOrderDate() == null) continue;
-            if (s.equalsIgnoreCase("Pending") || s.equalsIgnoreCase("Confirmed") || s.equalsIgnoreCase("Scheduled")) {
+            OrderStatus os = OrderStatus.fromLabel(s);
+            if (os == OrderStatus.PENDING || os == OrderStatus.CONFIRMED || os == OrderStatus.SCHEDULED) {
                 long mins = Duration.between(o.getOrderDate(), now).toMinutes();
                 if (mins >= 0 && mins < 1440) { awaiting++; oldestPending = Math.max(oldestPending, mins); }
             }
@@ -162,6 +164,7 @@ public class SmartAlertService {
     }
 
     private boolean isVoided(String status) {
-        return "Cancelled".equalsIgnoreCase(status) || "Rejected".equalsIgnoreCase(status);
+        OrderStatus s = OrderStatus.fromLabel(status);
+        return s != null && s.isVoided();
     }
 }

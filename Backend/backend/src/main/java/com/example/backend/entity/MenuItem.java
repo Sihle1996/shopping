@@ -38,6 +38,15 @@ public class MenuItem {
     @Column(name = "price")
     private Double price;
 
+    /**
+     * What this item costs the store to make (food/ingredient cost), in Rand.
+     * Optional — when null, CraveIt Books estimates it at a benchmark % of price.
+     * Drives accurate profit & margin so the AI can advise on pricing/promos.
+     */
+    @DecimalMin(value = "0.0", message = "Cost cannot be negative")
+    @Column(name = "cost")
+    private Double cost;
+
     @Column(name = "is_available", nullable = false)
     private Boolean isAvailable = true;
 
@@ -61,6 +70,16 @@ public class MenuItem {
 
     @Transient
     private int quantity = 1;
+
+    /**
+     * Computed (not stored): gross margin % = (price − cost) / price × 100.
+     * Returns null when price or cost is unknown (so the UI shows "—", not 0%).
+     */
+    @Transient
+    public Double getMarginPercent() {
+        if (price == null || price <= 0 || cost == null) return null;
+        return (price - cost) / price * 100.0;
+    }
 
     /** Computed (not stored): no free stock left to sell after reservations. */
     @Transient

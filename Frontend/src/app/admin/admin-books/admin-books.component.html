@@ -1,0 +1,132 @@
+<div class="max-w-5xl mx-auto px-3 sm:px-6 py-5 sm:py-8">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+    <div>
+      <h1 class="text-xl sm:text-2xl font-bold text-textDark flex items-center gap-2">
+        <i class="bi bi-journal-bookmark text-primary"></i> CraveIt Books
+      </h1>
+      <p class="text-sm text-textMuted mt-0.5">Your money in — revenue, cost and real profit.</p>
+    </div>
+    <!-- Range toggle -->
+    <div *ngIf="!locked" class="inline-flex rounded-xl border border-borderColor bg-white p-1 self-start shadow-card">
+      <button *ngFor="let r of ranges" (click)="setRange(r)"
+              class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+              [ngClass]="days === r ? 'bg-primary text-white' : 'text-textMuted hover:text-textDark'">
+        {{ r }}d
+      </button>
+    </div>
+  </div>
+
+  <!-- Locked (plan gate) -->
+  <div *ngIf="locked" class="rounded-2xl border border-primary-100 bg-primary-50/50 p-6 sm:p-10 text-center">
+    <i class="bi bi-lock-fill text-3xl text-primary"></i>
+    <h2 class="text-lg font-semibold text-textDark mt-3">Books is a PRO feature</h2>
+    <p class="text-sm text-textMuted mt-1 max-w-md mx-auto">{{ lockedMessage }}</p>
+    <a routerLink="/admin/subscription"
+       class="inline-flex items-center gap-2 mt-4 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600 transition-colors">
+      <i class="bi bi-arrow-up-circle"></i> Upgrade plan
+    </a>
+  </div>
+
+  <ng-container *ngIf="!locked">
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div *ngFor="let _ of [1,2,3,4]" class="h-24 rounded-2xl ai-sheen bg-surface"></div>
+    </div>
+
+    <ng-container *ngIf="!loading && data as d">
+
+      <!-- KPI cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="rounded-2xl border border-borderColor bg-white p-4 shadow-card">
+          <p class="text-xs font-medium text-textMuted flex items-center gap-1.5"><i class="bi bi-cash-stack text-emerald-500"></i> Revenue</p>
+          <p class="price text-2xl font-bold text-textDark mt-1">R{{ d.revenue | number:'1.0-0' }}</p>
+          <p class="text-[11px] text-textMuted mt-0.5">{{ d.orders }} delivered order{{ d.orders === 1 ? '' : 's' }}</p>
+        </div>
+        <div class="rounded-2xl border border-borderColor bg-white p-4 shadow-card">
+          <p class="text-xs font-medium text-textMuted flex items-center gap-1.5"><i class="bi bi-bag text-amber-500"></i> Food cost</p>
+          <p class="price text-2xl font-bold text-textDark mt-1">R{{ d.cogs | number:'1.0-0' }}</p>
+          <p class="text-[11px] text-textMuted mt-0.5">what it cost to make</p>
+        </div>
+        <div class="rounded-2xl border p-4 shadow-card"
+             [ngClass]="d.grossProfit >= 0 ? 'border-emerald-200 bg-emerald-50/60' : 'border-red-200 bg-red-50/60'">
+          <p class="text-xs font-medium text-textMuted flex items-center gap-1.5"><i class="bi bi-graph-up-arrow text-primary"></i> Gross profit</p>
+          <p class="price text-2xl font-bold mt-1" [ngClass]="d.grossProfit >= 0 ? 'text-emerald-700' : 'text-red-600'">
+            R{{ d.grossProfit | number:'1.0-0' }}
+          </p>
+          <p class="text-[11px] text-textMuted mt-0.5">revenue − cost</p>
+        </div>
+        <div class="rounded-2xl border border-borderColor bg-white p-4 shadow-card">
+          <p class="text-xs font-medium text-textMuted flex items-center gap-1.5"><i class="bi bi-percent text-primary"></i> Margin</p>
+          <p class="price text-2xl font-bold mt-1" [ngClass]="marginClass(d.marginPercent)">
+            {{ d.marginPercent != null ? (d.marginPercent | number:'1.0-0') + '%' : '—' }}
+          </p>
+          <p class="text-[11px] text-textMuted mt-0.5">healthy is 65–72%</p>
+        </div>
+      </div>
+
+      <!-- Estimated-data nudge -->
+      <div *ngIf="d.estimatedSharePercent > 0"
+           class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-2.5">
+        <i class="bi bi-info-circle-fill text-amber-500 mt-0.5"></i>
+        <p class="text-xs text-amber-900 leading-snug">
+          <strong>{{ d.estimatedSharePercent | number:'1.0-0' }}%</strong> of these sales use an
+          <strong>estimated</strong> cost (~30% of price) because no cost is set on those items.
+          Add real costs on the <a routerLink="/admin/menu" class="underline font-semibold">Menu</a> for exact profit.
+        </p>
+      </div>
+
+      <!-- Per-item profitability -->
+      <div class="mt-5 rounded-2xl border border-borderColor bg-white shadow-card overflow-hidden">
+        <div class="px-4 py-3 border-b border-borderColor flex items-center gap-2">
+          <i class="bi bi-bar-chart-line-fill text-primary"></i>
+          <h2 class="text-sm font-semibold text-textDark">Profit by item</h2>
+        </div>
+
+        <!-- Empty -->
+        <div *ngIf="d.items.length === 0" class="px-4 py-10 text-center">
+          <i class="bi bi-receipt text-2xl text-textMuted"></i>
+          <p class="text-sm text-textDark font-medium mt-2">No delivered orders in this period</p>
+          <p class="text-xs text-textMuted">Profit shows up here once orders are delivered.</p>
+        </div>
+
+        <ul *ngIf="d.items.length > 0" class="divide-y divide-borderColor">
+          <li *ngFor="let item of d.items" class="px-4 py-3">
+            <div class="flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-textDark truncate">{{ item.name }}</p>
+                <p class="text-[11px] text-textMuted">
+                  {{ item.units }} sold · R{{ item.revenue | number:'1.0-0' }} in
+                  <span *ngIf="item.estimated" class="ml-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-[10px] font-semibold">
+                    <i class="bi bi-dot"></i> est. cost
+                  </span>
+                </p>
+              </div>
+              <div class="text-right flex-shrink-0">
+                <p class="price text-sm font-bold" [ngClass]="item.profit >= 0 ? 'text-emerald-700' : 'text-red-600'">
+                  R{{ item.profit | number:'1.0-0' }}
+                </p>
+                <p class="text-[11px] font-medium" [ngClass]="marginClass(item.marginPercent)">
+                  {{ item.marginPercent != null ? (item.marginPercent | number:'1.0-0') + '%' : '—' }}
+                </p>
+              </div>
+            </div>
+            <!-- Profit bar (most-profitable item = full width) -->
+            <div class="mt-2 h-1.5 rounded-full bg-surface overflow-hidden">
+              <div class="h-full rounded-full transition-all"
+                   [ngClass]="item.profit >= 0 ? 'bg-primary' : 'bg-red-400'"
+                   [style.width.%]="barWidth(item)"></div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <p class="text-[11px] text-textMuted text-center mt-4">
+        Revenue counts <strong>delivered</strong> orders only. Books feeds your cost &amp; margin to the Store Copilot for smarter pricing advice.
+      </p>
+
+    </ng-container>
+  </ng-container>
+</div>

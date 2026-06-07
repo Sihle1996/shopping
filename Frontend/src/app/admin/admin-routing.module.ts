@@ -17,6 +17,7 @@ import { AdminReviewsComponent } from './admin-reviews/admin-reviews.component';
 import { AdminEnrollmentComponent } from './admin-enrollment/admin-enrollment.component';
 import { AdminSupportComponent } from './admin-support/admin-support.component';
 import { AdminPayoutsComponent } from './admin-payouts/admin-payouts.component';
+import { AdminBooksComponent } from './admin-books/admin-books.component';
 
 const routes: Routes = [
   {
@@ -38,6 +39,7 @@ const routes: Routes = [
       { path: 'reviews', canActivate: [EnrollmentGuard], component: AdminReviewsComponent },
       { path: 'support', canActivate: [EnrollmentGuard], component: AdminSupportComponent },
       { path: 'payouts', canActivate: [EnrollmentGuard], component: AdminPayoutsComponent },
+      { path: 'books', canActivate: [EnrollmentGuard], component: AdminBooksComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

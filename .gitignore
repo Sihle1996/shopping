@@ -27,3 +27,6 @@ Backend/backend/uploads/
 # Logs
 *.log
 logs/
+Backend/backend/.ai-key
+
+
