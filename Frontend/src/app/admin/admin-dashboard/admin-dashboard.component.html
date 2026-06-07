@@ -150,13 +150,13 @@
     <!-- Today's KPI Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
 
-      <!-- Today's Orders -->
+      <!-- Orders (period-scoped when analytics is on) -->
       <div class="bg-white rounded-2xl shadow-card p-5">
-        <p class="text-textMuted text-xs mb-3">Today's Orders</p>
+        <p class="text-textMuted text-xs mb-3">{{ hasAnalytics ? periodLabel : "Today's" }} Orders</p>
         <div class="flex items-end justify-between">
           <div>
-            <p *ngIf="!statsLoading" class="font-numbers text-3xl font-bold text-textDark">{{ todayOrders }}</p>
-            <div *ngIf="statsLoading" class="h-8 w-12 bg-gray-100 rounded animate-pulse"></div>
+            <p *ngIf="!(hasAnalytics ? analyticsLoading : statsLoading)" class="font-numbers text-3xl font-bold text-textDark">{{ hasAnalytics ? periodOrders : todayOrders }}</p>
+            <div *ngIf="(hasAnalytics ? analyticsLoading : statsLoading)" class="h-8 w-12 bg-gray-100 rounded animate-pulse"></div>
             <p class="text-xs text-textMuted mt-1">{{ totalOrders }} all-time</p>
           </div>
           <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center">
@@ -165,13 +165,13 @@
         </div>
       </div>
 
-      <!-- Today's Revenue -->
+      <!-- Revenue (period-scoped when analytics is on) -->
       <div class="bg-white rounded-2xl shadow-card p-5">
-        <p class="text-textMuted text-xs mb-3">Today's Revenue</p>
+        <p class="text-textMuted text-xs mb-3">{{ hasAnalytics ? periodLabel : "Today's" }} Revenue</p>
         <div class="flex items-end justify-between">
           <div>
-            <p *ngIf="!statsLoading" class="font-numbers text-3xl font-bold text-success">R{{ todayRevenue | number:'1.2-2' }}</p>
-            <div *ngIf="statsLoading" class="h-8 w-24 bg-gray-100 rounded animate-pulse"></div>
+            <p *ngIf="!(hasAnalytics ? analyticsLoading : statsLoading)" class="font-numbers text-3xl font-bold text-success">R{{ (hasAnalytics ? periodRevenue : todayRevenue) | number:'1.2-2' }}</p>
+            <div *ngIf="(hasAnalytics ? analyticsLoading : statsLoading)" class="h-8 w-24 bg-gray-100 rounded animate-pulse"></div>
             <p class="text-xs text-textMuted mt-1">R{{ totalRevenue | number:'1.0-0' }} all-time</p>
           </div>
           <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
@@ -195,6 +195,18 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- Period filter — scopes the Orders/Revenue cards above and the charts below -->
+    <div *ngIf="hasAnalytics" class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between -mt-4 mb-8">
+      <span class="text-xs font-medium text-textMuted">Showing data for</span>
+      <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-gray-100 overflow-x-auto self-start sm:self-auto">
+        <button *ngFor="let opt of periodOptions" type="button" (click)="setPeriod(opt.key)"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors"
+                [ngClass]="selectedPeriod === opt.key ? 'bg-white text-primary shadow-sm' : 'text-textMuted hover:text-textDark'">
+          {{ opt.label }}
+        </button>
+      </div>
     </div>
 
     <!-- Live Orders Feed (always visible) -->
@@ -275,18 +287,6 @@
 
     <!-- Charts + metrics (PRO/ENTERPRISE only) -->
     <ng-container *ngIf="hasAnalytics">
-
-      <!-- Period filter -->
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5">
-        <h2 class="font-heading text-base font-semibold text-textDark">Analytics</h2>
-        <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-gray-100 overflow-x-auto self-start sm:self-auto">
-          <button *ngFor="let opt of periodOptions" type="button" (click)="setPeriod(opt.key)"
-                  class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors"
-                  [ngClass]="selectedPeriod === opt.key ? 'bg-white text-primary shadow-sm' : 'text-textMuted hover:text-textDark'">
-            {{ opt.label }}
-          </button>
-        </div>
-      </div>
 
       <!-- Loading skeleton for charts -->
       <div *ngIf="analyticsLoading" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

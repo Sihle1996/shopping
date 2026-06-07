@@ -67,6 +67,18 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     { key: '30d',   label: '30 days' },
     { key: 'month', label: 'This month' },
   ];
+  // Period-scoped headline figures (derived from the analytics calls).
+  periodRevenue = 0;
+  periodOrders = 0;
+
+  get periodLabel(): string {
+    switch (this.selectedPeriod) {
+      case 'today': return 'Today';
+      case '7d':    return 'Last 7 days';
+      case '30d':   return 'Last 30 days';
+      default:      return 'This month';
+    }
+  }
 
   // All-time stats
   totalOrders = 0;
@@ -353,6 +365,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
     this.analyticsService.getSalesTrends(start, end).subscribe({
       next: data => {
+        this.periodRevenue = data.reduce((sum, d) => sum + (d.total || 0), 0);
         this.salesChartOptions = this.buildSalesChartOptions(
           data.map(d => d.date),
           data.map(d => d.total)
@@ -378,6 +391,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.analyticsService.getCancellationRate(start, end).subscribe(v => this.cancellations = v);
     this.analyticsService.getDeliveryTime(start, end).subscribe(v => this.avgDeliveryMinutes = v);
     this.analyticsService.getPeakHours(start, end).subscribe(data => {
+      this.periodOrders = data.reduce((sum, d) => sum + (d.orderCount || 0), 0);
       this.peakHoursChartOptions = this.buildPeakHoursChartOptions(data);
     });
   }
