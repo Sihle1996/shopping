@@ -51,7 +51,7 @@
     </a>
 
     <!-- Sign In (when logged out) -->
-    <a *ngIf="!isLoggedIn" routerLink="/login"
+    <a *ngIf="!isLoggedIn" routerLink="/login" [queryParams]="{ returnUrl: returnUrl }"
        class="flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-2xl transition-all duration-200 min-w-[60px]"
        [class.text-primary]="isActive('/login')"
        [class.text-textLight]="!isActive('/login')">

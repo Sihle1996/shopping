@@ -63,4 +63,9 @@ export class FooterComponent implements OnInit, OnDestroy {
   isActive(path: string): boolean {
     return this.activeRoute === path || this.activeRoute.startsWith(path + '/');
   }
+
+  /** Current URL so the footer's Sign In returns here after login, like the navbar's. */
+  get returnUrl(): string {
+    return this.router.url;
+  }
 }
