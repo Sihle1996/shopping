@@ -1,5 +1,6 @@
 package com.example.backend.service;
 
+import com.example.backend.entity.OrderStatus;
 import com.example.backend.repository.CategoryRepository;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.PromotionRepository;
@@ -37,6 +38,7 @@ public class CapabilityRegistry {
         List<CapabilityModule> out = new ArrayList<>();
         if (wants(module, "menu")) out.add(menu(tenantId));
         if (wants(module, "promotions")) out.add(promotions(tenantId));
+        if (wants(module, "orders")) out.add(orders());
         return out;
     }
 
@@ -135,6 +137,30 @@ public class CapabilityRegistry {
                 null);
 
         return new CapabilityModule("promotions", "Promotions", List.of(create));
+    }
+
+    // ── Orders (workflow layer) ───────────────────────────────────────────────
+
+    private CapabilityModule orders() {
+        // The lifecycle graph: current status -> the statuses it may move to.
+        Map<String, List<String>> workflow = new LinkedHashMap<>();
+        for (OrderStatus s : OrderStatus.values()) {
+            workflow.put(s.label(), s.nextStatuses().stream().map(OrderStatus::label).toList());
+        }
+        List<String> allStatuses = Arrays.stream(OrderStatus.values()).map(OrderStatus::label).toList();
+
+        CapabilityAction setStatus = new CapabilityAction(
+                "set_order_status", "Update order status",
+                "Move an order along its lifecycle. Only transitions allowed by the workflow are valid.",
+                null,
+                List.of(
+                        field("orderId", "string", true, null, null, null,
+                                "The order id (from list_orders / get_order_detail)"),
+                        field("status", "enum", true, null, allStatuses, List.of("orderId"),
+                                "Must be a VALID next status for the order's current status — see workflow")),
+                workflow);
+
+        return new CapabilityModule("orders", "Orders", List.of(setStatus));
     }
 
     // ── Field helpers ───────────────────────────────────────────────────────

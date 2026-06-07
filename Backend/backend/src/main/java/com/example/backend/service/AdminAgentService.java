@@ -58,6 +58,7 @@ public class AdminAgentService {
     private final AiActionLogRepository aiActionLogRepository;
     private final BookkeepingService bookkeepingService;
     private final CapabilityRegistry capabilityRegistry;
+    private final OrderService orderService;
     private final ObjectMapper objectMapper;
 
     /** Copilot reply plus any actions it proposed (the UI shows confirm cards). */
@@ -261,8 +262,9 @@ public class AdminAgentService {
             clears stock; ALL is a blunt last resort. Always verify the discounted price still beats cost.
 
             You can also PROPOSE changes using the propose_* tools: open/close the store, set an item's
-            availability, adjust stock, change a price, add a new menu item, create a promotion (choose its
-            scope — one PRODUCT, a CATEGORY, or ALL — deliberately from the data; don't default to store-wide),
+            availability, adjust stock, change a price, add a new menu item, move an order along its lifecycle
+            (only valid workflow transitions), create a promotion (choose its scope — one PRODUCT, a CATEGORY,
+            or ALL — deliberately from the data; don't default to store-wide),
             or change a store setting (delivery fee, minimum order, driver earning %%, loyalty on/off,
             estimated delivery minutes, delivery radius). These are NOT applied automatically — they
             become confirmation cards the owner taps "Apply" on. So: propose clearly, state the expected
@@ -428,6 +430,14 @@ public class AdminAgentService {
                        "value", numProp("New value (for loyalty_enabled use 1 = on, 0 = off)")),
                 List.of("setting", "value")));
 
+        tools.add(tool("propose_set_order_status",
+                "Propose moving an order to a new status. Call get_capabilities('orders') first — only "
+                        + "transitions allowed by the workflow for the order's current status are valid.",
+                Map.of("orderId", strProp("The order id"),
+                       "status", enumProp("New status",
+                               List.of("Confirmed", "Preparing", "Out for Delivery", "Delivered", "Cancelled", "Rejected"))),
+                List.of("orderId", "status")));
+
         tools.add(tool("propose_create_menu_item",
                 "Propose ADDING a new menu item. Use when the owner wants to add a dish/drink. "
                         + "Set a sensible category and (optionally) a short description and the item's cost.",
@@ -451,6 +461,7 @@ public class AdminAgentService {
             case "propose_set_item_price":       return proposeSetPrice(tenantId, input, proposals);
             case "propose_create_promotion":     return proposeCreatePromotion(input, proposals);
             case "propose_create_menu_item":     return proposeCreateMenuItem(input, proposals);
+            case "propose_set_order_status":     return proposeSetOrderStatus(tenantId, input, proposals);
             case "propose_update_setting":       return proposeUpdateSetting(input, proposals);
             case "get_capabilities":   return json(capabilityRegistry.describe(tenantId, input.path("module").asText(null)));
             case "get_store_overview": return toolStoreOverview(tenantId);
@@ -876,6 +887,30 @@ public class AdminAgentService {
         return "Proposed for the owner to confirm — not applied yet.";
     }
 
+    private String proposeSetOrderStatus(UUID tenantId, JsonNode input, List<Map<String, Object>> proposals) {
+        String orderId = input.path("orderId").asText("").trim();
+        String target = input.path("status").asText("").trim();
+        if (orderId.isBlank() || target.isBlank()) return "I need the order id and the new status.";
+        Order o;
+        try {
+            o = orderRepository.findByIdAndTenant_Id(UUID.fromString(orderId), tenantId).orElse(null);
+        } catch (IllegalArgumentException e) {
+            return "That doesn't look like a valid order id.";
+        }
+        if (o == null) return "I couldn't find that order.";
+        OrderStatus cur = OrderStatus.fromLabel(o.getStatus());
+        OrderStatus tgt = OrderStatus.fromLabel(target);
+        if (tgt == null) return "'" + target + "' isn't a valid order status.";
+        if (cur != null && !cur.canTransitionTo(tgt)) {
+            String valid = cur.nextStatuses().stream().map(OrderStatus::label).reduce((a, b) -> a + ", " + b).orElse("none");
+            return "An order that's '" + cur.label() + "' can't move to '" + tgt.label() + "'. Valid next: " + valid + ".";
+        }
+        addProposal(proposals, "set_order_status",
+                "Move order #" + orderId.substring(0, Math.min(8, orderId.length())).toUpperCase() + " to " + tgt.label(),
+                Map.of("orderId", orderId, "status", tgt.label()));
+        return "Proposed for the owner to confirm — not applied yet.";
+    }
+
     private String proposeUpdateSetting(JsonNode input, List<Map<String, Object>> proposals) {
         String setting = input.path("setting").asText(null);
         double value = input.path("value").asDouble(Double.NaN);
@@ -1027,6 +1062,19 @@ public class AdminAgentService {
                 menuItemRepository.save(mi);
                 return "Added '" + name + "' to " + mi.getCategory() + " at R"
                         + String.format(Locale.UK, "%.2f", price) + ". Set its stock when you're ready to sell it.";
+            }
+            case "set_order_status": {
+                UUID orderId = UUID.fromString(p.get("orderId").toString());
+                Order o = orderRepository.findByIdAndTenant_Id(orderId, tenantId)
+                        .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+                OrderStatus cur = OrderStatus.fromLabel(o.getStatus());
+                OrderStatus tgt = OrderStatus.fromLabel(p.get("status").toString());
+                if (tgt == null) return "That isn't a valid order status.";
+                if (cur != null && !cur.canTransitionTo(tgt)) {
+                    return "An order that's '" + cur.label() + "' can't move to '" + tgt.label() + "'.";
+                }
+                orderService.updateOrderStatus(orderId, tgt.label()); // reuses stock/loyalty/payout side-effects
+                return "Order moved to " + tgt.label() + ".";
             }
             case "update_setting": {
                 String s = (String) p.get("setting");

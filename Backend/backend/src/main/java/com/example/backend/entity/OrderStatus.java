@@ -1,5 +1,7 @@
 package com.example.backend.entity;
 
+import java.util.List;
+
 /**
  * Canonical order lifecycle statuses. The database/API still stores the
  * human label (e.g. "Out for Delivery") for backward compatibility, but code
@@ -37,6 +39,26 @@ public enum OrderStatus {
             }
         }
         return null;
+    }
+
+    /**
+     * The statuses an order in THIS state may move to next — the lifecycle
+     * workflow the AI (and UI) reason over. Terminal states return empty.
+     */
+    public List<OrderStatus> nextStatuses() {
+        return switch (this) {
+            case PENDING          -> List.of(CONFIRMED, CANCELLED, REJECTED);
+            case SCHEDULED        -> List.of(CONFIRMED, CANCELLED);
+            case CONFIRMED        -> List.of(PREPARING, CANCELLED);
+            case PREPARING        -> List.of(OUT_FOR_DELIVERY, CANCELLED);
+            case OUT_FOR_DELIVERY -> List.of(DELIVERED, CANCELLED);
+            case DELIVERED, CANCELLED, REJECTED -> List.of();
+        };
+    }
+
+    /** Whether moving from this status to {@code target} is a valid transition. */
+    public boolean canTransitionTo(OrderStatus target) {
+        return target != null && nextStatuses().contains(target);
     }
 
     /** Terminal success — the sale is realised and counts as revenue. */
