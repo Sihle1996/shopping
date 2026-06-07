@@ -63,9 +63,6 @@
                 </span>
               </p>
               <p class="text-xs text-textDark">{{ s.analysis.hypothesis }}</p>
-              <ul class="text-[11px] text-textMuted mt-0.5 space-y-0.5">
-                <li *ngFor="let e of s.analysis.evidence" class="flex items-center gap-1.5"><i class="bi bi-dot"></i>{{ e }}</li>
-              </ul>
               <!-- PRIOR (OBSERVED) — learning data, structurally separated & permanently hedged
                    so it never reads as a causal/established fact -->
               <div *ngIf="s.analysis.priorObserved as ph"

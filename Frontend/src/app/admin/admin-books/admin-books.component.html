@@ -275,7 +275,7 @@
         </div>
 
         <ul *ngIf="d.items.length > 0" class="divide-y divide-borderColor">
-          <li *ngFor="let item of d.items" class="px-4 py-3">
+          <li *ngFor="let item of (showAllItems ? d.items : (d.items | slice:0:ITEMS_PREVIEW))" class="px-4 py-3">
             <div class="flex items-center justify-between gap-3">
               <div class="min-w-0">
                 <p class="text-sm font-medium text-textDark truncate">{{ item.name }}</p>
@@ -303,6 +303,10 @@
             </div>
           </li>
         </ul>
+        <button *ngIf="d.items.length > ITEMS_PREVIEW" (click)="showAllItems = !showAllItems"
+                class="w-full px-4 py-2.5 text-xs font-semibold text-primary hover:bg-surface border-t border-borderColor transition-colors">
+          {{ showAllItems ? 'Show less' : 'Show all ' + d.items.length + ' items' }}
+        </button>
       </div>
 
       <p class="text-[11px] text-textMuted text-center mt-4">

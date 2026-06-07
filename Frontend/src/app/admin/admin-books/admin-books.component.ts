@@ -119,6 +119,10 @@ export class AdminBooksComponent implements OnInit {
       });
   }
 
+  /** Collapse a long Profit-by-item list to the top few until the owner expands it. */
+  showAllItems = false;
+  readonly ITEMS_PREVIEW = 8;
+
   /** Bar width (0–100%) for an item's profit, relative to the most profitable item. */
   barWidth(item: BookItem): number {
     const max = Math.max(1, ...(this.data?.items || []).map(i => Math.max(0, i.profit)));
