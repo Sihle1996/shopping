@@ -607,18 +607,23 @@ public class AdminAiService {
                 "}\n" +
                 "Reviews:\n" + sb;
 
-        Map<String, Object> result = parseJsonOrFallback(anthropicClient.call(prompt), Map.of(
+        Map<String, Object> fallback = Map.of(
                 "period", formatPeriod(sinceDateTime),
                 "sentimentScore", 0,
                 "positives", List.of(),
                 "negatives", List.of(),
-                "recommendation", "Unable to process reviews at this time."
-        ));
+                "recommendation", "Unable to process reviews at this time.");
 
-        result = new HashMap<>(result);
+        // Give the model enough room for the JSON, and NEVER cache a failure (so a retry
+        // can succeed instead of serving the cached fallback for 6 hours).
+        String raw = anthropicClient.call(prompt, 700);
+        if (raw == null || raw.isBlank()) return fallback;
+
+        Map<String, Object> result = new HashMap<>(parseJsonOrFallback(raw, fallback));
         result.putIfAbsent("period", formatPeriod(sinceDateTime));
-
-        digestCache.put(cacheKey, new CachedDigest(result));
+        if (!"Unable to process reviews at this time.".equals(result.get("recommendation"))) {
+            digestCache.put(cacheKey, new CachedDigest(result)); // cache only a genuine digest
+        }
         return result;
     }
 
@@ -1100,16 +1105,20 @@ public class AdminAiService {
 @SuppressWarnings("unchecked")
     private Map<String, Object> parseJsonOrFallback(String raw, Map<String, Object> fallback) {
         if (raw == null || raw.isBlank()) return new HashMap<>(fallback);
+        String cleaned = raw.trim()
+                .replaceAll("(?s)^```json\\s*", "")
+                .replaceAll("(?s)^```\\s*", "")
+                .replaceAll("(?s)\\s*```$", "");
         try {
-            String cleaned = raw.trim()
-                    .replaceAll("(?s)^```json\\s*", "")
-                    .replaceAll("(?s)^```\\s*", "")
-                    .replaceAll("(?s)\\s*```$", "");
             return objectMapper.readValue(cleaned, Map.class);
-        } catch (Exception e) {
-            log.warn("Failed to parse Claude response as JSON: {}", raw);
-            return new HashMap<>(fallback);
+        } catch (Exception ignored) { /* fall through: try to extract a JSON object from prose */ }
+        int s = cleaned.indexOf('{'), e = cleaned.lastIndexOf('}');
+        if (s >= 0 && e > s) {
+            try { return objectMapper.readValue(cleaned.substring(s, e + 1), Map.class); }
+            catch (Exception ignored) { /* give up below */ }
         }
+        log.warn("Failed to parse Claude response as JSON: {}", raw);
+        return new HashMap<>(fallback);
     }
 
     // ── Cache ───────────────────────────────────────────────────────────────
