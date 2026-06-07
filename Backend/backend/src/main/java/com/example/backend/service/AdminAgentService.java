@@ -54,6 +54,7 @@ public class AdminAgentService {
     private final AdminDriverService adminDriverService;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final AiActionLogRepository aiActionLogRepository;
+    private final BookkeepingService bookkeepingService;
     private final ObjectMapper objectMapper;
 
     /** Copilot reply plus any actions it proposed (the UI shows confirm cards). */
@@ -204,6 +205,9 @@ public class AdminAgentService {
             worst-margin affected item still clears cost. If costKnown is false the margin is unknown —
             say so and suggest the owner add the item's cost in Books for exact advice; do NOT guess a
             cost. Prefer protecting margin over chasing volume unless the owner says otherwise.
+            For overall profitability, the bottom line, costs or expenses ("are we making money?",
+            "what's my profit?", "where's my money going?"), call get_books_summary — it returns the
+            full P&L (gross/net/operating profit and margins, sales by category, operating expenses).
 
             You can also PROPOSE changes using the propose_* tools: open/close the store, set an item's
             availability, adjust stock, change a price, create a promotion (a %% off everything for N days),
@@ -234,6 +238,14 @@ public class AdminAgentService {
                 "Key performance metrics over a period: revenue, average order value, on-time delivery %, "
                         + "cancellation rate, average delivery minutes, busiest hour, and top-selling products.",
                 Map.of("range", enumProp("Time window", List.of("today", "7d", "30d", "month"))),
+                List.of()));
+
+        tools.add(tool("get_books_summary",
+                "CraveIt Books income statement for the last N days (default 30): revenue, food cost (COGS) "
+                        + "with a by-category breakdown, gross profit & margin, platform commission, net profit, "
+                        + "operating expenses with a by-category breakdown, and operating profit (the true bottom "
+                        + "line). Use this for any profitability, 'are we making money', cost or expense question.",
+                Map.of("days", numProp("Look-back window in days (default 30)")),
                 List.of()));
 
         tools.add(tool("list_orders",
@@ -357,6 +369,7 @@ public class AdminAgentService {
             case "propose_update_setting":       return proposeUpdateSetting(input, proposals);
             case "get_store_overview": return toolStoreOverview(tenantId);
             case "get_analytics":      return toolAnalytics(input.path("range").asText("30d"));
+            case "get_books_summary":  return toolBooksSummary(tenantId, input.path("days").asInt(30));
             case "list_orders":        return toolListOrders(tenantId,
                     input.hasNonNull("status") ? input.get("status").asText() : null,
                     input.path("limit").asInt(20));
@@ -472,6 +485,35 @@ public class AdminAgentService {
             items.add(r);
         });
         return json(Map.of("itemCount", items.size(), "items", items));
+    }
+
+    private String toolBooksSummary(UUID tenantId, int days) {
+        BookkeepingService.MoneyIn pl = bookkeepingService.moneyIn(tenantId, days);
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("periodDays", pl.days());
+        m.put("realisedOrders", pl.orders());
+        m.put("revenue", pl.revenue());
+        m.put("foodCost", pl.cogs());
+        m.put("grossProfit", pl.grossProfit());
+        m.put("grossMarginPercent", pl.marginPercent());
+        m.put("platformCommission", pl.platformCommission());
+        m.put("netProfit", pl.netProfit());
+        m.put("operatingExpenses", pl.operatingExpenses());
+        m.put("operatingProfit", pl.operatingProfit());
+        m.put("operatingMarginPercent", pl.operatingMarginPercent());
+        m.put("estimatedCostSharePercent", pl.estimatedSharePercent());
+
+        List<Map<String, Object>> cats = new ArrayList<>();
+        for (BookkeepingService.CategoryLine c : pl.cogsByCategory()) {
+            Map<String, Object> cm = new LinkedHashMap<>();
+            cm.put("category", c.category);
+            cm.put("revenue", c.getRevenue());
+            cm.put("cost", c.getCogs());
+            cm.put("marginPercent", c.getMarginPercent());
+            cats.add(cm);
+        }
+        m.put("salesByCategory", cats);
+        return json(m);
     }
 
     private String toolInventoryAlerts(UUID tenantId) {
