@@ -133,6 +133,12 @@ export class AdminAiService {
     return this.http.get<{ verdict: string; recommendation: string }>(`${this.base}/plan-advice`);
   }
 
+  /** The capability manifest (the SAME source the AI reads) — for option-driven UI. */
+  capabilities(module?: string): Observable<any[]> {
+    const q = module ? `?module=${encodeURIComponent(module)}` : '';
+    return this.http.get<any[]>(`${this.base}/capabilities${q}`);
+  }
+
   /** Apply an action the copilot proposed, after the admin confirms. */
   act(action: string, params: Record<string, any>): Observable<AiActResult> {
     return this.http.post<AiActResult>(`${this.base}/act`, { action, params });

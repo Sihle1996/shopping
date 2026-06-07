@@ -33,6 +33,15 @@
       </app-button>
     </app-page-header>
 
+    <!-- Plan headroom — straight from the capability manifest the AI also reads -->
+    <p *ngIf="menuHeadroom && menuHeadroom.max > 0" class="mt-2 text-xs text-textMuted flex items-center gap-1.5">
+      <i class="bi bi-box-seam text-primary"></i>
+      {{ menuHeadroom.used }} / {{ menuHeadroom.max }} menu items used
+      <span [class.text-danger]="menuHeadroom.remaining <= 0" [class.font-semibold]="menuHeadroom.remaining <= 0">
+        · {{ menuHeadroom.remaining }} left on your plan
+      </span>
+    </p>
+
     <!-- Import result banner -->
     <div *ngIf="importResult"
          class="mb-4 px-4 py-3 rounded-xl bg-primary-50 border border-primary text-sm text-primary flex items-center justify-between">
@@ -66,10 +75,10 @@
                   class="w-full px-4 py-2.5 rounded-xl border bg-surface text-sm text-textDark
                          focus:outline-none focus:ring-2 focus:border-transparent">
             <option value="">Select a category</option>
-            <option *ngFor="let cat of categories" [value]="cat.name">{{ cat.name }}</option>
+            <option *ngFor="let cat of formCategories" [value]="cat">{{ cat }}</option>
           </select>
-          <p *ngIf="menuFormSubmitted && !formData.category && categories.length > 0" class="text-danger text-xs mt-1">Please select a category</p>
-          <p *ngIf="categories.length === 0" class="text-danger text-xs mt-1">
+          <p *ngIf="menuFormSubmitted && !formData.category && formCategories.length > 0" class="text-danger text-xs mt-1">Please select a category</p>
+          <p *ngIf="formCategories.length === 0" class="text-danger text-xs mt-1">
             No categories yet — <a routerLink="/admin/settings" class="underline">add one in Settings</a> first
           </p>
         </div>

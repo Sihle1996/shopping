@@ -27,6 +27,10 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
   categories: any[] = [];       // objects: { id, name }
   filterCategories: string[] = ['All']; // names for the filter bar
 
+  // Capability manifest (the SAME source the AI reads) — drives the form's options.
+  capabilityCategories: string[] = [];
+  menuHeadroom: { max: number; used: number; remaining: number } | null = null;
+
   showDeleteConfirm = false;
   deleteTargetId: string | null = null;
 
@@ -138,6 +142,28 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
       },
       error: () => {}
     });
+    this.loadCapabilities();
+  }
+
+  /** Read the capability manifest so the form offers the AI's exact categories + shows plan headroom. */
+  private loadCapabilities(): void {
+    this.adminAiService.capabilities('menu').subscribe({
+      next: (mods) => {
+        const menu = (mods || []).find((m: any) => m.module === 'menu');
+        const create = menu?.actions?.find((a: any) => a.id === 'create_menu_item');
+        const catField = create?.fields?.find((f: any) => f.name === 'category');
+        this.capabilityCategories = catField?.options || [];
+        this.menuHeadroom = create?.constraints?.planItems || null;
+      },
+      error: () => {}
+    });
+  }
+
+  /** Categories for the add/edit form — the manifest's (AI-shared) list, falling back to the table. */
+  get formCategories(): string[] {
+    return this.capabilityCategories.length
+      ? this.capabilityCategories
+      : this.categories.map(c => c.name);
   }
 
   fetchMenuItems(): void {
