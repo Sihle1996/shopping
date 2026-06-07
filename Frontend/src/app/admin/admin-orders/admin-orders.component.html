@@ -127,7 +127,7 @@
         </thead>
         <tbody class="divide-y divide-borderColor">
           <tr *ngFor="let order of filteredOrders(); trackBy: trackById" class="hover:bg-surface transition-colors">
-            <td class="px-5 py-3.5 text-sm font-medium text-textDark">#{{ order.id }}</td>
+            <td class="px-5 py-3.5 text-sm font-medium text-textDark font-numbers" [title]="order.id">#{{ order.id | slice:0:8 | uppercase }}</td>
             <td class="px-5 py-3.5 text-sm text-textLight">{{ order.orderDate | date:'medium' }}</td>
             <td class="px-5 py-3.5 text-sm text-textLight">{{ order.userEmail }}</td>
             <td class="px-5 py-3.5 text-sm font-numbers font-semibold text-textDark">R{{ order.totalAmount | number:'1.2-2' }}</td>
@@ -152,22 +152,24 @@
     <div *ngIf="!loading && !errorMessage" class="grid grid-cols-1 gap-3 md:hidden">
       <div *ngFor="let order of filteredOrders(); trackBy: trackById"
            class="bg-white rounded-2xl shadow-card p-4 animate-fade-in">
-        <div class="flex items-start justify-between mb-2">
-          <h3 class="font-semibold text-sm text-textDark">Order #{{ order.id }}</h3>
-          <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold"
+        <div class="flex items-start justify-between gap-2 mb-3">
+          <div class="min-w-0">
+            <h3 class="font-heading font-bold text-sm text-textDark font-numbers">#{{ order.id | slice:0:8 | uppercase }}</h3>
+            <p class="text-xs text-textMuted truncate mt-0.5">{{ order.userEmail }}</p>
+          </div>
+          <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold flex-shrink-0"
                 [ngClass]="statusChip(order.status)">
             <span class="h-1.5 w-1.5 rounded-full" [ngClass]="statusDot(order.status)"></span>
             {{ order.status }}
           </span>
         </div>
-        <p class="text-xs text-textLight">{{ order.orderDate | date:'medium' }}</p>
-        <p class="text-xs text-textLight">{{ order.userEmail }}</p>
-        <p class="font-numbers font-semibold text-textDark mt-1">R{{ order.totalAmount | number:'1.2-2' }}</p>
-        <div class="mt-3">
-          <app-button variant="primary" size="sm" [fullWidth]="true" (clicked)="openDrawer(order)">
-            View Details
-          </app-button>
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs text-textMuted">{{ order.orderDate | date:'MMM d, HH:mm' }}</span>
+          <span class="font-numbers font-bold text-primary text-base">R{{ order.totalAmount | number:'1.2-2' }}</span>
         </div>
+        <app-button variant="primary" size="sm" [fullWidth]="true" (clicked)="openDrawer(order)">
+          View Details
+        </app-button>
       </div>
     </div>
 
@@ -188,10 +190,10 @@
         </button>
 
         <!-- Scrollable content -->
-        <div class="flex-1 overflow-y-auto p-6 pb-2">
+        <div class="flex-1 overflow-y-auto p-5 pb-2 bg-surface">
 
         <header class="mb-4">
-          <h3 class="font-heading text-xl font-bold text-textDark">Order #{{ so.id }}</h3>
+          <h3 class="font-heading text-xl font-bold text-textDark font-numbers" [title]="so.id">Order #{{ so.id | slice:0:8 | uppercase }}</h3>
           <div class="mt-2">
             <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
                   [ngClass]="statusChip(so.status)">
@@ -202,22 +204,26 @@
         </header>
 
         <!-- Meta -->
-        <div class="grid grid-cols-2 gap-3 rounded-2xl bg-surface p-4 text-sm mb-6">
+        <div class="grid grid-cols-2 gap-x-4 gap-y-3 rounded-2xl bg-white border border-borderColor p-4 text-sm mb-5 shadow-sm">
           <div>
-            <p class="text-textMuted text-xs">Date</p>
-            <p class="font-medium text-textDark">{{ so.orderDate | date:'medium' }}</p>
+            <p class="text-textMuted text-[11px] uppercase tracking-wide mb-0.5">Date</p>
+            <p class="font-medium text-textDark text-xs">{{ so.orderDate | date:'MMM d, y · HH:mm' }}</p>
+          </div>
+          <div class="min-w-0">
+            <p class="text-textMuted text-[11px] uppercase tracking-wide mb-0.5">Customer</p>
+            <p class="font-medium text-textDark text-xs truncate" [title]="so.userEmail">{{ so.userEmail }}</p>
+          </div>
+          <div class="min-w-0">
+            <p class="text-textMuted text-[11px] uppercase tracking-wide mb-0.5">Payment ID</p>
+            <p class="font-medium text-textDark text-xs truncate">{{ so.paymentId || '—' }}</p>
           </div>
           <div>
-            <p class="text-textMuted text-xs">Customer</p>
-            <p class="font-medium text-textDark">{{ so.userEmail }}</p>
-          </div>
-          <div>
-            <p class="text-textMuted text-xs">Payment ID</p>
-            <p class="font-medium text-textDark">{{ so.paymentId || '—' }}</p>
+            <p class="text-textMuted text-[11px] uppercase tracking-wide mb-0.5">Total</p>
+            <p class="font-numbers font-bold text-primary">R{{ so.totalAmount | number:'1.2-2' }}</p>
           </div>
           <div class="col-span-2">
-            <p class="text-textMuted text-xs">Delivery</p>
-            <p class="font-medium text-textDark">{{ so.deliveryAddress || '—' }}</p>
+            <p class="text-textMuted text-[11px] uppercase tracking-wide mb-0.5">Delivery</p>
+            <p class="font-medium text-textDark text-xs">{{ so.deliveryAddress || '—' }}</p>
           </div>
           <div *ngIf="so.orderNotes" class="col-span-2">
             <p class="text-textMuted text-xs">Delivery Notes</p>
@@ -231,7 +237,7 @@
         <!-- Items -->
         <div class="mb-6">
           <h4 class="text-sm font-semibold text-textDark mb-3 pl-3 border-l-2 border-primary">Items</h4>
-          <div class="rounded-2xl border border-borderColor divide-y divide-borderColor">
+          <div class="rounded-2xl bg-white border border-borderColor divide-y divide-borderColor shadow-sm">
             <div *ngFor="let item of so.items" class="flex items-center justify-between px-4 py-3">
               <div>
                 <p class="text-sm font-medium text-textDark">{{ item.name }}
@@ -256,6 +262,7 @@
         <!-- Update Status -->
         <div class="mb-6">
           <h4 class="text-sm font-semibold text-textDark mb-3 pl-3 border-l-2 border-primary">Update Status</h4>
+          <div class="bg-white border border-borderColor rounded-2xl p-4 shadow-sm">
           <div class="flex flex-wrap gap-2">
             <button *ngFor="let s of orderStatuses"
                     (click)="updateStatus(so.id, s)"
@@ -278,6 +285,7 @@
           <div class="flex justify-between mt-1">
             <span *ngFor="let s of orderStatuses" class="text-[9px] text-textMuted">{{ s }}</span>
           </div>
+          </div><!-- end status white card -->
         </div>
 
         </div><!-- end scrollable content -->
