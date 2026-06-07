@@ -260,8 +260,8 @@ public class AdminAgentService {
             clears stock; ALL is a blunt last resort. Always verify the discounted price still beats cost.
 
             You can also PROPOSE changes using the propose_* tools: open/close the store, set an item's
-            availability, adjust stock, change a price, create a promotion (choose its scope — one PRODUCT,
-            a CATEGORY, or ALL — deliberately from the data; don't default to store-wide),
+            availability, adjust stock, change a price, add a new menu item, create a promotion (choose its
+            scope — one PRODUCT, a CATEGORY, or ALL — deliberately from the data; don't default to store-wide),
             or change a store setting (delivery fee, minimum order, driver earning %%, loyalty on/off,
             estimated delivery minutes, delivery radius). These are NOT applied automatically — they
             become confirmation cards the owner taps "Apply" on. So: propose clearly, state the expected
@@ -411,6 +411,16 @@ public class AdminAgentService {
                        "value", numProp("New value (for loyalty_enabled use 1 = on, 0 = off)")),
                 List.of("setting", "value")));
 
+        tools.add(tool("propose_create_menu_item",
+                "Propose ADDING a new menu item. Use when the owner wants to add a dish/drink. "
+                        + "Set a sensible category and (optionally) a short description and the item's cost.",
+                Map.of("name", strProp("Item name"),
+                       "price", numProp("Selling price in Rand"),
+                       "category", strProp("Category (e.g. Burgers, Drinks)"),
+                       "description", strProp("Optional short appetising description"),
+                       "cost", numProp("Optional cost to make in Rand (leave out if unknown — never guess)")),
+                List.of("name", "price", "category")));
+
         return tools;
     }
 
@@ -423,6 +433,7 @@ public class AdminAgentService {
             case "propose_adjust_stock":         return proposeAdjustStock(tenantId, input, proposals);
             case "propose_set_item_price":       return proposeSetPrice(tenantId, input, proposals);
             case "propose_create_promotion":     return proposeCreatePromotion(input, proposals);
+            case "propose_create_menu_item":     return proposeCreateMenuItem(input, proposals);
             case "propose_update_setting":       return proposeUpdateSetting(input, proposals);
             case "get_store_overview": return toolStoreOverview(tenantId);
             case "get_analytics":      return toolAnalytics(input.path("range").asText("30d"));
@@ -828,6 +839,25 @@ public class AdminAgentService {
         return "Proposed for the owner to confirm — not applied yet.";
     }
 
+    private String proposeCreateMenuItem(JsonNode input, List<Map<String, Object>> proposals) {
+        String name = input.path("name").asText("").trim();
+        double price = input.path("price").asDouble(0);
+        String category = input.path("category").asText("").trim();
+        if (name.isBlank() || price <= 0 || category.isBlank()) {
+            return "To add an item I need at least a name, a price (> 0) and a category.";
+        }
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("name", name);
+        params.put("price", price);
+        params.put("category", category);
+        if (input.hasNonNull("description")) params.put("description", input.get("description").asText());
+        if (input.hasNonNull("cost")) params.put("cost", input.get("cost").asDouble());
+        addProposal(proposals, "create_menu_item",
+                "Add '" + name + "' to " + category + " at R" + String.format(Locale.UK, "%.2f", price),
+                params);
+        return "Proposed for the owner to confirm — not applied yet.";
+    }
+
     private String proposeUpdateSetting(JsonNode input, List<Map<String, Object>> proposals) {
         String setting = input.path("setting").asText(null);
         double value = input.path("value").asDouble(Double.NaN);
@@ -958,6 +988,27 @@ public class AdminAgentService {
                 }
                 promotionRepository.save(promo);
                 return "Created '" + title + "' — " + (int) pct + "% " + scopeDesc + " for " + days + " day(s).";
+            }
+            case "create_menu_item": {
+                String name = p.get("name") != null ? p.get("name").toString().trim() : "";
+                if (name.isBlank() || !(p.get("price") instanceof Number)) {
+                    return "I need at least a name and price to create the item.";
+                }
+                double price = ((Number) p.get("price")).doubleValue();
+                String category = p.get("category") != null ? p.get("category").toString().trim() : "Other";
+                subscriptionEnforcementService.assertMenuItemLimit(tenantId); // respect plan limits
+                Tenant t = tenantRepository.findById(tenantId).orElseThrow();
+                MenuItem mi = new MenuItem();
+                mi.setName(name);
+                mi.setPrice(price);
+                mi.setCategory(category.isBlank() ? "Other" : category);
+                if (p.get("description") != null) mi.setDescription(p.get("description").toString().trim());
+                if (p.get("cost") instanceof Number c) mi.setCost(c.doubleValue());
+                mi.setIsAvailable(true);
+                mi.setTenant(t);
+                menuItemRepository.save(mi);
+                return "Added '" + name + "' to " + mi.getCategory() + " at R"
+                        + String.format(Locale.UK, "%.2f", price) + ". Set its stock when you're ready to sell it.";
             }
             case "update_setting": {
                 String s = (String) p.get("setting");
