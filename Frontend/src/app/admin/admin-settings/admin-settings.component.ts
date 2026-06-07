@@ -98,6 +98,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   };
   notifPrefsLoading = false;
   notifPrefsSaving = false;
+  notifEditing = false;  // prefs stay read-only until Edit
 
   constructor(
     private http: HttpClient,
@@ -377,7 +378,11 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     const s = this.settings;
     if (!s.name?.trim() || !s.phone?.trim() || !s.email?.trim() || !this.settingsEmailValid) return;
     this.isSaving = true;
-    this.http.put<TenantSettings>(`${environment.apiUrl}/api/admin/settings`, this.settings, {
+    // Open/closed is managed from the Dashboard + schedule — don't let a Settings
+    // save overwrite the live value with a stale one.
+    const payload: any = { ...this.settings };
+    delete payload.isOpen;
+    this.http.put<TenantSettings>(`${environment.apiUrl}/api/admin/settings`, payload, {
       headers: this.getHeaders()
     }).subscribe({
       next: (updated) => {
@@ -415,11 +420,20 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
       });
   }
 
+  editNotifPrefs(): void {
+    this.notifEditing = true;
+  }
+
+  cancelNotifPrefs(): void {
+    this.notifEditing = false;
+    this.loadNotifPrefs();  // discard unsaved toggles
+  }
+
   saveNotifPrefs(): void {
     this.notifPrefsSaving = true;
     this.http.put<any>(`${environment.apiUrl}/api/admin/notification-preferences`, this.notifPrefs, { headers: this.getHeaders() })
       .subscribe({
-        next: () => { this.notifPrefsSaving = false; this.toastr.success('Notification preferences saved'); },
+        next: () => { this.notifPrefsSaving = false; this.notifEditing = false; this.toastr.success('Notification preferences saved'); },
         error: () => { this.notifPrefsSaving = false; this.toastr.error('Failed to save preferences'); }
       });
   }
