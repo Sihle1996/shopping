@@ -294,30 +294,30 @@
 
 <!-- Bulk price action bar -->
 <div *ngIf="bulkMode"
-     class="fixed bottom-16 lg:bottom-0 left-0 right-0 z-50 bg-white border-t border-borderColor shadow-xl px-4 py-3 flex flex-wrap items-center gap-3">
-  <div class="flex items-center gap-2 flex-1 min-w-0">
-    <span class="text-sm font-semibold text-textDark">
-      {{ selectedIds.size }} item{{ selectedIds.size !== 1 ? 's' : '' }} selected
+     class="fixed bottom-16 lg:bottom-0 left-0 right-0 z-50 bg-white border-t border-borderColor shadow-xl px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+  <div class="flex items-center gap-3 flex-shrink-0 sm:flex-1 sm:min-w-0">
+    <span class="text-sm font-semibold text-textDark whitespace-nowrap">
+      {{ selectedIds.size }} selected
     </span>
     <button (click)="selectAll()"
-            class="text-xs text-primary hover:underline font-medium">Select all</button>
+            class="text-xs text-primary hover:underline font-medium whitespace-nowrap">Select all</button>
     <button *ngIf="selectedIds.size > 0" (click)="clearBulkSelection()"
             class="text-xs text-textMuted hover:underline">Clear</button>
   </div>
-  <div class="flex items-center gap-2 flex-wrap">
+  <div class="flex items-center gap-2 w-full sm:w-auto">
     <select [(ngModel)]="bulkAdjType"
-            class="px-3 py-2 rounded-xl border border-borderColor bg-white text-sm text-textDark
+            class="px-3 py-2 rounded-xl border border-borderColor bg-white text-sm text-textDark flex-shrink-0
                    focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent">
       <option value="PERCENT">% change</option>
       <option value="FLAT">Flat +/- (R)</option>
     </select>
     <input type="number" [(ngModel)]="bulkAdjValue"
            placeholder="{{ bulkAdjType === 'PERCENT' ? 'e.g. 10 or -5' : 'e.g. 5 or -2' }}"
-           class="w-36 px-3 py-2 rounded-xl border border-borderColor bg-white text-sm text-textDark
+           class="min-w-0 flex-1 sm:w-36 sm:flex-none px-3 py-2 rounded-xl border border-borderColor bg-white text-sm text-textDark
                   focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
     <button (click)="applyBulkPrice()"
             [disabled]="selectedIds.size === 0 || !bulkAdjValue || bulkSaving"
-            class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600
+            class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600 flex-shrink-0
                    transition-colors disabled:opacity-50 flex items-center gap-1.5">
       <span class="inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin align-middle flex-shrink-0" *ngIf="bulkSaving"></span>
       {{ bulkSaving ? 'Saving…' : 'Apply' }}
