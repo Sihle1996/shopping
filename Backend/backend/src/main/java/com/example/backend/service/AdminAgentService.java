@@ -75,6 +75,78 @@ public class AdminAgentService {
         return new AgentResult(answer, proposals);
     }
 
+    /**
+     * A short, proactive daily briefing — gathered server-side from real data and
+     * written up by Claude in a single call (fast, no multi-tool loop). Read-only.
+     */
+    @Transactional(readOnly = true)
+    public String dailyBriefing(UUID tenantId) {
+        Tenant t = tenantRepository.findById(tenantId).orElse(null);
+        String storeName = t != null && t.getName() != null ? t.getName() : "your store";
+
+        // today's takings
+        Instant startToday = LocalDate.now(SAST).atStartOfDay(SAST).toInstant();
+        List<Order> today = orderRepository.findByOrderDateBetweenAndTenant_Id(startToday, Instant.now(), tenantId);
+        long ordersToday = today.stream().filter(o -> !isVoided(o.getStatus())).count();
+        double revToday = today.stream().filter(o -> !isVoided(o.getStatus()))
+                .mapToDouble(o -> o.getTotalAmount() != null ? o.getTotalAmount() : 0).sum();
+
+        // 7-day revenue
+        double rev7 = analyticsService.getSalesTrends(Instant.now().minus(Duration.ofDays(7)), Instant.now())
+                .stream().mapToDouble(d -> d.getTotal() != null ? d.getTotal() : 0).sum();
+
+        // inventory health
+        List<String> soldOut = new ArrayList<>();
+        int low = 0;
+        for (MenuItem mi : menuItemRepository.findByTenant_Id(tenantId)) {
+            int free = mi.getStock() - mi.getReservedStock();
+            if (free <= 0) soldOut.add(mi.getName());
+            else if (free <= mi.getLowStockThreshold()) low++;
+        }
+
+        // reviews in last 7 days
+        java.time.LocalDateTime weekAgo = java.time.LocalDateTime.now().minusDays(7);
+        List<Review> recentReviews = reviewRepository.findByTenant_IdOrderByCreatedAtDesc(tenantId).stream()
+                .filter(r -> r.getCreatedAt() != null && r.getCreatedAt().isAfter(weekAgo))
+                .toList();
+        double avgRating = recentReviews.isEmpty() ? 0
+                : recentReviews.stream().mapToInt(Review::getRating).average().orElse(0);
+
+        long activePromos = promotionRepository.findActiveByTenantId(OffsetDateTime.now(), tenantId).size();
+
+        Map<String, Object> snap = new LinkedHashMap<>();
+        snap.put("storeOpen", t != null ? t.getIsOpen() : null);
+        snap.put("ordersToday", ordersToday);
+        snap.put("revenueToday", round2(revToday));
+        snap.put("revenueLast7Days", round2(rev7));
+        snap.put("soldOutItems", soldOut);
+        snap.put("lowStockCount", low);
+        snap.put("activePromotions", activePromos);
+        snap.put("reviewsLast7Days", recentReviews.size());
+        snap.put("avgRatingLast7Days", round2(avgRating));
+
+        String prompt = "You are the manager of \"" + storeName + "\", a store on the CraveIt food-delivery app. "
+                + "Today is " + LocalDate.now(SAST) + ". Here is the live state as JSON:\n" + json(snap) + "\n\n"
+                + "Write a short daily briefing for the owner: 2–4 punchy bullet points, most important first. "
+                + "Use the real numbers (Rand, R). Call out anything worth acting on (store closed, sold-out items, "
+                + "a sales dip, new reviews). Be warm but concise — no preamble or sign-off, just the bullets.";
+
+        String out = anthropicClient.isConfigured() ? anthropicClient.call(prompt, 400) : null;
+        return (out != null && !out.isBlank()) ? out.trim() : ruleBasedBriefing(snap, soldOut);
+    }
+
+    private String ruleBasedBriefing(Map<String, Object> snap, List<String> soldOut) {
+        StringBuilder sb = new StringBuilder();
+        if (Boolean.FALSE.equals(snap.get("storeOpen"))) sb.append("• Your store is closed — no orders can come in.\n");
+        sb.append(String.format(Locale.UK, "• Today: %s orders, R%.2f in revenue.\n",
+                snap.get("ordersToday"), (double) snap.get("revenueToday")));
+        if (!soldOut.isEmpty()) sb.append("• Sold out: ").append(String.join(", ", soldOut)).append(" — restock to avoid lost sales.\n");
+        if (((Number) snap.get("reviewsLast7Days")).intValue() > 0)
+            sb.append(String.format(Locale.UK, "• %s new review(s) this week (avg %.1f/5).\n",
+                    snap.get("reviewsLast7Days"), (double) snap.get("avgRatingLast7Days")));
+        return sb.toString().trim();
+    }
+
     // ── System prompt (store-aware) ───────────────────────────────────────────
 
     private String buildSystemPrompt(Tenant t) {

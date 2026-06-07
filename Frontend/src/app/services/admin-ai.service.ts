@@ -88,4 +88,9 @@ export class AdminAiService {
   act(action: string, params: Record<string, any>): Observable<AiActResult> {
     return this.http.post<AiActResult>(`${this.base}/act`, { action, params });
   }
+
+  /** Proactive daily briefing for the dashboard. */
+  briefing(): Observable<{ briefing: string }> {
+    return this.http.get<{ briefing: string }>(`${this.base}/briefing`);
+  }
 }

@@ -87,4 +87,12 @@ public class AdminAiController {
         }
         return ResponseEntity.ok(adminAgentService.executeAction(action, params));
     }
+
+    /** GET /api/admin/ai/briefing — a short proactive daily briefing from real store data. */
+    @GetMapping("/briefing")
+    public ResponseEntity<Map<String, Object>> briefing() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return ResponseEntity.ok(Map.of("briefing", ""));
+        return ResponseEntity.ok(Map.of("briefing", adminAgentService.dailyBriefing(tenantId)));
+    }
 }
