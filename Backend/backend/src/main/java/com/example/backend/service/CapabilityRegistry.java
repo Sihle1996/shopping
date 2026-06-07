@@ -2,6 +2,7 @@ package com.example.backend.service;
 
 import com.example.backend.repository.CategoryRepository;
 import com.example.backend.repository.MenuItemRepository;
+import com.example.backend.repository.PromotionRepository;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class CapabilityRegistry {
 
     private final MenuItemRepository menuItemRepository;
     private final CategoryRepository categoryRepository;
+    private final PromotionRepository promotionRepository;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
 
     /** Target gross margin the AI aims for when suggesting a price from cost. */
@@ -34,6 +36,7 @@ public class CapabilityRegistry {
     public List<CapabilityModule> describe(UUID tenantId, String module) {
         List<CapabilityModule> out = new ArrayList<>();
         if (wants(module, "menu")) out.add(menu(tenantId));
+        if (wants(module, "promotions")) out.add(promotions(tenantId));
         return out;
     }
 
@@ -41,11 +44,11 @@ public class CapabilityRegistry {
         return filter == null || filter.isBlank() || filter.equalsIgnoreCase(module);
     }
 
-    // ── Menu ──────────────────────────────────────────────────────────────────
-
-    private CapabilityModule menu(UUID tenantId) {
-        // Valid categories = the union of the category list AND the categories actually
-        // used on items (they can drift, e.g. after a CSV import) — reflect reality.
+    /**
+     * Valid categories = the union of the category list AND the categories actually
+     * used on items (they can drift, e.g. after a CSV import) — reflect reality.
+     */
+    private List<String> categoriesFor(UUID tenantId) {
         Set<String> catSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         categoryRepository.findByTenant_Id(tenantId).forEach(c -> {
             if (c.getName() != null && !c.getName().isBlank()) catSet.add(c.getName().trim());
@@ -53,7 +56,13 @@ public class CapabilityRegistry {
         menuItemRepository.findByTenant_Id(tenantId).forEach(mi -> {
             if (mi.getCategory() != null && !mi.getCategory().isBlank()) catSet.add(mi.getCategory().trim());
         });
-        List<String> categories = new ArrayList<>(catSet);
+        return new ArrayList<>(catSet);
+    }
+
+    // ── Menu ──────────────────────────────────────────────────────────────────
+
+    private CapabilityModule menu(UUID tenantId) {
+        List<String> categories = categoriesFor(tenantId);
 
         long used = menuItemRepository.countByTenant_Id(tenantId);
         int max = 0;
@@ -93,6 +102,39 @@ public class CapabilityRegistry {
                 null);
 
         return new CapabilityModule("menu", "Menu", List.of(create, setPrice));
+    }
+
+    // ── Promotions ────────────────────────────────────────────────────────────
+
+    private CapabilityModule promotions(UUID tenantId) {
+        List<String> categories = categoriesFor(tenantId);
+
+        int max = 0;
+        try { max = subscriptionEnforcementService.getPlan(tenantId).getMaxPromotions(); } catch (Exception ignored) {}
+        long used = promotionRepository.countByTenant_IdAndActiveTrue(tenantId);
+        Map<String, Object> headroom = new LinkedHashMap<>();
+        headroom.put("max", max);
+        headroom.put("used", used);
+        headroom.put("remaining", Math.max(0, max - used));
+        boolean canAdd = max <= 0 || used < max;
+
+        CapabilityAction create = new CapabilityAction(
+                "create_promotion", "Create a promotion",
+                "Run a time-limited discount. Choose the scope deliberately from the data.",
+                canAdd ? Map.of("activePromotions", headroom)
+                       : Map.of("activePromotions", headroom, "blocked", "At active-promotion limit — deactivate one or upgrade"),
+                List.of(
+                        field("title", "string", true, null, null, null, null),
+                        field("discountPercent", "number", true, null, null, null,
+                                "1-100; keep it BELOW the targeted item's gross margin so it never sells below cost"),
+                        field("days", "integer", false, null, null, null, "Duration in days (default 3)"),
+                        enumField("appliesTo", true, List.of("ALL", "CATEGORY", "PRODUCT"),
+                                "Scope. Prefer PRODUCT (a healthy-margin favourite) or CATEGORY over blunt store-wide ALL"),
+                        field("target", "string", false, null, categories, List.of("appliesTo"),
+                                "Required unless ALL. For CATEGORY use one of the listed categories; for PRODUCT use an exact item name from get_menu")),
+                null);
+
+        return new CapabilityModule("promotions", "Promotions", List.of(create));
     }
 
     // ── Field helpers ───────────────────────────────────────────────────────
