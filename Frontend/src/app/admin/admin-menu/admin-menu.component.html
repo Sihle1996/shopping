@@ -133,19 +133,23 @@
         <div class="md:col-span-2">
           <div class="flex items-center justify-between mb-1">
             <label class="block text-xs font-medium text-textDark">Description</label>
-            <button type="button" (click)="generateWithAi()"
-                    [disabled]="aiGenerating"
-                    class="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-700
-                           disabled:opacity-50 transition-colors">
-              <span *ngIf="aiGenerating" class="inline-block w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
-              <i *ngIf="!aiGenerating" class="bi bi-stars"></i>
-              <span [class.ai-generating-text]="aiGenerating">{{ aiGenerating ? 'Generating…' : 'Generate with AI' }}</span>
-            </button>
+            <div class="flex items-center gap-2">
+              <span *ngIf="!canGenerate" class="text-[10px] text-textMuted italic">Enter a name to suggest details</span>
+              <button type="button" (click)="generateWithAi()"
+                      [disabled]="aiGenerating || !canGenerate"
+                      [title]="canGenerate ? 'Complete the empty fields from the name (cost is never guessed)' : 'Enter an item name first'"
+                      class="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-700
+                             disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                <span *ngIf="aiGenerating" class="inline-block w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
+                <i *ngIf="!aiGenerating" class="bi bi-stars"></i>
+                <span [class.ai-generating-text]="aiGenerating">{{ aiGenerating ? 'Suggesting…' : 'Suggest details' }}</span>
+              </button>
+            </div>
           </div>
           <textarea [(ngModel)]="formData.description" name="description" rows="3"
                     class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark resize-none
                            focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
-                    placeholder="Describe the item, or click Generate with AI…"></textarea>
+                    placeholder="Describe the item, or type a name above and click Suggest details…"></textarea>
         </div>
         <div class="md:col-span-2">
           <app-button variant="primary" size="md" type="submit" [fullWidth]="true">

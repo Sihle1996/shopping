@@ -209,10 +209,18 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
     }, 50);
   }
 
-  /** ✨ Ask Claude to write a description (and suggest a category) for the item. */
+  /**
+   * AI here COMPLETES a partially-defined item — it never creates one from nothing.
+   * The anchor is the name (the owner's intent); without it there's nothing to complete.
+   */
+  get canGenerate(): boolean {
+    return !!this.formData.name?.trim();
+  }
+
+  /** ✨ Complete the empty fields (description, category, price) from the typed name. Never fills cost. */
   generateWithAi(): void {
-    if (!this.formData.name?.trim()) {
-      this.toastr.warning('Enter an item name first', 'AI Generate');
+    if (!this.canGenerate) {
+      this.toastr.warning('Enter an item name first', 'Suggest details');
       return;
     }
     this.aiGenerating = true;
