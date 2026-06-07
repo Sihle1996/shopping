@@ -425,10 +425,26 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       chart: { type: 'bar', height: 240, toolbar: { show: false } },
       colors: [color],
       plotOptions: { bar: { borderRadius: 4, columnWidth: '60%' } },
-      xaxis: { categories: labels, labels: { style: { fontSize: '10px' } } },
+      xaxis: {
+        categories: labels,
+        tickPlacement: 'on',
+        labels: {
+          rotate: 0,
+          hideOverlappingLabels: true,
+          style: { fontSize: '10px' },
+          // 24 hourly labels overflow on mobile — show every 3rd hour only.
+          formatter: (val: string) => {
+            const h = parseInt(val, 10);
+            return Number.isNaN(h) || h % 3 !== 0 ? '' : `${h}:00`;
+          }
+        }
+      },
       yaxis: { labels: { style: { fontSize: '11px' } } },
       dataLabels: { enabled: false },
-      tooltip: { y: { formatter: (v: number) => `${v} orders` } },
+      tooltip: {
+        x: { formatter: (_v: number, opts?: any) => labels[opts?.dataPointIndex] ?? '' },
+        y: { formatter: (v: number) => `${v} orders` }
+      },
       grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
       noData: { text: 'No order data for this period', style: { color: '#94a3b8' } }
     };
