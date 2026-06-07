@@ -209,18 +209,65 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
     }, 50);
   }
 
+  // ── Smart Fill (IDE-style, progressive) ─────────────────────────────────
+  nameGhost = '';                       // grey completion suffix for the name field
+  private readonly TARGET_MARGIN = 0.65; // matches the backend manifest's price rule
+
+  /** Name-completion vocabulary: the store's OWN item names + categories (never invented). */
+  private get nameVocab(): string[] {
+    const names = this.menuItems.map(i => i?.name).filter((n: any) => !!n);
+    return Array.from(new Set<string>([...names, ...this.formCategories]));
+  }
+
+  /** Recompute the ghost suffix as the owner types the name (local, instant). */
+  onNameChange(): void {
+    this.nameGhost = '';
+    const name = this.formData.name || '';
+    if (name.trim().length < 2) return;
+    const match = this.nameVocab.find(v => v.toLowerCase().startsWith(name.toLowerCase()) && v.length > name.length);
+    if (match) this.nameGhost = match.substring(name.length);
+  }
+
+  /** Tab accepts the ghost completion (IDE-style). */
+  onNameKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Tab' && this.nameGhost) {
+      e.preventDefault();
+      this.formData.name = (this.formData.name || '') + this.nameGhost;
+      this.nameGhost = '';
+    }
+  }
+
+  /** Rule #1: price intelligence is gated on a real cost — no cost, no price suggestion. */
+  get canSuggestPrice(): boolean {
+    return this.formData.cost != null && this.formData.cost > 0;
+  }
+  /** Deterministic suggested price from cost at the target margin (the manifest rule). */
+  get suggestedPrice(): number | null {
+    const c = this.formData.cost;
+    return c != null && c > 0 ? Math.round(c / (1 - this.TARGET_MARGIN)) : null;
+  }
+  get suggestedPriceMargin(): number | null {
+    const p = this.suggestedPrice;
+    const c = this.formData.cost;
+    return p && p > 0 && c != null ? Math.round((p - c) / p * 100) : null;
+  }
+  useSuggestedPrice(): void {
+    const p = this.suggestedPrice;
+    if (p) this.formData.price = p;
+  }
+
   /**
-   * AI here COMPLETES a partially-defined item — it never creates one from nothing.
-   * The anchor is the name (the owner's intent); without it there's nothing to complete.
+   * Rule #2: AI COMPLETES a partial item, never creates one. A description needs both a
+   * name (intent) AND a category (classification) — without them there's nothing to complete.
    */
   get canGenerate(): boolean {
-    return !!this.formData.name?.trim();
+    return !!this.formData.name?.trim() && !!this.formData.category;
   }
 
   /** ✨ Complete the empty fields (description, category, price) from the typed name. Never fills cost. */
   generateWithAi(): void {
     if (!this.canGenerate) {
-      this.toastr.warning('Enter an item name first', 'Suggest details');
+      this.toastr.warning('Add a name and category first', 'Suggest details');
       return;
     }
     this.aiGenerating = true;
