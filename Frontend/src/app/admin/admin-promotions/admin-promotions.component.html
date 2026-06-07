@@ -106,8 +106,11 @@
         <div *ngFor="let o of outcomes" class="p-3 rounded-xl border border-borderColor bg-surface">
           <div class="flex items-center justify-between gap-2 mb-1">
             <span class="text-sm font-semibold text-textDark truncate">{{ o.target }} <span class="text-textMuted font-normal">· {{ o.discountPercent }}% off</span></span>
-            <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded"
-                  [ngClass]="o.status === 'running' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'">{{ o.status }}</span>
+            <span class="flex items-center gap-1 flex-shrink-0">
+              <span *ngIf="o.dataQuality" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded" [ngClass]="qualityClass(o.dataQuality)" title="Sample size, not a prediction">{{ o.dataQuality }} data</span>
+              <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded"
+                    [ngClass]="o.status === 'running' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'">{{ o.status }}</span>
+            </span>
           </div>
           <!-- Pending: not enough events yet to measure (not "no effect") -->
           <p *ngIf="o.signal === 'PENDING'" class="text-xs text-textMuted italic">
@@ -130,6 +133,13 @@
               </span>
             </div>
             <p class="text-[10px] text-textMuted">Revenue (delivered): R{{ o.delivered.before.revenue | number:'1.0-0' }} → R{{ o.delivered.during.revenue | number:'1.0-0' }}</p>
+            <!-- Baseline context: isolate the item from the store-wide trend -->
+            <div class="flex items-center justify-between gap-2 pt-1 mt-1 border-t border-borderColor">
+              <span class="text-textMuted">vs store-wide <span [ngClass]="changeClass(o.storeChangePercent)">{{ signed(o.storeChangePercent) }}</span></span>
+              <span class="font-semibold" [ngClass]="changeClass(o.netLiftPercent)">
+                Net lift {{ signed(o.netLiftPercent) }}
+              </span>
+            </div>
           </div>
         </div>
       </div>

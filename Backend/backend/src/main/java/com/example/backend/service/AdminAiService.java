@@ -232,6 +232,17 @@ public class AdminAiService {
             // ORDERED is the dense EARLY signal; DELIVERED is the sparse FINAL signal.
             boolean hasSignal = (before[0] + during[0]) > 0;
 
+            // BASELINE: did the whole store move in the same windows? Net lift isolates
+            // the item from the background trend (a +140% item lift means little if the
+            // store was also up +140%). Data quality describes the sample, not the outcome.
+            long storeBefore = storeOrders(tenantId, beforeStart, start);
+            long storeDuring = storeOrders(tenantId, start, duringEnd);
+            Long storePercent = storeBefore > 0 ? Math.round((storeDuring - storeBefore) / (double) storeBefore * 100.0) : null;
+            Long itemPercent = before[0] > 0 ? Math.round((during[0] - before[0]) / before[0] * 100.0) : null;
+            Long netLift = (itemPercent != null && storePercent != null) ? itemPercent - storePercent : null;
+            long itemEvents = (long) (before[0] + during[0]);
+            String dataQuality = itemEvents >= 15 ? "HIGH" : itemEvents >= 4 ? "MEDIUM" : "LOW";
+
             String targetName = p.getTargetProductName();
             if (targetName == null || targetName.isBlank()) {
                 targetName = menuItemRepository.findByIdAndTenant_Id(p.getTargetProductId(), tenantId)
@@ -247,6 +258,9 @@ public class AdminAiService {
             r.put("signal", hasSignal ? "MEASURED" : "PENDING");
             r.put("ordered", signalBlock(before[0], before[1], during[0], during[1]));   // early
             r.put("delivered", signalBlock(before[2], before[3], during[2], during[3])); // final
+            r.put("storeChangePercent", storePercent); // background trend (store-wide orders)
+            r.put("netLiftPercent", netLift);          // item lift minus store-wide trend
+            r.put("dataQuality", dataQuality);         // LOW | MEDIUM | HIGH — sample size, not a prediction
             out.add(r);
         }
         return Map.of("outcomes", out);
@@ -276,6 +290,13 @@ public class AdminAiService {
             }
         }
         return new double[]{oUnits, oRev, dUnits, dRev};
+    }
+
+    /** Store-wide placed (non-voided) order count in a window — the background baseline. */
+    private long storeOrders(UUID tenantId, Instant from, Instant to) {
+        return orderRepository.findByOrderDateBetweenAndTenant_Id(from, to, tenantId).stream()
+                .filter(o -> { OrderStatus s = OrderStatus.fromLabel(o.getStatus()); return s == null || !s.isVoided(); })
+                .count();
     }
 
     /** before/during units+revenue for one signal, with the % unit change (null if no baseline). */

@@ -156,6 +156,18 @@ export class AdminPromotionsComponent implements OnInit {
     return pct > 0 ? 'text-emerald-600' : pct < 0 ? 'text-red-600' : 'text-textMuted';
   }
 
+  qualityClass(q?: string): string {
+    return ({
+      HIGH: 'bg-emerald-100 text-emerald-700',
+      MEDIUM: 'bg-amber-100 text-amber-700',
+      LOW: 'bg-gray-100 text-gray-600'
+    } as any)[q || ''] ?? 'bg-gray-100 text-gray-600';
+  }
+
+  signed(pct: number | null): string {
+    return pct == null ? 'n/a' : (pct > 0 ? '+' : '') + pct + '%';
+  }
+
   openForm(): void {
     this.formOpen = true;
   }
