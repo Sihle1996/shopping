@@ -58,6 +58,14 @@ public class SmartAlertService {
 
         int created = 0;
 
+        // 0) Store closed — you're not taking orders. One tap to open.
+        if (Boolean.FALSE.equals(tenant.getIsOpen())) {
+            created += raise(tenant, "store-closed", "high",
+                    "Your store is closed",
+                    "You're not accepting orders right now. Open the store to start receiving them.",
+                    action("set_store_open", "Open the store", Map.of("open", true)));
+        }
+
         // 1) Sold-out sellers — an item that normally sells is sold out / hidden.
         for (MenuItem mi : items) {
             int units = sold.getOrDefault(mi.getId(), 0);

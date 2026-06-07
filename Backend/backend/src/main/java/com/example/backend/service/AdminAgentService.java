@@ -148,68 +148,19 @@ public class AdminAgentService {
         String prompt = "You are a sharp, experienced operations advisor for \"" + storeName + "\", a store on the "
                 + "CraveIt food-delivery app. Today is " + LocalDate.now(SAST) + ". Here is the live state as JSON "
                 + "(money in South African Rand, R):\n" + json(snap) + "\n\n"
-                + "Write the owner an intelligent daily briefing — 3 to 5 short bullet points. Don't just restate the "
-                + "numbers: INTERPRET them. Include, where the data supports it:\n"
-                + "• a quick read on how the business is doing (e.g. revenue trend vs last week),\n"
-                + "• concrete ADVICE to grow sales or save money (promote a top seller, run a deal at the busiest hour, "
-                + "fix a low average order value),\n"
-                + "• clear WARNINGS about risks (store closed, rising cancellations, sold-out best-sellers, a sales dip, "
-                + "low ratings).\n"
-                + "Lead with the most important. Be specific with numbers, warm but direct. No preamble or sign-off, "
-                + "no emoji — just plain bullet points, each starting with '- '.";
+                + "Write a punchy, SCANNABLE daily briefing the owner can read in 10 seconds. Strict rules:\n"
+                + "- AT MOST 3 bullets, the single most important first.\n"
+                + "- Each bullet is ONE short sentence (max ~18 words), opening with a 2-3 word **bold** label.\n"
+                + "- INTERPRET the data (a trend, a piece of advice, or a strategic risk) — never just restate numbers.\n"
+                + "- Use specific Rand (R) figures.\n"
+                + "- Do NOT mention operational to-dos (sold-out items, pending/unprepared orders, a closed store) — "
+                + "those are separate alerts.\n"
+                + "- No preamble, no sign-off, no emoji. Plain markdown bullets, each starting with '- '.";
 
         String out = anthropicClient.isConfigured() ? anthropicClient.call(prompt, 500) : null;
-        String briefing = (out != null && !out.isBlank()) ? out.trim() : ruleBasedBriefing(snap, soldOut);
+        String briefing = (out != null && !out.isBlank()) ? out.trim() : ruleBasedBriefing(snap);
 
-        Map<String, Object> res = new LinkedHashMap<>();
-        res.put("briefing", briefing);
-        res.put("reminders", buildReminders(tenantId, t, soldOut));
-        return res;
-    }
-
-    /** Operational alerts that need the owner's attention right now (deterministic). */
-    private List<Map<String, Object>> buildReminders(UUID tenantId, Tenant t, List<String> soldOut) {
-        List<Map<String, Object>> rem = new ArrayList<>();
-        if (t != null && Boolean.FALSE.equals(t.getIsOpen())) {
-            rem.add(reminder("high", "Store is closed — you're not accepting orders."));
-        }
-
-        Instant since = Instant.now().minus(Duration.ofDays(2));
-        int awaiting = 0; long oldestAwait = 0; int prepLong = 0; int delivLong = 0;
-        for (Order o : orderRepository.findByOrderDateBetweenAndTenant_Id(since, Instant.now(), tenantId)) {
-            String s = o.getStatus();
-            if (s == null) continue;
-            long mins = o.getOrderDate() != null ? Duration.between(o.getOrderDate(), Instant.now()).toMinutes() : 0;
-            if (s.equalsIgnoreCase("Pending") || s.equalsIgnoreCase("Confirmed") || s.equalsIgnoreCase("Scheduled")) {
-                awaiting++; oldestAwait = Math.max(oldestAwait, mins);
-            } else if (s.equalsIgnoreCase("Preparing") && mins > 30) {
-                prepLong++;
-            } else if (s.equalsIgnoreCase("Out for Delivery") && mins > 45) {
-                delivLong++;
-            }
-        }
-        if (awaiting > 0) {
-            rem.add(reminder(oldestAwait > 15 ? "high" : "medium",
-                    awaiting + " order" + (awaiting > 1 ? "s" : "") + " awaiting prep — oldest " + oldestAwait + " min ago."));
-        }
-        if (prepLong > 0) {
-            rem.add(reminder("medium", prepLong + " order" + (prepLong > 1 ? "s" : "") + " preparing over 30 min."));
-        }
-        if (delivLong > 0) {
-            rem.add(reminder("medium", delivLong + " deliver" + (delivLong > 1 ? "ies" : "y") + " running over 45 min."));
-        }
-        if (!soldOut.isEmpty()) {
-            String names = String.join(", ", soldOut.stream().limit(3).toList()) + (soldOut.size() > 3 ? "…" : "");
-            rem.add(reminder("medium", soldOut.size() + " item" + (soldOut.size() > 1 ? "s" : "") + " sold out: " + names));
-        }
-        return rem;
-    }
-
-    private Map<String, Object> reminder(String severity, String text) {
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("severity", severity);
-        m.put("text", text);
-        return m;
+        return Map.of("briefing", briefing);
     }
 
     private double sumRevenue(Instant start, Instant end) {
@@ -217,14 +168,14 @@ public class AdminAgentService {
                 .mapToDouble(d -> d.getTotal() != null ? d.getTotal() : 0).sum();
     }
 
-    private String ruleBasedBriefing(Map<String, Object> snap, List<String> soldOut) {
+    private String ruleBasedBriefing(Map<String, Object> snap) {
         StringBuilder sb = new StringBuilder();
-        if (Boolean.FALSE.equals(snap.get("storeOpen"))) sb.append("• Your store is closed — no orders can come in.\n");
-        sb.append(String.format(Locale.UK, "• Today: %s orders, R%.2f in revenue.\n",
+        sb.append(String.format(Locale.UK, "- Today: %s orders, R%.2f in revenue.\n",
                 snap.get("ordersToday"), (double) snap.get("revenueToday")));
-        if (!soldOut.isEmpty()) sb.append("• Sold out: ").append(String.join(", ", soldOut)).append(" — restock to avoid lost sales.\n");
+        sb.append(String.format(Locale.UK, "- Last 7 days: R%.2f in revenue.\n",
+                (double) snap.get("revenueLast7Days")));
         if (((Number) snap.get("reviewsLast7Days")).intValue() > 0)
-            sb.append(String.format(Locale.UK, "• %s new review(s) this week (avg %.1f/5).\n",
+            sb.append(String.format(Locale.UK, "- %s new review(s) this week (avg %.1f/5).\n",
                     snap.get("reviewsLast7Days"), (double) snap.get("avgRatingLast7Days")));
         return sb.toString().trim();
     }

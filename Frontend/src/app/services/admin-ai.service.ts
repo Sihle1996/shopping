@@ -61,14 +61,8 @@ export interface AiActResult {
   message: string;
 }
 
-export interface AiReminder {
-  severity: 'high' | 'medium' | 'low';
-  text: string;
-}
-
 export interface AiBriefing {
   briefing: string;
-  reminders: AiReminder[];
 }
 
 export interface AiAlert {
@@ -108,7 +102,7 @@ export class AdminAiService {
     return this.http.post<AiActResult>(`${this.base}/act`, { action, params });
   }
 
-  /** Proactive daily briefing + reminders for the dashboard. */
+  /** Proactive daily briefing (pure advice — operational items live in alerts). */
   briefing(): Observable<AiBriefing> {
     return this.http.get<AiBriefing>(`${this.base}/briefing`);
   }
