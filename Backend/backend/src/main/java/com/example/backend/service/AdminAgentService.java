@@ -13,6 +13,7 @@ import com.example.backend.model.Promotion;
 import com.example.backend.repository.CategoryRepository;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.OrderRepository;
+import com.example.backend.repository.SupportTicketRepository;
 import com.example.backend.repository.PromotionRepository;
 import com.example.backend.repository.AiActionLogRepository;
 import com.example.backend.repository.ReviewRepository;
@@ -59,6 +60,7 @@ public class AdminAgentService {
     private final BookkeepingService bookkeepingService;
     private final CapabilityRegistry capabilityRegistry;
     private final OrderService orderService;
+    private final SupportTicketRepository supportTicketRepository;
     private final ObjectMapper objectMapper;
 
     /** Copilot reply plus any actions it proposed (the UI shows confirm cards). */
@@ -278,6 +280,9 @@ public class AdminAgentService {
             missing, ASK for it; if a field has aiCanSuggest=false (e.g. an item's cost) NEVER guess it; honour
             dependsOn (suggest a price only once cost is known, using its suggestRule). When several options
             exist, weigh them from the data and either recommend the best with a one-line reason or lay out the choices.
+            For a complaint or support ticket, FIRST call get_customer_context (lifetime value + this order's delivery
+            vs expected) and get_capabilities('support'), then recommend the resolution that fits the customer's value
+            and the issue, with a one-line reason — don't treat every complaint the same.
 
             Formatting: reply in clean markdown. Use a markdown table (with a |---| header row) whenever
             you list several items with attributes (e.g. menu items with prices, orders with status).
@@ -316,6 +321,20 @@ public class AdminAgentService {
                         + "operating expenses with a by-category breakdown, and operating profit (the true bottom "
                         + "line). Use this for any profitability, 'are we making money', cost or expense question.",
                 Map.of("days", numProp("Look-back window in days (default 30)")),
+                List.of()));
+
+        tools.add(tool("get_customer_context",
+                "Rich context for a support or service decision about an order: the customer's lifetime value "
+                        + "(total orders, lifetime spend, customer since), THIS order's value/status and its delivery "
+                        + "time vs the store's expected (slaBreached), and the store's average delivery today. "
+                        + "Pull this BEFORE recommending how to handle a complaint or support ticket.",
+                Map.of("order_id", strProp("The order id the issue relates to")),
+                List.of("order_id")));
+
+        tools.add(tool("list_support_tickets",
+                "Customer support tickets (most recent first): id, subject, message, status, the customer, "
+                        + "and the related order id (if any). Use to triage and advise on support.",
+                Map.of("limit", intProp("Max tickets (default 15)")),
                 List.of()));
 
         tools.add(tool("list_orders",
@@ -467,6 +486,8 @@ public class AdminAgentService {
             case "get_store_overview": return toolStoreOverview(tenantId);
             case "get_analytics":      return toolAnalytics(input.path("range").asText("30d"));
             case "get_books_summary":  return toolBooksSummary(tenantId, input.path("days").asInt(30));
+            case "get_customer_context": return toolCustomerContext(tenantId, input.path("order_id").asText(null));
+            case "list_support_tickets": return toolSupportTickets(tenantId, input.path("limit").asInt(15));
             case "list_orders":        return toolListOrders(tenantId,
                     input.hasNonNull("status") ? input.get("status").asText() : null,
                     input.path("limit").asInt(20));
@@ -610,7 +631,7 @@ public class AdminAgentService {
             cats.add(cm);
         }
         m.put("salesByCategory", cats);
-
+        // (expensesByCategory appended below)
         List<Map<String, Object>> exp = new ArrayList<>();
         for (BookkeepingService.ExpenseCategoryLine ec : pl.expensesByCategory()) {
             Map<String, Object> em = new LinkedHashMap<>();
@@ -620,6 +641,80 @@ public class AdminAgentService {
         }
         m.put("expensesByCategory", exp);
         return json(m);
+    }
+
+    /** Rich context bundle for a support/service decision about one order. */
+    private String toolCustomerContext(UUID tenantId, String orderIdStr) {
+        if (orderIdStr == null || orderIdStr.isBlank()) {
+            return "Give me the order id the issue relates to.";
+        }
+        Order order;
+        try {
+            order = orderRepository.findByIdAndTenant_Id(UUID.fromString(orderIdStr.trim()), tenantId).orElse(null);
+        } catch (IllegalArgumentException e) {
+            return "That isn't a valid order id.";
+        }
+        if (order == null) return "No order matched that id.";
+
+        Tenant t = tenantRepository.findById(tenantId).orElse(null);
+        int expectedMins = (t != null && t.getEstimatedDeliveryMinutes() != null) ? t.getEstimatedDeliveryMinutes() : 30;
+
+        Map<String, Object> m = new LinkedHashMap<>();
+
+        Map<String, Object> oc = new LinkedHashMap<>();
+        oc.put("id", order.getId().toString());
+        oc.put("total", order.getTotalAmount());
+        oc.put("status", order.getStatus());
+        Long deliveryMins = (order.getOrderDate() != null && order.getDeliveredAt() != null)
+                ? Duration.between(order.getOrderDate(), order.getDeliveredAt()).toMinutes() : null;
+        oc.put("deliveryMinutes", deliveryMins);
+        oc.put("expectedMinutes", expectedMins);
+        oc.put("slaBreached", deliveryMins != null && deliveryMins > expectedMins);
+        m.put("order", oc);
+
+        if (order.getUser() != null) {
+            List<Order> theirs = orderRepository.findByUserIdAndTenant_IdOrderByOrderDateDesc(order.getUser().getId(), tenantId);
+            long delivered = theirs.stream().filter(o -> OrderStatus.DELIVERED.matches(o.getStatus())).count();
+            double lifetime = theirs.stream().filter(o -> OrderStatus.DELIVERED.matches(o.getStatus()))
+                    .mapToDouble(o -> o.getTotalAmount() != null ? o.getTotalAmount() : 0).sum();
+            Instant since = theirs.stream().map(Order::getOrderDate).filter(Objects::nonNull).min(Instant::compareTo).orElse(null);
+            Map<String, Object> cc = new LinkedHashMap<>();
+            cc.put("name", order.getUser().getFullName() != null ? order.getUser().getFullName() : order.getUser().getEmail());
+            cc.put("totalOrders", theirs.size());
+            cc.put("deliveredOrders", delivered);
+            cc.put("lifetimeSpend", round2(lifetime));
+            cc.put("customerSince", since != null ? since.atZone(SAST).toLocalDate().toString() : null);
+            m.put("customer", cc);
+        }
+
+        Instant startToday = LocalDate.now(SAST).atStartOfDay(SAST).toInstant();
+        long[] todayMins = orderRepository.findByOrderDateBetweenAndTenant_Id(startToday, Instant.now(), tenantId).stream()
+                .filter(o -> OrderStatus.DELIVERED.matches(o.getStatus()) && o.getOrderDate() != null && o.getDeliveredAt() != null)
+                .mapToLong(o -> Duration.between(o.getOrderDate(), o.getDeliveredAt()).toMinutes()).toArray();
+        Map<String, Object> sc = new LinkedHashMap<>();
+        sc.put("avgDeliveryMinutesToday", todayMins.length > 0 ? Math.round(Arrays.stream(todayMins).average().orElse(0)) : null);
+        sc.put("expectedDeliveryMinutes", expectedMins);
+        m.put("storeToday", sc);
+
+        return json(m);
+    }
+
+    private String toolSupportTickets(UUID tenantId, int limit) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        supportTicketRepository.findByTenant_IdOrderByCreatedAtDesc(tenantId).stream()
+                .limit(Math.max(1, limit))
+                .forEach(tk -> {
+                    Map<String, Object> r = new LinkedHashMap<>();
+                    r.put("id", tk.getId().toString());
+                    r.put("subject", tk.getSubject());
+                    r.put("message", tk.getMessage());
+                    r.put("status", tk.getStatus() != null ? tk.getStatus().name() : null);
+                    r.put("orderId", tk.getOrderId() != null ? tk.getOrderId().toString() : null);
+                    try { r.put("customer", tk.getUser() != null ? tk.getUser().getEmail() : null); }
+                    catch (Exception ignored) { r.put("customer", null); }
+                    out.add(r);
+                });
+        return json(Map.of("ticketCount", out.size(), "tickets", out));
     }
 
     private String toolInventoryAlerts(UUID tenantId) {

@@ -39,6 +39,7 @@ public class CapabilityRegistry {
         if (wants(module, "menu")) out.add(menu(tenantId));
         if (wants(module, "promotions")) out.add(promotions(tenantId));
         if (wants(module, "orders")) out.add(orders());
+        if (wants(module, "support")) out.add(support());
         return out;
     }
 
@@ -161,6 +162,33 @@ public class CapabilityRegistry {
                 workflow);
 
         return new CapabilityModule("orders", "Orders", List.of(setStatus));
+    }
+
+    // ── Support ───────────────────────────────────────────────────────────────
+
+    private CapabilityModule support() {
+        Map<String, List<String>> workflow = new LinkedHashMap<>();
+        workflow.put("OPEN", List.of("IN_PROGRESS", "RESOLVED", "CLOSED"));
+        workflow.put("IN_PROGRESS", List.of("RESOLVED", "CLOSED"));
+        workflow.put("RESOLVED", List.of("CLOSED"));
+        workflow.put("CLOSED", List.of());
+
+        CapabilityAction resolve = new CapabilityAction(
+                "resolve_ticket", "Decide a ticket resolution",
+                "Advisory: weigh the customer's value and the issue, then recommend a resolution and draft a "
+                        + "reply (the owner applies it on the Support page — AI advises, owner acts).",
+                null,
+                List.of(
+                        enumField("resolution", true,
+                                List.of("apology_only", "refund_delivery_fee", "refund_full", "loyalty_credit", "escalate"),
+                                "Pick from get_customer_context: high-value customer + SLA breach -> refund delivery fee "
+                                        + "or loyalty credit; minor issue -> apology; payment/fraud -> escalate; full refund only when clearly warranted"),
+                        field("status", "enum", false, null,
+                                List.of("OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"), null,
+                                "Usually RESOLVED once handled — see workflow")),
+                workflow);
+
+        return new CapabilityModule("support", "Support", List.of(resolve));
     }
 
     // ── Field helpers ───────────────────────────────────────────────────────
