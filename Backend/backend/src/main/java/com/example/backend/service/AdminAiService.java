@@ -4,8 +4,10 @@ import com.example.backend.entity.MenuItem;
 import com.example.backend.entity.Order;
 import com.example.backend.entity.OrderStatus;
 import com.example.backend.entity.Review;
+import com.example.backend.entity.PromoOutcomeRecord;
 import com.example.backend.entity.SubscriptionPlan;
 import com.example.backend.model.Promotion;
+import com.example.backend.repository.PromoOutcomeRecordRepository;
 import com.example.backend.repository.PromotionRepository;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.OrderRepository;
@@ -33,6 +35,7 @@ public class AdminAiService {
     private final OrderRepository orderRepository;
     private final MenuItemRepository menuItemRepository;
     private final PromotionRepository promotionRepository;
+    private final PromoOutcomeRecordRepository promoOutcomeRecordRepository;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final AnalyticsService analyticsService;
     private final ObjectMapper objectMapper;
@@ -99,7 +102,12 @@ public class AdminAiService {
 
     // ── Feature 2: Promotion Optimizer ─────────────────────────────────────
 
+    @org.springframework.transaction.annotation.Transactional
     public Map<String, Object> suggestPromotions(UUID tenantId) {
+        // LEARN: snapshot any newly-ended promos, then rank this run with their history.
+        recordEndedPromoOutcomes(tenantId);
+        Map<UUID, double[]> history = promoHistory(tenantId);
+
         Instant thirtyDaysAgo = Instant.now().minus(Duration.ofDays(30));
         List<Order> recentOrders = orderRepository
                 .findByOrderDateBetweenAndTenant_Id(thirtyDaysAgo, Instant.now(), tenantId)
@@ -160,6 +168,12 @@ public class AdminAiService {
             double demandScore = maxUnits > 0 ? (double) units / maxUnits : 0;                  // 0..1
             double marginScore = maxMargin > medM ? (margin - medM) / (maxMargin - medM) : 0.5; // 0..1
             double composite = demandScore * 0.6 + marginScore * 0.4;
+            // LEARN: nudge ranking by this item's historical net response (bounded ±0.25),
+            // so promos that performed well before surface higher — observed, not proof.
+            double[] h = history.get(item.getId());
+            Double avgNet = (h != null && h[1] > 0) ? h[0] / h[1] : null;
+            long samples = h != null ? (long) h[1] : 0;
+            if (avgNet != null) composite += Math.max(-0.25, Math.min(0.25, avgNet / 200.0));
             String strength = composite >= 0.66 ? "STRONG" : composite >= 0.33 ? "MODERATE" : "WEAK";
             int discount = (int) Math.min(18, Math.max(5, Math.round(margin * 0.20)));          // varies, below margin
 
@@ -172,11 +186,18 @@ public class AdminAiService {
             promo.put("startAt", today);
             promo.put("endAt", endAt);
 
-            String hypothesis = switch (strength) {
-                case "STRONG"   -> "Strongest test candidate — high demand with a clear margin buffer.";
-                case "MODERATE" -> "Solid secondary test — good demand with an adequate margin buffer.";
-                default          -> "Optional test — a moderate signal worth a small experiment.";
-            };
+            String hypothesis;
+            if (avgNet != null && avgNet > 0) {
+                hypothesis = "Repeat candidate — prior promos on this item showed a positive net change (observed, not controlled).";
+            } else if (avgNet != null) {
+                hypothesis = "Prior promos on this item showed no positive net change — test cautiously.";
+            } else {
+                hypothesis = switch (strength) {
+                    case "STRONG"   -> "Strongest test candidate — high demand with a clear margin buffer.";
+                    case "MODERATE" -> "Solid secondary test — good demand with an adequate margin buffer.";
+                    default          -> "Optional test — a moderate signal worth a small experiment.";
+                };
+            }
 
             Map<String, Object> s = new LinkedHashMap<>();
             // FACTS — observed, immutable (the data layer)
@@ -188,11 +209,16 @@ public class AdminAiService {
             // are the SEMANTIC signals; the global uncertainty note lives once in the UI banner.
             Map<String, Object> analysis = new LinkedHashMap<>();
             analysis.put("hypothesis", hypothesis);
-            analysis.put("evidence", List.of(
+            List<String> evidence = new ArrayList<>(List.of(
                     units + " orders in the last 30 days (rank #" + rank + ")",
                     String.format(Locale.UK, "%.0f%% margin — %s the store median",
                             margin, margin >= medM ? "at or above" : "below"),
                     "In stock now"));
+            if (samples > 0) {
+                evidence.add(String.format(Locale.UK,
+                        "Prior promos: avg %+.0f%% net vs store over %d (observed, not controlled)", avgNet, samples));
+            }
+            analysis.put("evidence", evidence);
             analysis.put("insightStrength", strength);
             analysis.put("recommendationType", "EXPERIMENT");
             s.put("analysis", analysis);
@@ -232,27 +258,12 @@ public class AdminAiService {
             // ORDERED is the dense EARLY signal; DELIVERED is the sparse FINAL signal.
             boolean hasSignal = (before[0] + during[0]) > 0;
 
-            // BASELINE: did the whole store move? Net lift isolates the item from the
-            // background trend. The equal-length "before" window can be empty for a short
-            // or fresh promo, so the baseline is RATE-normalised over a STABLE window
-            // (up to 14 days before the promo, scaled to orders/day) — always computable
-            // when the store has any history, instead of "n/a".
-            double durDays = Math.max(0.25, len.toHours() / 24.0);
-            Instant storeBaseStart = start.minus(Duration.ofDays(14));
-            double baseDays = Math.max(1.0, Duration.between(storeBaseStart, start).toHours() / 24.0);
-            double storeBasePerDay = storeOrders(tenantId, storeBaseStart, start) / baseDays;
-            double storeDurPerDay = storeOrders(tenantId, start, duringEnd) / durDays;
-            Long storePercent = storeBasePerDay > 0
-                    ? Math.round((storeDurPerDay - storeBasePerDay) / storeBasePerDay * 100.0) : null;
-
-            // Item lift on the SAME rate basis (so net lift compares like for like, and is
-            // computable even when the equal-length before window had no sales).
-            double itemBaseUnits = productSales(tenantId, p.getTargetProductId(), storeBaseStart, start)[0];
-            double itemBasePerDay = itemBaseUnits / baseDays;
-            double itemDurPerDay = during[0] / durDays;
-            Long itemPercent = itemBasePerDay > 0
-                    ? Math.round((itemDurPerDay - itemBasePerDay) / itemBasePerDay * 100.0) : null;
-            Long netLift = (itemPercent != null && storePercent != null) ? itemPercent - storePercent : null;
+            // BASELINE: net lift isolates the item from the store-wide trend, rate-normalised
+            // over a STABLE 14-day pre-promo window (see computeLift) so it's always
+            // computable when the store has history, instead of "n/a".
+            LiftCalc lift = computeLift(tenantId, p.getTargetProductId(), start, duringEnd);
+            Long storePercent = lift.storePercent();
+            Long netLift = lift.netLift();
             long itemEvents = (long) (before[0] + during[0]);
             String dataQuality = itemEvents >= 15 ? "HIGH" : itemEvents >= 4 ? "MEDIUM" : "LOW";
 
@@ -310,6 +321,70 @@ public class AdminAiService {
         return orderRepository.findByOrderDateBetweenAndTenant_Id(from, to, tenantId).stream()
                 .filter(o -> { OrderStatus s = OrderStatus.fromLabel(o.getStatus()); return s == null || !s.isVoided(); })
                 .count();
+    }
+
+    private record LiftCalc(Long storePercent, Long itemPercent, Long netLift, double duringUnits) {}
+
+    /**
+     * Rate-normalised lift for one product over [start, duringEnd], measured against a
+     * STABLE 14-day pre-promo baseline (orders/day). Shared by the outcomes view and the
+     * learning recorder so both compute net lift identically.
+     */
+    private LiftCalc computeLift(UUID tenantId, UUID productId, Instant start, Instant duringEnd) {
+        Duration len = Duration.between(start, duringEnd);
+        double durDays = Math.max(0.25, len.toHours() / 24.0);
+        Instant baseStart = start.minus(Duration.ofDays(14));
+        double baseDays = Math.max(1.0, Duration.between(baseStart, start).toHours() / 24.0);
+
+        double storeBasePerDay = storeOrders(tenantId, baseStart, start) / baseDays;
+        double storeDurPerDay = storeOrders(tenantId, start, duringEnd) / durDays;
+        Long storePercent = storeBasePerDay > 0
+                ? Math.round((storeDurPerDay - storeBasePerDay) / storeBasePerDay * 100.0) : null;
+
+        double itemBasePerDay = productSales(tenantId, productId, baseStart, start)[0] / baseDays;
+        double duringUnits = productSales(tenantId, productId, start, duringEnd)[0];
+        double itemDurPerDay = duringUnits / durDays;
+        Long itemPercent = itemBasePerDay > 0
+                ? Math.round((itemDurPerDay - itemBasePerDay) / itemBasePerDay * 100.0) : null;
+
+        Long netLift = (itemPercent != null && storePercent != null) ? itemPercent - storePercent : null;
+        return new LiftCalc(storePercent, itemPercent, netLift, duringUnits);
+    }
+
+    /**
+     * The LEARNING step: when a PRODUCT promo has ended, persist its measured net lift once
+     * (deduped by promo id) so future suggestions can rank by historical response. Best-effort.
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public void recordEndedPromoOutcomes(UUID tenantId) {
+        Instant now = Instant.now();
+        for (Promotion p : promotionRepository.findByTenant_Id(tenantId)) {
+            if (p.getAppliesTo() != Promotion.AppliesTo.PRODUCT || p.getTargetProductId() == null
+                    || p.getStartAt() == null || p.getEndAt() == null) continue;
+            if (p.getEndAt().toInstant().isAfter(now)) continue;          // not ended yet
+            if (promoOutcomeRecordRepository.existsByPromoId(p.getId())) continue; // already recorded
+            LiftCalc lift = computeLift(tenantId, p.getTargetProductId(), p.getStartAt().toInstant(), p.getEndAt().toInstant());
+            if (lift.netLift() == null) continue; // not measurable
+            PromoOutcomeRecord rec = new PromoOutcomeRecord();
+            rec.setTenantId(tenantId);
+            rec.setProductId(p.getTargetProductId());
+            rec.setPromoId(p.getId());
+            rec.setNetLiftPercent((int) (long) lift.netLift());
+            rec.setSampleUnits((int) lift.duringUnits());
+            promoOutcomeRecordRepository.save(rec);
+        }
+    }
+
+    /** Per-product history: productId → [avgNetLift, sampleCount]. Empty if nothing recorded. */
+    private Map<UUID, double[]> promoHistory(UUID tenantId) {
+        Map<UUID, double[]> hist = new HashMap<>();
+        for (PromoOutcomeRecord r : promoOutcomeRecordRepository.findByTenantId(tenantId)) {
+            if (r.getProductId() == null || r.getNetLiftPercent() == null) continue;
+            double[] cur = hist.computeIfAbsent(r.getProductId(), k -> new double[2]);
+            cur[0] += r.getNetLiftPercent();
+            cur[1] += 1;
+        }
+        return hist;
     }
 
     /** before/during units+revenue for one signal, with the % unit change (null if no baseline). */
