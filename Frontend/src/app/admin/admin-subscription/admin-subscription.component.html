@@ -42,11 +42,45 @@
         <i class="bi bi-stars text-lg mt-0.5"
            [ngClass]="advice.verdict === 'UPGRADE' ? 'text-primary'
                     : advice.verdict === 'CONSIDER_DOWNGRADE' ? 'text-amber-500' : 'text-emerald-600'"></i>
-        <div class="min-w-0">
+        <div class="min-w-0 flex-1">
           <p class="text-sm font-semibold text-textDark">
             {{ advice.verdict === 'UPGRADE' ? 'Worth upgrading' : advice.verdict === 'CONSIDER_DOWNGRADE' ? 'You could save' : 'Good fit' }}
           </p>
           <p class="text-sm text-textMuted mt-0.5 leading-snug">{{ advice.recommendation }}</p>
+
+          <!-- Usage stats — the numbers as data, not prose -->
+          <div *ngIf="advice.usage as u" class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <div class="flex items-baseline justify-between">
+                <span class="text-[11px] font-medium text-textDark">Menu items</span>
+                <span class="text-[11px] text-textMuted">{{ u.menuItems }}<span *ngIf="u.maxMenuItems > 0">/{{ u.maxMenuItems }}</span></span>
+              </div>
+              <div *ngIf="u.maxMenuItems > 0" class="mt-1 h-1.5 rounded-full bg-white/60 overflow-hidden">
+                <div class="h-full rounded-full bg-primary" [style.width.%]="usagePct(u.menuItems, u.maxMenuItems)"></div>
+              </div>
+              <span *ngIf="u.maxMenuItems <= 0" class="text-[10px] text-textMuted">unlimited</span>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between">
+                <span class="text-[11px] font-medium text-textDark">Active promos</span>
+                <span class="text-[11px] text-textMuted">{{ u.activePromos }}<span *ngIf="u.maxPromotions > 0">/{{ u.maxPromotions }}</span></span>
+              </div>
+              <div *ngIf="u.maxPromotions > 0" class="mt-1 h-1.5 rounded-full bg-white/60 overflow-hidden">
+                <div class="h-full rounded-full bg-primary" [style.width.%]="usagePct(u.activePromos, u.maxPromotions)"></div>
+              </div>
+              <span *ngIf="u.maxPromotions <= 0" class="text-[10px] text-textMuted">unlimited</span>
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between">
+                <span class="text-[11px] font-medium text-textDark">Orders (30d)</span>
+                <span *ngIf="u.ordersTrendPercent != null" class="text-[11px] font-semibold"
+                      [ngClass]="u.ordersTrendPercent >= 0 ? 'text-emerald-600' : 'text-red-600'">
+                  {{ u.ordersTrendPercent > 0 ? '+' : '' }}{{ u.ordersTrendPercent }}%
+                </span>
+              </div>
+              <p class="text-sm font-bold text-textDark mt-0.5">{{ u.orders30d }} <span class="text-[10px] text-textMuted font-normal">vs {{ u.ordersPrev30d }} prior</span></p>
+            </div>
+          </div>
         </div>
       </div>
 

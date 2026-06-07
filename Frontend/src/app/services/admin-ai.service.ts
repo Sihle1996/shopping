@@ -83,6 +83,20 @@ export interface AiBriefing {
   briefing: string;
 }
 
+export interface AiPlanUsage {
+  plan: string;
+  menuItems: number; maxMenuItems: number;
+  activePromos: number; maxPromotions: number;
+  orders30d: number; ordersPrev30d: number;
+  ordersTrendPercent: number | null;
+}
+
+export interface AiPlanAdvice {
+  verdict: string;
+  recommendation: string;
+  usage?: AiPlanUsage;
+}
+
 export interface AiSupportDraft {
   category: string;
   urgency: 'low' | 'medium' | 'high' | string;
@@ -154,9 +168,9 @@ export class AdminAiService {
     return this.http.post<{ updated: number }>(`${this.base}/menu/bulk-describe`, {});
   }
 
-  /** Plan-fit advice: does the subscription suit current usage & growth? */
-  planAdvice(): Observable<{ verdict: string; recommendation: string }> {
-    return this.http.get<{ verdict: string; recommendation: string }>(`${this.base}/plan-advice`);
+  /** Plan-fit advice: verdict + recommendation + structured usage stats. */
+  planAdvice(): Observable<AiPlanAdvice> {
+    return this.http.get<AiPlanAdvice>(`${this.base}/plan-advice`);
   }
 
   /** Measured before-vs-during results for each product promotion (the feedback loop). */

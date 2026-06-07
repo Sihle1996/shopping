@@ -737,29 +737,49 @@ public class AdminAiService {
                 now.minus(Duration.ofDays(60)), now.minus(Duration.ofDays(30)), tenantId)
                 .stream().filter(o -> OrderStatus.DELIVERED.matches(o.getStatus())).count();
 
+        // Structured usage so the UI shows the numbers as stats, not buried in prose.
+        Map<String, Object> usage = new LinkedHashMap<>();
+        usage.put("plan", plan.getName());
+        usage.put("menuItems", items);
+        usage.put("maxMenuItems", plan.getMaxMenuItems());
+        usage.put("activePromos", activePromos);
+        usage.put("maxPromotions", plan.getMaxPromotions());
+        usage.put("orders30d", orders30);
+        usage.put("ordersPrev30d", ordersPrev30);
+        usage.put("ordersTrendPercent", ordersPrev30 > 0
+                ? Math.round((orders30 - ordersPrev30) / (double) ordersPrev30 * 100.0) : null);
+
         boolean nearLimit = (plan.getMaxMenuItems() > 0 && items >= plan.getMaxMenuItems() * 0.8)
                 || (plan.getMaxPromotions() > 0 && activePromos >= plan.getMaxPromotions());
         String ruleVerdict = nearLimit ? "UPGRADE" : "GOOD_FIT";
 
+        Map<String, Object> result;
         if (!anthropicClient.isConfigured()) {
-            return Map.of("verdict", ruleVerdict, "recommendation", nearLimit
+            result = new LinkedHashMap<>();
+            result.put("verdict", ruleVerdict);
+            result.put("recommendation", nearLimit
                     ? "You're close to your " + plan.getName() + " plan limits — upgrading unlocks more headroom."
                     : "Your " + plan.getName() + " plan comfortably covers your current usage.");
+        } else {
+            String prompt =
+                    "You advise a restaurant owner on whether their CraveIt subscription fits, in South African English.\n" +
+                    "Plan: " + plan.getName() + " (max menu items " + plan.getMaxMenuItems() +
+                    ", max active promos " + plan.getMaxPromotions() +
+                    ", analytics " + (plan.isHasAnalytics() ? "included" : "NOT included") + ").\n" +
+                    "Usage: " + items + " menu items, " + activePromos + " active promos.\n" +
+                    "Delivered orders: " + orders30 + " last 30 days (" + ordersPrev30 + " the 30 days before).\n" +
+                    "The UI ALREADY shows these numbers as stats, so do NOT repeat the figures — give ONE short, " +
+                    "specific recommendation (max 1 sentence, ~20 words) and a verdict. UPGRADE if near/at limits or " +
+                    "growing fast and they'd benefit from headroom or analytics; GOOD_FIT if it suits them; " +
+                    "CONSIDER_DOWNGRADE only if usage is very low and flat. Be honest, not pushy.\n" +
+                    "Return JSON only: { \"verdict\": \"UPGRADE|GOOD_FIT|CONSIDER_DOWNGRADE\", \"recommendation\": \"<text>\" }";
+            String raw = anthropicClient.call(prompt);
+            result = (raw != null && !raw.isBlank())
+                    ? new LinkedHashMap<>(parseJsonOrFallback(raw, Map.of("verdict", ruleVerdict, "recommendation", "")))
+                    : new LinkedHashMap<>(fallback);
         }
-        String prompt =
-                "You advise a restaurant owner on whether their CraveIt subscription fits, in South African English.\n" +
-                "Plan: " + plan.getName() + " (max menu items " + plan.getMaxMenuItems() +
-                ", max active promos " + plan.getMaxPromotions() +
-                ", analytics " + (plan.isHasAnalytics() ? "included" : "NOT included") + ").\n" +
-                "Usage: " + items + " menu items, " + activePromos + " active promos.\n" +
-                "Delivered orders: " + orders30 + " last 30 days (" + ordersPrev30 + " the 30 days before).\n" +
-                "Give ONE short, specific recommendation (1-2 sentences) and a verdict. UPGRADE if near/at limits or " +
-                "growing fast and they'd benefit from headroom or analytics; GOOD_FIT if it suits them; " +
-                "CONSIDER_DOWNGRADE only if usage is very low and flat. Be honest, not pushy.\n" +
-                "Return JSON only: { \"verdict\": \"UPGRADE|GOOD_FIT|CONSIDER_DOWNGRADE\", \"recommendation\": \"<text>\" }";
-        String raw = anthropicClient.call(prompt);
-        return (raw != null && !raw.isBlank())
-                ? parseJsonOrFallback(raw, Map.of("verdict", ruleVerdict, "recommendation", "")) : fallback;
+        result.put("usage", usage);
+        return result;
     }
 
     // ── Feature 4: Conversational Analytics ────────────────────────────────

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SubscriptionService, SubscriptionInfo } from '../../services/subscription.service';
-import { AdminAiService } from '../../services/admin-ai.service';
+import { AdminAiService, AiPlanAdvice } from '../../services/admin-ai.service';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
@@ -22,7 +22,12 @@ export class AdminSubscriptionComponent implements OnInit {
   plans: PlanOption[] = [];
 
   // AI plan-fit advice
-  advice: { verdict: string; recommendation: string } | null = null;
+  advice: AiPlanAdvice | null = null;
+
+  /** Percent of a plan limit used (0 = unlimited plan → no bar). */
+  usagePct(used: number, max: number): number {
+    return max > 0 ? Math.min(100, Math.round(used / max * 100)) : 0;
+  }
 
   upgradingPlan: string | null = null;
   payFastLoading = false;
