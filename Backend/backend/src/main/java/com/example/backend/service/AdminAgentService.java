@@ -57,6 +57,7 @@ public class AdminAgentService {
     private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final AiActionLogRepository aiActionLogRepository;
     private final BookkeepingService bookkeepingService;
+    private final CapabilityRegistry capabilityRegistry;
     private final ObjectMapper objectMapper;
 
     /** Copilot reply plus any actions it proposed (the UI shows confirm cards). */
@@ -269,6 +270,13 @@ public class AdminAgentService {
             propose when the owner is clearly asking to change something. If a tool returns no data, say
             so. Keep answers tight — a few sentences or a short list, not an essay.
 
+            BE APPLICATION-AWARE: before proposing a change, call get_capabilities for that module to learn the
+            available actions, the VALID option values (e.g. the store's real categories), plan headroom (slots
+            left) and each field's rules. Only fill an option from its listed values; if a required field is
+            missing, ASK for it; if a field has aiCanSuggest=false (e.g. an item's cost) NEVER guess it; honour
+            dependsOn (suggest a price only once cost is known, using its suggestRule). When several options
+            exist, weigh them from the data and either recommend the best with a one-line reason or lay out the choices.
+
             Formatting: reply in clean markdown. Use a markdown table (with a |---| header row) whenever
             you list several items with attributes (e.g. menu items with prices, orders with status).
             Use short **bold** labels and '- ' bullet points. Do NOT use any emojis.
@@ -279,6 +287,15 @@ public class AdminAgentService {
 
     private List<Map<String, Object>> buildTools() {
         List<Map<String, Object>> tools = new ArrayList<>();
+
+        tools.add(tool("get_capabilities",
+                "What you can DO in a module right now — the available actions with their fields "
+                        + "(required, which you may suggest, dependencies like price needing cost), the VALID "
+                        + "option values (e.g. the store's real categories), plan headroom (slots left), and any "
+                        + "workflow. ALWAYS consult this before proposing an action so your options and field "
+                        + "values are real, not guessed. Pass a module (e.g. 'menu') or omit for all.",
+                Map.of("module", strProp("Module name, e.g. 'menu' (optional)")),
+                List.of()));
 
         tools.add(tool("get_store_overview",
                 "Snapshot of the store: name, cuisine, open/closed, delivery fee, minimum order, "
@@ -435,6 +452,7 @@ public class AdminAgentService {
             case "propose_create_promotion":     return proposeCreatePromotion(input, proposals);
             case "propose_create_menu_item":     return proposeCreateMenuItem(input, proposals);
             case "propose_update_setting":       return proposeUpdateSetting(input, proposals);
+            case "get_capabilities":   return json(capabilityRegistry.describe(tenantId, input.path("module").asText(null)));
             case "get_store_overview": return toolStoreOverview(tenantId);
             case "get_analytics":      return toolAnalytics(input.path("range").asText("30d"));
             case "get_books_summary":  return toolBooksSummary(tenantId, input.path("days").asInt(30));

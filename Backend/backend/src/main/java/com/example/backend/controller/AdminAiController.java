@@ -5,6 +5,7 @@ import com.example.backend.entity.AiAlert;
 import com.example.backend.repository.AiAlertRepository;
 import com.example.backend.service.AdminAiService;
 import com.example.backend.service.AdminAgentService;
+import com.example.backend.service.CapabilityRegistry;
 import com.example.backend.service.SmartAlertService;
 import com.example.backend.tenant.TenantContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,7 +31,14 @@ public class AdminAiController {
     private final AdminAgentService adminAgentService;
     private final SmartAlertService smartAlertService;
     private final AiAlertRepository aiAlertRepository;
+    private final CapabilityRegistry capabilityRegistry;
     private final ObjectMapper objectMapper;
+
+    /** GET /api/admin/ai/capabilities — the per-tenant capability manifest (AI + UI share it) */
+    @GetMapping("/capabilities")
+    public ResponseEntity<?> capabilities(@RequestParam(required = false) String module) {
+        return ResponseEntity.ok(capabilityRegistry.describe(TenantContext.getCurrentTenantId(), module));
+    }
 
     /** POST /api/admin/ai/describe-item — generate description + tags for a menu item */
     @PostMapping("/describe-item")
