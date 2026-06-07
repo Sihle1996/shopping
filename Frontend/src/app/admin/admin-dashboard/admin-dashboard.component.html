@@ -472,13 +472,33 @@
         </button>
       </div>
 
-      <div *ngFor="let msg of chatMessages" class="flex"
-           [ngClass]="msg.role === 'user' ? 'justify-end' : 'justify-start'">
-        <div class="max-w-[85%] px-3 py-2 rounded-2xl text-sm"
+      <div *ngFor="let msg of chatMessages" class="flex flex-col"
+           [ngClass]="msg.role === 'user' ? 'items-end' : 'items-start'">
+        <div class="max-w-[85%] px-3 py-2 rounded-2xl text-sm whitespace-pre-line"
              [ngClass]="msg.role === 'user'
                ? 'bg-primary text-white rounded-br-sm'
                : 'bg-surface border border-borderColor text-textDark rounded-bl-sm'">
           {{ msg.text }}
+        </div>
+
+        <!-- Proposed action confirm cards -->
+        <div *ngIf="msg.actions?.length" class="mt-2 w-full space-y-2">
+          <div *ngFor="let a of msg.actions"
+               class="rounded-xl border border-primary/40 bg-primary-50 px-3 py-2.5">
+            <p class="text-xs font-semibold text-textDark mb-2">{{ a.label }}?</p>
+            <div class="flex gap-2">
+              <button (click)="applyAction(msg, a)" [disabled]="applyingAction"
+                      class="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold
+                             hover:bg-primary-600 disabled:opacity-50 transition-colors flex items-center gap-1.5">
+                <span *ngIf="applyingAction === a" class="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                Apply
+              </button>
+              <button (click)="dismissAction(msg, a)"
+                      class="px-3 py-1.5 rounded-lg border border-borderColor text-xs text-textMuted hover:bg-white transition-colors">
+                Dismiss
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

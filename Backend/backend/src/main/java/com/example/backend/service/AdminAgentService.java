@@ -1,5 +1,7 @@
 package com.example.backend.service;
 
+import com.example.backend.entity.AiActionLog;
+import com.example.backend.entity.InventoryAdjustmentDTO;
 import com.example.backend.entity.MenuItem;
 import com.example.backend.entity.Order;
 import com.example.backend.entity.Review;
@@ -10,6 +12,7 @@ import com.example.backend.model.Promotion;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.PromotionRepository;
+import com.example.backend.repository.AiActionLogRepository;
 import com.example.backend.repository.ReviewRepository;
 import com.example.backend.repository.StoreHoursRepository;
 import com.example.backend.repository.TenantRepository;
@@ -47,21 +50,28 @@ public class AdminAgentService {
     private final UserRepository userRepository;
     private final InventoryService inventoryService;
     private final PayoutLedgerService payoutLedgerService;
+    private final AiActionLogRepository aiActionLogRepository;
     private final ObjectMapper objectMapper;
+
+    /** Copilot reply plus any actions it proposed (the UI shows confirm cards). */
+    public record AgentResult(String answer, List<Map<String, Object>> proposedActions) {}
 
     private static final ZoneId SAST = ZoneId.of("Africa/Johannesburg");
 
-    /** Returns the copilot's answer, or null if AI is unavailable (caller falls back). */
+    /** Returns the copilot's answer + proposed actions, or null if AI is unavailable. */
     @Transactional(readOnly = true)
-    public String chat(String question) {
+    public AgentResult chat(String question) {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId == null || !anthropicClient.isConfigured()) return null;
         Tenant tenant = tenantRepository.findById(tenantId).orElse(null);
         String system = buildSystemPrompt(tenant);
-        return anthropicClient.runAgent(
+        List<Map<String, Object>> proposals = new ArrayList<>();
+        String answer = anthropicClient.runAgent(
                 system, question, buildTools(),
-                (name, input) -> executeTool(tenantId, name, input),
+                (name, input) -> executeTool(tenantId, name, input, proposals),
                 8, 1500);
+        if (answer == null) return null;
+        return new AgentResult(answer, proposals);
     }
 
     // ── System prompt (store-aware) ───────────────────────────────────────────
@@ -79,10 +89,12 @@ public class AdminAgentService {
             practical, cite real figures, and proactively call out what matters (low stock, sold-out
             items, sales dips, standout or slow products, bad reviews).
 
-            You are currently READ-ONLY: if the owner asks you to change something (price, stock,
-            promo, hours), explain exactly what you would do and the expected impact, but make clear
-            you can't apply it yet. If a tool returns no data, say so plainly. Keep answers tight —
-            a few sentences or a short list, not an essay.
+            You can also PROPOSE changes using the propose_* tools: open/close the store, set an item's
+            availability, adjust stock, or change a price. These are NOT applied automatically — they
+            become confirmation cards the owner taps "Apply" on. So: propose clearly, state the expected
+            impact, and NEVER say a change is done — say you've proposed it for their approval. Only
+            propose when the owner is clearly asking to change something. If a tool returns no data, say
+            so. Keep answers tight — a few sentences or a short list, not an essay.
             """.formatted(name, cuisine, today);
     }
 
@@ -153,13 +165,42 @@ public class AdminAgentService {
                 "Counts of the store's registered users broken down by role (customers, drivers, admins).",
                 Map.of(), List.of()));
 
+        // ── Action proposals (require the owner to confirm in the UI) ──────────
+        tools.add(tool("propose_set_store_open",
+                "Propose opening or closing the store for orders. Use when the owner asks to open/close.",
+                Map.of("open", boolProp("true to open, false to close")),
+                List.of("open")));
+
+        tools.add(tool("propose_set_item_availability",
+                "Propose marking a menu item available or unavailable to customers.",
+                Map.of("item", strProp("Item name"),
+                       "available", boolProp("true = available, false = hidden")),
+                List.of("item", "available")));
+
+        tools.add(tool("propose_adjust_stock",
+                "Propose changing an item's stock by a relative amount (e.g. +10 to restock, -3 to remove).",
+                Map.of("item", strProp("Item name"),
+                       "change", intProp("Positive to add, negative to remove"),
+                       "reason", strProp("Short reason (e.g. restock, waste)")),
+                List.of("item", "change")));
+
+        tools.add(tool("propose_set_item_price",
+                "Propose setting a menu item's price (in Rand).",
+                Map.of("item", strProp("Item name"),
+                       "price", numProp("New price in Rand")),
+                List.of("item", "price")));
+
         return tools;
     }
 
     // ── Tool execution (tenant-scoped, read-only) ─────────────────────────────
 
-    private String executeTool(UUID tenantId, String name, JsonNode input) {
+    private String executeTool(UUID tenantId, String name, JsonNode input, List<Map<String, Object>> proposals) {
         switch (name) {
+            case "propose_set_store_open":       return proposeStoreOpen(input, proposals);
+            case "propose_set_item_availability": return proposeAvailability(tenantId, input, proposals);
+            case "propose_adjust_stock":         return proposeAdjustStock(tenantId, input, proposals);
+            case "propose_set_item_price":       return proposeSetPrice(tenantId, input, proposals);
             case "get_store_overview": return toolStoreOverview(tenantId);
             case "get_analytics":      return toolAnalytics(input.path("range").asText("30d"));
             case "list_orders":        return toolListOrders(tenantId,
@@ -411,6 +452,136 @@ public class AdminAgentService {
         return json(m);
     }
 
+    // ── Action proposals ──────────────────────────────────────────────────────
+
+    private String proposeStoreOpen(JsonNode input, List<Map<String, Object>> proposals) {
+        boolean open = input.path("open").asBoolean(true);
+        addProposal(proposals, "set_store_open",
+                open ? "Open the store for orders" : "Close the store",
+                Map.of("open", open));
+        return "Proposed for the owner to confirm — not applied yet.";
+    }
+
+    private String proposeAvailability(UUID tenantId, JsonNode input, List<Map<String, Object>> proposals) {
+        MenuItem item = resolveItem(tenantId, input.path("item").asText(null));
+        if (item == null) return "No menu item matched that name.";
+        boolean available = input.path("available").asBoolean(true);
+        addProposal(proposals, "set_item_availability",
+                (available ? "Make '" : "Hide '") + item.getName() + (available ? "' available" : "' from customers"),
+                Map.of("itemId", item.getId().toString(), "itemName", item.getName(), "available", available));
+        return "Proposed for the owner to confirm — not applied yet.";
+    }
+
+    private String proposeAdjustStock(UUID tenantId, JsonNode input, List<Map<String, Object>> proposals) {
+        MenuItem item = resolveItem(tenantId, input.path("item").asText(null));
+        if (item == null) return "No menu item matched that name.";
+        int change = input.path("change").asInt(0);
+        if (change == 0) return "Stock change must be non-zero.";
+        String reason = input.path("reason").asText("manual adjustment");
+        addProposal(proposals, "adjust_stock",
+                (change > 0 ? "Add " + change + " to '" : "Remove " + (-change) + " from '") + item.getName() + "' stock",
+                Map.of("itemId", item.getId().toString(), "itemName", item.getName(),
+                       "change", change, "reason", reason));
+        return "Proposed for the owner to confirm — not applied yet.";
+    }
+
+    private String proposeSetPrice(UUID tenantId, JsonNode input, List<Map<String, Object>> proposals) {
+        MenuItem item = resolveItem(tenantId, input.path("item").asText(null));
+        if (item == null) return "No menu item matched that name.";
+        double price = input.path("price").asDouble(-1);
+        if (price < 0) return "Provide a valid price.";
+        addProposal(proposals, "set_item_price",
+                "Set '" + item.getName() + "' price to R" + String.format("%.2f", price),
+                Map.of("itemId", item.getId().toString(), "itemName", item.getName(), "price", price));
+        return "Proposed for the owner to confirm — not applied yet.";
+    }
+
+    private void addProposal(List<Map<String, Object>> proposals, String action, String label, Map<String, Object> params) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("action", action);
+        p.put("label", label);
+        p.put("params", params);
+        proposals.add(p);
+    }
+
+    private MenuItem resolveItem(UUID tenantId, String nameOrId) {
+        if (nameOrId == null || nameOrId.isBlank()) return null;
+        String q = nameOrId.trim().toLowerCase();
+        List<MenuItem> items = menuItemRepository.findByTenant_Id(tenantId);
+        // exact match first, then contains
+        return items.stream().filter(i -> i.getName() != null && i.getName().equalsIgnoreCase(nameOrId.trim()))
+                .findFirst()
+                .or(() -> items.stream().filter(i -> i.getName() != null && i.getName().toLowerCase().contains(q)).findFirst())
+                .orElse(null);
+    }
+
+    // ── Action execution (called from /api/admin/ai/act after the owner confirms) ─
+
+    @Transactional
+    public Map<String, Object> executeAction(String action, Map<String, Object> params) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return Map.of("ok", false, "message", "No store context.");
+        String message;
+        try {
+            message = applyAction(tenantId, action, params);
+            logAction(tenantId, action, params, "APPLIED", message);
+            return Map.of("ok", true, "message", message);
+        } catch (Exception e) {
+            logAction(tenantId, action, params, "FAILED", e.getMessage());
+            return Map.of("ok", false, "message", "Couldn't apply that: " + e.getMessage());
+        }
+    }
+
+    private String applyAction(UUID tenantId, String action, Map<String, Object> p) {
+        switch (action) {
+            case "set_store_open": {
+                boolean open = Boolean.TRUE.equals(p.get("open"));
+                Tenant t = tenantRepository.findById(tenantId).orElseThrow();
+                t.setIsOpen(open);
+                tenantRepository.save(t);
+                return "Store is now " + (open ? "open" : "closed") + ".";
+            }
+            case "set_item_availability": {
+                UUID id = UUID.fromString((String) p.get("itemId"));
+                boolean available = Boolean.TRUE.equals(p.get("available"));
+                inventoryService.setAvailability(id, available);
+                return "'" + p.get("itemName") + "' is now " + (available ? "available" : "hidden") + ".";
+            }
+            case "adjust_stock": {
+                UUID id = UUID.fromString((String) p.get("itemId"));
+                int change = ((Number) p.get("change")).intValue();
+                InventoryAdjustmentDTO dto = new InventoryAdjustmentDTO();
+                dto.setMenuItemId(id);
+                dto.setStockChange(change);
+                dto.setReservedChange(0);
+                inventoryService.adjustInventory(List.of(dto));
+                return "Adjusted '" + p.get("itemName") + "' stock by " + (change > 0 ? "+" : "") + change + ".";
+            }
+            case "set_item_price": {
+                UUID id = UUID.fromString((String) p.get("itemId"));
+                double price = ((Number) p.get("price")).doubleValue();
+                MenuItem mi = menuItemRepository.findByIdAndTenant_Id(id, tenantId).orElseThrow();
+                mi.setPrice(price);
+                menuItemRepository.save(mi);
+                return "'" + mi.getName() + "' price set to R" + String.format("%.2f", price) + ".";
+            }
+            default:
+                throw new IllegalArgumentException("Unknown action: " + action);
+        }
+    }
+
+    private void logAction(UUID tenantId, String action, Map<String, Object> params, String status, String message) {
+        try {
+            AiActionLog log = new AiActionLog();
+            tenantRepository.findById(tenantId).ifPresent(log::setTenant);
+            log.setAction(action);
+            log.setParams(json(params));
+            log.setStatus(status);
+            log.setMessage(message);
+            aiActionLogRepository.save(log);
+        } catch (Exception ignored) { /* never fail the action on a logging error */ }
+    }
+
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private Instant rangeStart(String range) {
@@ -459,6 +630,14 @@ public class AdminAgentService {
 
     private Map<String, Object> intProp(String desc) {
         return Map.of("type", "integer", "description", desc);
+    }
+
+    private Map<String, Object> numProp(String desc) {
+        return Map.of("type", "number", "description", desc);
+    }
+
+    private Map<String, Object> boolProp(String desc) {
+        return Map.of("type", "boolean", "description", desc);
     }
 
     private Map<String, Object> enumProp(String desc, List<String> values) {

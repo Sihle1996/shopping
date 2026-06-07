@@ -42,10 +42,22 @@ export interface AiPromoSuggestionsResponse {
   suggestions: AiPromoSuggestion[];
 }
 
+export interface AiProposedAction {
+  action: string;
+  label: string;
+  params: Record<string, any>;
+}
+
 export interface AiQueryResponse {
   answer: string;
   data: Record<string, any>;
   question: string;
+  proposedActions?: AiProposedAction[];
+}
+
+export interface AiActResult {
+  ok: boolean;
+  message: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -69,5 +81,10 @@ export class AdminAiService {
 
   query(question: string): Observable<AiQueryResponse> {
     return this.http.post<AiQueryResponse>(`${this.base}/query`, { question });
+  }
+
+  /** Apply an action the copilot proposed, after the admin confirms. */
+  act(action: string, params: Record<string, any>): Observable<AiActResult> {
+    return this.http.post<AiActResult>(`${this.base}/act`, { action, params });
   }
 }
