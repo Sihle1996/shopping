@@ -11,6 +11,7 @@ import { debounceTime, takeUntil } from 'rxjs/operators';
 import { driver } from 'driver.js';
 import { AnalyticsService } from './analytics.service';
 import { AdminService } from 'src/app/services/admin.service';
+import { AdminAiService, AiOpportunity } from 'src/app/services/admin-ai.service';
 import { SubscriptionService } from 'src/app/services/subscription.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ToastrService } from 'ngx-toastr';
@@ -112,6 +113,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   analyticsLoading = true;
   settingsLoading = true;
 
+  // Profit Finder
+  profitOpps: AiOpportunity[] = [];
+  profitTotal = 0;
+  profitLoading = true;
+  applyingOpp: AiOpportunity | null = null;
+
   // Onboarding checklist
   setupMenuItems: any[] = [];
   setupCategories: any[] = [];
@@ -137,6 +144,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private analyticsService: AnalyticsService,
     private adminService: AdminService,
+    private adminAiService: AdminAiService,
     private subscriptionService: SubscriptionService,
     private notificationService: NotificationService,
     private router: Router,
@@ -152,6 +160,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.loadStats();
     this.loadStoreSettings();
     this.loadRecentOrders();
+    this.loadProfitFinder();
 
     this.notificationService.orderEvents
       .pipe(debounceTime(200), takeUntil(this.destroy$))
@@ -168,6 +177,42 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       if (this.hasAnalytics) this.loadAnalytics();
       else this.analyticsLoading = false;
     });
+  }
+
+  loadProfitFinder(): void {
+    this.profitLoading = true;
+    this.adminAiService.profitFinder().subscribe({
+      next: (res) => {
+        this.profitOpps = res.opportunities || [];
+        this.profitTotal = res.totalImpact || 0;
+        this.profitLoading = false;
+      },
+      error: () => { this.profitLoading = false; }
+    });
+  }
+
+  /** One-tap apply a Profit Finder opportunity's action. */
+  applyOpportunity(opp: AiOpportunity): void {
+    if (!opp.action || this.applyingOpp) return;
+    this.applyingOpp = opp;
+    this.adminAiService.act(opp.action.action, opp.action.params).subscribe({
+      next: (res) => {
+        this.applyingOpp = null;
+        if (res.ok) {
+          this.toastr.success(res.message, '✨ Done');
+          this.profitOpps = this.profitOpps.filter(o => o !== opp);
+          this.profitTotal = Math.max(0, this.profitTotal - (opp.randImpact || 0));
+          this.loadStats();
+        } else {
+          this.toastr.error(res.message);
+        }
+      },
+      error: () => { this.applyingOpp = null; this.toastr.error('Could not apply that.'); }
+    });
+  }
+
+  dismissOpportunity(opp: AiOpportunity): void {
+    this.profitOpps = this.profitOpps.filter(o => o !== opp);
   }
 
   private loadStoreSettings(): void {

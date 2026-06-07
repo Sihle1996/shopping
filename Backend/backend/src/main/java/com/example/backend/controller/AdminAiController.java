@@ -3,6 +3,7 @@ package com.example.backend.controller;
 import com.example.backend.dto.AiDescribeItemRequest;
 import com.example.backend.service.AdminAiService;
 import com.example.backend.service.AdminAgentService;
+import com.example.backend.service.ProfitFinderService;
 import com.example.backend.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ public class AdminAiController {
 
     private final AdminAiService adminAiService;
     private final AdminAgentService adminAgentService;
+    private final ProfitFinderService profitFinderService;
 
     /** POST /api/admin/ai/describe-item — generate description + tags for a menu item */
     @PostMapping("/describe-item")
@@ -86,5 +88,13 @@ public class AdminAiController {
             return ResponseEntity.badRequest().body(Map.of("ok", false, "message", "action is required"));
         }
         return ResponseEntity.ok(adminAgentService.executeAction(action, params));
+    }
+
+    /** GET /api/admin/ai/profit-finder — quantified money opportunities from the store's own data. */
+    @GetMapping("/profit-finder")
+    public ResponseEntity<Map<String, Object>> profitFinder() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return ResponseEntity.badRequest().body(Map.of("opportunities", java.util.List.of()));
+        return ResponseEntity.ok(profitFinderService.findOpportunities(tenantId));
     }
 }
