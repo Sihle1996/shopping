@@ -14,6 +14,7 @@ import { AdminFooterComponent } from '../admin-footer/admin-footer.component';
 import { AdminDiagnosticsComponent } from '../admin-diagnostics/admin-diagnostics.component';
 import { InventoryManagementComponent } from '../inventory-management/inventory-management.component';
 import { AdminLayoutComponent } from '../admin-layout/admin-layout.component';
+import { StoreCopilotComponent } from '../store-copilot/store-copilot.component';
 import { SharedModule } from '../../shared/shared.module';
 import { AdminRoutingModule } from '../admin-routing.module';
 import { AdminPromotionsComponent } from '../admin-promotions/admin-promotions.component';
@@ -37,6 +38,7 @@ import { AdminPayoutsComponent } from '../admin-payouts/admin-payouts.component'
     AdminDiagnosticsComponent,
     InventoryManagementComponent,
     AdminLayoutComponent,
+    StoreCopilotComponent,
     AdminPromotionsComponent,
     AdminSettingsComponent,
     AdminSubscriptionComponent,

@@ -11,7 +11,6 @@ import { debounceTime, takeUntil } from 'rxjs/operators';
 import { driver } from 'driver.js';
 import { AnalyticsService } from './analytics.service';
 import { AdminService } from 'src/app/services/admin.service';
-import { AdminAiService, AiProposedAction } from 'src/app/services/admin-ai.service';
 import { SubscriptionService } from 'src/app/services/subscription.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ToastrService } from 'ngx-toastr';
@@ -113,13 +112,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   analyticsLoading = true;
   settingsLoading = true;
 
-  // AI Chat widget ("Store Copilot")
-  chatOpen = false;
-  chatInput = '';
-  chatMessages: Array<{ role: 'user' | 'ai'; text: string; actions?: AiProposedAction[] }> = [];
-  chatLoading = false;
-  applyingAction: AiProposedAction | null = null;
-
   // Onboarding checklist
   setupMenuItems: any[] = [];
   setupCategories: any[] = [];
@@ -145,7 +137,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private analyticsService: AnalyticsService,
     private adminService: AdminService,
-    private adminAiService: AdminAiService,
     private subscriptionService: SubscriptionService,
     private notificationService: NotificationService,
     private router: Router,
@@ -473,60 +464,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
       noData: { text: 'No sales data for this period', style: { color: '#94a3b8' } }
     };
-  }
-
-  // ── AI Chat ("Ask your data") ───────────────────────────────────────────
-
-  toggleChat(): void {
-    this.chatOpen = !this.chatOpen;
-  }
-
-  sendChatMessage(): void {
-    const q = this.chatInput.trim();
-    if (!q || this.chatLoading) return;
-    this.chatMessages.push({ role: 'user', text: q });
-    this.chatInput = '';
-    this.chatLoading = true;
-    this.adminAiService.query(q).subscribe({
-      next: (res) => {
-        this.chatLoading = false;
-        this.chatMessages.push({ role: 'ai', text: res.answer, actions: res.proposedActions || [] });
-      },
-      error: () => {
-        this.chatLoading = false;
-        this.chatMessages.push({ role: 'ai', text: 'Sorry, I could not process that. Please try again.' });
-      }
-    });
-  }
-
-  /** Apply a copilot-proposed action after the admin taps Apply. */
-  applyAction(msg: { actions?: AiProposedAction[] }, action: AiProposedAction): void {
-    if (this.applyingAction) return;
-    this.applyingAction = action;
-    this.adminAiService.act(action.action, action.params).subscribe({
-      next: (res) => {
-        this.applyingAction = null;
-        // remove the card once applied and confirm in-thread
-        if (msg.actions) msg.actions = msg.actions.filter(a => a !== action);
-        this.chatMessages.push({ role: 'ai', text: res.ok ? '✓ ' + res.message : '⚠️ ' + res.message });
-        if (res.ok) { this.loadStats(); this.loadStoreSettings(); }
-      },
-      error: () => {
-        this.applyingAction = null;
-        this.chatMessages.push({ role: 'ai', text: '⚠️ Could not apply that action.' });
-      }
-    });
-  }
-
-  dismissAction(msg: { actions?: AiProposedAction[] }, action: AiProposedAction): void {
-    if (msg.actions) msg.actions = msg.actions.filter(a => a !== action);
-  }
-
-  onChatKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      this.sendChatMessage();
-    }
   }
 
   private buildPeakHoursChartOptions(data: Array<{ hour: number; orderCount: number }>): Partial<ProductsChartOptions> {

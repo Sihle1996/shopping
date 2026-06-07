@@ -6,6 +6,7 @@ import com.example.backend.entity.Review;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.ReviewRepository;
+import com.example.backend.tenant.TenantContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,10 +54,39 @@ public class AdminAiService {
                 "Tags must be chosen only from: filling, comfort, healthy, light, premium, indulgent, quick, grilled, fried, spicy, sweet, vegan, value";
 
         String raw = anthropicClient.call(prompt);
-        if (raw != null && !raw.isBlank()) {
-            return parseJsonOrFallback(raw, buildDescribeFallback(name, price, category));
+        Map<String, Object> base = (raw != null && !raw.isBlank())
+                ? parseJsonOrFallback(raw, buildDescribeFallback(name, price, category))
+                : buildDescribeFallback(name, price, category);
+
+        // Price is NOT guessed by the AI — anchor it to the store's own existing
+        // items in the same category (median). No comparable items => no suggestion.
+        Map<String, Object> out = new LinkedHashMap<>(base);
+        out.remove("suggestedPrice");
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId != null) {
+            String cat = (String) out.getOrDefault("suggestedCategory", category);
+            Double median = medianCategoryPrice(tenantId, cat != null ? cat : category);
+            if (median != null) out.put("suggestedPrice", median);
         }
-        return buildDescribeFallback(name, price, category);
+        return out;
+    }
+
+    /** Median price of the store's existing priced items in a category (or overall). */
+    private Double medianCategoryPrice(UUID tenantId, String category) {
+        List<MenuItem> priced = menuItemRepository.findByTenant_Id(tenantId).stream()
+                .filter(i -> i.getPrice() != null && i.getPrice() > 0)
+                .collect(Collectors.toList());
+        List<Double> prices = (category != null && !category.isBlank())
+                ? priced.stream().filter(i -> category.equalsIgnoreCase(i.getCategory()))
+                        .map(MenuItem::getPrice).sorted().collect(Collectors.toList())
+                : new ArrayList<>();
+        if (prices.isEmpty()) {
+            prices = priced.stream().map(MenuItem::getPrice).sorted().collect(Collectors.toList());
+        }
+        if (prices.isEmpty()) return null; // no basis — don't suggest
+        int n = prices.size();
+        double med = (n % 2 == 1) ? prices.get(n / 2) : (prices.get(n / 2 - 1) + prices.get(n / 2)) / 2.0;
+        return Math.round(med * 100.0) / 100.0;
     }
 
     // ── Feature 2: Promotion Optimizer ─────────────────────────────────────
@@ -425,7 +455,16 @@ public class AdminAiService {
         String desc = String.format("A tasty %s for just R%.0f — a great choice any time.",
                 category != null ? category.toLowerCase() : "item",
                 price != null ? price : BigDecimal.ZERO);
-        return Map.of("description", desc, "tags", tags, "suggestedCategory", category != null ? category : "");
+        double suggestedPrice = (price != null && price.doubleValue() > 0) ? price.doubleValue()
+                : cat.contains("drink") || cat.contains("juice") ? 20
+                : cat.contains("side") || cat.contains("fries") ? 35
+                : cat.contains("dessert") ? 40
+                : cat.contains("burger") || cat.contains("wrap") ? 85
+                : cat.contains("main") || cat.contains("platter") || cat.contains("ribs") ? 130
+                : 60;
+        return Map.of("description", desc, "tags", tags,
+                "suggestedCategory", category != null ? category : "",
+                "suggestedPrice", suggestedPrice);
     }
 
     private Map<String, Object> buildRuleBasedPromoSuggestions(List<MenuItem> menuItems, Map<UUID, Long> itemCounts) {

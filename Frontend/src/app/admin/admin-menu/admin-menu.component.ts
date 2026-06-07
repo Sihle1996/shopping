@@ -199,9 +199,12 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
         if (res.suggestedCategory && !this.formData.category) {
           this.formData.category = res.suggestedCategory;
         }
-        if (res.tags?.length) {
-          this.toastr.success(`Generated a description + ${res.tags.length} tag ideas`, '✨ AI');
-        }
+        const applyPrice = !!res.suggestedPrice && (!this.formData.price || this.formData.price <= 0);
+        if (applyPrice) this.formData.price = res.suggestedPrice!;
+        const msg = applyPrice
+          ? 'Wrote the description; suggested a price from your similar items — adjust to your costs'
+          : 'Wrote the description';
+        this.toastr.success(msg, '✨ AI');
       },
       error: () => {
         this.aiGenerating = false;

@@ -13,6 +13,7 @@ export interface AiDescribeItemResponse {
   description: string;
   tags: string[];
   suggestedCategory: string;
+  suggestedPrice?: number;
 }
 
 export interface AiReviewDigestResponse {

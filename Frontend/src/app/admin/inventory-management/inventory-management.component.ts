@@ -5,6 +5,7 @@ import { debounceTime, filter, takeUntil } from 'rxjs/operators';
 import { AdminService } from 'src/app/services/admin.service';
 import { SubscriptionService } from 'src/app/services/subscription.service';
 import { NotificationService } from 'src/app/services/notification.service';
+import { CopilotService } from 'src/app/services/copilot.service';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
@@ -32,8 +33,14 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
     private subscriptionService: SubscriptionService,
     private notificationService: NotificationService,
     private router: Router,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private copilotService: CopilotService
   ) {}
+
+  /** Ask the global Store Copilot for restock guidance. */
+  askRestockAdvice(): void {
+    this.copilotService.ask('Which items are sold out or low on stock, and roughly how much should I restock each? Keep it short.');
+  }
 
   ngOnInit(): void {
     this.fetchInventory();
