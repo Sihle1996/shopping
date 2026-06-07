@@ -180,30 +180,34 @@ public class AdminAiService {
                 .limit(3)
                 .collect(Collectors.toList());
 
-        // Decision gradient — score each candidate so the cards differ instead of cloning.
-        // Both inputs are real signals: demand (units, vs the strongest) and margin headroom
-        // (how far above the store median). NO behavioural claims (no "drives baskets").
+        // Decision gradient — score each candidate by demand (vs the strongest) + margin
+        // headroom (over the store median) + historical response, then ORDER the cards by that
+        // score so the strongest test candidate is first (not merely the highest volume — a
+        // top-volume item at the median margin has no room to discount, so it scores lower).
         long maxUnits = candidates.stream().mapToLong(i -> itemCounts.getOrDefault(i.getId(), 0L)).max().orElse(1);
         double medM = medianMargin != null ? medianMargin : 0;
         double maxMargin = candidates.stream().mapToDouble(MenuItem::getMarginPercent).max().orElse(medM);
+        final long mu = maxUnits; final double mm = maxMargin, md = medM;
+        java.util.function.ToDoubleFunction<MenuItem> scoreOf = it -> {
+            double dS = mu > 0 ? (double) itemCounts.getOrDefault(it.getId(), 0L) / mu : 0;     // demand 0..1
+            double mS = mm > md ? (it.getMarginPercent() - md) / (mm - md) : 0.5;               // margin headroom 0..1
+            double c = dS * 0.6 + mS * 0.4;
+            double[] hh = history.get(it.getId());
+            if (hh != null && hh[1] > 0) c += Math.max(-0.25, Math.min(0.25, (hh[0] / hh[1]) / 200.0)); // history nudge
+            return c;
+        };
+        candidates.sort((a, b) -> Double.compare(scoreOf.applyAsDouble(b), scoreOf.applyAsDouble(a)));
 
         String today = LocalDate.now().toString();
         String endAt = LocalDate.now().plusDays(5).toString();
         List<Map<String, Object>> suggestions = new ArrayList<>();
-        int rank = 0;
         for (MenuItem item : candidates) {
-            rank++;
             long units = itemCounts.getOrDefault(item.getId(), 0L);
             double margin = item.getMarginPercent();
-            double demandScore = maxUnits > 0 ? (double) units / maxUnits : 0;                  // 0..1
-            double marginScore = maxMargin > medM ? (margin - medM) / (maxMargin - medM) : 0.5; // 0..1
-            double composite = demandScore * 0.6 + marginScore * 0.4;
-            // LEARN: nudge ranking by this item's historical net response (bounded ±0.25),
-            // so promos that performed well before surface higher — observed, not proof.
+            double composite = scoreOf.applyAsDouble(item);
             double[] h = history.get(item.getId());
             Double avgNet = (h != null && h[1] > 0) ? h[0] / h[1] : null;
             long samples = h != null ? (long) h[1] : 0;
-            if (avgNet != null) composite += Math.max(-0.25, Math.min(0.25, avgNet / 200.0));
             String strength = composite >= 0.66 ? "STRONG" : composite >= 0.33 ? "MODERATE" : "WEAK";
             int discount = (int) Math.min(18, Math.max(5, Math.round(margin * 0.20)));          // varies, below margin
 
@@ -232,7 +236,7 @@ public class AdminAiService {
             Map<String, Object> s = new LinkedHashMap<>();
             // FACTS — observed, immutable (the data layer)
             s.put("facts", List.of(
-                    "#" + rank + " by volume — " + units + " orders in 30 days",
+                    units + " orders in the last 30 days",
                     String.format(Locale.UK, "%.0f%% margin (store median %.0f%%)", margin, medM),
                     String.format(Locale.UK, "R%.2f current price", item.getPrice())));
             // ANALYSIS — structured tokens (epistemic layer). insightStrength + recommendationType
@@ -243,7 +247,7 @@ public class AdminAiService {
             // response is kept OUT of here so a learning number can never sit among the
             // facts as if it were one.
             analysis.put("evidence", List.of(
-                    units + " orders in the last 30 days (rank #" + rank + ")",
+                    units + " orders in the last 30 days",
                     String.format(Locale.UK, "%.0f%% margin — %s the store median",
                             margin, margin >= medM ? "at or above" : "below"),
                     "In stock now"));
