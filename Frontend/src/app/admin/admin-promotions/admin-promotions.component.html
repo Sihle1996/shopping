@@ -39,6 +39,9 @@
              [hidden]="aiSuggestionsDismissed.has(i)"
              class="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border border-borderColor bg-surface">
           <div class="flex-1 min-w-0">
+            <span *ngIf="s.strength" class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded mb-1">
+              <i class="bi bi-flask"></i> {{ s.strength }}
+            </span>
             <p class="text-xs text-textMuted mb-1">{{ s.reason }}</p>
             <div class="flex flex-wrap items-center gap-2">
               <span class="font-semibold text-textDark text-sm">{{ s.proposedPromo.title }}</span>

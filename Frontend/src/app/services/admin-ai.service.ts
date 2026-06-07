@@ -36,6 +36,7 @@ export interface AiProposedPromo {
 
 export interface AiPromoSuggestion {
   reason: string;
+  strength?: string; // 'Experimental' — promo impact is unproven without elasticity data
   proposedPromo: AiProposedPromo;
 }
 

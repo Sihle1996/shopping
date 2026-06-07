@@ -140,17 +140,26 @@ public class AdminAiService {
 
         String today = LocalDate.now().toString();
         String prompt =
-                "You are a promotions advisor for a South African food delivery restaurant.\n" +
-                "Based on 30-day order data below, suggest 1–3 time-limited promotions to boost sales.\n" +
-                "Today is " + today + ".\n" +
-                "PROFIT RULES: prefer discounting items with a HEALTHY margin (you can afford it) and good " +
-                "volume; the discountPercent must stay well below the item's margin so it never sells below " +
-                "cost; do NOT suggest discounts on thin-margin items (or where margin is n/a).\n" +
+                "You are a promotions advisor for a South African food-delivery restaurant. Suggest 0-3 time-limited " +
+                "promotions from the 30-day data below. Today is " + today + ".\n" +
+                "EVIDENCE CONSTRAINT (critical): the ONLY data you have is order frequency, price, margin and stock. " +
+                "You do NOT have price elasticity, past promotion response, basket/bundle behaviour, customer intent, " +
+                "or peak-hour data. Therefore:\n" +
+                "- Base each suggestion ONLY on frequency + margin + stock: a popular item with a HEALTHY margin, with " +
+                "the discountPercent kept well below that item's margin so it never sells below cost. Skip thin-margin " +
+                "or margin=n/a items. If nothing qualifies, return an empty suggestions list.\n" +
+                "- Treat every promo as an EXPERIMENT — its effect on volume is UNKNOWN. NEVER claim a discount 'will " +
+                "drive', 'encourages', 'positions', 'captures' or 'boosts' demand, and never assume peak hours or that " +
+                "bundles lift baskets. Use neutral, honest language.\n" +
+                "- 'reason' must state ONLY: the evidence (the metric, e.g. '21 orders, 64% margin'), that the volume " +
+                "uplift is unproven, and the main risk (margin or cannibalising full-price sales). 1-2 sentences.\n" +
+                "- 'strength' is always 'Experimental' (you have no promo-response data to justify 'Strong').\n" +
                 "Return JSON only, no markdown:\n" +
                 "{\n" +
                 "  \"suggestions\": [\n" +
                 "    {\n" +
-                "      \"reason\": \"<why this promo makes sense>\",\n" +
+                "      \"reason\": \"<evidence + 'uplift unproven' + the risk>\",\n" +
+                "      \"strength\": \"Experimental\",\n" +
                 "      \"proposedPromo\": {\n" +
                 "        \"title\": \"<promo name>\",\n" +
                 "        \"discountPercent\": <10-30>,\n" +

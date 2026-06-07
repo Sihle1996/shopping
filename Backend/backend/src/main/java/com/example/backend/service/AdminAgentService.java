@@ -259,9 +259,11 @@ public class AdminAgentService {
             For overall profitability, the bottom line, costs or expenses ("are we making money?",
             "what's my profit?", "where's my money going?"), call get_books_summary — it returns the
             full P&L (gross/net/operating profit and margins, sales by category, operating expenses).
-            When proposing a promotion, TARGET it from the data instead of blanket store-wide: a healthy-
-            margin popular item (PRODUCT) drives profitable volume; a slow or overstocked item/category
-            clears stock; ALL is a blunt last resort. Always verify the discounted price still beats cost.
+            When proposing a promotion, TARGET it from the data (a popular, healthy-margin PRODUCT, or a
+            CATEGORY; ALL only if asked) and keep the discount below the item's margin so it never sells below
+            cost. But you only have frequency + margin + stock — NOT elasticity, past-promo response or basket
+            data — so a promo's effect on volume is UNKNOWN: frame it as an experiment, never claim it 'will
+            drive'/'boost'/'encourage' sales, and name the risk (margin / cannibalising full-price sales).
 
             You can also PROPOSE changes using the propose_* tools: open/close the store, set an item's
             availability, adjust stock, change a price, add a new menu item, move an order along its lifecycle
