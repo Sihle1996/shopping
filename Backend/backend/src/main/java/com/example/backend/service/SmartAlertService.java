@@ -186,11 +186,34 @@ public class SmartAlertService {
         if (activePromos == 0 && revPrior7 > 0 && rev7 < revPrior7 && canAddPromotion(tenantId, activePromos)) {
             double dropPct = (revPrior7 - rev7) / revPrior7 * 100.0;
             if (dropPct >= MIN_SALES_DIP_PCT) {
+                // Target the discount intelligently: the most popular item the store can afford
+                // to discount (margin at/above its median, in stock) — not a blunt store-wide deal.
+                MenuItem promoTarget = null; int promoUnits = 0;
+                for (MenuItem mi : items) {
+                    int u = sold.getOrDefault(mi.getId(), 0);
+                    Double m = mi.getMarginPercent();
+                    boolean sellable = !Boolean.FALSE.equals(mi.getIsAvailable())
+                            && (mi.getStock() - mi.getReservedStock()) > 0;
+                    boolean affordable = m == null || medianMargin == null || m >= medianMargin;
+                    if (u > promoUnits && sellable && affordable) { promoTarget = mi; promoUnits = u; }
+                }
+                Map<String, Object> promoParams = new LinkedHashMap<>();
+                promoParams.put("title", "Win-back Deal");
+                promoParams.put("discountPercent", 15);
+                promoParams.put("days", 3);
+                String promoLabel;
+                if (promoTarget != null) {
+                    promoParams.put("appliesTo", "PRODUCT");
+                    promoParams.put("target", promoTarget.getName());
+                    promoLabel = "15% off " + promoTarget.getName() + " for 3 days";
+                } else {
+                    promoParams.put("appliesTo", "ALL");
+                    promoLabel = "Launch 15% off for 3 days";
+                }
                 created += raise(activeKeys, tenant, "sales-dip", "medium",
                         String.format(Locale.UK, "Sales are down %.0f%% vs last week", dropPct),
                         String.format(Locale.UK, "You took R%.0f this week vs R%.0f last week, with no deal live. A short discount can win customers back.", rev7, revPrior7),
-                        action("create_promotion", "Launch 15% off for 3 days",
-                                Map.of("title", "Win-back Deal", "discountPercent", 15, "days", 3)),
+                        action("create_promotion", promoLabel, promoParams),
                         riskImpact(revPrior7 - rev7, marginFrac, commissionFrac, "vs last week"));
             }
         }

@@ -10,6 +10,7 @@ import com.example.backend.entity.SalesTrendDTO;
 import com.example.backend.entity.TopProductDTO;
 import com.example.backend.entity.Tenant;
 import com.example.backend.model.Promotion;
+import com.example.backend.repository.CategoryRepository;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.PromotionRepository;
@@ -45,6 +46,7 @@ public class AdminAgentService {
     private final TenantRepository tenantRepository;
     private final OrderRepository orderRepository;
     private final MenuItemRepository menuItemRepository;
+    private final CategoryRepository categoryRepository;
     private final ReviewRepository reviewRepository;
     private final PromotionRepository promotionRepository;
     private final StoreHoursRepository storeHoursRepository;
@@ -245,9 +247,13 @@ public class AdminAgentService {
             For overall profitability, the bottom line, costs or expenses ("are we making money?",
             "what's my profit?", "where's my money going?"), call get_books_summary — it returns the
             full P&L (gross/net/operating profit and margins, sales by category, operating expenses).
+            When proposing a promotion, TARGET it from the data instead of blanket store-wide: a healthy-
+            margin popular item (PRODUCT) drives profitable volume; a slow or overstocked item/category
+            clears stock; ALL is a blunt last resort. Always verify the discounted price still beats cost.
 
             You can also PROPOSE changes using the propose_* tools: open/close the store, set an item's
-            availability, adjust stock, change a price, create a promotion (a %% off everything for N days),
+            availability, adjust stock, change a price, create a promotion (choose its scope — one PRODUCT,
+            a CATEGORY, or ALL — deliberately from the data; don't default to store-wide),
             or change a store setting (delivery fee, minimum order, driver earning %%, loyalty on/off,
             estimated delivery minutes, delivery radius). These are NOT applied automatically — they
             become confirmation cards the owner taps "Apply" on. So: propose clearly, state the expected
@@ -376,11 +382,17 @@ public class AdminAgentService {
                 List.of("item", "price")));
 
         tools.add(tool("propose_create_promotion",
-                "Propose a store-wide promotion (a % off everything) running for a number of days. "
-                        + "Use when the owner wants to run a deal or discount.",
+                "Propose a promotion. CHOOSE THE SCOPE deliberately from the data — don't default to "
+                        + "store-wide. appliesTo=PRODUCT discounts one item (best for promoting a popular, "
+                        + "healthy-margin favourite, or clearing an overstocked item), CATEGORY discounts a "
+                        + "whole category, ALL is everything (use only when the owner asks for store-wide). "
+                        + "For PRODUCT or CATEGORY set 'target' to the exact item/category name. Never pick a "
+                        + "discount that takes the target item below its cost — check its margin first via get_menu.",
                 Map.of("title", strProp("Short promo title, e.g. 'Weekend Special'"),
                        "discountPercent", numProp("Discount percent, 1-100"),
-                       "days", intProp("How many days it runs (default 3)")),
+                       "days", intProp("How many days it runs (default 3)"),
+                       "appliesTo", enumProp("Scope of the discount", List.of("ALL", "CATEGORY", "PRODUCT")),
+                       "target", strProp("Exact product or category name — required unless appliesTo=ALL")),
                 List.of("title", "discountPercent")));
 
         tools.add(tool("propose_update_setting",
@@ -785,9 +797,26 @@ public class AdminAgentService {
         if (pct < 1 || pct > 100) return "Discount must be between 1 and 100%.";
         int days = input.path("days").asInt(3);
         if (days < 1) days = 3;
+        String appliesTo = input.path("appliesTo").asText("ALL").toUpperCase(Locale.ROOT);
+        String target = input.hasNonNull("target") ? input.get("target").asText().trim() : null;
+        if (!"ALL".equals(appliesTo) && (target == null || target.isBlank())) {
+            return "For a " + appliesTo + " promo I need the exact "
+                    + ("PRODUCT".equals(appliesTo) ? "item" : "category") + " name to target.";
+        }
+        String scope = switch (appliesTo) {
+            case "PRODUCT" -> "on " + target;
+            case "CATEGORY" -> "across " + target;
+            default -> "off everything";
+        };
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("title", title);
+        params.put("discountPercent", pct);
+        params.put("days", days);
+        params.put("appliesTo", appliesTo);
+        if (target != null) params.put("target", target);
         addProposal(proposals, "create_promotion",
-                "Run '" + title + "' — " + (int) pct + "% off everything for " + days + " day" + (days > 1 ? "s" : ""),
-                Map.of("title", title, "discountPercent", pct, "days", days));
+                "Run '" + title + "' — " + (int) pct + "% off " + scope + " for " + days + " day" + (days > 1 ? "s" : ""),
+                params);
         return "Proposed for the owner to confirm — not applied yet.";
     }
 
@@ -886,19 +915,41 @@ public class AdminAgentService {
                 String title = (String) p.getOrDefault("title", "Special offer");
                 double pct = ((Number) p.get("discountPercent")).doubleValue();
                 int days = p.get("days") != null ? ((Number) p.get("days")).intValue() : 3;
+                String appliesTo = p.get("appliesTo") != null ? p.get("appliesTo").toString().toUpperCase(Locale.ROOT) : "ALL";
+                String target = p.get("target") != null ? p.get("target").toString().trim() : null;
                 subscriptionEnforcementService.assertPromotionLimit(tenantId); // respect plan limits
                 Tenant t = tenantRepository.findById(tenantId).orElseThrow();
                 Promotion promo = new Promotion();
                 promo.setTenant(t);
                 promo.setTitle(title);
                 promo.setDiscountPercent(java.math.BigDecimal.valueOf(pct));
-                promo.setAppliesTo(Promotion.AppliesTo.ALL);
                 promo.setStartAt(OffsetDateTime.now());
                 promo.setEndAt(OffsetDateTime.now().plusDays(days));
                 promo.setActive(true);
                 promo.setFeatured(false);
+
+                String scopeDesc;
+                if ("PRODUCT".equals(appliesTo) && target != null) {
+                    MenuItem item = menuItemRepository.findByTenant_Id(tenantId).stream()
+                            .filter(mi -> target.equalsIgnoreCase(mi.getName())).findFirst().orElse(null);
+                    if (item == null) return "No item named '" + target + "' — can't target that promo.";
+                    promo.setAppliesTo(Promotion.AppliesTo.PRODUCT);
+                    promo.setTargetProductId(item.getId());
+                    promo.setTargetProductName(item.getName());
+                    scopeDesc = "on " + item.getName();
+                } else if ("CATEGORY".equals(appliesTo) && target != null) {
+                    promo.setAppliesTo(Promotion.AppliesTo.CATEGORY);
+                    promo.setTargetCategoryName(target);
+                    categoryRepository.findByTenant_Id(tenantId).stream()
+                            .filter(c -> target.equalsIgnoreCase(c.getName())).findFirst()
+                            .ifPresent(c -> promo.setTargetCategoryId(c.getId()));
+                    scopeDesc = "across " + target;
+                } else {
+                    promo.setAppliesTo(Promotion.AppliesTo.ALL);
+                    scopeDesc = "off everything";
+                }
                 promotionRepository.save(promo);
-                return "Created '" + title + "' — " + (int) pct + "% off everything for " + days + " day(s).";
+                return "Created '" + title + "' — " + (int) pct + "% " + scopeDesc + " for " + days + " day(s).";
             }
             case "update_setting": {
                 String s = (String) p.get("setting");
