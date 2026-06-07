@@ -61,21 +61,6 @@ export interface AiActResult {
   message: string;
 }
 
-export interface AiOpportunity {
-  type: string;
-  severity: 'high' | 'medium' | 'low';
-  title: string;
-  detail: string;
-  randImpact: number;
-  action?: AiProposedAction;
-}
-
-export interface ProfitFinderResponse {
-  opportunities: AiOpportunity[];
-  totalImpact: number;
-  currency: string;
-}
-
 @Injectable({ providedIn: 'root' })
 export class AdminAiService {
   private readonly base = `${environment.apiUrl}/api/admin/ai`;
@@ -102,10 +87,5 @@ export class AdminAiService {
   /** Apply an action the copilot proposed, after the admin confirms. */
   act(action: string, params: Record<string, any>): Observable<AiActResult> {
     return this.http.post<AiActResult>(`${this.base}/act`, { action, params });
-  }
-
-  /** Quantified money opportunities ("Profit Finder"). */
-  profitFinder(): Observable<ProfitFinderResponse> {
-    return this.http.get<ProfitFinderResponse>(`${this.base}/profit-finder`);
   }
 }
