@@ -271,6 +271,38 @@ public class AdminAiService {
         return result;
     }
 
+    // ── Feature: AI Support Desk ───────────────────────────────────────────
+
+    /**
+     * Drafts a reply to a customer support ticket, plus triage metadata
+     * (category, urgency) and an internal suggested resolution (e.g. a credit).
+     * One-shot, read-only — the owner reviews/edits before anything is sent.
+     */
+    public Map<String, Object> draftSupportReply(String subject, String message) {
+        Map<String, Object> fallback = Map.of(
+                "category", "Other",
+                "urgency", "medium",
+                "draftReply", "Thanks for reaching out — we're looking into this and will come back to you shortly.",
+                "suggestedResolution", "Review the ticket and respond",
+                "suggestedStatus", "IN_PROGRESS");
+        if (!anthropicClient.isConfigured()) return fallback;
+        String prompt =
+                "You are a warm, professional customer-support agent for a South African food-delivery store on CraveIt.\n" +
+                "A customer raised this support ticket:\n" +
+                "Subject: " + (subject != null ? subject : "") + "\n" +
+                "Message: " + (message != null ? message : "") + "\n\n" +
+                "Return JSON only, no markdown:\n" +
+                "{\n" +
+                "  \"category\": \"<one of: Delivery, Food quality, Payment/Refund, Order issue, Account, Other>\",\n" +
+                "  \"urgency\": \"<low | medium | high>\",\n" +
+                "  \"draftReply\": \"<a warm, concise reply TO THE CUSTOMER, 2-4 sentences, South African English; own the issue, apologise if warranted, and give a clear next step or resolution. No placeholders or brackets.>\",\n" +
+                "  \"suggestedResolution\": \"<short internal note for the owner, e.g. 'Refund the delivery fee', 'Offer R20 loyalty credit', 'Explain — no refund due'>\",\n" +
+                "  \"suggestedStatus\": \"<OPEN | IN_PROGRESS | RESOLVED>\"\n" +
+                "}";
+        String raw = anthropicClient.call(prompt);
+        return (raw != null && !raw.isBlank()) ? parseJsonOrFallback(raw, fallback) : fallback;
+    }
+
     // ── Feature 4: Conversational Analytics ────────────────────────────────
 
     public Map<String, Object> queryAnalytics(String question, UUID tenantId) {

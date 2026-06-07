@@ -65,6 +65,14 @@ export interface AiBriefing {
   briefing: string;
 }
 
+export interface AiSupportDraft {
+  category: string;
+  urgency: 'low' | 'medium' | 'high' | string;
+  draftReply: string;
+  suggestedResolution: string;
+  suggestedStatus: string;
+}
+
 export interface AiAlertImpact {
   revenueAtRisk?: number;
   grossProfitAtRisk?: number;
@@ -103,6 +111,11 @@ export class AdminAiService {
 
   query(question: string, history?: { role: string; text: string }[]): Observable<AiQueryResponse> {
     return this.http.post<AiQueryResponse>(`${this.base}/query`, { question, history: history || [] });
+  }
+
+  /** Draft a support-ticket reply + triage (category, urgency, suggested resolution & status). */
+  draftSupport(subject: string, message: string): Observable<AiSupportDraft> {
+    return this.http.post<AiSupportDraft>(`${this.base}/support/draft`, { subject, message });
   }
 
   /** Apply an action the copilot proposed, after the admin confirms. */

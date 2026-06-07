@@ -39,6 +39,17 @@ public class AdminAiController {
         return ResponseEntity.ok(result);
     }
 
+    /** POST /api/admin/ai/support/draft — draft a reply + triage for a support ticket */
+    @PostMapping("/support/draft")
+    public ResponseEntity<Map<String, Object>> supportDraft(@RequestBody Map<String, String> body) {
+        String subject = body.getOrDefault("subject", "").trim();
+        String message = body.getOrDefault("message", "").trim();
+        if (message.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "message is required"));
+        }
+        return ResponseEntity.ok(adminAiService.draftSupportReply(subject, message));
+    }
+
     /** POST /api/admin/ai/review-digest — weekly sentiment summary of customer reviews */
     @PostMapping("/review-digest")
     public ResponseEntity<Map<String, Object>> reviewDigest(

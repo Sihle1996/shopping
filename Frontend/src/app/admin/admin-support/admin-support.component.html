@@ -59,9 +59,23 @@
                 <option *ngFor="let s of statuses" [value]="s">{{ statusLabel(s) }}</option>
               </select>
             </div>
+            <!-- AI triage chips -->
+            <div *ngIf="aiCategory || aiResolution" class="flex flex-wrap items-center gap-1.5">
+              <span *ngIf="aiCategory" class="px-2 py-0.5 rounded-md bg-primary-100 text-primary-700 text-[11px] font-semibold">{{ aiCategory }}</span>
+              <span *ngIf="aiUrgency" class="px-2 py-0.5 rounded-md text-[11px] font-semibold" [ngClass]="urgencyClass(aiUrgency)">{{ aiUrgency }} urgency</span>
+              <span *ngIf="aiResolution" class="text-[11px] text-textMuted">· {{ aiResolution }}</span>
+            </div>
             <div>
-              <label class="text-xs text-textMuted block mb-1">Reply / Notes</label>
-              <textarea [(ngModel)]="draftNotes" rows="3"
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-xs text-textMuted">Reply / Notes</label>
+                <button (click)="draftWithAi()" [disabled]="aiDrafting"
+                        class="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline disabled:opacity-50">
+                  <span *ngIf="aiDrafting" class="inline-block w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
+                  <i *ngIf="!aiDrafting" class="bi bi-stars"></i>
+                  {{ aiDrafting ? 'Drafting…' : 'Draft with AI' }}
+                </button>
+              </div>
+              <textarea [(ngModel)]="draftNotes" rows="4"
                         placeholder="Write a reply visible to the customer..."
                         class="w-full px-3 py-2 rounded-xl border border-borderColor bg-surface text-sm
                                focus:outline-none focus:ring-2 focus:ring-primary-400 resize-none"></textarea>

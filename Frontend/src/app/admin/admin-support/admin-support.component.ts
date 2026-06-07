@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from 'src/app/services/auth.service';
+import { AdminAiService } from 'src/app/services/admin-ai.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 
@@ -28,6 +29,12 @@ export class AdminSupportComponent implements OnInit {
   draftNotes = '';
   draftStatus = '';
 
+  // AI draft
+  aiDrafting = false;
+  aiCategory = '';
+  aiUrgency = '';
+  aiResolution = '';
+
   readonly statuses = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
 
   private get headers(): HttpHeaders {
@@ -37,7 +44,8 @@ export class AdminSupportComponent implements OnInit {
     return new HttpHeaders(h);
   }
 
-  constructor(private http: HttpClient, private auth: AuthService, private toastr: ToastrService) {}
+  constructor(private http: HttpClient, private auth: AuthService,
+              private ai: AdminAiService, private toastr: ToastrService) {}
 
   ngOnInit(): void { this.load(); }
 
@@ -51,9 +59,36 @@ export class AdminSupportComponent implements OnInit {
     this.selected = t;
     this.draftNotes = t.adminNotes ?? '';
     this.draftStatus = t.status;
+    this.aiCategory = ''; this.aiUrgency = ''; this.aiResolution = '';
   }
 
   close(): void { this.selected = null; }
+
+  /** Ask the AI to triage the ticket and draft a customer reply into the notes box. */
+  draftWithAi(): void {
+    if (!this.selected || this.aiDrafting) return;
+    this.aiDrafting = true;
+    this.ai.draftSupport(this.selected.subject, this.selected.message).subscribe({
+      next: (d) => {
+        this.aiDrafting = false;
+        this.aiCategory = d.category || '';
+        this.aiUrgency = d.urgency || '';
+        this.aiResolution = d.suggestedResolution || '';
+        // Prefill the reply; keep any existing notes below it.
+        this.draftNotes = (d.draftReply || '').trim() +
+          (this.draftNotes ? '\n\n— previous notes —\n' + this.draftNotes : '');
+        if (d.suggestedStatus && this.statuses.includes(d.suggestedStatus)) {
+          this.draftStatus = d.suggestedStatus;
+        }
+        this.toastr.success('Drafted a reply — review and edit before saving', 'AI');
+      },
+      error: () => { this.aiDrafting = false; this.toastr.error('AI draft unavailable right now'); }
+    });
+  }
+
+  urgencyClass(u: string): string {
+    return ({ high: 'bg-red-100 text-red-700', medium: 'bg-amber-100 text-amber-800', low: 'bg-emerald-100 text-emerald-700' } as any)[u] ?? 'bg-gray-100 text-gray-600';
+  }
 
   save(): void {
     if (!this.selected) return;
