@@ -161,8 +161,13 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
       return;
     }
     this.showForm = !this.showForm;
-    if (this.showForm) this.scrollToForm();
-    else this.resetForm();
+    if (this.showForm) {
+      // Opening the form — leave bulk mode (mutually exclusive)
+      if (this.bulkMode) { this.bulkMode = false; this.clearBulkSelection(); }
+      this.scrollToForm();
+    } else {
+      this.resetForm();
+    }
   }
 
   /** Bring the (top-of-page) form into view so the admin sees it open. */
@@ -186,6 +191,7 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
   }
 
   editItem(item: any): void {
+    if (this.bulkMode) { this.bulkMode = false; this.clearBulkSelection(); }
     this.formData = { ...item };
     this.showForm = true;
     this.isEditing = true;
@@ -289,7 +295,12 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
 
   toggleBulkMode(): void {
     this.bulkMode = !this.bulkMode;
-    if (!this.bulkMode) this.clearBulkSelection();
+    if (this.bulkMode) {
+      // Entering bulk mode — close the add/edit form (mutually exclusive)
+      if (this.showForm) { this.showForm = false; this.resetForm(); }
+    } else {
+      this.clearBulkSelection();
+    }
   }
 
   toggleSelect(id: string): void {
