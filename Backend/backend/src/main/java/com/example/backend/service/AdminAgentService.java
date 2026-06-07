@@ -50,6 +50,7 @@ public class AdminAgentService {
     private final UserRepository userRepository;
     private final InventoryService inventoryService;
     private final PayoutLedgerService payoutLedgerService;
+    private final AdminDriverService adminDriverService;
     private final AiActionLogRepository aiActionLogRepository;
     private final ObjectMapper objectMapper;
 
@@ -165,6 +166,19 @@ public class AdminAgentService {
                 "Counts of the store's registered users broken down by role (customers, drivers, admins).",
                 Map.of(), List.of()));
 
+        tools.add(tool("get_settings",
+                "The store's configuration: contact phone/email, delivery fee, minimum order, delivery "
+                        + "radius, estimated delivery minutes, driver earning %, loyalty on/off, and platform commission %.",
+                Map.of(), List.of()));
+
+        tools.add(tool("subscription",
+                "The store's current subscription plan and status (e.g. BASIC, PRO; TRIAL, ACTIVE).",
+                Map.of(), List.of()));
+
+        tools.add(tool("drivers",
+                "The store's delivery drivers with their email and current status (e.g. AVAILABLE, BUSY, OFFLINE).",
+                Map.of(), List.of()));
+
         // ── Action proposals (require the owner to confirm in the UI) ──────────
         tools.add(tool("propose_set_store_open",
                 "Propose opening or closing the store for orders. Use when the owner asks to open/close.",
@@ -215,6 +229,9 @@ public class AdminAgentService {
             case "payouts_summary":    return toolPayouts(tenantId);
             case "get_store_hours":    return toolStoreHours(tenantId);
             case "customers":          return toolCustomers(tenantId);
+            case "get_settings":       return toolSettings(tenantId);
+            case "subscription":       return toolSubscription(tenantId);
+            case "drivers":            return toolDrivers();
             default:                   return "Unknown tool: " + name;
         }
     }
@@ -450,6 +467,38 @@ public class AdminAgentService {
         m.put("totalUsers", users.size());
         m.put("byRole", byRole);
         return json(m);
+    }
+
+    private String toolSettings(UUID tenantId) {
+        Tenant t = tenantRepository.findById(tenantId).orElse(null);
+        if (t == null) return "{}";
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("name", t.getName());
+        m.put("phone", t.getPhone());
+        m.put("email", t.getEmail());
+        m.put("cuisine", t.getCuisineType());
+        m.put("isOpen", t.getIsOpen());
+        m.put("deliveryFeeBase", t.getDeliveryFeeBase());
+        m.put("minimumOrderAmount", t.getMinimumOrderAmount());
+        m.put("deliveryRadiusKm", t.getDeliveryRadiusKm());
+        m.put("estimatedDeliveryMinutes", t.getEstimatedDeliveryMinutes());
+        m.put("driverEarningPercent", t.getDriverEarningPercent());
+        m.put("loyaltyEnabled", t.getLoyaltyEnabled());
+        m.put("platformCommissionPercent", t.getPlatformCommissionPercent());
+        return json(m);
+    }
+
+    private String toolSubscription(UUID tenantId) {
+        Tenant t = tenantRepository.findById(tenantId).orElse(null);
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("plan", t != null ? t.getSubscriptionPlan() : null);
+        m.put("status", t != null ? t.getSubscriptionStatus() : null);
+        return json(m);
+    }
+
+    private String toolDrivers() {
+        var drivers = adminDriverService.getAllDrivers();
+        return json(Map.of("count", drivers.size(), "drivers", drivers));
     }
 
     // ── Action proposals ──────────────────────────────────────────────────────
