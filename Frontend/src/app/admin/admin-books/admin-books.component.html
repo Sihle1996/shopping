@@ -260,6 +260,33 @@
         </div>
       </div>
 
+      <!-- Profit x review-sentiment insights -->
+      <div *ngIf="insights.length" class="mt-5 rounded-2xl border border-borderColor bg-white shadow-card overflow-hidden">
+        <div class="px-4 py-3 border-b border-borderColor flex items-center gap-2">
+          <i class="bi bi-lightbulb text-primary"></i>
+          <h2 class="text-sm font-semibold text-textDark">Opportunities &amp; risks</h2>
+          <span class="text-[11px] text-textMuted ml-auto">profit meets reviews</span>
+        </div>
+        <div class="divide-y divide-borderColor">
+          <div *ngFor="let ins of insights" class="px-4 py-3 flex items-start gap-3">
+            <span class="mt-0.5 w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                  [ngClass]="ins.type === 'OPPORTUNITY' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'">
+              <i class="bi" [ngClass]="ins.type === 'OPPORTUNITY' ? 'bi-star-fill' : 'bi-exclamation-triangle-fill'"></i>
+            </span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded"
+                      [ngClass]="ins.type === 'OPPORTUNITY' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'">{{ ins.type }}</span>
+                <span class="text-sm font-semibold text-textDark">{{ ins.item }}</span>
+                <span class="text-[11px] text-textMuted">R{{ ins.profit | number:'1.0-0' }} profit · {{ ins.avgRating }}/5 ({{ ins.reviewCount }})</span>
+              </div>
+              <p class="text-xs text-textMuted mt-0.5 leading-snug">{{ ins.message }}</p>
+            </div>
+          </div>
+        </div>
+        <p class="px-4 py-2 text-[10px] text-textMuted border-t border-borderColor">Sentiment is from reviews of orders containing the item — directional, not a controlled measure.</p>
+      </div>
+
       <!-- Per-item profitability -->
       <div class="mt-5 rounded-2xl border border-borderColor bg-white shadow-card overflow-hidden">
         <div class="px-4 py-3 border-b border-borderColor flex items-center gap-2">

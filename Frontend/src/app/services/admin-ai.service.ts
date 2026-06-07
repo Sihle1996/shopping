@@ -168,6 +168,11 @@ export class AdminAiService {
     return this.http.post<{ updated: number }>(`${this.base}/menu/bulk-describe`, {});
   }
 
+  /** Opportunities/risks from cross-referencing per-item profit (Books) with review sentiment. */
+  reviewBookInsights(): Observable<{ insights: any[] }> {
+    return this.http.get<{ insights: any[] }>(`${this.base}/review-book-insights`);
+  }
+
   /** Plan-fit advice: verdict + recommendation + structured usage stats. */
   planAdvice(): Observable<AiPlanAdvice> {
     return this.http.get<AiPlanAdvice>(`${this.base}/plan-advice`);

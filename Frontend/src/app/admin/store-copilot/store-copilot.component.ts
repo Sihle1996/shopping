@@ -75,12 +75,12 @@ export class StoreCopilotComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.applyingAction = null;
         if (msg.actions) msg.actions = msg.actions.filter(a => a !== action);
-        this.messages.push({ role: 'ai', text: res.ok ? '✓ ' + res.message : '⚠️ ' + res.message });
+        this.messages.push({ role: 'ai', text: res.ok ? res.message : 'Could not apply: ' + res.message });
         if (res.ok) this.toastr.success(res.message, 'Copilot');
       },
       error: () => {
         this.applyingAction = null;
-        this.messages.push({ role: 'ai', text: '⚠️ Could not apply that action.' });
+        this.messages.push({ role: 'ai', text: 'Could not apply that action.' });
       }
     });
   }

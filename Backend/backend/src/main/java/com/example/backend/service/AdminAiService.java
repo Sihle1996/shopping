@@ -39,6 +39,7 @@ public class AdminAiService {
     private final PromotionRepository promotionRepository;
     private final PromoOutcomeRecordRepository promoOutcomeRecordRepository;
     private final AlertOutcomeRepository alertOutcomeRepository;
+    private final BookkeepingService bookkeepingService;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final AnalyticsService analyticsService;
     private final ObjectMapper objectMapper;
@@ -784,6 +785,80 @@ public class AdminAiService {
         }
         result.put("usage", usage);
         return result;
+    }
+
+    // ── Feature: Reviews x Books (profit meets sentiment) ───────────────────
+
+    /**
+     * Cross-references per-item PROFIT (Books) with review SENTIMENT to surface a few
+     * opportunities (high-profit AND well-reviewed) and risks (high-profit but flagged in
+     * reviews). Deterministic + templated — no LLM. Sentiment is attributed at the ORDER
+     * level (a review covers everything in its order), so it's directional, not causal.
+     */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public Map<String, Object> reviewBookInsights(UUID tenantId) {
+        BookkeepingService.MoneyIn pl;
+        try { pl = bookkeepingService.moneyIn(tenantId, 30); } catch (Exception e) { return Map.of("insights", List.of()); }
+        if (pl.items() == null || pl.items().isEmpty()) return Map.of("insights", List.of());
+
+        // Per-item sentiment from reviews of orders that contained the item.
+        java.time.LocalDateTime since = java.time.LocalDateTime.now().minusDays(30);
+        String[] complaintWords = {"cold", "late", "slow", "dry", "wrong", "missing", "lukewarm", "long", "raw", "burnt", "soggy"};
+        Map<String, double[]> sentiment = new HashMap<>(); // nameLC -> [ratingSum, count, complaintCount]
+        for (Review rv : reviewRepository.findByTenant_IdOrderByCreatedAtDesc(tenantId)) {
+            if (rv.getCreatedAt() == null || rv.getCreatedAt().isBefore(since) || rv.getOrder() == null
+                    || rv.getOrder().getOrderItems() == null) continue;
+            String comment = rv.getComment() != null ? rv.getComment().toLowerCase() : "";
+            boolean complaint = rv.getRating() <= 2;
+            for (String w : complaintWords) if (comment.contains(w)) { complaint = true; break; }
+            Set<String> namesInOrder = new HashSet<>();
+            for (var oi : rv.getOrder().getOrderItems()) {
+                if (oi.getMenuItem() != null && oi.getMenuItem().getName() != null)
+                    namesInOrder.add(oi.getMenuItem().getName().toLowerCase());
+            }
+            for (String nm : namesInOrder) {
+                double[] s = sentiment.computeIfAbsent(nm, k -> new double[3]);
+                s[0] += rv.getRating(); s[1] += 1; if (complaint) s[2] += 1;
+            }
+        }
+
+        double topProfit = pl.items().get(0).getProfit(); // items are profit-sorted desc
+        List<Map<String, Object>> insights = new ArrayList<>();
+        for (BookkeepingService.ItemLine il : pl.items()) {
+            if (insights.size() >= 4) break;
+            if (il.name == null || il.getProfit() <= 0 || il.getProfit() < topProfit * 0.4) continue; // real contributor
+            double[] s = sentiment.get(il.name.toLowerCase());
+            if (s == null || s[1] < 2) continue; // need enough review signal
+            double avg = s[0] / s[1];
+            int reviews = (int) s[1], complaints = (int) s[2];
+
+            String type, message;
+            if (avg >= 4.0 && complaints == 0) {
+                type = "OPPORTUNITY";
+                message = il.name + " is one of your most profitable items and well-reviewed ("
+                        + String.format(Locale.UK, "%.1f", avg) + "/5 across " + reviews
+                        + " orders). Featuring it in a promotion or as a homepage pick leans into a proven strength.";
+            } else if (avg <= 3.2 || complaints >= 2) { // a pattern, not one noisy review
+                type = "RISK";
+                message = il.name + " is a high-profit item (R" + String.format(Locale.UK, "%.0f", il.getProfit())
+                        + ") but recent reviews flag concerns (" + String.format(Locale.UK, "%.1f", avg) + "/5"
+                        + (complaints > 0 ? ", " + complaints + " mentioning quality or delivery" : "")
+                        + "). Protecting its quality preserves real profit.";
+            } else {
+                continue;
+            }
+            Map<String, Object> ins = new LinkedHashMap<>();
+            ins.put("type", type);
+            ins.put("item", il.name);
+            ins.put("profit", il.getProfit());
+            ins.put("marginPercent", il.getMarginPercent());
+            ins.put("avgRating", Math.round(avg * 10.0) / 10.0);
+            ins.put("reviewCount", reviews);
+            ins.put("complaintCount", complaints);
+            ins.put("message", message);
+            insights.add(ins);
+        }
+        return Map.of("insights", insights);
     }
 
     // ── Feature 4: Conversational Analytics ────────────────────────────────

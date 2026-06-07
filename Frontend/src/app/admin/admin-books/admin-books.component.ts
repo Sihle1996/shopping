@@ -95,7 +95,15 @@ export class AdminBooksComponent implements OnInit {
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 
-  ngOnInit(): void { this.load(); this.loadExpenses(); }
+  // Profit x review-sentiment insights (opportunities/risks)
+  insights: any[] = [];
+
+  ngOnInit(): void { this.load(); this.loadExpenses(); this.loadInsights(); }
+
+  loadInsights(): void {
+    this.http.get<{ insights: any[] }>(`${environment.apiUrl}/api/admin/ai/review-book-insights`, { headers: this.headers })
+      .subscribe({ next: r => this.insights = r.insights || [], error: () => {} });
+  }
 
   setRange(d: number): void {
     if (this.days === d) return;
