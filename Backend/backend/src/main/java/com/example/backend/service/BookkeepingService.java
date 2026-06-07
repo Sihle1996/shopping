@@ -1,9 +1,11 @@
 package com.example.backend.service;
 
+import com.example.backend.entity.Expense;
 import com.example.backend.entity.MenuItem;
 import com.example.backend.entity.Order;
 import com.example.backend.entity.OrderItem;
 import com.example.backend.entity.OrderStatus;
+import com.example.backend.repository.ExpenseRepository;
 import com.example.backend.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,7 +36,10 @@ import java.util.*;
 public class BookkeepingService {
 
     private final OrderRepository orderRepository;
+    private final ExpenseRepository expenseRepository;
 
+    /** Days in a month used to prorate recurring (monthly) expenses to the window. */
+    private static final double DAYS_PER_MONTH = 30.0;
     /** Industry food-cost benchmark used only when an item's real cost is unknown. */
     private static final double BENCHMARK_COST_RATIO = 0.30;
     /** Fallback look-back window when the caller doesn't specify one. */
@@ -104,6 +109,25 @@ public class BookkeepingService {
         double netProfit = grossProfit - platformCommission;
         Double netMargin = revenue > 0 ? netProfit / revenue * 100.0 : null;
 
+        // Operating expenses (money out): one-off costs dated inside the window, plus
+        // recurring monthly costs prorated to the window length. Net profit minus these
+        // is the true operating profit (after rent, staff, packaging, etc.).
+        LocalDate today = LocalDate.now(SAST);
+        LocalDate windowStart = from.atZone(SAST).toLocalDate();
+        double operatingExpenses = 0;
+        for (Expense e : expenseRepository.findByTenant_IdOrderByIncurredOnDesc(tenantId)) {
+            if (e.getAmount() == null || e.getIncurredOn() == null) continue;
+            if (e.isRecurring()) {
+                if (!e.getIncurredOn().isAfter(today)) {
+                    operatingExpenses += e.getAmount() * (window / DAYS_PER_MONTH);
+                }
+            } else if (!e.getIncurredOn().isBefore(windowStart) && !e.getIncurredOn().isAfter(today)) {
+                operatingExpenses += e.getAmount();
+            }
+        }
+        double operatingProfit = netProfit - operatingExpenses;
+        Double operatingMargin = revenue > 0 ? operatingProfit / revenue * 100.0 : null;
+
         List<ItemLine> items = new ArrayList<>(byItem.values());
         items.sort(Comparator.comparingDouble((ItemLine l) -> l.revenue - l.cogs).reversed());
 
@@ -118,7 +142,8 @@ public class BookkeepingService {
 
         return new MoneyIn(window, round(revenue), round(cogs), round(grossProfit),
                 margin, round(estimatedShare), realisedOrders, items,
-                categories, round(platformCommission), round(netProfit), netMargin, dailyProfit);
+                categories, round(platformCommission), round(netProfit), netMargin, dailyProfit,
+                round(operatingExpenses), round(operatingProfit), operatingMargin);
     }
 
     private static double round(double v) {
@@ -169,6 +194,9 @@ public class BookkeepingService {
             double platformCommission,
             double netProfit,
             Double netMarginPercent,
-            List<DayPoint> dailyProfit
+            List<DayPoint> dailyProfit,
+            double operatingExpenses,
+            double operatingProfit,
+            Double operatingMarginPercent
     ) {}
 }

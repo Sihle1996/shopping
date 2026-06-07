@@ -104,14 +104,25 @@
               <span>− Platform commission<span *ngIf="commissionPercent != null"> ({{ commissionPercent | number:'1.0-0' }}%)</span></span>
               <span class="price">−R{{ d.platformCommission | number:'1.0-0' }}</span>
             </div>
-            <div class="flex items-center justify-between border-t-2 border-borderColor pt-2 mt-1">
-              <span class="text-textDark font-bold">Net profit</span>
-              <span class="price font-bold text-base" [ngClass]="d.netProfit >= 0 ? 'text-emerald-700' : 'text-red-600'">
+            <div class="flex items-center justify-between border-t border-borderColor pt-2">
+              <span class="text-textDark font-medium">Net profit</span>
+              <span class="price font-semibold" [ngClass]="d.netProfit >= 0 ? 'text-emerald-700' : 'text-red-600'">
                 R{{ d.netProfit | number:'1.0-0' }}
                 <span class="text-textMuted font-normal text-xs">({{ d.netMarginPercent != null ? (d.netMarginPercent | number:'1.0-0') + '%' : '—' }})</span>
               </span>
             </div>
-            <p class="text-[11px] text-textMuted pt-1">Commission is the real fee CraveIt deducts per order. Net profit is before rent, staff &amp; other running costs.</p>
+            <div class="flex items-center justify-between text-textMuted">
+              <span>− Operating expenses</span>
+              <span class="price">−R{{ (d.operatingExpenses || 0) | number:'1.0-0' }}</span>
+            </div>
+            <div class="flex items-center justify-between border-t-2 border-borderColor pt-2 mt-1">
+              <span class="text-textDark font-bold">Operating profit</span>
+              <span class="price font-bold text-base" [ngClass]="(d.operatingProfit || 0) >= 0 ? 'text-emerald-700' : 'text-red-600'">
+                R{{ (d.operatingProfit || 0) | number:'1.0-0' }}
+                <span class="text-textMuted font-normal text-xs">({{ d.operatingMarginPercent != null ? (d.operatingMarginPercent | number:'1.0-0') + '%' : '—' }})</span>
+              </span>
+            </div>
+            <p class="text-[11px] text-textMuted pt-1">Commission is the real fee CraveIt deducts. Operating profit is your true bottom line after the rent, staff &amp; other costs you log below.</p>
           </div>
         </div>
 
@@ -135,6 +146,81 @@
             <div *ngIf="!d.cogsByCategory || d.cogsByCategory.length === 0" class="text-xs text-textMuted text-center py-4">No category data yet.</div>
           </div>
         </div>
+      </div>
+
+      <!-- Operating expenses -->
+      <div class="mt-3 rounded-2xl border border-borderColor bg-white shadow-card overflow-hidden">
+        <div class="px-4 py-3 border-b border-borderColor flex items-center justify-between gap-2">
+          <h2 class="text-sm font-semibold text-textDark flex items-center gap-2">
+            <i class="bi bi-wallet2 text-primary"></i> Operating expenses
+          </h2>
+          <button (click)="toggleExpenseForm()" class="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
+            <i class="bi" [ngClass]="showExpenseForm ? 'bi-x-lg' : 'bi-plus-lg'"></i>
+            {{ showExpenseForm ? 'Cancel' : 'Add expense' }}
+          </button>
+        </div>
+
+        <!-- Add form -->
+        <div *ngIf="showExpenseForm" class="p-4 border-b border-borderColor grid sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-textDark mb-1">What is it?</label>
+            <input [(ngModel)]="newExpense.label" name="expLabel" placeholder="e.g. Monthly rent"
+                   class="w-full px-3 py-2 rounded-xl border border-borderColor bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-textDark mb-1">Category</label>
+            <select [(ngModel)]="newExpense.category" name="expCat"
+                    class="w-full px-3 py-2 rounded-xl border border-borderColor bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400">
+              <option *ngFor="let c of expenseCategories" [value]="c">{{ c }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-textDark mb-1">Amount (ZAR)</label>
+            <input type="number" min="0" step="0.01" [(ngModel)]="newExpense.amount" name="expAmt" placeholder="0.00"
+                   class="w-full px-3 py-2 rounded-xl border border-borderColor bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-textDark mb-1">Date</label>
+            <input type="date" [(ngModel)]="newExpense.incurredOn" name="expDate"
+                   class="w-full px-3 py-2 rounded-xl border border-borderColor bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" />
+          </div>
+          <label class="flex items-center gap-2 text-sm text-textDark sm:col-span-2 cursor-pointer">
+            <input type="checkbox" [(ngModel)]="newExpense.recurring" name="expRec" class="rounded" />
+            Recurring monthly cost <span class="text-textMuted text-xs">(prorated to the selected period)</span>
+          </label>
+          <div class="sm:col-span-2 flex justify-end">
+            <button (click)="addExpense()" [disabled]="savingExpense || !newExpense.label || !newExpense.amount"
+                    class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600 disabled:opacity-50 flex items-center gap-1.5">
+              <span *ngIf="savingExpense" class="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              Save expense
+            </button>
+          </div>
+        </div>
+
+        <!-- Empty -->
+        <div *ngIf="expenses.length === 0 && !showExpenseForm" class="px-4 py-6 text-center">
+          <i class="bi bi-receipt-cutoff text-2xl text-textMuted"></i>
+          <p class="text-sm text-textDark font-medium mt-2">No expenses logged</p>
+          <p class="text-xs text-textMuted">Add rent, staff and other costs to see your true operating profit.</p>
+        </div>
+
+        <!-- List -->
+        <ul *ngIf="expenses.length > 0" class="divide-y divide-borderColor">
+          <li *ngFor="let e of expenses" class="px-4 py-2.5 flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-textDark truncate">{{ e.label }}
+                <span *ngIf="e.recurring" class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-primary-100 text-primary-700 font-semibold">monthly</span>
+              </p>
+              <p class="text-[11px] text-textMuted">{{ e.category }} · {{ e.incurredOn }}</p>
+            </div>
+            <div class="flex items-center gap-3 flex-shrink-0">
+              <span class="price text-sm font-semibold text-textDark">R{{ e.amount | number:'1.0-2' }}</span>
+              <button (click)="deleteExpense(e)" class="text-textMuted hover:text-danger transition-colors p-1" title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </li>
+        </ul>
       </div>
 
       <!-- Daily gross-profit trend -->

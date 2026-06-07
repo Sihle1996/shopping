@@ -42,6 +42,18 @@ interface MoneyIn {
   netProfit: number;
   netMarginPercent: number | null;
   dailyProfit: DayPoint[];
+  operatingExpenses: number;
+  operatingProfit: number;
+  operatingMarginPercent: number | null;
+}
+
+interface Expense {
+  id: string;
+  label: string;
+  category: string;
+  amount: number;
+  recurring: boolean;
+  incurredOn: string;
 }
 
 @Component({
@@ -60,6 +72,14 @@ export class AdminBooksComponent implements OnInit {
   private readonly MARGIN_GOOD = 60;
   private readonly MARGIN_OK = 30;
 
+  // Operating expenses
+  expenses: Expense[] = [];
+  showExpenseForm = false;
+  savingExpense = false;
+  readonly expenseCategories = ['Rent', 'Staff', 'Stock/Supplies', 'Packaging', 'Utilities', 'Marketing', 'Equipment', 'Other'];
+  newExpense: { label: string; category: string; amount: number | null; recurring: boolean; incurredOn: string } =
+    { label: '', category: 'Rent', amount: null, recurring: true, incurredOn: '' };
+
   private get headers(): HttpHeaders {
     const h: any = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.auth.getToken()}` };
     const tid = localStorage.getItem('tenantId');
@@ -69,7 +89,7 @@ export class AdminBooksComponent implements OnInit {
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void { this.load(); this.loadExpenses(); }
 
   setRange(d: number): void {
     if (this.days === d) return;
@@ -128,5 +148,41 @@ export class AdminBooksComponent implements OnInit {
     if (m >= this.MARGIN_GOOD) return 'text-emerald-600';
     if (m >= this.MARGIN_OK) return 'text-amber-600';
     return 'text-red-600';
+  }
+
+  // ── Operating expenses ────────────────────────────────────────────────────
+
+  private today(): string { return new Date().toISOString().slice(0, 10); }
+
+  loadExpenses(): void {
+    this.http.get<Expense[]>(`${environment.apiUrl}/api/admin/books/expenses`, { headers: this.headers })
+      .subscribe({ next: e => this.expenses = e || [], error: () => {} });
+  }
+
+  toggleExpenseForm(): void {
+    this.showExpenseForm = !this.showExpenseForm;
+    if (this.showExpenseForm && !this.newExpense.incurredOn) this.newExpense.incurredOn = this.today();
+  }
+
+  addExpense(): void {
+    if (!this.newExpense.label.trim() || !this.newExpense.amount || this.newExpense.amount <= 0) return;
+    this.savingExpense = true;
+    const body = { ...this.newExpense, incurredOn: this.newExpense.incurredOn || this.today() };
+    this.http.post<Expense>(`${environment.apiUrl}/api/admin/books/expenses`, body, { headers: this.headers })
+      .subscribe({
+        next: () => {
+          this.savingExpense = false;
+          this.showExpenseForm = false;
+          this.newExpense = { label: '', category: 'Rent', amount: null, recurring: true, incurredOn: this.today() };
+          this.loadExpenses();
+          this.load(); // recompute operating profit
+        },
+        error: () => { this.savingExpense = false; }
+      });
+  }
+
+  deleteExpense(e: Expense): void {
+    this.http.delete(`${environment.apiUrl}/api/admin/books/expenses/${e.id}`, { headers: this.headers })
+      .subscribe({ next: () => { this.expenses = this.expenses.filter(x => x.id !== e.id); this.load(); }, error: () => {} });
   }
 }
