@@ -121,12 +121,15 @@ public class AdminAiService {
             return Map.of("suggestions", List.of());
         }
 
-        // Build compact summary (max 2000 chars)
+        // Build compact summary (max 2000 chars) — include each item's margin so the
+        // AI can pick PROFITABLE discounts and never push an item below cost.
         StringBuilder sb = new StringBuilder();
         for (MenuItem item : menuItems) {
             long count = itemCounts.getOrDefault(item.getId(), 0L);
-            String line = String.format("- %s | R%.2f | %s | %d orders\n",
-                    item.getName(), item.getPrice(), item.getCategory(), count);
+            Double margin = item.getMarginPercent();
+            String marginStr = margin != null ? String.format("%.0f%%", margin) : "n/a";
+            String line = String.format("- %s | R%.2f | margin %s | %s | %d orders\n",
+                    item.getName(), item.getPrice(), marginStr, item.getCategory(), count);
             if (sb.length() + line.length() > 2000) break;
             sb.append(line);
         }
@@ -136,6 +139,9 @@ public class AdminAiService {
                 "You are a promotions advisor for a South African food delivery restaurant.\n" +
                 "Based on 30-day order data below, suggest 1–3 time-limited promotions to boost sales.\n" +
                 "Today is " + today + ".\n" +
+                "PROFIT RULES: prefer discounting items with a HEALTHY margin (you can afford it) and good " +
+                "volume; the discountPercent must stay well below the item's margin so it never sells below " +
+                "cost; do NOT suggest discounts on thin-margin items (or where margin is n/a).\n" +
                 "Return JSON only, no markdown:\n" +
                 "{\n" +
                 "  \"suggestions\": [\n" +

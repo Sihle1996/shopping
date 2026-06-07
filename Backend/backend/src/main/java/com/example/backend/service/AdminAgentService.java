@@ -178,6 +178,14 @@ public class AdminAgentService {
         snap.put("revenueLast7Days", round2(rev7));
         snap.put("revenuePrior7Days", round2(revPrior7));
         snap.put("revenueTrendPercent", trendPct);
+        // Profitability (30d) from CraveIt Books — so the briefing can talk profit, not just sales.
+        try {
+            BookkeepingService.MoneyIn pl = bookkeepingService.moneyIn(tenantId, 30);
+            snap.put("grossProfit30d", pl.grossProfit());
+            snap.put("grossMarginPercent", pl.marginPercent());
+            snap.put("operatingProfit30d", pl.operatingProfit());
+            snap.put("operatingExpenses30d", pl.operatingExpenses());
+        } catch (Exception ignored) { /* books optional */ }
         snap.put("avgOrderValue30d", aov);
         snap.put("cancellationRatePercent30d", cancelRate);
         snap.put("topProducts30d", topProducts);
