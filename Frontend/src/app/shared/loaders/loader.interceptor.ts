@@ -5,7 +5,10 @@ import { finalize } from 'rxjs/operators';
 import { LoaderService } from './loader.service';
 
 // These URL patterns should NOT trigger the global spinner
+// (their pages render their own loading skeletons).
 const SILENT_PATTERNS = [
+  '/api/menu',
+  '/api/admin/menu',
   '/api/cart/',
   '/api/cart/add',
   '/api/cart/update',
