@@ -185,4 +185,24 @@ export class AdminBooksComponent implements OnInit {
     this.http.delete(`${environment.apiUrl}/api/admin/books/expenses/${e.id}`, { headers: this.headers })
       .subscribe({ next: () => { this.expenses = this.expenses.filter(x => x.id !== e.id); this.load(); }, error: () => {} });
   }
+
+  /** Download the P&L + items + expenses for the current period as CSV. */
+  exporting = false;
+  exportCsv(): void {
+    this.exporting = true;
+    this.http.get(`${environment.apiUrl}/api/admin/books/export.csv?days=${this.days}`,
+      { headers: this.headers, responseType: 'blob' })
+      .subscribe({
+        next: (blob) => {
+          this.exporting = false;
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `craveit-books-${this.days}d.csv`;
+          a.click();
+          URL.revokeObjectURL(url);
+        },
+        error: () => { this.exporting = false; }
+      });
+  }
 }

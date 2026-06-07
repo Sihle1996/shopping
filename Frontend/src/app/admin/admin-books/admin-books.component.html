@@ -8,12 +8,22 @@
       </h1>
       <p class="text-sm text-textMuted mt-0.5">Your money in — revenue, cost and real profit.</p>
     </div>
-    <!-- Range toggle -->
-    <div *ngIf="!locked" class="inline-flex rounded-xl border border-borderColor bg-white p-1 self-start shadow-card">
-      <button *ngFor="let r of ranges" (click)="setRange(r)"
-              class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-              [ngClass]="days === r ? 'bg-primary text-white' : 'text-textMuted hover:text-textDark'">
-        {{ r }}d
+    <div *ngIf="!locked" class="flex items-center gap-2 self-start">
+      <!-- Range toggle -->
+      <div class="inline-flex rounded-xl border border-borderColor bg-white p-1 shadow-card">
+        <button *ngFor="let r of ranges" (click)="setRange(r)"
+                class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                [ngClass]="days === r ? 'bg-primary text-white' : 'text-textMuted hover:text-textDark'">
+          {{ r }}d
+        </button>
+      </div>
+      <!-- Export -->
+      <button (click)="exportCsv()" [disabled]="exporting || loading"
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-borderColor bg-white text-sm font-medium text-textDark shadow-card hover:bg-surface disabled:opacity-50 transition-colors"
+              title="Download as CSV">
+        <span *ngIf="exporting" class="inline-block w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
+        <i *ngIf="!exporting" class="bi bi-download"></i>
+        <span class="hidden sm:inline">Export</span>
       </button>
     </div>
   </div>

@@ -8,12 +8,16 @@ import com.example.backend.service.BookkeepingService;
 import com.example.backend.service.SubscriptionEnforcementService;
 import com.example.backend.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +45,58 @@ public class AdminBooksController {
             @RequestParam(defaultValue = DEFAULT_DAYS) int days) {
         UUID tenantId = requireBooksAccess();
         return ResponseEntity.ok(bookkeepingService.moneyIn(tenantId, days));
+    }
+
+    @GetMapping("/export.csv")
+    public ResponseEntity<ByteArrayResource> exportCsv(@RequestParam(defaultValue = DEFAULT_DAYS) int days) {
+        UUID tenantId = requireBooksAccess();
+        BookkeepingService.MoneyIn pl = bookkeepingService.moneyIn(tenantId, days);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("CraveIt Books — Profit & Loss,last ").append(pl.days()).append(" days\n\n");
+        sb.append("Line,Amount (ZAR)\n");
+        sb.append("Revenue,").append(pl.revenue()).append('\n');
+        sb.append("Food cost (COGS),-").append(pl.cogs()).append('\n');
+        sb.append("Gross profit,").append(pl.grossProfit()).append('\n');
+        sb.append("Platform commission,-").append(pl.platformCommission()).append('\n');
+        sb.append("Net profit,").append(pl.netProfit()).append('\n');
+        sb.append("Operating expenses,-").append(pl.operatingExpenses()).append('\n');
+        sb.append("Operating profit,").append(pl.operatingProfit()).append('\n');
+
+        sb.append("\nSales by category,Revenue,Cost,Margin %\n");
+        for (BookkeepingService.CategoryLine c : pl.cogsByCategory()) {
+            sb.append(csv(c.category)).append(',').append(c.getRevenue()).append(',')
+              .append(c.getCogs()).append(',').append(c.getMarginPercent() != null ? c.getMarginPercent() : "").append('\n');
+        }
+
+        sb.append("\nProfit by item,Units,Revenue,Cost,Profit,Margin %\n");
+        for (BookkeepingService.ItemLine it : pl.items()) {
+            sb.append(csv(it.name)).append(',').append(it.units).append(',').append(it.getRevenue()).append(',')
+              .append(it.getCogs()).append(',').append(it.getProfit()).append(',')
+              .append(it.getMarginPercent() != null ? it.getMarginPercent() : "").append('\n');
+        }
+
+        sb.append("\nOperating expenses,Category,Amount,Type,Date\n");
+        for (Expense e : expenseRepository.findByTenant_IdOrderByIncurredOnDesc(tenantId)) {
+            sb.append(csv(e.getLabel())).append(',').append(csv(e.getCategory())).append(',')
+              .append(e.getAmount()).append(',').append(e.isRecurring() ? "monthly" : "one-off")
+              .append(',').append(e.getIncurredOn()).append('\n');
+        }
+
+        byte[] bytes = sb.toString().getBytes(StandardCharsets.UTF_8);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=craveit-books-" + pl.days() + "d.csv")
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .body(new ByteArrayResource(bytes));
+    }
+
+    /** Quote a CSV field if it contains a comma, quote or newline. */
+    private static String csv(String s) {
+        if (s == null) return "";
+        if (s.contains(",") || s.contains("\"") || s.contains("\n")) {
+            return '"' + s.replace("\"", "\"\"") + '"';
+        }
+        return s;
     }
 
     // ── Operating expenses ──────────────────────────────────────────────────
