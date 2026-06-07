@@ -8,8 +8,8 @@
            ? 'bg-red-50 border-red-200'
            : 'bg-amber-50 border-amber-200'">
       <div class="flex items-start gap-3 flex-1">
-        <i class="bi text-xl flex-shrink-0 mt-0.5"
-           [ngClass]="setupSettings.approvalStatus === 'REJECTED' ? 'bi-exclamation-triangle-fill text-red-500' : 'bi-hourglass-split text-amber-500'"></i>
+        <i class="text-xl flex-shrink-0 mt-0.5"
+           [ngClass]="setupSettings.approvalStatus === 'REJECTED' ? 'ph-fill ph-warning-circle text-red-500' : 'ph ph-hourglass text-amber-500'"></i>
         <div>
           <p class="font-semibold text-sm"
              [ngClass]="setupSettings.approvalStatus === 'REJECTED' ? 'text-red-700' : 'text-amber-700'">
@@ -80,7 +80,7 @@
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2.5">
           <div class="w-8 h-8 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
-            <i class="bi bi-rocket-takeoff-fill text-primary text-sm"></i>
+            <i class="ph-fill ph-rocket-launch text-primary text-sm"></i>
           </div>
           <div>
             <h3 class="font-heading text-sm font-semibold text-textDark leading-tight">Get your store ready</h3>
@@ -89,7 +89,7 @@
         </div>
         <button (click)="dismissOnboarding()"
                 class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-surface text-textMuted hover:text-textDark transition-colors">
-          <i class="bi bi-x text-base"></i>
+          <i class="ph ph-x text-base"></i>
         </button>
       </div>
 
@@ -101,7 +101,7 @@
 
       <!-- All done -->
       <div *ngIf="setupComplete" class="flex items-center gap-3 py-1">
-        <i class="bi bi-check-circle-fill text-success text-xl flex-shrink-0"></i>
+        <i class="ph-fill ph-check-circle text-success text-xl flex-shrink-0"></i>
         <div class="flex-1">
           <p class="text-sm font-semibold text-textDark">You're all set!</p>
           <p class="text-xs text-textMuted">Your store is ready to accept orders.</p>
@@ -118,7 +118,7 @@
              class="flex items-center gap-3 px-2 py-2 rounded-xl transition-colors hover:bg-surface">
           <!-- Icon -->
           <div class="w-5 h-5 flex-shrink-0 flex items-center justify-center">
-            <i *ngIf="step.done"  class="bi bi-check-circle-fill text-success text-[15px]"></i>
+            <i *ngIf="step.done"  class="ph-fill ph-check-circle text-success text-[15px]"></i>
             <span *ngIf="!step.done" class="w-4 h-4 rounded-full border-2 border-gray-300 block"></span>
           </div>
           <!-- Label -->
@@ -130,18 +130,18 @@
           <button *ngIf="!step.done && step.proLocked"
                   (click)="goToStep(step)"
                   class="flex-shrink-0 flex items-center gap-1 text-xs font-semibold text-amber-600 hover:underline">
-            <i class="bi bi-lock-fill text-[10px]"></i> PRO
+            <i class="ph-fill ph-lock text-[10px]"></i> PRO
           </button>
           <!-- CTA: prereq-locked (finish other steps first) -->
           <span *ngIf="!step.done && !step.proLocked && step.prereqLocked"
                 class="flex-shrink-0 flex items-center gap-1 text-[11px] text-textMuted italic">
-            <i class="bi bi-hourglass-split text-[10px]"></i> Finish above steps first
+            <i class="ph ph-hourglass text-[10px]"></i> Finish above steps first
           </span>
           <!-- CTA: ready to action -->
           <button *ngIf="!step.done && !step.proLocked && !step.prereqLocked"
                   (click)="goToStep(step)"
                   class="flex-shrink-0 flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
-            {{ step.actionLabel }} <i class="bi bi-arrow-right text-[10px]"></i>
+            {{ step.actionLabel }} <i class="ph ph-arrow-right text-[10px]"></i>
           </button>
         </div>
       </div>
@@ -160,7 +160,7 @@
             <p class="text-xs text-textMuted mt-1">{{ totalOrders }} all-time</p>
           </div>
           <div class="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center">
-            <i class="bi bi-receipt text-primary text-lg"></i>
+            <i class="ph ph-receipt text-primary text-lg"></i>
           </div>
         </div>
       </div>
@@ -175,7 +175,7 @@
             <p class="text-xs text-textMuted mt-1">R{{ totalRevenue | number:'1.0-0' }} all-time</p>
           </div>
           <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-            <i class="bi bi-cash-coin text-success text-lg"></i>
+            <i class="ph ph-money text-success text-lg"></i>
           </div>
         </div>
       </div>
@@ -190,7 +190,7 @@
             <p class="text-xs text-textMuted mt-1">Need attention</p>
           </div>
           <div class="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center">
-            <i class="bi bi-clock text-warning text-lg"></i>
+            <i class="ph ph-clock text-warning text-lg"></i>
           </div>
         </div>
       </div>
@@ -218,7 +218,7 @@
         </div>
         <a routerLink="/admin/orders"
            class="text-xs text-primary font-semibold hover:underline flex items-center gap-1">
-          View all <i class="bi bi-arrow-right"></i>
+          View all <i class="ph ph-arrow-right"></i>
         </a>
       </div>
 
@@ -235,7 +235,7 @@
       <!-- Orders list -->
       <div *ngIf="!recentOrdersLoading">
         <div *ngIf="recentOrders.length === 0" class="px-5 py-10 text-center text-textMuted text-sm">
-          <i class="bi bi-inbox text-3xl text-gray-300 block mb-2"></i>
+          <i class="ph ph-tray text-3xl text-gray-300 block mb-2"></i>
           No orders yet today
         </div>
 
@@ -246,7 +246,7 @@
           <!-- Status badge — icon only on mobile, full text on sm+ -->
           <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold flex-shrink-0"
                 [ngClass]="statusClass(order.status)">
-            <i class="bi text-[10px]" [ngClass]="statusIcon(order.status)"></i>
+            <i class="text-[10px]" [ngClass]="statusIcon(order.status)"></i>
             <span class="hidden sm:inline">{{ order.status }}</span>
           </span>
 
@@ -263,7 +263,7 @@
           </div>
 
           <!-- Chevron -->
-          <i class="bi bi-chevron-right text-xs text-textMuted flex-shrink-0"></i>
+          <i class="ph ph-caret-right text-xs text-textMuted flex-shrink-0"></i>
 
         </div>
       </div>
@@ -273,7 +273,7 @@
     <div *ngIf="!hasAnalytics"
          class="mb-8 rounded-2xl border border-borderColor bg-white p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
       <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center flex-shrink-0">
-        <i class="bi bi-graph-up text-primary"></i>
+        <i class="ph ph-chart-line-up text-primary"></i>
       </div>
       <div class="flex-1">
         <p class="font-semibold text-sm text-textDark">Unlock analytics on PRO & ENTERPRISE</p>
@@ -281,7 +281,7 @@
       </div>
       <a routerLink="/admin/subscription"
          class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-xl hover:bg-primary-600 transition-colors flex-shrink-0">
-        <i class="bi bi-arrow-up-circle"></i> Upgrade
+        <i class="ph ph-arrow-circle-up"></i> Upgrade
       </a>
     </div>
 
@@ -341,7 +341,7 @@
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <div class="bg-white rounded-2xl shadow-card p-4 flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <i class="bi bi-cash-coin text-primary text-lg"></i>
+            <i class="ph ph-money text-primary text-lg"></i>
           </div>
           <div class="min-w-0">
             <p class="text-textMuted text-[11px] uppercase tracking-wide leading-tight">Avg Order Value</p>
@@ -351,7 +351,7 @@
         </div>
         <div class="bg-white rounded-2xl shadow-card p-4 flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
-            <i class="bi bi-clock-history text-success text-lg"></i>
+            <i class="ph ph-clock-counter-clockwise text-success text-lg"></i>
           </div>
           <div class="min-w-0">
             <p class="text-textMuted text-[11px] uppercase tracking-wide leading-tight">On-time Delivery</p>
@@ -361,7 +361,7 @@
         </div>
         <div class="bg-white rounded-2xl shadow-card p-4 flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
-            <i class="bi bi-x-circle text-danger text-lg"></i>
+            <i class="ph ph-x-circle text-danger text-lg"></i>
           </div>
           <div class="min-w-0">
             <p class="text-textMuted text-[11px] uppercase tracking-wide leading-tight">Cancellation Rate</p>
@@ -371,7 +371,7 @@
         </div>
         <div class="bg-white rounded-2xl shadow-card p-4 flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
-            <i class="bi bi-truck text-amber-600 text-lg"></i>
+            <i class="ph ph-truck text-amber-600 text-lg"></i>
           </div>
           <div class="min-w-0">
             <p class="text-textMuted text-[11px] uppercase tracking-wide leading-tight">Avg Delivery Time</p>
