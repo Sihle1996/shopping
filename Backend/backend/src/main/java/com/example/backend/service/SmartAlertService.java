@@ -19,9 +19,10 @@ import java.time.*;
 import java.util.*;
 
 /**
- * Generates proactive "Smart Alerts" for a store from its own data. Computed
- * straight from the order/menu repos (no request context) so it also runs in
- * the scheduled scan. De-duplicates by a stable key so it never spams.
+ * Generates proactive "Smart Alerts" for a store from its OWN data — no fixed
+ * "magic" thresholds. Volume signals come from the store's week-over-week trend;
+ * margin signals come from the store's own cost data and its median margin.
+ * De-duplicates by a stable key so it never spams.
  */
 @Service
 @RequiredArgsConstructor
@@ -36,8 +37,10 @@ public class SmartAlertService {
     private final SubscriptionEnforcementService subscriptionEnforcementService;
 
     private static final ZoneId SAST = ZoneId.of("Africa/Johannesburg");
-    /** A store needs at least this many orders in the last 30 days before promo advice is relevant. */
-    private static final int ESTABLISHED_ORDERS_30D = 25;
+    /** Ignore week-to-week sales noise below this drop before suggesting a deal. */
+    private static final double MIN_SALES_DIP_PCT = 20.0;
+    /** An order is "stuck in prep" once it's older than this and not started. */
+    private static final int PREP_SLA_MINUTES = 15;
 
     @Transactional
     public int scan(UUID tenantId) {
@@ -48,7 +51,7 @@ public class SmartAlertService {
         Instant now = Instant.now();
         List<Order> last30 = orderRepository.findByOrderDateBetweenAndTenant_Id(now.minus(Duration.ofDays(30)), now, tenantId);
 
-        // units sold per item (genuine orders)
+        // units sold per item (genuine orders), and the store's own median margin
         Map<UUID, Integer> sold = new HashMap<>();
         for (Order o : last30) {
             if (isVoided(o.getStatus())) continue;
@@ -59,6 +62,7 @@ public class SmartAlertService {
                 }
             }
         }
+        Double medianMargin = medianMargin(items);
 
         int created = 0;
 
@@ -88,22 +92,77 @@ public class SmartAlertService {
             }
         }
 
-        // 2) Promo drought — only for an ESTABLISHED, steadily-trading store with no
-        // live deal. A brand-new shop shouldn't be nagged to discount before it has
-        // a track record.
-        long activePromos = promotionRepository.findActiveByTenantId(OffsetDateTime.now(), tenantId).size();
-        long ordersRecent = last30.stream().filter(o -> !isVoided(o.getStatus())).count();
-        // Only nag to launch a promo if the plan can actually accept one — otherwise the
-        // "Launch 15% off" action would always fail the plan-limit check and re-surface forever.
-        if (activePromos == 0 && ordersRecent >= ESTABLISHED_ORDERS_30D && canAddPromotion(tenantId, activePromos)) {
-            created += raise(tenant, "promo-drought", "medium",
-                    "No promotion is running",
-                    "You're trading steadily with no deal live. A short discount is a quick way to lift orders.",
-                    action("create_promotion", "Launch 15% off for 3 days",
-                            Map.of("title", "Flash Sale", "discountPercent", 15, "days", 3)));
+        // 2) Losing money — a selling item priced at or below what it costs to make.
+        //    Pure data: margin <= 0. One tap sets a price that hits the store's median margin.
+        for (MenuItem mi : items) {
+            int units = sold.getOrDefault(mi.getId(), 0);
+            Double margin = mi.getMarginPercent();
+            if (units <= 0 || margin == null || margin > 0) continue; // only at/below cost
+            Map<String, Object> fix = null;
+            if (medianMargin != null && medianMargin > 0 && medianMargin < 95) {
+                double target = round2(mi.getCost() / (1 - medianMargin / 100.0));
+                fix = action("set_item_price", "Set " + mi.getName() + " to R" + String.format(Locale.UK, "%.2f", target),
+                        Map.of("itemId", mi.getId().toString(), "price", target));
+            }
+            created += raise(tenant, "below-cost:" + mi.getId(), "high",
+                    mi.getName() + " is selling at a loss",
+                    String.format(Locale.UK, "Sold %d in 30 days at R%.2f but it costs R%.2f to make — you lose money on every order.",
+                            units, mi.getPrice(), mi.getCost()),
+                    fix);
         }
 
-        // 3) Pending orders aging — something's sitting unprepared.
+        // 3) Thin-margin bestseller — your busiest item earns BELOW your own median margin.
+        if (medianMargin != null) {
+            MenuItem worst = null; int worstUnits = 0; double worstMargin = 0;
+            for (MenuItem mi : items) {
+                int units = sold.getOrDefault(mi.getId(), 0);
+                Double margin = mi.getMarginPercent();
+                if (units <= 0 || margin == null || margin <= 0) continue;
+                if (margin < medianMargin && units > worstUnits) { worst = mi; worstUnits = units; worstMargin = margin; }
+            }
+            if (worst != null) {
+                created += raise(tenant, "thin-margin:" + worst.getId(), "medium",
+                        worst.getName() + " earns below-average margin",
+                        String.format(Locale.UK, "It's a top seller (%d sold) at %.0f%% margin vs your typical %.0f%%. A small price rise lifts profit the most here.",
+                                worstUnits, worstMargin, medianMargin),
+                        null);
+            }
+        }
+
+        // 4) Missing costs — selling items with no cost, so Books has to estimate them.
+        long missingCost = items.stream()
+                .filter(mi -> sold.getOrDefault(mi.getId(), 0) > 0 && mi.getCost() == null)
+                .count();
+        if (missingCost > 0) {
+            created += raise(tenant, "missing-cost:" + missingCost, "info",
+                    "Add cost to " + missingCost + " selling item" + (missingCost > 1 ? "s" : ""),
+                    "Books is estimating their cost (~30% of price). Add real costs so your profit is exact.",
+                    null);
+        }
+
+        // 5) Sales dipping — the store's OWN week-over-week trend is down, with no live
+        //    deal. Replaces any fixed order-count rule: the signal is this store's trend.
+        long activePromos = promotionRepository.findActiveByTenantId(OffsetDateTime.now(), tenantId).size();
+        double rev7 = 0, revPrior7 = 0;
+        for (Order o : last30) {
+            if (!OrderStatus.DELIVERED.matches(o.getStatus()) || o.getOrderDate() == null) continue;
+            long daysAgo = Duration.between(o.getOrderDate(), now).toDays();
+            double amt = o.getTotalAmount() != null ? o.getTotalAmount() : 0;
+            if (daysAgo < 7) rev7 += amt;
+            else if (daysAgo < 14) revPrior7 += amt;
+        }
+        if (activePromos == 0 && revPrior7 > 0 && rev7 < revPrior7 && canAddPromotion(tenantId, activePromos)) {
+            double dropPct = (revPrior7 - rev7) / revPrior7 * 100.0;
+            if (dropPct >= MIN_SALES_DIP_PCT) {
+                created += raise(tenant, "sales-dip", "medium",
+                        String.format(Locale.UK, "Sales are down %.0f%% vs last week", dropPct),
+                        String.format(Locale.UK, "You took R%.0f this week vs R%.0f last week, with no deal live. A short discount can win customers back.", rev7, revPrior7),
+                        action("create_promotion", "Launch 15% off for 3 days",
+                                Map.of("title", "Win-back Deal", "discountPercent", 15, "days", 3)));
+            }
+        }
+
+        // 6) Pending orders aging — something's sitting unprepared past your prep window.
         long oldestPending = 0; int awaiting = 0;
         for (Order o : last30) {
             String s = o.getStatus();
@@ -114,14 +173,14 @@ public class SmartAlertService {
                 if (mins >= 0 && mins < 1440) { awaiting++; oldestPending = Math.max(oldestPending, mins); }
             }
         }
-        if (awaiting > 0 && oldestPending >= 15) {
+        if (awaiting > 0 && oldestPending >= PREP_SLA_MINUTES) {
             created += raise(tenant, "pending-aging", "high",
                     awaiting + " order" + (awaiting > 1 ? "s" : "") + " awaiting prep",
                     "Oldest is " + oldestPending + " min old and not started. Check the kitchen.",
                     null);
         }
 
-        // 4) Milestone — today is beating the last fortnight (a little delight).
+        // 7) Milestone — today is beating the last fortnight (a little delight).
         Map<LocalDate, Double> daily = new HashMap<>();
         for (Order o : last30) {
             if (isVoided(o.getStatus()) || o.getOrderDate() == null) continue;
@@ -140,6 +199,22 @@ public class SmartAlertService {
         }
 
         return created;
+    }
+
+    /** The store's own median gross margin %, from items that have a cost set. */
+    private Double medianMargin(List<MenuItem> items) {
+        List<Double> margins = new ArrayList<>();
+        for (MenuItem mi : items) {
+            Double m = mi.getMarginPercent();
+            if (m != null) margins.add(m);
+        }
+        if (margins.isEmpty()) return null;
+        Collections.sort(margins);
+        return margins.get(margins.size() / 2);
+    }
+
+    private static double round2(double v) {
+        return Math.round(v * 100.0) / 100.0;
     }
 
     private int raise(Tenant tenant, String key, String severity, String title, String body, Map<String, Object> action) {
