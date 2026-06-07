@@ -442,7 +442,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     const color = this.getBrandColor();
     return {
       series: [{ name: 'Revenue', data: values }],
-      chart: { type: 'area', height: 280, toolbar: { show: false }, sparkline: { enabled: false } },
+      chart: { type: 'area', height: 280, toolbar: { show: false }, zoom: { enabled: false }, sparkline: { enabled: false } },
       colors: [color],
       xaxis: { categories: labels, labels: { style: { fontSize: '11px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
       yaxis: { labels: { formatter: (v: number) => `R${v.toLocaleString('en-ZA', { minimumFractionDigits: 0 })}`, style: { fontSize: '11px' } } },
@@ -461,7 +461,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     const values = data.map(d => d.orderCount);
     return {
       series: [{ name: 'Orders', data: values }],
-      chart: { type: 'bar', height: 240, toolbar: { show: false } },
+      chart: { type: 'bar', height: 240, toolbar: { show: false }, zoom: { enabled: false } },
       colors: [color],
       plotOptions: { bar: { borderRadius: 4, columnWidth: '60%' } },
       xaxis: {
@@ -493,7 +493,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     const color = this.getBrandColor();
     return {
       series: [{ name: 'Orders', data: values }],
-      chart: { type: 'bar', height: 280, toolbar: { show: false } },
+      chart: { type: 'bar', height: 280, toolbar: { show: false }, zoom: { enabled: false } },
       colors: [color],
       plotOptions: { bar: { horizontal: true, borderRadius: 6, barHeight: '55%' } },
       xaxis: { categories: labels, labels: { style: { fontSize: '11px' } }, tickAmount: 4 },
