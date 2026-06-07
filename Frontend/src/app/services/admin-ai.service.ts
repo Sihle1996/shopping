@@ -34,12 +34,20 @@ export interface AiProposedPromo {
   endAt: string;
 }
 
+export interface AiPriorObserved {
+  avgNetPercent: number;
+  samples: number;
+  basis: string; // always 'OBSERVATIONAL' — never causal
+  note: string;
+}
+
 export interface AiPromoAnalysis {
   hypothesis: string;
   evidence: string[];
-  insightStrength?: string;   // STRONG | MODERATE | WEAK — the decision gradient
-  recommendationType: string; // 'EXPERIMENT' — the SEMANTIC confidence, not a label
-  uncertainty?: string;       // legacy; the uncertainty note now lives in one global banner
+  insightStrength?: string;        // STRONG | MODERATE | WEAK — the decision gradient
+  recommendationType: string;      // 'EXPERIMENT' — the SEMANTIC confidence, not a label
+  priorObserved?: AiPriorObserved; // learning data — structurally non-causal
+  uncertainty?: string;            // legacy; the uncertainty note now lives in one global banner
 }
 
 export interface AiPromoSuggestion {

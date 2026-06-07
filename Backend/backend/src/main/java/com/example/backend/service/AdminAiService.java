@@ -209,18 +209,26 @@ public class AdminAiService {
             // are the SEMANTIC signals; the global uncertainty note lives once in the UI banner.
             Map<String, Object> analysis = new LinkedHashMap<>();
             analysis.put("hypothesis", hypothesis);
-            List<String> evidence = new ArrayList<>(List.of(
+            // EVIDENCE is selection criteria only (why this item was picked). Historical
+            // response is kept OUT of here so a learning number can never sit among the
+            // facts as if it were one.
+            analysis.put("evidence", List.of(
                     units + " orders in the last 30 days (rank #" + rank + ")",
                     String.format(Locale.UK, "%.0f%% margin — %s the store median",
                             margin, margin >= medM ? "at or above" : "below"),
                     "In stock now"));
-            if (samples > 0) {
-                evidence.add(String.format(Locale.UK,
-                        "Prior promos: avg %+.0f%% net vs store over %d (observed, not controlled)", avgNet, samples));
-            }
-            analysis.put("evidence", evidence);
             analysis.put("insightStrength", strength);
             analysis.put("recommendationType", "EXPERIMENT");
+            // Learning data lives in its OWN typed block, permanently stamped OBSERVATIONAL,
+            // so it can't leak into the UI (or any narration) as causal truth.
+            if (samples > 0) {
+                Map<String, Object> prior = new LinkedHashMap<>();
+                prior.put("avgNetPercent", Math.round(avgNet));
+                prior.put("samples", samples);
+                prior.put("basis", "OBSERVATIONAL");
+                prior.put("note", "Past association vs the store baseline — not a controlled or causal result.");
+                analysis.put("priorObserved", prior);
+            }
             s.put("analysis", analysis);
             s.put("proposedPromo", promo);
             suggestions.add(s);

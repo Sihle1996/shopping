@@ -66,6 +66,14 @@
               <ul class="text-[11px] text-textMuted mt-0.5 space-y-0.5">
                 <li *ngFor="let e of s.analysis.evidence" class="flex items-center gap-1.5"><i class="bi bi-dot"></i>{{ e }}</li>
               </ul>
+              <!-- PRIOR (OBSERVED) — learning data, structurally separated & permanently hedged
+                   so it never reads as a causal/established fact -->
+              <div *ngIf="s.analysis.priorObserved as ph"
+                   class="mt-1.5 px-2 py-1 rounded border border-dashed border-borderColor bg-surface/50">
+                <span class="text-[10px] font-semibold uppercase tracking-wide text-textMuted">Prior (observed)</span>
+                <span class="text-[11px] text-textDark ml-1">avg {{ ph.avgNetPercent > 0 ? '+' : '' }}{{ ph.avgNetPercent }}% net vs store · {{ ph.samples }} sample{{ ph.samples === 1 ? '' : 's' }}</span>
+                <p class="text-[10px] italic text-textMuted mt-0.5">{{ ph.note }}</p>
+              </div>
             </div>
             <!-- legacy fallback -->
             <p *ngIf="!s.analysis && s.reason" class="text-xs text-textMuted mb-1">{{ s.reason }}</p>
