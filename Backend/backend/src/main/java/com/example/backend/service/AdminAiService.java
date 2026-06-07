@@ -828,9 +828,9 @@ public class AdminAiService {
         }
 
         double topProfit = pl.items().get(0).getProfit(); // items are profit-sorted desc
-        List<Map<String, Object>> insights = new ArrayList<>();
+        List<Map<String, Object>> opportunities = new ArrayList<>();
+        List<Map<String, Object>> risks = new ArrayList<>();
         for (BookkeepingService.ItemLine il : pl.items()) {
-            if (insights.size() >= 4) break;
             if (il.name == null || il.getProfit() <= 0 || il.getProfit() < topProfit * 0.4) continue; // real contributor
             double[] s = sentiment.get(il.name.toLowerCase());
             if (s == null || s[1] < 2) continue; // need enough review signal
@@ -861,7 +861,16 @@ public class AdminAiService {
             ins.put("reviewCount", reviews);
             ins.put("complaintCount", complaints);
             ins.put("message", message);
-            insights.add(ins);
+            (type.equals("RISK") ? risks : opportunities).add(ins);
+        }
+
+        // Interleave (risks first each round) so the card shows BOTH kinds, not just the
+        // top-4 most-profitable items — which would otherwise be all opportunities. Cap 4.
+        List<Map<String, Object>> insights = new ArrayList<>();
+        int ri = 0, oi = 0;
+        while (insights.size() < 4 && (ri < risks.size() || oi < opportunities.size())) {
+            if (ri < risks.size()) insights.add(risks.get(ri++));
+            if (insights.size() < 4 && oi < opportunities.size()) insights.add(opportunities.get(oi++));
         }
         return Map.of("insights", insights);
     }
