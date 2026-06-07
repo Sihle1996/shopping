@@ -4,9 +4,11 @@ import com.example.backend.entity.MenuItem;
 import com.example.backend.entity.Order;
 import com.example.backend.entity.OrderStatus;
 import com.example.backend.entity.Review;
+import com.example.backend.entity.AlertOutcome;
 import com.example.backend.entity.PromoOutcomeRecord;
 import com.example.backend.entity.SubscriptionPlan;
 import com.example.backend.model.Promotion;
+import com.example.backend.repository.AlertOutcomeRepository;
 import com.example.backend.repository.PromoOutcomeRecordRepository;
 import com.example.backend.repository.PromotionRepository;
 import com.example.backend.repository.MenuItemRepository;
@@ -36,6 +38,7 @@ public class AdminAiService {
     private final MenuItemRepository menuItemRepository;
     private final PromotionRepository promotionRepository;
     private final PromoOutcomeRecordRepository promoOutcomeRecordRepository;
+    private final AlertOutcomeRepository alertOutcomeRepository;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final AnalyticsService analyticsService;
     private final ObjectMapper objectMapper;
@@ -393,6 +396,86 @@ public class AdminAiService {
             cur[1] += 1;
         }
         return hist;
+    }
+
+    // ── Feature: Alert calibration (predict → act → measure) ────────────────
+
+    /** On apply: snapshot what the alert PREDICTED + the subject item's baseline rate. */
+    @org.springframework.transaction.annotation.Transactional
+    public void recordAlertApplied(UUID tenantId, String alertKey, String impactJson, String actionJson) {
+        if (tenantId == null || alertKey == null) return;
+        AlertOutcome o = new AlertOutcome();
+        o.setTenantId(tenantId);
+        o.setAlertKey(alertKey);
+        o.setAlertType(alertKey.contains(":") ? alertKey.substring(0, alertKey.indexOf(':')) : alertKey);
+        try {
+            if (impactJson != null && !impactJson.isBlank()) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> m = objectMapper.readValue(impactJson, Map.class);
+                o.setPredictedRevenueAtRisk(asDouble(m.get("revenueAtRisk")));
+                o.setPredictedNetAtRisk(asDouble(m.get("netProfitAtRisk")));
+            }
+        } catch (Exception ignored) { /* impact optional */ }
+        try {
+            if (actionJson != null && !actionJson.isBlank()) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> act = objectMapper.readValue(actionJson, Map.class);
+                if (act.get("params") instanceof Map<?, ?> params && params.get("itemId") != null) {
+                    UUID itemId = UUID.fromString(params.get("itemId").toString());
+                    o.setItemId(itemId);
+                    Instant now = Instant.now();
+                    o.setBaselineUnits30d((int) productSales(tenantId, itemId, now.minus(Duration.ofDays(30)), now)[0]);
+                }
+            }
+        } catch (Exception ignored) { /* no item subject */ }
+        alertOutcomeRepository.save(o);
+    }
+
+    /**
+     * Calibration readout: each applied alert fix, with the PREDICTED impact next to the
+     * OBSERVED change in the subject item's sales rate since the fix (vs its prior rate).
+     * Observational — shows how well predictions track reality, never claims causation.
+     */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public Map<String, Object> alertOutcomes(UUID tenantId) {
+        Instant now = Instant.now();
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (AlertOutcome o : alertOutcomeRepository.findByTenantId(tenantId)) {
+            Map<String, Object> r = new LinkedHashMap<>();
+            r.put("alertType", o.getAlertType());
+            r.put("appliedAt", o.getAppliedAt() != null ? o.getAppliedAt().toString() : null);
+            r.put("predictedRevenueAtRisk", o.getPredictedRevenueAtRisk());
+            r.put("predictedNetAtRisk", o.getPredictedNetAtRisk());
+            r.put("basis", "OBSERVATIONAL");
+
+            if (o.getItemId() != null && o.getAppliedAt() != null) {
+                r.put("item", menuItemRepository.findByIdAndTenant_Id(o.getItemId(), tenantId)
+                        .map(MenuItem::getName).orElse("item"));
+                Instant applied = o.getAppliedAt().atZone(ZoneId.systemDefault()).toInstant();
+                double hours = Duration.between(applied, now).toHours();
+                if (hours >= 24) {
+                    double windowDays = Math.max(0.5, hours / 24.0);
+                    double observedRate = productSales(tenantId, o.getItemId(), applied, now)[0] / windowDays;
+                    double baselineRate = o.getBaselineUnits30d() != null ? o.getBaselineUnits30d() / 30.0 : 0;
+                    r.put("status", "MEASURED");
+                    r.put("windowDays", Math.round(windowDays));
+                    r.put("baselineRatePerDay", Math.round(baselineRate * 100.0) / 100.0);
+                    r.put("observedRatePerDay", Math.round(observedRate * 100.0) / 100.0);
+                    r.put("rateChangePercent", baselineRate > 0
+                            ? Math.round((observedRate - baselineRate) / baselineRate * 100.0) : null);
+                } else {
+                    r.put("status", "PENDING"); // too soon to measure
+                }
+            } else {
+                r.put("status", "NO_SUBJECT"); // store-level fix, no per-item rate to track
+            }
+            out.add(r);
+        }
+        return Map.of("outcomes", out);
+    }
+
+    private Double asDouble(Object o) {
+        return o instanceof Number n ? n.doubleValue() : null;
     }
 
     /** before/during units+revenue for one signal, with the % unit change (null if no baseline). */

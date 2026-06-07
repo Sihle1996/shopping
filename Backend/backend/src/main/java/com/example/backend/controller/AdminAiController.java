@@ -93,6 +93,12 @@ public class AdminAiController {
         return ResponseEntity.ok(adminAiService.reviewDigest(tenantId, since));
     }
 
+    /** GET /api/admin/ai/alert-outcomes — calibration: each applied alert fix, predicted vs observed */
+    @GetMapping("/alert-outcomes")
+    public ResponseEntity<Map<String, Object>> alertOutcomes() {
+        return ResponseEntity.ok(adminAiService.alertOutcomes(TenantContext.getCurrentTenantId()));
+    }
+
     /** GET /api/admin/ai/promo-outcomes — measured before-vs-during results per product promo */
     @GetMapping("/promo-outcomes")
     public ResponseEntity<Map<String, Object>> promoOutcomes() {
@@ -176,7 +182,13 @@ public class AdminAiController {
             @SuppressWarnings("unchecked")
             Map<String, Object> params = act.get("params") instanceof Map ? (Map<String, Object>) act.get("params") : Map.of();
             Map<String, Object> result = adminAgentService.executeAction((String) act.get("action"), params);
-            if (Boolean.TRUE.equals(result.get("ok"))) { a.setStatus("DONE"); aiAlertRepository.save(a); }
+            if (Boolean.TRUE.equals(result.get("ok"))) {
+                a.setStatus("DONE");
+                aiAlertRepository.save(a);
+                // CALIBRATION: remember what this fix predicted + the item baseline, to measure later.
+                try { adminAiService.recordAlertApplied(tenantId, a.getAlertKey(), a.getImpact(), a.getAction()); }
+                catch (Exception ignored) {}
+            }
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.ok(Map.of("ok", false, "message", "Couldn't apply: " + e.getMessage()));
