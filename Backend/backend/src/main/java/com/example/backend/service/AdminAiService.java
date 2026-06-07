@@ -85,6 +85,33 @@ public class AdminAiService {
         return out;
     }
 
+    /**
+     * Light name COMPLETION for Smart Fill: append 0-3 words to the typed seed to form a
+     * natural item name (e.g. "mushroom" -> "Mushroom Burger"). It must KEEP the typed text
+     * as the start — it completes, never reorders or invents from nothing. Returns "" if it
+     * can't safely extend the seed.
+     */
+    public Map<String, Object> completeName(String partial, String category) {
+        String seed = partial != null ? partial.trim() : "";
+        if (seed.length() < 2 || !anthropicClient.isConfigured()) return Map.of("name", "");
+        String cat = category != null && !category.isBlank() ? "Category: " + category + ". " : "";
+        String prompt =
+                "Complete this partial menu-item name for a South African food store into a natural, common name.\n" +
+                "Rules: the result MUST start with the user's exact typed text (do not reorder or remove their words); " +
+                "only APPEND 0-3 words; keep it short and realistic; no punctuation. " + cat +
+                "Return JSON only: { \"name\": \"<completed name>\" }\n" +
+                "Partial: \"" + seed.replace("\"", "'") + "\"";
+        String raw = anthropicClient.call(prompt, 60);
+        Map<String, Object> parsed = parseJsonOrFallback(raw, Map.of("name", ""));
+        Object n = parsed.get("name");
+        String name = n != null ? n.toString().trim() : "";
+        // Safety: only return a genuine extension of the seed (so it can render as ghost text).
+        if (name.isBlank() || !name.toLowerCase().startsWith(seed.toLowerCase()) || name.length() <= seed.length()) {
+            return Map.of("name", "");
+        }
+        return Map.of("name", name);
+    }
+
     /** Median price of the store's existing priced items in a category (or overall). */
     private Double medianCategoryPrice(UUID tenantId, String category) {
         List<MenuItem> priced = menuItemRepository.findByTenant_Id(tenantId).stream()

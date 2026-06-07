@@ -40,6 +40,14 @@ public class AdminAiController {
         return ResponseEntity.ok(capabilityRegistry.describe(TenantContext.getCurrentTenantId(), module));
     }
 
+    /** POST /api/admin/ai/complete-name — append-only name completion for Smart Fill ghost text */
+    @PostMapping("/complete-name")
+    public ResponseEntity<Map<String, Object>> completeName(@RequestBody Map<String, String> body) {
+        String partial = body.getOrDefault("partial", "");
+        String category = body.getOrDefault("category", "");
+        return ResponseEntity.ok(adminAiService.completeName(partial, category));
+    }
+
     /** POST /api/admin/ai/describe-item — generate description + tags for a menu item */
     @PostMapping("/describe-item")
     public ResponseEntity<Map<String, Object>> describeItem(@RequestBody AiDescribeItemRequest req) {

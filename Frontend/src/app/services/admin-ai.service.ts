@@ -121,6 +121,11 @@ export class AdminAiService {
     return this.http.post<AiDescribeItemResponse>(`${this.base}/describe-item`, req);
   }
 
+  /** Append-only name completion for ghost text (e.g. "mushroom" -> "Mushroom Burger"). */
+  completeName(partial: string, category?: string): Observable<{ name: string }> {
+    return this.http.post<{ name: string }>(`${this.base}/complete-name`, { partial, category: category || '' });
+  }
+
   reviewDigest(since?: string): Observable<AiReviewDigestResponse> {
     const body = since ? { since } : {};
     return this.http.post<AiReviewDigestResponse>(`${this.base}/review-digest`, body);

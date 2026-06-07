@@ -211,6 +211,7 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
 
   // ── Smart Fill (IDE-style, progressive) ─────────────────────────────────
   nameGhost = '';                       // grey completion suffix for the name field
+  private nameTimer: any;               // debounce for the AI completion fallback
   private readonly TARGET_MARGIN = 0.65; // matches the backend manifest's price rule
 
   /** Name-completion vocabulary: the store's OWN item names + categories (never invented). */
@@ -219,13 +220,35 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
     return Array.from(new Set<string>([...names, ...this.formCategories]));
   }
 
-  /** Recompute the ghost suffix as the owner types the name (local, instant). */
+  /**
+   * Ghost suffix as the owner types: an INSTANT local match from the store's own vocabulary,
+   * falling back to a debounced AI completion (append-only) for brand-new items not on the menu.
+   */
   onNameChange(): void {
     this.nameGhost = '';
+    clearTimeout(this.nameTimer);
     const name = this.formData.name || '';
     if (name.trim().length < 2) return;
-    const match = this.nameVocab.find(v => v.toLowerCase().startsWith(name.toLowerCase()) && v.length > name.length);
-    if (match) this.nameGhost = match.substring(name.length);
+
+    // 1) instant: complete from an existing item/category
+    const local = this.nameVocab.find(v => v.toLowerCase().startsWith(name.toLowerCase()) && v.length > name.length);
+    if (local) { this.nameGhost = local.substring(name.length); return; }
+
+    // 2) fallback: AI completes a new name (debounced so it's one call per pause, not per keystroke)
+    if (name.trim().length < 3) return;
+    this.nameTimer = setTimeout(() => {
+      this.adminAiService.completeName(this.formData.name || '', this.formData.category).subscribe({
+        next: (res) => {
+          const sug = (res?.name || '').trim();
+          const cur = this.formData.name || '';
+          // still the same prefix, and a genuine extension → show as ghost
+          if (sug && cur && sug.toLowerCase().startsWith(cur.toLowerCase()) && sug.length > cur.length) {
+            this.nameGhost = sug.substring(cur.length);
+          }
+        },
+        error: () => {}
+      });
+    }, 450);
   }
 
   /** Tab accepts the ghost completion (IDE-style). */
