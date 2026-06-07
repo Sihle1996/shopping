@@ -40,8 +40,8 @@
           <i class="bi bi-exclamation-triangle mt-0.5"></i>
           <span>No historical promotion data yet — all suggestions are <strong>experiments to test</strong>, ranked by demand &amp; margin. Outcomes are unknown until you run them.</span>
         </div>
-        <div *ngFor="let s of aiSuggestions; let i = index"
-             [hidden]="aiSuggestionsDismissed.has(i)"
+        <ng-container *ngFor="let s of aiSuggestions; let i = index">
+        <div *ngIf="!aiSuggestionsDismissed.has(i)"
              class="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border border-borderColor bg-surface">
           <div class="flex-1 min-w-0">
             <!-- FACTS — observed data layer -->
@@ -97,6 +97,7 @@
             </button>
           </div>
         </div>
+        </ng-container>
       </div>
     </div>
 
