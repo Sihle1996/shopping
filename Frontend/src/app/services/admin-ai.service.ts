@@ -118,6 +118,11 @@ export class AdminAiService {
     return this.http.post<AiSupportDraft>(`${this.base}/support/draft`, { subject, message });
   }
 
+  /** Draft a short public reply to a single customer review. */
+  draftReviewReply(rating: number, comment: string): Observable<{ reply: string }> {
+    return this.http.post<{ reply: string }>(`${this.base}/review/draft-reply`, { rating, comment });
+  }
+
   /** Apply an action the copilot proposed, after the admin confirms. */
   act(action: string, params: Record<string, any>): Observable<AiActResult> {
     return this.http.post<AiActResult>(`${this.base}/act`, { action, params });

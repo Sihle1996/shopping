@@ -50,6 +50,14 @@ public class AdminAiController {
         return ResponseEntity.ok(adminAiService.draftSupportReply(subject, message));
     }
 
+    /** POST /api/admin/ai/review/draft-reply — draft a public reply to one review */
+    @PostMapping("/review/draft-reply")
+    public ResponseEntity<Map<String, Object>> reviewReply(@RequestBody Map<String, Object> body) {
+        int rating = body.get("rating") instanceof Number n ? n.intValue() : 0;
+        String comment = body.get("comment") != null ? body.get("comment").toString() : "";
+        return ResponseEntity.ok(adminAiService.draftReviewReply(rating, comment));
+    }
+
     /** POST /api/admin/ai/review-digest — weekly sentiment summary of customer reviews */
     @PostMapping("/review-digest")
     public ResponseEntity<Map<String, Object>> reviewDigest(

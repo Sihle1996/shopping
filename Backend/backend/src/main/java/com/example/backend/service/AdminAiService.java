@@ -303,6 +303,24 @@ public class AdminAiService {
         return (raw != null && !raw.isBlank()) ? parseJsonOrFallback(raw, fallback) : fallback;
     }
 
+    /**
+     * Drafts a short, sincere PUBLIC reply to a single customer review.
+     * One-shot, read-only — the owner copies/edits before posting.
+     */
+    public Map<String, Object> draftReviewReply(int rating, String comment) {
+        String fb = rating >= 4
+                ? "Thank you so much for the kind words — we're thrilled you enjoyed it and can't wait to serve you again!"
+                : "We're really sorry your experience fell short. Thank you for the honest feedback — we're on it and would love the chance to make it right.";
+        if (!anthropicClient.isConfigured()) return Map.of("reply", fb);
+        String prompt =
+                "You are the owner of a South African food-delivery store on CraveIt, replying PUBLICLY to a customer review.\n" +
+                "Rating: " + rating + "/5\nComment: " + (comment != null && !comment.isBlank() ? comment : "(no comment left)") + "\n\n" +
+                "Write a warm, sincere, SHORT public reply (1-3 sentences, South African English). For a positive review, thank them specifically; for a negative one, own it, apologise briefly, and invite them back. Do NOT promise refunds or use placeholders/brackets.\n" +
+                "Return JSON only: { \"reply\": \"<text>\" }";
+        String raw = anthropicClient.call(prompt);
+        return (raw != null && !raw.isBlank()) ? parseJsonOrFallback(raw, Map.of("reply", fb)) : Map.of("reply", fb);
+    }
+
     // ── Feature 4: Conversational Analytics ────────────────────────────────
 
     public Map<String, Object> queryAnalytics(String question, UUID tenantId) {

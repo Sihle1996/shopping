@@ -17,6 +17,10 @@ export class AdminReviewsComponent implements OnInit {
   digestLoading = false;
   digestError: string | null = null;
 
+  // Per-review AI replies
+  replies: { [id: string]: string } = {};
+  replyingId: string | null = null;
+
   constructor(private reviewService: ReviewService, private adminAiService: AdminAiService,
               private toastr: ToastrService, private confirm: ConfirmService) {}
 
@@ -88,5 +92,24 @@ export class AdminReviewsComponent implements OnInit {
 
   stars(rating: number): number[] {
     return Array.from({ length: 5 }, (_, i) => i + 1);
+  }
+
+  /** Ask the AI to draft a short public reply to this review. */
+  draftReply(r: ReviewDTO): void {
+    if (this.replyingId) return;
+    this.replyingId = r.id;
+    this.adminAiService.draftReviewReply(r.rating, r.comment || '').subscribe({
+      next: (res) => { this.replies[r.id] = res.reply; this.replyingId = null; },
+      error: () => { this.replyingId = null; this.toastr.error('AI reply is unavailable right now'); }
+    });
+  }
+
+  copyReply(id: string): void {
+    const text = this.replies[id];
+    if (!text) return;
+    navigator.clipboard?.writeText(text).then(
+      () => this.toastr.success('Reply copied'),
+      () => this.toastr.error('Could not copy')
+    );
   }
 }

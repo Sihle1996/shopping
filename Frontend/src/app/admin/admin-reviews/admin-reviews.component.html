@@ -135,6 +135,22 @@
         <p *ngIf="review.comment" class="text-sm text-textDark leading-relaxed flex-1">{{ review.comment }}</p>
         <p *ngIf="!review.comment" class="text-xs text-textMuted italic flex-1">No comment left</p>
 
+        <!-- AI reply -->
+        <div class="mt-3 pt-3 border-t border-borderColor">
+          <div *ngIf="replies[review.id]" class="rounded-xl bg-primary-50/50 border border-primary-100 p-2.5 mb-2">
+            <p class="text-xs text-textDark leading-relaxed">{{ replies[review.id] }}</p>
+            <button (click)="copyReply(review.id)" class="mt-1.5 text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1">
+              <i class="bi bi-clipboard"></i> Copy reply
+            </button>
+          </div>
+          <button (click)="draftReply(review)" [disabled]="replyingId === review.id"
+                  class="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1 disabled:opacity-50">
+            <span *ngIf="replyingId === review.id" class="inline-block w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
+            <i *ngIf="replyingId !== review.id" class="bi bi-stars"></i>
+            {{ replies[review.id] ? 'Redraft reply' : 'Draft reply with AI' }}
+          </button>
+        </div>
+
       </div>
     </div>
 
