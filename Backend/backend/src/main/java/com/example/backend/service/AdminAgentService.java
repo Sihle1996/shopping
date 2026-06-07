@@ -11,7 +11,9 @@ import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.PromotionRepository;
 import com.example.backend.repository.ReviewRepository;
+import com.example.backend.repository.StoreHoursRepository;
 import com.example.backend.repository.TenantRepository;
+import com.example.backend.repository.UserRepository;
 import com.example.backend.tenant.TenantContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,6 +43,10 @@ public class AdminAgentService {
     private final MenuItemRepository menuItemRepository;
     private final ReviewRepository reviewRepository;
     private final PromotionRepository promotionRepository;
+    private final StoreHoursRepository storeHoursRepository;
+    private final UserRepository userRepository;
+    private final InventoryService inventoryService;
+    private final PayoutLedgerService payoutLedgerService;
     private final ObjectMapper objectMapper;
 
     private static final ZoneId SAST = ZoneId.of("Africa/Johannesburg");
@@ -122,6 +128,31 @@ public class AdminAgentService {
                 "All promotions for the store: title, discount %, what it applies to, active flag, and dates.",
                 Map.of(), List.of()));
 
+        tools.add(tool("get_order_detail",
+                "Full detail of one order by its id or short reference (e.g. 3D5FE52E): status, total, "
+                        + "delivery address, and every line item with quantity.",
+                Map.of("order_id", strProp("Order id or short reference")),
+                List.of("order_id")));
+
+        tools.add(tool("inventory_history",
+                "Recent stock-movement log: each change with item, stock/reserved delta, type "
+                        + "(ADJUSTMENT, ORDER_RESERVED, ORDER_CONFIRMED, ORDER_CANCELLED, ORDER_AUTO_REJECTED) and time. "
+                        + "Use this to explain WHY stock changed.",
+                Map.of("limit", intProp("Max entries (default 30)")),
+                List.of()));
+
+        tools.add(tool("payouts_summary",
+                "How much the store is currently owed (settlement balance) in Rand.",
+                Map.of(), List.of()));
+
+        tools.add(tool("get_store_hours",
+                "The weekly opening-hours schedule (per day: open/close times or closed).",
+                Map.of(), List.of()));
+
+        tools.add(tool("customers",
+                "Counts of the store's registered users broken down by role (customers, drivers, admins).",
+                Map.of(), List.of()));
+
         return tools;
     }
 
@@ -138,6 +169,11 @@ public class AdminAgentService {
             case "inventory_alerts":   return toolInventoryAlerts(tenantId);
             case "list_reviews":       return toolReviews(tenantId, input.path("limit").asInt(12));
             case "list_promotions":    return toolPromotions(tenantId);
+            case "get_order_detail":   return toolOrderDetail(tenantId, input.path("order_id").asText(null));
+            case "inventory_history":  return toolInventoryHistory(input.path("limit").asInt(30));
+            case "payouts_summary":    return toolPayouts(tenantId);
+            case "get_store_hours":    return toolStoreHours(tenantId);
+            case "customers":          return toolCustomers(tenantId);
             default:                   return "Unknown tool: " + name;
         }
     }
@@ -285,6 +321,94 @@ public class AdminAgentService {
             out.add(r);
         }
         return json(Map.of("count", out.size(), "promotions", out));
+    }
+
+    private String toolOrderDetail(UUID tenantId, String orderId) {
+        if (orderId == null || orderId.isBlank()) return "Provide an order id.";
+        String q = orderId.trim().toLowerCase();
+        Order order = orderRepository.findByTenant_Id(tenantId).stream()
+                .filter(o -> o.getId() != null && o.getId().toString().toLowerCase().startsWith(q))
+                .findFirst().orElse(null);
+        if (order == null) return json(Map.of("found", false));
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (var oi : order.getOrderItems()) {
+            Map<String, Object> r = new LinkedHashMap<>();
+            r.put("name", oi.getName());
+            r.put("size", oi.getSize());
+            r.put("qty", oi.getQuantity());
+            r.put("lineTotal", oi.getTotalPrice());
+            if (oi.getSpecialInstructions() != null) r.put("notes", oi.getSpecialInstructions());
+            items.add(r);
+        }
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("ref", shortId(order.getId()));
+        m.put("status", order.getStatus());
+        m.put("total", order.getTotalAmount());
+        m.put("placedAt", order.getOrderDate() != null ? order.getOrderDate().toString() : null);
+        m.put("deliveryAddress", order.getDeliveryAddress());
+        m.put("items", items);
+        return json(m);
+    }
+
+    private String toolInventoryHistory(int limit) {
+        int cap = Math.min(Math.max(limit, 1), 50);
+        List<Map<String, Object>> out = new ArrayList<>();
+        inventoryService.getAuditLogs().stream()
+                .sorted((a, b) -> {
+                    var ta = a.getTimestamp(); var tb = b.getTimestamp();
+                    if (ta == null && tb == null) return 0;
+                    if (ta == null) return 1;
+                    if (tb == null) return -1;
+                    return tb.compareTo(ta);
+                })
+                .limit(cap)
+                .forEach(l -> {
+                    Map<String, Object> r = new LinkedHashMap<>();
+                    r.put("item", l.getMenuItemName());
+                    r.put("stockChange", l.getStockChange());
+                    r.put("reservedChange", l.getReservedChange());
+                    r.put("type", l.getType());
+                    r.put("at", l.getTimestamp() != null ? l.getTimestamp().toString() : null);
+                    out.add(r);
+                });
+        return json(Map.of("count", out.size(), "entries", out));
+    }
+
+    private String toolPayouts(UUID tenantId) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("balanceOwed", payoutLedgerService.getBalance(tenantId));
+        m.put("currency", "ZAR");
+        return json(m);
+    }
+
+    private String toolStoreHours(UUID tenantId) {
+        String[] dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (var sh : storeHoursRepository.findByTenant_IdOrderByDayOfWeek(tenantId)) {
+            Map<String, Object> r = new LinkedHashMap<>();
+            int d = sh.getDayOfWeek();
+            r.put("day", (d >= 0 && d < 7) ? dayNames[d] : String.valueOf(d));
+            r.put("closed", sh.isClosed());
+            if (!sh.isClosed()) {
+                r.put("open", sh.getOpenTime());
+                r.put("close", sh.getCloseTime());
+            }
+            out.add(r);
+        }
+        return json(Map.of("schedule", out));
+    }
+
+    private String toolCustomers(UUID tenantId) {
+        Map<String, Long> byRole = new LinkedHashMap<>();
+        var users = userRepository.findByTenant_Id(tenantId);
+        for (var u : users) {
+            String role = u.getRole() != null ? u.getRole().toString() : "UNKNOWN";
+            byRole.merge(role, 1L, Long::sum);
+        }
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("totalUsers", users.size());
+        m.put("byRole", byRole);
+        return json(m);
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
