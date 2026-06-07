@@ -125,99 +125,56 @@ public class AdminAiService {
             return Map.of("suggestions", List.of());
         }
 
-        // Build compact summary (max 2000 chars) — include each item's margin so the
-        // AI can pick PROFITABLE discounts and never push an item below cost.
-        StringBuilder sb = new StringBuilder();
-        for (MenuItem item : menuItems) {
-            long count = itemCounts.getOrDefault(item.getId(), 0L);
-            Double margin = item.getMarginPercent();
-            String marginStr = margin != null ? String.format("%.0f%%", margin) : "n/a";
-            String line = String.format("- %s | R%.2f | margin %s | %s | %d orders\n",
-                    item.getName(), item.getPrice(), marginStr, item.getCategory(), count);
-            if (sb.length() + line.length() > 2000) break;
-            sb.append(line);
-        }
+        // LEVEL-3: the BACKEND decides deterministically (no LLM) — there is no
+        // elasticity/promo-history data to "reason" over. Pick the store's most-ordered
+        // items that it can afford to discount (margin at/above its OWN median, in stock),
+        // and emit STRUCTURED facts + an explicit confidence contract. The UI narrates.
+        List<Double> margins = menuItems.stream().map(MenuItem::getMarginPercent)
+                .filter(Objects::nonNull).sorted().collect(Collectors.toList());
+        Double medianMargin = margins.isEmpty() ? null : margins.get(margins.size() / 2);
+
+        List<MenuItem> candidates = menuItems.stream()
+                .filter(i -> itemCounts.getOrDefault(i.getId(), 0L) > 0)
+                .filter(i -> i.getMarginPercent() != null && (medianMargin == null || i.getMarginPercent() >= medianMargin))
+                .filter(i -> (i.getStock() - i.getReservedStock()) > 0 && i.getPrice() != null && i.getPrice() > 0)
+                .sorted((a, b) -> Long.compare(itemCounts.getOrDefault(b.getId(), 0L), itemCounts.getOrDefault(a.getId(), 0L)))
+                .limit(3)
+                .collect(Collectors.toList());
 
         String today = LocalDate.now().toString();
-        String prompt =
-                "You are a promotions advisor for a South African food-delivery restaurant. Suggest 0-3 time-limited " +
-                "promotions from the 30-day data below. Today is " + today + ".\n" +
-                "EVIDENCE CONSTRAINT (critical): the ONLY data you have is order frequency, price, margin and stock. " +
-                "You do NOT have price elasticity, past promotion response, basket/bundle behaviour, customer intent, " +
-                "or peak-hour data. Therefore:\n" +
-                "- Base each suggestion ONLY on frequency + margin + stock: a popular item with a HEALTHY margin, with " +
-                "the discountPercent kept well below that item's margin so it never sells below cost. Skip thin-margin " +
-                "or margin=n/a items. If nothing qualifies, return an empty suggestions list.\n" +
-                "- Treat every promo as an EXPERIMENT — its effect on volume is UNKNOWN. NEVER claim a discount 'will " +
-                "drive', 'encourages', 'positions', 'captures' or 'boosts' demand, and never assume peak hours or that " +
-                "bundles lift baskets. Use neutral, honest language.\n" +
-                "- 'reason' must state ONLY: the evidence (the metric, e.g. '21 orders, 64% margin'), that the volume " +
-                "uplift is unproven, and the main risk (margin or cannibalising full-price sales). 1-2 sentences.\n" +
-                "- 'strength' is always 'Experimental' (you have no promo-response data to justify 'Strong').\n" +
-                "Return JSON only, no markdown:\n" +
-                "{\n" +
-                "  \"suggestions\": [\n" +
-                "    {\n" +
-                "      \"reason\": \"<evidence + 'uplift unproven' + the risk>\",\n" +
-                "      \"strength\": \"Experimental\",\n" +
-                "      \"proposedPromo\": {\n" +
-                "        \"title\": \"<promo name>\",\n" +
-                "        \"discountPercent\": <10-30>,\n" +
-                "        \"appliesTo\": \"PRODUCT\",\n" +
-                "        \"targetProductName\": \"<exact item name from data>\",\n" +
-                "        \"startAt\": \"<today's date>\",\n" +
-                "        \"endAt\": \"<date 3-7 days from today>\"\n" +
-                "      }\n" +
-                "    }\n" +
-                "  ]\n" +
-                "}\n" +
-                "Menu items (name | price | category | orders in last 30 days):\n" + sb;
+        String endAt = LocalDate.now().plusDays(5).toString();
+        List<Map<String, Object>> suggestions = new ArrayList<>();
+        for (MenuItem item : candidates) {
+            long units = itemCounts.getOrDefault(item.getId(), 0L);
+            double margin = item.getMarginPercent();
+            int discount = (int) Math.min(15, Math.max(5, Math.round(margin / 4.0))); // safely below margin
 
-        String promoRaw = anthropicClient.call(prompt);
-        Map<String, Object> result = (promoRaw != null && !promoRaw.isBlank())
-                ? parseJsonOrFallback(promoRaw, Map.of("suggestions", List.of()))
-                : buildRuleBasedPromoSuggestions(menuItems, itemCounts);
+            Map<String, Object> promo = new LinkedHashMap<>();
+            promo.put("title", item.getName() + " — featured");
+            promo.put("discountPercent", discount);
+            promo.put("appliesTo", "PRODUCT");
+            promo.put("targetProductName", item.getName());
+            promo.put("targetProductId", item.getId().toString());
+            promo.put("startAt", today);
+            promo.put("endAt", endAt);
 
-        // Resolve targetProductName → targetProductId
-        Map<String, UUID> nameToId = menuItems.stream()
-                .collect(Collectors.toMap(
-                        i -> i.getName().toLowerCase(),
-                        MenuItem::getId,
-                        (a, b) -> a
-                ));
-
-        List<Map<String, Object>> rawSuggestions = getSuggestions(result);
-        List<Map<String, Object>> enriched = new ArrayList<>();
-        for (Map<String, Object> s : rawSuggestions) {
-            Map<String, Object> copy = new HashMap<>(s);
-            Object pp = s.get("proposedPromo");
-            if (pp instanceof Map<?, ?> promo) {
-                Map<String, Object> promoCopy = new HashMap<>();
-                promo.forEach((k, v) -> promoCopy.put(k.toString(), v));
-                Object targetObj = promoCopy.get("targetProductName");
-                String targetName = (targetObj instanceof String str) ? str : null;
-                if (targetName != null) {
-                    UUID id = nameToId.get(targetName.toLowerCase());
-                    if (id != null) promoCopy.put("targetProductId", id.toString());
-                }
-                copy.put("proposedPromo", promoCopy);
-            }
-            enriched.add(copy);
+            Map<String, Object> s = new LinkedHashMap<>();
+            // FACTS (observed, deterministic) — kept separate from interpretation
+            s.put("facts", List.of(
+                    units + " orders in the last 30 days",
+                    String.format(Locale.UK, "%.0f%% gross margin", margin),
+                    String.format(Locale.UK, "R%.2f current price", item.getPrice())));
+            // ANALYSIS (explicit confidence contract — never "Strong")
+            s.put("confidence", "Experimental");
+            s.put("whyNotCertain", "No past promotion-response or price-elasticity data for this item — the effect on volume is unknown.");
+            s.put("strength", "Experimental"); // back-compat with the existing UI badge
+            s.put("reason", String.format(Locale.UK,
+                    "Selected because it is among your most-ordered items (%d) with a healthy %.0f%% margin, so a %d%% discount stays above cost.",
+                    units, margin, discount));
+            s.put("proposedPromo", promo);
+            suggestions.add(s);
         }
-
-        return Map.of("suggestions", enriched);
-    }
-
-    @SuppressWarnings("unchecked")
-    private List<Map<String, Object>> getSuggestions(Map<String, Object> result) {
-        Object raw = result.get("suggestions");
-        if (raw instanceof List<?> list) {
-            return list.stream()
-                    .filter(i -> i instanceof Map)
-                    .map(i -> (Map<String, Object>) i)
-                    .collect(Collectors.toList());
-        }
-        return List.of();
+        return Map.of("suggestions", suggestions);
     }
 
     // ── Feature 3: Review Digest ────────────────────────────────────────────
@@ -636,29 +593,6 @@ public class AdminAiService {
         return Map.of("description", desc, "tags", tags,
                 "suggestedCategory", category != null ? category : "",
                 "suggestedPrice", suggestedPrice);
-    }
-
-    private Map<String, Object> buildRuleBasedPromoSuggestions(List<MenuItem> menuItems, Map<UUID, Long> itemCounts) {
-        String today = LocalDate.now().toString();
-        String endDate = LocalDate.now().plusDays(5).toString();
-        // Suggest discount on lowest-ordered available item
-        List<Map<String, Object>> suggestions = new ArrayList<>();
-        menuItems.stream()
-                .filter(i -> i.getPrice() != null)
-                .min(Comparator.comparingLong(i -> itemCounts.getOrDefault(i.getId(), 0L)))
-                .ifPresent(item -> suggestions.add(Map.of(
-                        "reason", item.getName() + " has low order volume — a discount could drive visibility.",
-                        "proposedPromo", Map.of(
-                                "title", item.getName() + " Special",
-                                "discountPercent", 15,
-                                "appliesTo", "PRODUCT",
-                                "targetProductName", item.getName(),
-                                "targetProductId", item.getId().toString(),
-                                "startAt", today,
-                                "endAt", endDate
-                        )
-                )));
-        return Map.of("suggestions", suggestions);
     }
 
     private String buildFallbackAnswer(String intent, String period, Map<String, Object> data) {

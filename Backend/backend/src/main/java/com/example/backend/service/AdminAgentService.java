@@ -89,7 +89,24 @@ public class AdminAgentService {
                 (name, input) -> executeTool(tenantId, name, input, proposals),
                 8, 1500);
         if (answer == null) return null;
-        return new AgentResult(answer, proposals);
+        return new AgentResult(sanitiseNarration(answer), proposals);
+    }
+
+    /**
+     * No-causality contract (system-level, not just a prompt): neutralise the
+     * specific predictive/marketing phrases that imply a guaranteed outcome the
+     * system cannot actually predict. A blunt safety net so narration can't
+     * regress into "this will boost sales" even if a prompt slips.
+     */
+    static String sanitiseNarration(String text) {
+        if (text == null || text.isBlank()) return text;
+        return text
+                .replaceAll("(?i)\\bwill\\s+drive\\b", "may be associated with")
+                .replaceAll("(?i)\\bwill\\s+boost\\b", "may be associated with higher")
+                .replaceAll("(?i)\\bwill\\s+increase\\b", "may be associated with higher")
+                .replaceAll("(?i)\\bdrives\\s+sales\\b", "is associated with sales")
+                .replaceAll("(?i)\\bboosts\\s+revenue\\b", "is associated with revenue")
+                .replaceAll("(?i)\\bcaptures\\s+demand\\b", "is associated with demand");
     }
 
     /**
@@ -213,7 +230,7 @@ public class AdminAgentService {
                 + "- No preamble, no sign-off, no emoji. Plain markdown bullets, each starting with '- '.";
 
         String out = anthropicClient.isConfigured() ? anthropicClient.call(prompt, 500) : null;
-        String briefing = (out != null && !out.isBlank()) ? out.trim() : ruleBasedBriefing(snap);
+        String briefing = (out != null && !out.isBlank()) ? sanitiseNarration(out.trim()) : ruleBasedBriefing(snap);
 
         return Map.of("briefing", briefing);
     }

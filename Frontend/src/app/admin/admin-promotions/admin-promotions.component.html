@@ -18,7 +18,7 @@
           <h2 class="font-heading text-sm font-bold text-textDark flex items-center gap-1.5">
             <span>✨</span> AI Suggestions
           </h2>
-          <p class="text-xs text-textMuted mt-0.5">Based on your last 30 days of orders</p>
+          <p class="text-xs text-textMuted mt-0.5">Candidates from your sales &amp; margins — experiments to test, not forecasts</p>
         </div>
         <button (click)="loadAiSuggestions()"
                 [disabled]="aiSuggestionsLoading"
@@ -39,10 +39,20 @@
              [hidden]="aiSuggestionsDismissed.has(i)"
              class="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border border-borderColor bg-surface">
           <div class="flex-1 min-w-0">
-            <span *ngIf="s.strength" class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded mb-1">
-              <i class="bi bi-flask"></i> {{ s.strength }}
-            </span>
-            <p class="text-xs text-textMuted mb-1">{{ s.reason }}</p>
+            <!-- FACTS (observed) -->
+            <div *ngIf="s.facts?.length" class="mb-2">
+              <p class="text-[10px] font-bold uppercase tracking-wide text-textMuted mb-0.5">Facts</p>
+              <ul class="text-xs text-textDark space-y-0.5">
+                <li *ngFor="let f of s.facts" class="flex items-center gap-1.5"><i class="bi bi-dot text-primary"></i>{{ f }}</li>
+              </ul>
+            </div>
+            <!-- ANALYSIS (explicitly experimental) -->
+            <div class="mb-2">
+              <p class="text-[10px] font-bold uppercase tracking-wide text-amber-700 mb-0.5 flex items-center gap-1">
+                <i class="bi bi-flask"></i> Analysis · {{ s.confidence || s.strength || 'Experimental' }}
+              </p>
+              <p class="text-xs text-textMuted">{{ s.whyNotCertain || s.reason }}</p>
+            </div>
             <div class="flex flex-wrap items-center gap-2">
               <span class="font-semibold text-textDark text-sm">{{ s.proposedPromo.title }}</span>
               <span class="inline-flex items-center gap-1 text-xs font-bold bg-primary-50 text-primary px-2 py-0.5 rounded-full">

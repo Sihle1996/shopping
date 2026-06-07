@@ -36,7 +36,10 @@ export interface AiProposedPromo {
 
 export interface AiPromoSuggestion {
   reason: string;
-  strength?: string; // 'Experimental' — promo impact is unproven without elasticity data
+  facts?: string[];          // observed metrics (deterministic) — rendered separately from analysis
+  confidence?: string;       // always 'Experimental' (no elasticity/promo-history data)
+  whyNotCertain?: string;    // why this is not a confident prediction
+  strength?: string;         // back-compat alias for confidence
   proposedPromo: AiProposedPromo;
 }
 
