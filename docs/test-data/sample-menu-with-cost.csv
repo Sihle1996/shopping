@@ -1,0 +1,25 @@
+name,price,category,description,stock,cost
+Smash Burger,95,Burgers,Two smashed beef patties with cheddar pickles and house sauce on a brioche bun,40,34
+Chicken Burger,89,Burgers,Crispy fried chicken thigh lettuce and peri mayo,35,32
+Veggie Burger,79,Burgers,Grilled halloumi and roasted pepper stack,20,26
+Double Bacon Burger,119,Burgers,Double beef double bacon and melted cheese,25,47
+Beef Kota,65,Kotas,Quarter loaf with polony cheese chips and atchar,50,24
+Boerie Kota,75,Kotas,Boerewors egg cheese and chips in a quarter loaf,45,28
+Full House Kota,95,Kotas,The works - russian polony egg cheese chips and atchar,30,38
+Chicken Wrap,85,Wraps,Grilled chicken peri sauce lettuce and tomato,30,30
+Halloumi Wrap,80,Wraps,Grilled halloumi roasted veg and hummus,18,29
+Loaded Fries,55,Sides,Fries topped with cheese sauce and crispy bacon,60,19
+Regular Fries,30,Sides,Golden hand-cut fries with salt,80,8
+Onion Rings,40,Sides,Beer-battered crispy onion rings,35,13
+Coleslaw,25,Sides,Creamy house slaw,40,7
+Coca Cola,20,Drinks,Ice-cold 440ml can,100,7
+Sprite,20,Drinks,Ice-cold 440ml can,90,7
+Still Water,15,Drinks,500ml bottle,120,5
+Fresh Orange Juice,35,Drinks,Freshly squeezed,25,12
+Chocolate Cake,45,Desserts,Rich chocolate slice with ganache,15,15
+Malva Pudding,40,Desserts,Warm malva with custard,20,13
+Ice Cream Sundae,38,Desserts,Vanilla soft serve with chocolate sauce,30,12
+Beef Ribs,165,Mains,Slow-cooked sticky beef ribs with fries,12,66
+Grilled Chicken Platter,140,Mains,Half chicken flame-grilled with two sides,15,52
+Breakfast Roll,55,Breakfast,Bacon egg and cheese on a soft roll,25,18
+Full English,99,Breakfast,Eggs bacon boerewors beans toast and grilled tomato,18,36
