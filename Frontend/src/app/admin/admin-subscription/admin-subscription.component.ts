@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SubscriptionService, SubscriptionInfo } from '../../services/subscription.service';
+import { AdminAiService } from '../../services/admin-ai.service';
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
@@ -20,6 +21,9 @@ export class AdminSubscriptionComponent implements OnInit {
   loading = true;
   plans: PlanOption[] = [];
 
+  // AI plan-fit advice
+  advice: { verdict: string; recommendation: string } | null = null;
+
   upgradingPlan: string | null = null;
   payFastLoading = false;
   upgradeError = '';
@@ -33,11 +37,19 @@ export class AdminSubscriptionComponent implements OnInit {
 
   constructor(
     private subscriptionService: SubscriptionService,
+    private ai: AdminAiService,
     private toastr: ToastrService,
     private http: HttpClient,
     private route: ActivatedRoute,
     private router: Router
   ) {}
+
+  private loadAdvice(): void {
+    this.ai.planAdvice().subscribe({
+      next: (a) => { if (a && a.recommendation) this.advice = a; },
+      error: () => {}
+    });
+  }
 
   ngOnInit() {
     const payment = this.route.snapshot.queryParamMap.get('payment');
@@ -92,6 +104,7 @@ export class AdminSubscriptionComponent implements OnInit {
       next: info => {
         this.info = info;
         this.loading = false;
+        this.loadAdvice();
         this.subscriptionService.getPlans().subscribe({
           next: plans => this.plans = plans,
           error: () => {}

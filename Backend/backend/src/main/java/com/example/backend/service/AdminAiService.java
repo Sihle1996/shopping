@@ -4,6 +4,8 @@ import com.example.backend.entity.MenuItem;
 import com.example.backend.entity.Order;
 import com.example.backend.entity.OrderStatus;
 import com.example.backend.entity.Review;
+import com.example.backend.entity.SubscriptionPlan;
+import com.example.backend.repository.PromotionRepository;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.ReviewRepository;
@@ -29,6 +31,8 @@ public class AdminAiService {
     private final ReviewRepository reviewRepository;
     private final OrderRepository orderRepository;
     private final MenuItemRepository menuItemRepository;
+    private final PromotionRepository promotionRepository;
+    private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final AnalyticsService analyticsService;
     private final ObjectMapper objectMapper;
     private final AnthropicClient anthropicClient;
@@ -366,6 +370,54 @@ public class AdminAiService {
             }
         }
         return Map.of("updated", updated);
+    }
+
+    // ── Feature: Plan-fit advisor ──────────────────────────────────────────
+
+    /**
+     * Advises whether the store's subscription fits its real usage & growth:
+     * UPGRADE (near limits / growing), GOOD_FIT, or CONSIDER_DOWNGRADE (very low use).
+     */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public Map<String, Object> planAdvice(UUID tenantId) {
+        Map<String, Object> fallback = Map.of("verdict", "GOOD_FIT",
+                "recommendation", "Your plan looks like a reasonable fit for your current usage.");
+        if (tenantId == null) return fallback;
+        SubscriptionPlan plan;
+        try { plan = subscriptionEnforcementService.getPlan(tenantId); } catch (Exception e) { return fallback; }
+
+        long items = menuItemRepository.countByTenant_Id(tenantId);
+        long activePromos = promotionRepository.countByTenant_IdAndActiveTrue(tenantId);
+        Instant now = Instant.now();
+        long orders30 = orderRepository.findByOrderDateBetweenAndTenant_Id(now.minus(Duration.ofDays(30)), now, tenantId)
+                .stream().filter(o -> OrderStatus.DELIVERED.matches(o.getStatus())).count();
+        long ordersPrev30 = orderRepository.findByOrderDateBetweenAndTenant_Id(
+                now.minus(Duration.ofDays(60)), now.minus(Duration.ofDays(30)), tenantId)
+                .stream().filter(o -> OrderStatus.DELIVERED.matches(o.getStatus())).count();
+
+        boolean nearLimit = (plan.getMaxMenuItems() > 0 && items >= plan.getMaxMenuItems() * 0.8)
+                || (plan.getMaxPromotions() > 0 && activePromos >= plan.getMaxPromotions());
+        String ruleVerdict = nearLimit ? "UPGRADE" : "GOOD_FIT";
+
+        if (!anthropicClient.isConfigured()) {
+            return Map.of("verdict", ruleVerdict, "recommendation", nearLimit
+                    ? "You're close to your " + plan.getName() + " plan limits — upgrading unlocks more headroom."
+                    : "Your " + plan.getName() + " plan comfortably covers your current usage.");
+        }
+        String prompt =
+                "You advise a restaurant owner on whether their CraveIt subscription fits, in South African English.\n" +
+                "Plan: " + plan.getName() + " (max menu items " + plan.getMaxMenuItems() +
+                ", max active promos " + plan.getMaxPromotions() +
+                ", analytics " + (plan.isHasAnalytics() ? "included" : "NOT included") + ").\n" +
+                "Usage: " + items + " menu items, " + activePromos + " active promos.\n" +
+                "Delivered orders: " + orders30 + " last 30 days (" + ordersPrev30 + " the 30 days before).\n" +
+                "Give ONE short, specific recommendation (1-2 sentences) and a verdict. UPGRADE if near/at limits or " +
+                "growing fast and they'd benefit from headroom or analytics; GOOD_FIT if it suits them; " +
+                "CONSIDER_DOWNGRADE only if usage is very low and flat. Be honest, not pushy.\n" +
+                "Return JSON only: { \"verdict\": \"UPGRADE|GOOD_FIT|CONSIDER_DOWNGRADE\", \"recommendation\": \"<text>\" }";
+        String raw = anthropicClient.call(prompt);
+        return (raw != null && !raw.isBlank())
+                ? parseJsonOrFallback(raw, Map.of("verdict", ruleVerdict, "recommendation", "")) : fallback;
     }
 
     // ── Feature 4: Conversational Analytics ────────────────────────────────

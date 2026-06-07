@@ -128,6 +128,11 @@ export class AdminAiService {
     return this.http.post<{ updated: number }>(`${this.base}/menu/bulk-describe`, {});
   }
 
+  /** Plan-fit advice: does the subscription suit current usage & growth? */
+  planAdvice(): Observable<{ verdict: string; recommendation: string }> {
+    return this.http.get<{ verdict: string; recommendation: string }>(`${this.base}/plan-advice`);
+  }
+
   /** Apply an action the copilot proposed, after the admin confirms. */
   act(action: string, params: Record<string, any>): Observable<AiActResult> {
     return this.http.post<AiActResult>(`${this.base}/act`, { action, params });

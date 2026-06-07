@@ -50,6 +50,12 @@ public class AdminAiController {
         return ResponseEntity.ok(adminAiService.draftSupportReply(subject, message));
     }
 
+    /** GET /api/admin/ai/plan-advice — does the subscription fit current usage/growth? */
+    @GetMapping("/plan-advice")
+    public ResponseEntity<Map<String, Object>> planAdvice() {
+        return ResponseEntity.ok(adminAiService.planAdvice(TenantContext.getCurrentTenantId()));
+    }
+
     /** POST /api/admin/ai/menu/bulk-describe — fill descriptions for items missing one */
     @PostMapping("/menu/bulk-describe")
     public ResponseEntity<Map<String, Object>> bulkDescribe() {

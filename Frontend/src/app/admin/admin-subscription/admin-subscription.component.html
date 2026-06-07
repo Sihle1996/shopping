@@ -34,6 +34,22 @@
         </span>
       </app-page-header>
 
+      <!-- AI plan-fit advice -->
+      <div *ngIf="advice" class="mb-6 p-4 rounded-2xl border flex items-start gap-3"
+           [ngClass]="advice.verdict === 'UPGRADE' ? 'bg-primary-50 border-primary-100'
+                    : advice.verdict === 'CONSIDER_DOWNGRADE' ? 'bg-amber-50 border-amber-200'
+                    : 'bg-emerald-50 border-emerald-200'">
+        <i class="bi bi-stars text-lg mt-0.5"
+           [ngClass]="advice.verdict === 'UPGRADE' ? 'text-primary'
+                    : advice.verdict === 'CONSIDER_DOWNGRADE' ? 'text-amber-500' : 'text-emerald-600'"></i>
+        <div class="min-w-0">
+          <p class="text-sm font-semibold text-textDark">
+            {{ advice.verdict === 'UPGRADE' ? 'Worth upgrading' : advice.verdict === 'CONSIDER_DOWNGRADE' ? 'You could save' : 'Good fit' }}
+          </p>
+          <p class="text-sm text-textMuted mt-0.5 leading-snug">{{ advice.recommendation }}</p>
+        </div>
+      </div>
+
       <!-- SUSPENDED alert -->
       <div *ngIf="info.status === 'SUSPENDED'"
            class="mb-6 p-5 rounded-2xl bg-red-50 border border-red-200 flex items-start gap-4">
