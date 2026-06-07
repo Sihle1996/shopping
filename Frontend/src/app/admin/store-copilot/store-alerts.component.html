@@ -77,6 +77,10 @@
               <span *ngIf="a.impact.netProfitAtRisk != null" class="text-[11px] text-textMuted">
                 ≈ R{{ a.impact.netProfitAtRisk | number:'1.0-0' }} profit<span *ngIf="a.impact.timeWindow"> · {{ a.impact.timeWindow }}</span>
               </span>
+              <span *ngIf="a.impact.calibrated" class="text-[10px] text-textMuted italic"
+                    title="Forecast adjusted from past outcomes of this alert type — observed, not causal">
+                · calibrated ×{{ a.impact.calibrationFactor }} ({{ a.impact.calibrationSamples }} obs)
+              </span>
             </div>
             <div class="flex items-center gap-2 mt-2">
               <button *ngIf="a.action" (click)="apply(a)" [disabled]="applyingId"

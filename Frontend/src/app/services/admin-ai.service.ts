@@ -96,6 +96,9 @@ export interface AiAlertImpact {
   grossProfitAtRisk?: number;
   netProfitAtRisk?: number;
   timeWindow?: string;
+  calibrated?: boolean;        // figure adjusted by past outcomes of this alert type
+  calibrationFactor?: number;  // the applied scale (e.g. 0.8 = forecasts ran high before)
+  calibrationSamples?: number; // how much evidence backs the adjustment
 }
 
 export interface AiAlert {

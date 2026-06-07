@@ -471,11 +471,50 @@ public class AdminAiService {
             }
             out.add(r);
         }
-        return Map.of("outcomes", out);
+        Map<String, Object> calib = new LinkedHashMap<>();
+        alertCalibration(tenantId).forEach((t, c) ->
+                calib.put(t, Map.of("factor", Math.round(c.factor() * 100.0) / 100.0, "samples", c.samples())));
+        return Map.of("outcomes", out, "calibration", calib);
     }
 
     private Double asDouble(Object o) {
         return o instanceof Number n ? n.doubleValue() : null;
+    }
+
+    /** A learned correction for one alert family: how to scale its predictions, and on how much evidence. */
+    public record Calibration(double factor, int samples) {}
+
+    /**
+     * Closes the loop: per alert type, the mean ratio of OBSERVED post-fix sales rate to the
+     * PREDICTED baseline rate across measured outcomes — SHRUNK toward 1.0 until there's enough
+     * evidence (so one noisy point barely moves it) and BOUNDED to [0.5, 2.0]. A type whose
+     * forecasts ran low gets scaled up next time, and vice-versa. Observational, never causal.
+     */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public Map<String, Calibration> alertCalibration(UUID tenantId) {
+        Map<String, double[]> agg = new HashMap<>(); // type -> [sumRatio, count]
+        Instant now = Instant.now();
+        for (AlertOutcome o : alertOutcomeRepository.findByTenantId(tenantId)) {
+            if (o.getItemId() == null || o.getAppliedAt() == null
+                    || o.getBaselineUnits30d() == null || o.getBaselineUnits30d() <= 0) continue;
+            Instant applied = o.getAppliedAt().atZone(ZoneId.systemDefault()).toInstant();
+            double hours = Duration.between(applied, now).toHours();
+            if (hours < 24) continue; // not measurable yet
+            double windowDays = Math.max(0.5, hours / 24.0);
+            double observedRate = productSales(tenantId, o.getItemId(), applied, now)[0] / windowDays;
+            double baselineRate = o.getBaselineUnits30d() / 30.0;
+            double[] cur = agg.computeIfAbsent(o.getAlertType(), k -> new double[2]);
+            cur[0] += observedRate / baselineRate;
+            cur[1] += 1;
+        }
+        final double K = 3.0; // shrinkage strength toward 1.0 (= no adjustment)
+        Map<String, Calibration> out = new HashMap<>();
+        agg.forEach((type, v) -> {
+            double n = v[1], rawMean = v[0] / n;
+            double shrunk = (n * rawMean + K) / (n + K);              // Bayesian-style pull to 1.0
+            out.put(type, new Calibration(Math.max(0.5, Math.min(2.0, shrunk)), (int) n));
+        });
+        return out;
     }
 
     /** before/during units+revenue for one signal, with the % unit change (null if no baseline). */

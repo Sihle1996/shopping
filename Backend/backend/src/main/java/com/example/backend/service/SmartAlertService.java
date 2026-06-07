@@ -35,6 +35,7 @@ public class SmartAlertService {
     private final AiAlertRepository aiAlertRepository;
     private final ObjectMapper objectMapper;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
+    private final AdminAiService adminAiService;
 
     private static final ZoneId SAST = ZoneId.of("Africa/Johannesburg");
     /** Ignore week-to-week sales noise below this drop before suggesting a deal. */
@@ -85,6 +86,9 @@ public class SmartAlertService {
         }
         double revPerActiveHour = !activeHours.isEmpty() ? deliveredRev / activeHours.size() : 0;
 
+        // Closed loop: scale forecasts by how this store's PAST fixes actually played out.
+        Map<String, AdminAiService.Calibration> calibration = adminAiService.alertCalibration(tenantId);
+
         // 0) Store closed — you're not taking orders. One tap to open.
         if (Boolean.FALSE.equals(tenant.getIsOpen())) {
             created += raise(activeKeys, tenant, "store-closed", "high",
@@ -103,7 +107,9 @@ public class SmartAlertService {
             if (free <= 0 || !available) {
                 double avgDaily = units / 30.0;
                 int restock = Math.max(5, (int) Math.ceil(avgDaily * 7));
-                double dailyRev = avgDaily * mi.getPrice();
+                // Calibrate the at-risk FORECAST by past sold-out fixes (the "sells ~X/day" stays the raw fact).
+                AdminAiService.Calibration cal = calibration.get("soldout");
+                double dailyRev = avgDaily * mi.getPrice() * (cal != null ? cal.factor() : 1.0);
                 Double itemMargin = (mi.getCost() != null && mi.getPrice() > 0)
                         ? (mi.getPrice() - mi.getCost()) / mi.getPrice() : marginFrac;
                 created += raise(activeKeys, tenant, "soldout:" + mi.getId(), "high",
@@ -112,7 +118,7 @@ public class SmartAlertService {
                         action("adjust_stock", "Restock " + mi.getName() + " +" + restock,
                                 Map.of("itemId", mi.getId().toString(), "itemName", mi.getName(),
                                         "change", restock, "reason", "AI alert: stockout")),
-                        riskImpact(dailyRev, itemMargin, commissionFrac, "per day out of stock"));
+                        riskImpact(dailyRev, itemMargin, commissionFrac, "per day out of stock", cal));
             }
         }
 
@@ -313,6 +319,12 @@ public class SmartAlertService {
 
     /** Money-at-risk impact: gross = revenue × margin, net = gross − commission. */
     private String riskImpact(double revenueAtRisk, Double marginFrac, double commissionFrac, String timeWindow) {
+        return riskImpact(revenueAtRisk, marginFrac, commissionFrac, timeWindow, null);
+    }
+
+    /** As above, but records that the figure was calibrated from past outcomes (provenance, not a claim). */
+    private String riskImpact(double revenueAtRisk, Double marginFrac, double commissionFrac, String timeWindow,
+                              AdminAiService.Calibration cal) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("revenueAtRisk", round2(Math.max(0, revenueAtRisk)));
         if (marginFrac != null) {
@@ -321,6 +333,11 @@ public class SmartAlertService {
             m.put("netProfitAtRisk", round2(Math.max(0, gross - revenueAtRisk * commissionFrac)));
         }
         m.put("timeWindow", timeWindow);
+        if (cal != null) {
+            m.put("calibrated", true);
+            m.put("calibrationFactor", round2(cal.factor()));
+            m.put("calibrationSamples", cal.samples());
+        }
         try { return objectMapper.writeValueAsString(m); } catch (Exception e) { return null; }
     }
 
