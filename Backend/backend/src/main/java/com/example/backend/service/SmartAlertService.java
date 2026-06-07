@@ -34,6 +34,8 @@ public class SmartAlertService {
     private final ObjectMapper objectMapper;
 
     private static final ZoneId SAST = ZoneId.of("Africa/Johannesburg");
+    /** A store needs at least this many orders in the last 30 days before promo advice is relevant. */
+    private static final int ESTABLISHED_ORDERS_30D = 25;
 
     @Transactional
     public int scan(UUID tenantId) {
@@ -84,13 +86,15 @@ public class SmartAlertService {
             }
         }
 
-        // 2) Promo drought — store is trading but has no live deal.
+        // 2) Promo drought — only for an ESTABLISHED, steadily-trading store with no
+        // live deal. A brand-new shop shouldn't be nagged to discount before it has
+        // a track record.
         long activePromos = promotionRepository.findActiveByTenantId(OffsetDateTime.now(), tenantId).size();
         long ordersRecent = last30.stream().filter(o -> !isVoided(o.getStatus())).count();
-        if (activePromos == 0 && ordersRecent > 0) {
+        if (activePromos == 0 && ordersRecent >= ESTABLISHED_ORDERS_30D) {
             created += raise(tenant, "promo-drought", "medium",
                     "No promotion is running",
-                    "You haven't had a deal live recently. A short discount is a quick way to lift orders.",
+                    "You're trading steadily with no deal live. A short discount is a quick way to lift orders.",
                     action("create_promotion", "Launch 15% off for 3 days",
                             Map.of("title", "Flash Sale", "discountPercent", 15, "days", 3)));
         }

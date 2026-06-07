@@ -88,6 +88,22 @@
     </div>
   </div>
 
+  <!-- Peek: alerts pop out to grab attention, then glide back into the bell -->
+  <div *ngIf="peeking && !open" class="w-72 sm:w-80 space-y-2"
+       [ngClass]="peekClosing ? 'ai-peek-out' : 'ai-peek-in'">
+    <button *ngFor="let a of peekAlerts" type="button" (click)="toggle()"
+            class="w-full text-left flex items-start gap-2.5 rounded-xl border bg-white shadow-xl px-3 py-2.5
+                   hover:shadow-2xl transition-shadow"
+            [ngClass]="a.severity === 'high' ? 'border-red-200' : a.severity === 'medium' ? 'border-amber-200' : 'border-primary-100'">
+      <i class="bi mt-0.5 flex-shrink-0" [ngClass]="icon(a.severity) + ' ' + iconColor(a.severity)"></i>
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-semibold text-textDark leading-snug truncate">{{ a.title }}</p>
+        <p class="text-xs text-textMuted leading-snug truncate">{{ a.body }}</p>
+      </div>
+      <i class="bi bi-chevron-right text-textMuted text-xs mt-1 flex-shrink-0"></i>
+    </button>
+  </div>
+
   <!-- Bell button -->
   <button (click)="toggle()"
           class="relative w-12 h-12 rounded-full bg-white border border-borderColor shadow-lg text-textDark

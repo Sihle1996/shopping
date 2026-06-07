@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AdminAiService, AiAlert } from 'src/app/services/admin-ai.service';
 import { ToastrService } from 'ngx-toastr';
 
@@ -6,36 +6,63 @@ import { ToastrService } from 'ngx-toastr';
   selector: 'app-store-alerts',
   templateUrl: './store-alerts.component.html'
 })
-export class StoreAlertsComponent implements OnInit {
+export class StoreAlertsComponent implements OnInit, OnDestroy {
   open = false;
   alerts: AiAlert[] = [];
   loading = true;
   applyingId: string | null = null;
 
-  // Daily briefing (lives here now — pops up in the notification panel)
+  // Daily briefing (lives here now — open the bell to read it)
   briefing = '';
   briefingLoading = true;
+
+  // Transient "peek": alerts pop out, then glide back into the bell
+  peeking = false;
+  peekClosing = false;
+  peekAlerts: AiAlert[] = [];
+  private timers: any[] = [];
 
   constructor(private ai: AdminAiService, private toastr: ToastrService) {}
 
   ngOnInit(): void {
-    this.load();
+    this.load(true); // peek on first load
     this.loadBriefing();
-    // Pop the panel open once per session so the briefing greets the owner.
-    if (!sessionStorage.getItem('copilotBriefingShown')) {
-      this.open = true;
-      sessionStorage.setItem('copilotBriefingShown', '1');
-    }
+  }
+
+  ngOnDestroy(): void {
+    this.timers.forEach(clearTimeout);
   }
 
   get count(): number { return this.alerts.length; }
 
-  load(): void {
+  load(peek = false): void {
     this.loading = true;
     this.ai.alerts().subscribe({
-      next: (a) => { this.alerts = a || []; this.loading = false; },
+      next: (a) => { this.alerts = a || []; this.loading = false; if (peek) this.triggerPeek(); },
       error: () => { this.loading = false; }
     });
+  }
+
+  /** Pop only the IMPORTANT (high-severity) alerts out, then glide them into the bell. */
+  private triggerPeek(): void {
+    if (this.open) return;
+    const important = this.alerts.filter(a => a.severity === 'high').slice(0, 3);
+    if (important.length === 0) return;
+    this.peekAlerts = important;
+    this.peeking = true;
+    this.peekClosing = false;
+    this.timers.push(setTimeout(() => {
+      this.peekClosing = true; // start the shrink/fade-into-bell animation
+      this.timers.push(setTimeout(() => { this.peeking = false; this.peekAlerts = []; }, 500));
+    }, 5200));
+  }
+
+  private endPeek(): void {
+    this.timers.forEach(clearTimeout);
+    this.timers = [];
+    this.peeking = false;
+    this.peekClosing = false;
+    this.peekAlerts = [];
   }
 
   loadBriefing(): void {
@@ -52,6 +79,7 @@ export class StoreAlertsComponent implements OnInit {
   }
 
   toggle(): void {
+    this.endPeek();
     this.open = !this.open;
     if (this.open) this.refresh();
   }
