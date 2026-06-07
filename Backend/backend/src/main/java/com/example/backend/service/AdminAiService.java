@@ -232,13 +232,26 @@ public class AdminAiService {
             // ORDERED is the dense EARLY signal; DELIVERED is the sparse FINAL signal.
             boolean hasSignal = (before[0] + during[0]) > 0;
 
-            // BASELINE: did the whole store move in the same windows? Net lift isolates
-            // the item from the background trend (a +140% item lift means little if the
-            // store was also up +140%). Data quality describes the sample, not the outcome.
-            long storeBefore = storeOrders(tenantId, beforeStart, start);
-            long storeDuring = storeOrders(tenantId, start, duringEnd);
-            Long storePercent = storeBefore > 0 ? Math.round((storeDuring - storeBefore) / (double) storeBefore * 100.0) : null;
-            Long itemPercent = before[0] > 0 ? Math.round((during[0] - before[0]) / before[0] * 100.0) : null;
+            // BASELINE: did the whole store move? Net lift isolates the item from the
+            // background trend. The equal-length "before" window can be empty for a short
+            // or fresh promo, so the baseline is RATE-normalised over a STABLE window
+            // (up to 14 days before the promo, scaled to orders/day) — always computable
+            // when the store has any history, instead of "n/a".
+            double durDays = Math.max(0.25, len.toHours() / 24.0);
+            Instant storeBaseStart = start.minus(Duration.ofDays(14));
+            double baseDays = Math.max(1.0, Duration.between(storeBaseStart, start).toHours() / 24.0);
+            double storeBasePerDay = storeOrders(tenantId, storeBaseStart, start) / baseDays;
+            double storeDurPerDay = storeOrders(tenantId, start, duringEnd) / durDays;
+            Long storePercent = storeBasePerDay > 0
+                    ? Math.round((storeDurPerDay - storeBasePerDay) / storeBasePerDay * 100.0) : null;
+
+            // Item lift on the SAME rate basis (so net lift compares like for like, and is
+            // computable even when the equal-length before window had no sales).
+            double itemBaseUnits = productSales(tenantId, p.getTargetProductId(), storeBaseStart, start)[0];
+            double itemBasePerDay = itemBaseUnits / baseDays;
+            double itemDurPerDay = during[0] / durDays;
+            Long itemPercent = itemBasePerDay > 0
+                    ? Math.round((itemDurPerDay - itemBasePerDay) / itemBasePerDay * 100.0) : null;
             Long netLift = (itemPercent != null && storePercent != null) ? itemPercent - storePercent : null;
             long itemEvents = (long) (before[0] + during[0]);
             String dataQuality = itemEvents >= 15 ? "HIGH" : itemEvents >= 4 ? "MEDIUM" : "LOW";

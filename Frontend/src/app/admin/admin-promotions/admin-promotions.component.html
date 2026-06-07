@@ -135,9 +135,10 @@
             <p class="text-[10px] text-textMuted">Revenue (delivered): R{{ o.delivered.before.revenue | number:'1.0-0' }} → R{{ o.delivered.during.revenue | number:'1.0-0' }}</p>
             <!-- Baseline context: isolate the item from the store-wide trend -->
             <div class="flex items-center justify-between gap-2 pt-1 mt-1 border-t border-borderColor">
-              <span class="text-textMuted">vs store-wide <span [ngClass]="changeClass(o.storeChangePercent)">{{ signed(o.storeChangePercent) }}</span></span>
-              <span class="font-semibold" [ngClass]="changeClass(o.netLiftPercent)">
-                Net lift {{ signed(o.netLiftPercent) }}
+              <span class="text-textMuted">store-wide <span [ngClass]="changeClass(o.storeChangePercent)">{{ signed(o.storeChangePercent) }}</span></span>
+              <span class="font-semibold" [ngClass]="changeClass(o.netLiftPercent)"
+                    title="Observed performance relative to the store baseline — not a controlled/causal result">
+                Net vs store {{ signed(o.netLiftPercent) }}
               </span>
             </div>
           </div>
