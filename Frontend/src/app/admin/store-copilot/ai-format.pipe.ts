@@ -14,8 +14,18 @@ export class AiFormatPipe implements PipeTransform {
     return this.sanitizer.bypassSecurityTrustHtml(this.toHtml((raw || '').toString()));
   }
 
+  /**
+   * Escape every HTML-significant char (incl. quotes) BEFORE any formatting.
+   * inline() output is only ever placed as element text, never inside an
+   * attribute — escaping quotes too keeps it safe even if that ever changes.
+   */
   private esc(s: string): string {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   private stripEmoji(s: string): string {

@@ -2,6 +2,7 @@ package com.example.backend.service;
 
 import com.example.backend.entity.MenuItem;
 import com.example.backend.entity.Order;
+import com.example.backend.entity.OrderStatus;
 import com.example.backend.entity.Review;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.OrderRepository;
@@ -64,7 +65,8 @@ public class AdminAiService {
         out.remove("suggestedPrice");
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null) {
-            String cat = (String) out.getOrDefault("suggestedCategory", category);
+            Object catObj = out.getOrDefault("suggestedCategory", category);
+            String cat = (catObj instanceof String s) ? s : category;
             Double median = medianCategoryPrice(tenantId, cat != null ? cat : category);
             if (median != null) out.put("suggestedPrice", median);
         }
@@ -96,7 +98,7 @@ public class AdminAiService {
         List<Order> recentOrders = orderRepository
                 .findByOrderDateBetweenAndTenant_Id(thirtyDaysAgo, Instant.now(), tenantId)
                 .stream()
-                .filter(o -> "Delivered".equalsIgnoreCase(o.getStatus()))
+                .filter(o -> OrderStatus.DELIVERED.matches(o.getStatus()))
                 .collect(Collectors.toList());
 
         // Item order-count map: menuItemId → count
@@ -105,7 +107,8 @@ public class AdminAiService {
             if (o.getOrderItems() == null) continue;
             o.getOrderItems().forEach(oi -> {
                 if (oi.getMenuItem() != null) {
-                    itemCounts.merge(oi.getMenuItem().getId(), (long) oi.getQuantity(), Long::sum);
+                    long qty = oi.getQuantity() != null ? oi.getQuantity() : 0L;
+                    itemCounts.merge(oi.getMenuItem().getId(), qty, Long::sum);
                 }
             });
         }
@@ -171,7 +174,8 @@ public class AdminAiService {
             if (pp instanceof Map<?, ?> promo) {
                 Map<String, Object> promoCopy = new HashMap<>();
                 promo.forEach((k, v) -> promoCopy.put(k.toString(), v));
-                String targetName = (String) promoCopy.get("targetProductName");
+                Object targetObj = promoCopy.get("targetProductName");
+                String targetName = (targetObj instanceof String str) ? str : null;
                 if (targetName != null) {
                     UUID id = nameToId.get(targetName.toLowerCase());
                     if (id != null) promoCopy.put("targetProductId", id.toString());
@@ -358,13 +362,14 @@ public class AdminAiService {
             }
             case "TOP_ITEM_REVENUE" -> {
                 List<Order> orders = orderRepository.findByOrderDateBetweenAndTenant_Id(start, end, tenantId)
-                        .stream().filter(o -> "Delivered".equalsIgnoreCase(o.getStatus())).collect(Collectors.toList());
+                        .stream().filter(o -> OrderStatus.DELIVERED.matches(o.getStatus())).collect(Collectors.toList());
                 Map<String, Double> revByItem = new HashMap<>();
                 for (Order o : orders) {
                     if (o.getOrderItems() == null) continue;
                     o.getOrderItems().forEach(oi -> {
-                        if (oi.getMenuItem() != null) {
-                            double lineTotal = oi.getMenuItem().getPrice().doubleValue() * oi.getQuantity();
+                        if (oi.getMenuItem() != null && oi.getMenuItem().getPrice() != null) {
+                            int qty = oi.getQuantity() != null ? oi.getQuantity() : 0;
+                            double lineTotal = oi.getMenuItem().getPrice() * qty;
                             revByItem.merge(oi.getMenuItem().getName(), lineTotal, Double::sum);
                         }
                     });
@@ -376,13 +381,13 @@ public class AdminAiService {
             }
             case "REVENUE_COMPARISON" -> {
                 double current = orderRepository.findByOrderDateBetweenAndTenant_Id(start, end, tenantId)
-                        .stream().filter(o -> "Delivered".equalsIgnoreCase(o.getStatus()))
-                        .mapToDouble(Order::getTotalAmount).sum();
+                        .stream().filter(o -> OrderStatus.DELIVERED.matches(o.getStatus()))
+                        .mapToDouble(o -> o.getTotalAmount() != null ? o.getTotalAmount() : 0.0).sum();
                 Duration span = Duration.between(start, end);
                 double previous = orderRepository.findByOrderDateBetweenAndTenant_Id(
                         start.minus(span), start, tenantId)
-                        .stream().filter(o -> "Delivered".equalsIgnoreCase(o.getStatus()))
-                        .mapToDouble(Order::getTotalAmount).sum();
+                        .stream().filter(o -> OrderStatus.DELIVERED.matches(o.getStatus()))
+                        .mapToDouble(o -> o.getTotalAmount() != null ? o.getTotalAmount() : 0.0).sum();
                 yield Map.of("currentRevenue", Math.round(current), "previousRevenue", Math.round(previous));
             }
             case "PEAK_HOUR" -> {
@@ -402,9 +407,9 @@ public class AdminAiService {
             }
             default -> {
                 List<Order> orders = orderRepository.findByOrderDateBetweenAndTenant_Id(start, end, tenantId);
-                long count = orders.stream().filter(o -> "Delivered".equalsIgnoreCase(o.getStatus())).count();
-                double revenue = orders.stream().filter(o -> "Delivered".equalsIgnoreCase(o.getStatus()))
-                        .mapToDouble(Order::getTotalAmount).sum();
+                long count = orders.stream().filter(o -> OrderStatus.DELIVERED.matches(o.getStatus())).count();
+                double revenue = orders.stream().filter(o -> OrderStatus.DELIVERED.matches(o.getStatus()))
+                        .mapToDouble(o -> o.getTotalAmount() != null ? o.getTotalAmount() : 0.0).sum();
                 yield Map.of("orderCount", count, "revenue", Math.round(revenue));
             }
         };

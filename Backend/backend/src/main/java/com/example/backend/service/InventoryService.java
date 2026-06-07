@@ -39,10 +39,17 @@ public class InventoryService {
 
     @Transactional
     public List<MenuItem> adjustInventory(List<InventoryAdjustmentDTO> adjustments) {
+        // Tenant-scope every lookup so one store's admin can never adjust another
+        // store's stock by passing a foreign menu-item id (IDOR guard).
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tenant context for inventory adjustment");
+        }
         List<MenuItem> updated = new ArrayList<>();
         for (InventoryAdjustmentDTO adj : adjustments) {
-            MenuItem item = menuItemRepository.findById(adj.getMenuItemId())
-                    .orElseThrow(() -> new RuntimeException("Menu item not found: " + adj.getMenuItemId()));
+            MenuItem item = menuItemRepository.findByIdAndTenant_Id(adj.getMenuItemId(), tenantId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Menu item not found: " + adj.getMenuItemId()));
             item.setStock(item.getStock() + adj.getStockChange());
             item.setReservedStock(item.getReservedStock() + adj.getReservedChange());
             if (adj.getLowStockThreshold() != null) {
@@ -60,18 +67,15 @@ public class InventoryService {
             // Low stock alert: notify admin by email when stock drops to/below threshold
             if (adj.getStockChange() < 0 && saved.getStock() >= 0
                     && saved.getStock() <= saved.getLowStockThreshold()) {
-                UUID alertTenantId = TenantContext.getCurrentTenantId();
-                if (alertTenantId != null) {
-                    tenantRepository.findById(alertTenantId).ifPresent(tenant -> {
-                        if (tenant.getEmail() != null && !tenant.getEmail().isBlank()) {
-                            emailService.sendRaw(tenant.getEmail(),
-                                "Low Stock Alert — " + saved.getName(),
-                                "<p>Stock for <strong>" + saved.getName() + "</strong> has dropped to <strong>"
-                                + saved.getStock() + "</strong> units (threshold: " + saved.getLowStockThreshold() + ").</p>"
-                                + "<p>Please restock soon to avoid running out.</p>");
-                        }
-                    });
-                }
+                tenantRepository.findById(tenantId).ifPresent(tenant -> {
+                    if (tenant.getEmail() != null && !tenant.getEmail().isBlank()) {
+                        emailService.sendRaw(tenant.getEmail(),
+                            "Low Stock Alert — " + saved.getName(),
+                            "<p>Stock for <strong>" + saved.getName() + "</strong> has dropped to <strong>"
+                            + saved.getStock() + "</strong> units (threshold: " + saved.getLowStockThreshold() + ").</p>"
+                            + "<p>Please restock soon to avoid running out.</p>");
+                    }
+                });
             }
 
             InventoryLog log = new InventoryLog();
@@ -80,11 +84,7 @@ public class InventoryService {
             log.setStockChange(adj.getStockChange());
             log.setReservedChange(adj.getReservedChange());
             log.setType("ADJUSTMENT");
-
-            UUID tenantId = TenantContext.getCurrentTenantId();
-            if (tenantId != null) {
-                tenantRepository.findById(tenantId).ifPresent(log::setTenant);
-            }
+            tenantRepository.findById(tenantId).ifPresent(log::setTenant);
 
             inventoryLogRepository.save(log);
         }
