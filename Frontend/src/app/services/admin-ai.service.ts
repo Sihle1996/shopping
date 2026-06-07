@@ -34,12 +34,17 @@ export interface AiProposedPromo {
   endAt: string;
 }
 
+export interface AiPromoAnalysis {
+  hypothesis: string;
+  evidence: string[];
+  uncertainty: string;
+  recommendationType: string; // 'EXPERIMENT' — the SEMANTIC confidence, not a label
+}
+
 export interface AiPromoSuggestion {
-  reason: string;
-  facts?: string[];          // observed metrics (deterministic) — rendered separately from analysis
-  confidence?: string;       // always 'Experimental' (no elasticity/promo-history data)
-  whyNotCertain?: string;    // why this is not a confident prediction
-  strength?: string;         // back-compat alias for confidence
+  facts?: string[];               // observed metrics (data layer)
+  analysis?: AiPromoAnalysis;     // structured tokens (epistemic layer), not prose
+  reason?: string;                // legacy free-text fallback
   proposedPromo: AiProposedPromo;
 }
 

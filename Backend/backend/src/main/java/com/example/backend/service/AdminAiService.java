@@ -159,18 +159,23 @@ public class AdminAiService {
             promo.put("endAt", endAt);
 
             Map<String, Object> s = new LinkedHashMap<>();
-            // FACTS (observed, deterministic) — kept separate from interpretation
+            // FACTS — observed, immutable (the data layer)
             s.put("facts", List.of(
                     units + " orders in the last 30 days",
                     String.format(Locale.UK, "%.0f%% gross margin", margin),
                     String.format(Locale.UK, "R%.2f current price", item.getPrice())));
-            // ANALYSIS (explicit confidence contract — never "Strong")
-            s.put("confidence", "Experimental");
-            s.put("whyNotCertain", "No past promotion-response or price-elasticity data for this item — the effect on volume is unknown.");
-            s.put("strength", "Experimental"); // back-compat with the existing UI badge
-            s.put("reason", String.format(Locale.UK,
-                    "Selected because it is among your most-ordered items (%d) with a healthy %.0f%% margin, so a %d%% discount stays above cost.",
-                    units, margin, discount));
+            // ANALYSIS — generated as STRUCTURED TOKENS, not prose (the epistemic layer).
+            // recommendationType is the SEMANTIC confidence (an enum), not a cosmetic label.
+            Map<String, Object> analysis = new LinkedHashMap<>();
+            analysis.put("hypothesis", "High-rotation item the store can afford to discount");
+            analysis.put("evidence", List.of(
+                    "Among the store's most-ordered items (" + units + " in 30 days)",
+                    String.format(Locale.UK, "%.0f%% margin — at or above the store median", margin),
+                    "In stock now"));
+            analysis.put("uncertainty",
+                    "No price-elasticity or past-promotion-response data for this item — the effect on volume is unknown.");
+            analysis.put("recommendationType", "EXPERIMENT");
+            s.put("analysis", analysis);
             s.put("proposedPromo", promo);
             suggestions.add(s);
         }
