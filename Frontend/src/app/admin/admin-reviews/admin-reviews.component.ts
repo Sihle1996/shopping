@@ -94,7 +94,11 @@ export class AdminReviewsComponent implements OnInit {
     return Array.from({ length: 5 }, (_, i) => i + 1);
   }
 
-  // ── Rating summary ──────────────────────────────────────────────────────
+  // ── Rating summary + filter ─────────────────────────────────────────────
+  ratingFilter = 0; // 0 = all
+  get filteredReviews(): ReviewDTO[] {
+    return this.ratingFilter === 0 ? this.reviews : this.reviews.filter(r => r.rating === this.ratingFilter);
+  }
   get avgRating(): number {
     return this.reviews.length ? this.reviews.reduce((s, r) => s + r.rating, 0) / this.reviews.length : 0;
   }

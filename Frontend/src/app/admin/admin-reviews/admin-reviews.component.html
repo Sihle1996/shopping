@@ -117,10 +117,26 @@
       message="Customer reviews will appear here once orders are delivered">
     </app-empty-state>
 
+    <!-- Rating filter (handy when the list gets long) -->
+    <div *ngIf="!loading && reviews.length" class="flex flex-wrap gap-2 mb-4">
+      <button (click)="ratingFilter = 0"
+              class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors"
+              [ngClass]="ratingFilter === 0 ? 'bg-primary text-white border-primary' : 'bg-white text-textMuted border-borderColor hover:bg-surface'">
+        All <span class="opacity-70">{{ reviews.length }}</span>
+      </button>
+      <button *ngFor="let star of [5,4,3,2,1]" (click)="ratingFilter = star"
+              [disabled]="ratingCount(star) === 0"
+              class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors disabled:opacity-40 inline-flex items-center gap-1"
+              [ngClass]="ratingFilter === star ? 'bg-primary text-white border-primary' : 'bg-white text-textMuted border-borderColor hover:bg-surface'">
+        {{ star }} <i class="bi bi-star-fill text-[10px]" [class.text-amber-400]="ratingFilter !== star"></i>
+        <span class="opacity-70">{{ ratingCount(star) }}</span>
+      </button>
+    </div>
+
     <!-- Reviews grid -->
     <div *ngIf="!loading && reviews.length > 0"
          class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div *ngFor="let review of reviews"
+      <div *ngFor="let review of filteredReviews"
            class="bg-white rounded-2xl shadow-card border border-borderColor p-5 animate-fade-in flex flex-col">
 
         <!-- Top row: avatar + name + date + delete -->
