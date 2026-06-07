@@ -80,7 +80,7 @@ public class AdminAgentService {
      * written up by Claude in a single call (fast, no multi-tool loop). Read-only.
      */
     @Transactional(readOnly = true)
-    public String dailyBriefing(UUID tenantId) {
+    public Map<String, Object> dailyBriefing(UUID tenantId) {
         Tenant t = tenantRepository.findById(tenantId).orElse(null);
         String storeName = t != null && t.getName() != null ? t.getName() : "your store";
 
@@ -91,9 +91,22 @@ public class AdminAgentService {
         double revToday = today.stream().filter(o -> !isVoided(o.getStatus()))
                 .mapToDouble(o -> o.getTotalAmount() != null ? o.getTotalAmount() : 0).sum();
 
-        // 7-day revenue
-        double rev7 = analyticsService.getSalesTrends(Instant.now().minus(Duration.ofDays(7)), Instant.now())
-                .stream().mapToDouble(d -> d.getTotal() != null ? d.getTotal() : 0).sum();
+        // revenue trend: last 7 days vs the 7 before that
+        Instant now = Instant.now();
+        double rev7 = sumRevenue(now.minus(Duration.ofDays(7)), now);
+        double revPrior7 = sumRevenue(now.minus(Duration.ofDays(14)), now.minus(Duration.ofDays(7)));
+        Double trendPct = revPrior7 > 0 ? round2((rev7 - revPrior7) / revPrior7 * 100.0) : null;
+
+        // 30-day performance signals for smarter advice
+        Instant mAgo = now.minus(Duration.ofDays(30));
+        double aov = round2(analyticsService.getAverageOrderValue(mAgo, now));
+        double cancelRate = round2(analyticsService.getCancellationRate(mAgo, now));
+        List<String> topProducts = analyticsService.getTopProducts(mAgo, now).stream()
+                .limit(3).map(p -> p.getName() + " (" + p.getQuantity() + ")").toList();
+        var peak = analyticsService.getPeakHours(mAgo, now).stream()
+                .max(Comparator.comparingLong(p -> ((Number) p.getOrDefault("orderCount", 0)).longValue()))
+                .orElse(null);
+        String busiestHour = peak != null ? peak.get("hour") + ":00" : null;
 
         // inventory health
         List<String> soldOut = new ArrayList<>();
@@ -119,20 +132,88 @@ public class AdminAgentService {
         snap.put("ordersToday", ordersToday);
         snap.put("revenueToday", round2(revToday));
         snap.put("revenueLast7Days", round2(rev7));
+        snap.put("revenuePrior7Days", round2(revPrior7));
+        snap.put("revenueTrendPercent", trendPct);
+        snap.put("avgOrderValue30d", aov);
+        snap.put("cancellationRatePercent30d", cancelRate);
+        snap.put("topProducts30d", topProducts);
+        snap.put("busiestHour", busiestHour);
         snap.put("soldOutItems", soldOut);
         snap.put("lowStockCount", low);
         snap.put("activePromotions", activePromos);
         snap.put("reviewsLast7Days", recentReviews.size());
         snap.put("avgRatingLast7Days", round2(avgRating));
 
-        String prompt = "You are the manager of \"" + storeName + "\", a store on the CraveIt food-delivery app. "
-                + "Today is " + LocalDate.now(SAST) + ". Here is the live state as JSON:\n" + json(snap) + "\n\n"
-                + "Write a short daily briefing for the owner: 2–4 punchy bullet points, most important first. "
-                + "Use the real numbers (Rand, R). Call out anything worth acting on (store closed, sold-out items, "
-                + "a sales dip, new reviews). Be warm but concise — no preamble or sign-off, just the bullets.";
+        String prompt = "You are a sharp, experienced operations advisor for \"" + storeName + "\", a store on the "
+                + "CraveIt food-delivery app. Today is " + LocalDate.now(SAST) + ". Here is the live state as JSON "
+                + "(money in South African Rand, R):\n" + json(snap) + "\n\n"
+                + "Write the owner an intelligent daily briefing — 3 to 5 short bullet points. Don't just restate the "
+                + "numbers: INTERPRET them. Include, where the data supports it:\n"
+                + "• a quick read on how the business is doing (e.g. revenue trend vs last week),\n"
+                + "• concrete ADVICE to grow sales or save money (promote a top seller, run a deal at the busiest hour, "
+                + "fix a low average order value),\n"
+                + "• clear WARNINGS about risks (store closed, rising cancellations, sold-out best-sellers, a sales dip, "
+                + "low ratings).\n"
+                + "Lead with the most important. Be specific with numbers, warm but direct. No preamble or sign-off — "
+                + "just the bullets, each starting with a relevant emoji.";
 
-        String out = anthropicClient.isConfigured() ? anthropicClient.call(prompt, 400) : null;
-        return (out != null && !out.isBlank()) ? out.trim() : ruleBasedBriefing(snap, soldOut);
+        String out = anthropicClient.isConfigured() ? anthropicClient.call(prompt, 500) : null;
+        String briefing = (out != null && !out.isBlank()) ? out.trim() : ruleBasedBriefing(snap, soldOut);
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("briefing", briefing);
+        res.put("reminders", buildReminders(tenantId, t, soldOut));
+        return res;
+    }
+
+    /** Operational alerts that need the owner's attention right now (deterministic). */
+    private List<Map<String, Object>> buildReminders(UUID tenantId, Tenant t, List<String> soldOut) {
+        List<Map<String, Object>> rem = new ArrayList<>();
+        if (t != null && Boolean.FALSE.equals(t.getIsOpen())) {
+            rem.add(reminder("high", "Store is closed — you're not accepting orders."));
+        }
+
+        Instant since = Instant.now().minus(Duration.ofDays(2));
+        int awaiting = 0; long oldestAwait = 0; int prepLong = 0; int delivLong = 0;
+        for (Order o : orderRepository.findByOrderDateBetweenAndTenant_Id(since, Instant.now(), tenantId)) {
+            String s = o.getStatus();
+            if (s == null) continue;
+            long mins = o.getOrderDate() != null ? Duration.between(o.getOrderDate(), Instant.now()).toMinutes() : 0;
+            if (s.equalsIgnoreCase("Pending") || s.equalsIgnoreCase("Confirmed") || s.equalsIgnoreCase("Scheduled")) {
+                awaiting++; oldestAwait = Math.max(oldestAwait, mins);
+            } else if (s.equalsIgnoreCase("Preparing") && mins > 30) {
+                prepLong++;
+            } else if (s.equalsIgnoreCase("Out for Delivery") && mins > 45) {
+                delivLong++;
+            }
+        }
+        if (awaiting > 0) {
+            rem.add(reminder(oldestAwait > 15 ? "high" : "medium",
+                    awaiting + " order" + (awaiting > 1 ? "s" : "") + " awaiting prep — oldest " + oldestAwait + " min ago."));
+        }
+        if (prepLong > 0) {
+            rem.add(reminder("medium", prepLong + " order" + (prepLong > 1 ? "s" : "") + " preparing over 30 min."));
+        }
+        if (delivLong > 0) {
+            rem.add(reminder("medium", delivLong + " deliver" + (delivLong > 1 ? "ies" : "y") + " running over 45 min."));
+        }
+        if (!soldOut.isEmpty()) {
+            String names = String.join(", ", soldOut.stream().limit(3).toList()) + (soldOut.size() > 3 ? "…" : "");
+            rem.add(reminder("medium", soldOut.size() + " item" + (soldOut.size() > 1 ? "s" : "") + " sold out: " + names));
+        }
+        return rem;
+    }
+
+    private Map<String, Object> reminder(String severity, String text) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("severity", severity);
+        m.put("text", text);
+        return m;
+    }
+
+    private double sumRevenue(Instant start, Instant end) {
+        return analyticsService.getSalesTrends(start, end).stream()
+                .mapToDouble(d -> d.getTotal() != null ? d.getTotal() : 0).sum();
     }
 
     private String ruleBasedBriefing(Map<String, Object> snap, List<String> soldOut) {

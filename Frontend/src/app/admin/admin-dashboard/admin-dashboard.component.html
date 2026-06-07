@@ -69,32 +69,52 @@
     </div>
 
     <!-- Daily Briefing -->
-    <div *ngIf="briefingLoading || briefing"
-         class="mb-8 rounded-2xl border border-primary-100 overflow-hidden shadow-card"
-         style="background: linear-gradient(135deg, rgba(231,111,81,0.07), #ffffff 55%);">
-      <div class="flex items-center justify-between px-5 pt-4 pb-1">
-        <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+    <div *ngIf="briefingLoading || briefing || reminders.length"
+         class="mb-8 rounded-2xl border border-primary-100 overflow-hidden shadow-card bg-white">
+      <!-- Header band -->
+      <div class="flex items-center justify-between px-4 sm:px-5 py-3.5 text-white"
+           style="background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
             <span class="text-lg">☀️</span>
           </div>
-          <div>
-            <h3 class="font-heading text-sm font-bold text-textDark leading-tight">Your daily briefing</h3>
-            <p class="text-[11px] text-textMuted">What matters today · by your Store Copilot</p>
+          <div class="min-w-0">
+            <h3 class="font-heading text-sm font-bold leading-tight truncate">Your daily briefing</h3>
+            <p class="text-[11px] text-white/80 truncate">What matters today · by your Store Copilot</p>
           </div>
         </div>
         <button (click)="loadBriefing()" [disabled]="briefingLoading"
-                class="text-textMuted hover:text-primary disabled:opacity-50 transition-colors p-1.5"
+                class="text-white/90 hover:text-white disabled:opacity-50 transition-colors p-1.5 flex-shrink-0"
                 title="Refresh">
-          <i class="bi bi-arrow-clockwise" [class.animate-spin]="briefingLoading"></i>
+          <i class="bi bi-arrow-clockwise text-base" [class.animate-spin]="briefingLoading"></i>
         </button>
       </div>
-      <div class="px-5 pb-4">
-        <div *ngIf="briefingLoading" class="space-y-2 pt-1">
-          <div class="h-3 bg-white/70 rounded animate-pulse w-3/4"></div>
-          <div class="h-3 bg-white/70 rounded animate-pulse w-2/3"></div>
-          <div class="h-3 bg-white/70 rounded animate-pulse w-1/2"></div>
+
+      <!-- Loading -->
+      <div *ngIf="briefingLoading" class="p-4 sm:p-5 space-y-2.5">
+        <div class="h-3 bg-gray-100 rounded animate-pulse w-3/4"></div>
+        <div class="h-3 bg-gray-100 rounded animate-pulse w-2/3"></div>
+        <div class="h-3 bg-gray-100 rounded animate-pulse w-1/2"></div>
+      </div>
+
+      <div *ngIf="!briefingLoading" class="p-4 sm:p-5 space-y-4">
+        <!-- Reminders — needs attention -->
+        <div *ngIf="reminders.length" class="space-y-2">
+          <p class="text-[11px] font-semibold text-textMuted uppercase tracking-wide flex items-center gap-1.5">
+            <i class="bi bi-bell-fill text-primary"></i> Needs attention
+          </p>
+          <div *ngFor="let r of reminders"
+               class="flex items-start gap-2.5 rounded-xl px-3 py-2.5 border"
+               [ngClass]="r.severity === 'high' ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'">
+            <i class="bi mt-0.5 flex-shrink-0"
+               [ngClass]="r.severity === 'high' ? 'bi-exclamation-octagon-fill text-danger' : 'bi-exclamation-triangle-fill text-amber-500'"></i>
+            <span class="text-sm leading-snug"
+                  [ngClass]="r.severity === 'high' ? 'text-red-800' : 'text-amber-800'">{{ r.text }}</span>
+          </div>
         </div>
-        <p *ngIf="!briefingLoading" class="text-sm text-textDark whitespace-pre-line leading-relaxed">{{ briefing }}</p>
+
+        <!-- Narrative briefing -->
+        <p *ngIf="briefing" class="text-sm text-textDark whitespace-pre-line leading-relaxed">{{ briefing }}</p>
       </div>
     </div>
 

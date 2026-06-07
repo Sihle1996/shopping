@@ -92,7 +92,7 @@ public class AdminAiController {
     @GetMapping("/briefing")
     public ResponseEntity<Map<String, Object>> briefing() {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        if (tenantId == null) return ResponseEntity.ok(Map.of("briefing", ""));
-        return ResponseEntity.ok(Map.of("briefing", adminAgentService.dailyBriefing(tenantId)));
+        if (tenantId == null) return ResponseEntity.ok(Map.of("briefing", "", "reminders", java.util.List.of()));
+        return ResponseEntity.ok(adminAgentService.dailyBriefing(tenantId));
     }
 }

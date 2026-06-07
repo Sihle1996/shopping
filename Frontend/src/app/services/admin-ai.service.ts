@@ -61,6 +61,16 @@ export interface AiActResult {
   message: string;
 }
 
+export interface AiReminder {
+  severity: 'high' | 'medium' | 'low';
+  text: string;
+}
+
+export interface AiBriefing {
+  briefing: string;
+  reminders: AiReminder[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminAiService {
   private readonly base = `${environment.apiUrl}/api/admin/ai`;
@@ -89,8 +99,8 @@ export class AdminAiService {
     return this.http.post<AiActResult>(`${this.base}/act`, { action, params });
   }
 
-  /** Proactive daily briefing for the dashboard. */
-  briefing(): Observable<{ briefing: string }> {
-    return this.http.get<{ briefing: string }>(`${this.base}/briefing`);
+  /** Proactive daily briefing + reminders for the dashboard. */
+  briefing(): Observable<AiBriefing> {
+    return this.http.get<AiBriefing>(`${this.base}/briefing`);
   }
 }
