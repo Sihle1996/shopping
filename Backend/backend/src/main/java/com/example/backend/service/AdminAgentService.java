@@ -550,6 +550,15 @@ public class AdminAgentService {
             cats.add(cm);
         }
         m.put("salesByCategory", cats);
+
+        List<Map<String, Object>> exp = new ArrayList<>();
+        for (BookkeepingService.ExpenseCategoryLine ec : pl.expensesByCategory()) {
+            Map<String, Object> em = new LinkedHashMap<>();
+            em.put("category", ec.category());
+            em.put("amount", ec.amount());
+            exp.add(em);
+        }
+        m.put("expensesByCategory", exp);
         return json(m);
     }
 

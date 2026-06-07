@@ -115,17 +115,27 @@ public class BookkeepingService {
         LocalDate today = LocalDate.now(SAST);
         LocalDate windowStart = from.atZone(SAST).toLocalDate();
         double operatingExpenses = 0;
+        Map<String, Double> expenseByCat = new LinkedHashMap<>();
         for (Expense e : expenseRepository.findByTenant_IdOrderByIncurredOnDesc(tenantId)) {
             if (e.getAmount() == null || e.getIncurredOn() == null) continue;
+            double contribution = 0;
             if (e.isRecurring()) {
                 if (!e.getIncurredOn().isAfter(today)) {
-                    operatingExpenses += e.getAmount() * (window / DAYS_PER_MONTH);
+                    contribution = e.getAmount() * (window / DAYS_PER_MONTH);
                 }
             } else if (!e.getIncurredOn().isBefore(windowStart) && !e.getIncurredOn().isAfter(today)) {
-                operatingExpenses += e.getAmount();
+                contribution = e.getAmount();
+            }
+            if (contribution > 0) {
+                operatingExpenses += contribution;
+                String cat = e.getCategory() != null && !e.getCategory().isBlank() ? e.getCategory() : "Other";
+                expenseByCat.merge(cat, contribution, Double::sum);
             }
         }
         double operatingProfit = netProfit - operatingExpenses;
+        List<ExpenseCategoryLine> expenseCategories = new ArrayList<>();
+        expenseByCat.forEach((k, v) -> expenseCategories.add(new ExpenseCategoryLine(k, round(v))));
+        expenseCategories.sort((a, b) -> Double.compare(b.amount(), a.amount()));
         Double operatingMargin = revenue > 0 ? operatingProfit / revenue * 100.0 : null;
 
         List<ItemLine> items = new ArrayList<>(byItem.values());
@@ -143,7 +153,7 @@ public class BookkeepingService {
         return new MoneyIn(window, round(revenue), round(cogs), round(grossProfit),
                 margin, round(estimatedShare), realisedOrders, items,
                 categories, round(platformCommission), round(netProfit), netMargin, dailyProfit,
-                round(operatingExpenses), round(operatingProfit), operatingMargin);
+                round(operatingExpenses), round(operatingProfit), operatingMargin, expenseCategories);
     }
 
     private static double round(double v) {
@@ -180,6 +190,9 @@ public class BookkeepingService {
     /** One day's totals for the trend chart. */
     public record DayPoint(String date, double revenue, double cogs, double profit) {}
 
+    /** Operating expense total rolled up by category, for the reporting window. */
+    public record ExpenseCategoryLine(String category, double amount) {}
+
     /** Period income statement. */
     public record MoneyIn(
             int days,
@@ -197,6 +210,7 @@ public class BookkeepingService {
             List<DayPoint> dailyProfit,
             double operatingExpenses,
             double operatingProfit,
-            Double operatingMarginPercent
+            Double operatingMarginPercent,
+            List<ExpenseCategoryLine> expensesByCategory
     ) {}
 }

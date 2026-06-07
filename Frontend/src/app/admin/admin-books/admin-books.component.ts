@@ -45,6 +45,12 @@ interface MoneyIn {
   operatingExpenses: number;
   operatingProfit: number;
   operatingMarginPercent: number | null;
+  expensesByCategory: ExpenseCategoryLine[];
+}
+
+interface ExpenseCategoryLine {
+  category: string;
+  amount: number;
 }
 
 interface Expense {

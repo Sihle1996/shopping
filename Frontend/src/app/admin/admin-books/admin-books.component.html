@@ -170,6 +170,15 @@
           </button>
         </div>
 
+        <!-- By-category rollup for the period -->
+        <div *ngIf="d.expensesByCategory?.length" class="px-4 py-2.5 border-b border-borderColor flex flex-wrap gap-2">
+          <span *ngFor="let ec of d.expensesByCategory"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface text-xs text-textDark">
+            <i class="bi bi-dot text-primary"></i>{{ ec.category }}
+            <span class="price font-semibold">R{{ ec.amount | number:'1.0-0' }}</span>
+          </span>
+        </div>
+
         <!-- Add form -->
         <div *ngIf="showExpenseForm" class="p-4 border-b border-borderColor grid sm:grid-cols-2 gap-3">
           <div>
