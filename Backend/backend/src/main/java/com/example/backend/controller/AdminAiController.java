@@ -93,6 +93,12 @@ public class AdminAiController {
         return ResponseEntity.ok(adminAiService.reviewDigest(tenantId, since));
     }
 
+    /** GET /api/admin/ai/promo-outcomes — measured before-vs-during results per product promo */
+    @GetMapping("/promo-outcomes")
+    public ResponseEntity<Map<String, Object>> promoOutcomes() {
+        return ResponseEntity.ok(adminAiService.promoOutcomes(TenantContext.getCurrentTenantId()));
+    }
+
     /** POST /api/admin/ai/suggest-promotions — AI-generated promotion suggestions */
     @PostMapping("/suggest-promotions")
     public ResponseEntity<Map<String, Object>> suggestPromotions() {

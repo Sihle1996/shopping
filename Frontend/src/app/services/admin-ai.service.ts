@@ -143,6 +143,11 @@ export class AdminAiService {
     return this.http.get<{ verdict: string; recommendation: string }>(`${this.base}/plan-advice`);
   }
 
+  /** Measured before-vs-during results for each product promotion (the feedback loop). */
+  promoOutcomes(): Observable<{ outcomes: any[] }> {
+    return this.http.get<{ outcomes: any[] }>(`${this.base}/promo-outcomes`);
+  }
+
   /** The capability manifest (the SAME source the AI reads) — for option-driven UI. */
   capabilities(module?: string): Observable<any[]> {
     const q = module ? `?module=${encodeURIComponent(module)}` : '';

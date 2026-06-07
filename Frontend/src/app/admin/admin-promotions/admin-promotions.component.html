@@ -95,6 +95,43 @@
       </div>
     </div>
 
+    <!-- Experiment results (the feedback loop) -->
+    <div *ngIf="outcomes.length" class="bg-white rounded-2xl shadow-card p-5 mb-8">
+      <div class="flex items-center gap-2 mb-1">
+        <i class="bi bi-graph-up-arrow text-primary"></i>
+        <h3 class="font-semibold text-textDark text-sm">Experiment results</h3>
+      </div>
+      <p class="text-xs text-textMuted mb-3">The target item's sales <strong>during</strong> each promo vs the equal window <strong>before</strong>. Observed change — other factors may also vary.</p>
+      <div class="space-y-2">
+        <div *ngFor="let o of outcomes" class="p-3 rounded-xl border border-borderColor bg-surface">
+          <div class="flex items-center justify-between gap-2 mb-1">
+            <span class="text-sm font-semibold text-textDark truncate">{{ o.target }} <span class="text-textMuted font-normal">· {{ o.discountPercent }}% off</span></span>
+            <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded"
+                  [ngClass]="o.status === 'running' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'">{{ o.status }}</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <div>
+              <p class="text-[10px] uppercase tracking-wide text-textMuted">Before ({{ o.windowDays }}d)</p>
+              <p class="text-textDark">{{ o.before.units }} sold · R{{ o.before.revenue | number:'1.0-0' }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] uppercase tracking-wide text-textMuted">During</p>
+              <p class="text-textDark">{{ o.during.units }} sold · R{{ o.during.revenue | number:'1.0-0' }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] uppercase tracking-wide text-textMuted">Change</p>
+              <p class="font-semibold" [ngClass]="changeClass(o.change.unitsPercent)">
+                {{ o.change.unitsPercent == null ? 'n/a' : (o.change.unitsPercent > 0 ? '+' : '') + o.change.unitsPercent + '% units' }}
+              </p>
+              <p class="text-[11px]" [ngClass]="changeClass(o.change.revenuePercent)">
+                {{ o.change.revenuePercent == null ? '' : (o.change.revenuePercent > 0 ? '+' : '') + o.change.revenuePercent + '% rev' }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Create / Edit Form (collapsible) -->
     <div *ngIf="formOpen" class="bg-white rounded-2xl shadow-card p-6 mb-8">
       <div class="flex items-center justify-between mb-5">

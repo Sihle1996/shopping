@@ -5,6 +5,7 @@ import com.example.backend.entity.Order;
 import com.example.backend.entity.OrderStatus;
 import com.example.backend.entity.Review;
 import com.example.backend.entity.SubscriptionPlan;
+import com.example.backend.model.Promotion;
 import com.example.backend.repository.PromotionRepository;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.OrderRepository;
@@ -199,6 +200,66 @@ public class AdminAiService {
             suggestions.add(s);
         }
         return Map.of("suggestions", suggestions);
+    }
+
+    // ── Feature: Promotion outcomes (the feedback loop) ─────────────────────
+
+    /**
+     * Closes the experiment loop: for each PRODUCT promotion that has started,
+     * measures the target item's sales DURING the promo vs an equal-length window
+     * immediately BEFORE it. Purely observed facts (units & revenue) — the change
+     * is ASSOCIATED with the promo, not proven caused by it (other factors vary).
+     * This is the data that lets future suggestions learn instead of guessing.
+     */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public Map<String, Object> promoOutcomes(UUID tenantId) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        Instant now = Instant.now();
+        for (Promotion p : promotionRepository.findByTenant_Id(tenantId)) {
+            if (p.getAppliesTo() != Promotion.AppliesTo.PRODUCT || p.getTargetProductId() == null || p.getStartAt() == null) continue;
+            Instant start = p.getStartAt().toInstant();
+            if (start.isAfter(now)) continue; // not started yet
+            boolean ended = p.getEndAt() != null && p.getEndAt().toInstant().isBefore(now);
+            Instant duringEnd = ended ? p.getEndAt().toInstant() : now;
+            Duration len = Duration.between(start, duringEnd);
+            if (len.isZero() || len.isNegative()) continue;
+            Instant beforeStart = start.minus(len);
+
+            double[] before = productSales(tenantId, p.getTargetProductId(), beforeStart, start);
+            double[] during = productSales(tenantId, p.getTargetProductId(), start, duringEnd);
+
+            Map<String, Object> change = new LinkedHashMap<>();
+            change.put("unitsPercent", before[0] > 0 ? Math.round((during[0] - before[0]) / before[0] * 100.0) : null);
+            change.put("revenuePercent", before[1] > 0 ? Math.round((during[1] - before[1]) / before[1] * 100.0) : null);
+
+            Map<String, Object> r = new LinkedHashMap<>();
+            r.put("title", p.getTitle());
+            r.put("target", p.getTargetProductName());
+            r.put("discountPercent", p.getDiscountPercent());
+            r.put("status", ended ? "ended" : "running");
+            r.put("windowDays", Math.max(1, len.toDays()));
+            r.put("before", Map.of("units", (long) before[0], "revenue", Math.round(before[1] * 100.0) / 100.0));
+            r.put("during", Map.of("units", (long) during[0], "revenue", Math.round(during[1] * 100.0) / 100.0));
+            r.put("change", change);
+            out.add(r);
+        }
+        return Map.of("outcomes", out);
+    }
+
+    /** Units sold & revenue of one product from DELIVERED orders in a window. [units, revenue] */
+    private double[] productSales(UUID tenantId, UUID productId, Instant from, Instant to) {
+        long units = 0;
+        double revenue = 0;
+        for (Order o : orderRepository.findByOrderDateBetweenAndTenant_Id(from, to, tenantId)) {
+            if (!OrderStatus.DELIVERED.matches(o.getStatus()) || o.getOrderItems() == null) continue;
+            for (var oi : o.getOrderItems()) {
+                if (oi.getMenuItem() != null && productId.equals(oi.getMenuItem().getId())) {
+                    units += oi.getQuantity() != null ? oi.getQuantity() : 0;
+                    revenue += oi.getTotalPrice() != null ? oi.getTotalPrice() : 0;
+                }
+            }
+        }
+        return new double[]{units, revenue};
     }
 
     // ── Feature 3: Review Digest ────────────────────────────────────────────

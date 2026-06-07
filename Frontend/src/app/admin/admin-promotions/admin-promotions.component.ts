@@ -139,6 +139,21 @@ export class AdminPromotionsComponent implements OnInit {
       next: (list) => { this.promotions = list; this.loading = false; },
       error: () => { this.loading = false; }
     });
+    this.loadOutcomes();
+  }
+
+  // ── Experiment outcomes (the feedback loop) ──────────────────────────────
+  outcomes: any[] = [];
+  loadOutcomes(): void {
+    this.adminAiService.promoOutcomes().subscribe({
+      next: (r) => this.outcomes = r.outcomes || [],
+      error: () => {}
+    });
+  }
+
+  changeClass(pct: number | null): string {
+    if (pct == null) return 'text-textMuted';
+    return pct > 0 ? 'text-emerald-600' : pct < 0 ? 'text-red-600' : 'text-textMuted';
   }
 
   openForm(): void {
