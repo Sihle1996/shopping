@@ -68,12 +68,30 @@ public class SmartAlertService {
         int created = 0;
         Set<String> activeKeys = new HashSet<>(); // keys whose condition holds right now
 
+        // Store-level money factors, all from this store's own 30-day data:
+        //  - marginFrac: median gross margin (null if no costs captured yet)
+        //  - commissionFrac: the real platform fee the store pays
+        //  - revPerActiveHour: avg delivered revenue in an hour the store actually trades
+        Double marginFrac = medianMargin != null ? medianMargin / 100.0 : null;
+        double commissionFrac = tenant.getPlatformCommissionPercent() != null
+                ? tenant.getPlatformCommissionPercent().doubleValue() / 100.0 : 0.0;
+        double deliveredRev = 0;
+        Set<String> activeHours = new HashSet<>();
+        for (Order o : last30) {
+            if (!OrderStatus.DELIVERED.matches(o.getStatus()) || o.getOrderDate() == null) continue;
+            deliveredRev += o.getTotalAmount() != null ? o.getTotalAmount() : 0;
+            ZonedDateTime z = o.getOrderDate().atZone(SAST);
+            activeHours.add(z.toLocalDate() + "#" + z.getHour());
+        }
+        double revPerActiveHour = !activeHours.isEmpty() ? deliveredRev / activeHours.size() : 0;
+
         // 0) Store closed — you're not taking orders. One tap to open.
         if (Boolean.FALSE.equals(tenant.getIsOpen())) {
             created += raise(activeKeys, tenant, "store-closed", "high",
                     "Your store is closed",
                     "You're not accepting orders right now. Open the store to start receiving them.",
-                    action("set_store_open", "Open the store", Map.of("open", true)));
+                    action("set_store_open", "Open the store", Map.of("open", true)),
+                    revPerActiveHour > 0 ? riskImpact(revPerActiveHour, marginFrac, commissionFrac, "per hour closed") : null);
         }
 
         // 1) Sold-out sellers — an item that normally sells is sold out / hidden.
@@ -85,12 +103,16 @@ public class SmartAlertService {
             if (free <= 0 || !available) {
                 double avgDaily = units / 30.0;
                 int restock = Math.max(5, (int) Math.ceil(avgDaily * 7));
+                double dailyRev = avgDaily * mi.getPrice();
+                Double itemMargin = (mi.getCost() != null && mi.getPrice() > 0)
+                        ? (mi.getPrice() - mi.getCost()) / mi.getPrice() : marginFrac;
                 created += raise(activeKeys, tenant, "soldout:" + mi.getId(), "high",
                         mi.getName() + " is sold out",
                         String.format(Locale.UK, "It sells about %.1f/day — restock to stop losing orders.", avgDaily),
                         action("adjust_stock", "Restock " + mi.getName() + " +" + restock,
                                 Map.of("itemId", mi.getId().toString(), "itemName", mi.getName(),
-                                        "change", restock, "reason", "AI alert: stockout")));
+                                        "change", restock, "reason", "AI alert: stockout")),
+                        riskImpact(dailyRev, itemMargin, commissionFrac, "per day out of stock"));
             }
         }
 
@@ -106,11 +128,14 @@ public class SmartAlertService {
                 fix = action("set_item_price", "Set " + mi.getName() + " to R" + String.format(Locale.UK, "%.2f", target),
                         Map.of("itemId", mi.getId().toString(), "price", target));
             }
+            double dailyUnits = units / 30.0;
+            double dailyLoss = dailyUnits * (mi.getCost() - mi.getPrice()); // positive = bleeding
             created += raise(activeKeys, tenant, "below-cost:" + mi.getId(), "high",
                     mi.getName() + " is selling at a loss",
                     String.format(Locale.UK, "Sold %d in 30 days at R%.2f but it costs R%.2f to make — you lose money on every order.",
                             units, mi.getPrice(), mi.getCost()),
-                    fix);
+                    fix,
+                    lossImpact(dailyUnits * mi.getPrice(), dailyLoss, commissionFrac, "per day at this price"));
         }
 
         // 3) Thin-margin bestseller — a POPULAR item (above the store's own median sales
@@ -165,26 +190,33 @@ public class SmartAlertService {
                         String.format(Locale.UK, "Sales are down %.0f%% vs last week", dropPct),
                         String.format(Locale.UK, "You took R%.0f this week vs R%.0f last week, with no deal live. A short discount can win customers back.", rev7, revPrior7),
                         action("create_promotion", "Launch 15% off for 3 days",
-                                Map.of("title", "Win-back Deal", "discountPercent", 15, "days", 3)));
+                                Map.of("title", "Win-back Deal", "discountPercent", 15, "days", 3)),
+                        riskImpact(revPrior7 - rev7, marginFrac, commissionFrac, "vs last week"));
             }
         }
 
         // 6) Pending orders aging — something's sitting unprepared past your prep window.
-        long oldestPending = 0; int awaiting = 0;
+        //    Revenue at risk = each waiting order's value × its cancellation probability.
+        long oldestPending = 0; int awaiting = 0; double agingRevAtRisk = 0;
         for (Order o : last30) {
             String s = o.getStatus();
             if (s == null || o.getOrderDate() == null) continue;
             OrderStatus os = OrderStatus.fromLabel(s);
             if (os == OrderStatus.PENDING || os == OrderStatus.CONFIRMED || os == OrderStatus.SCHEDULED) {
                 long mins = Duration.between(o.getOrderDate(), now).toMinutes();
-                if (mins >= 0 && mins < 1440) { awaiting++; oldestPending = Math.max(oldestPending, mins); }
+                if (mins >= 0 && mins < 1440) {
+                    awaiting++;
+                    oldestPending = Math.max(oldestPending, mins);
+                    agingRevAtRisk += (o.getTotalAmount() != null ? o.getTotalAmount() : 0) * cancelProb(mins);
+                }
             }
         }
         if (awaiting > 0 && oldestPending >= PREP_SLA_MINUTES) {
             created += raise(activeKeys, tenant, "pending-aging", "high",
                     awaiting + " order" + (awaiting > 1 ? "s" : "") + " awaiting prep",
                     "Oldest is " + oldestPending + " min old and not started. Check the kitchen.",
-                    null);
+                    null,
+                    riskImpact(agingRevAtRisk, marginFrac, commissionFrac, "if not started soon"));
         }
 
         // 7) Milestone — today is beating the last fortnight (a little delight).
@@ -247,6 +279,39 @@ public class SmartAlertService {
     }
 
     /**
+     * Probability a not-yet-started order is lost, rising with the delay past the
+     * prep SLA (15 min ≈ 20%, 30 ≈ 50%, 45 ≈ 80%), capped. Heuristic, not magic
+     * per-store config — it scales the order's own value into "revenue at risk".
+     */
+    private double cancelProb(long delayMinutes) {
+        if (delayMinutes < PREP_SLA_MINUTES) return 0;
+        return Math.min(0.85, 0.20 + (delayMinutes - PREP_SLA_MINUTES) * 0.02);
+    }
+
+    /** Money-at-risk impact: gross = revenue × margin, net = gross − commission. */
+    private String riskImpact(double revenueAtRisk, Double marginFrac, double commissionFrac, String timeWindow) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("revenueAtRisk", round2(Math.max(0, revenueAtRisk)));
+        if (marginFrac != null) {
+            double gross = revenueAtRisk * marginFrac;
+            m.put("grossProfitAtRisk", round2(Math.max(0, gross)));
+            m.put("netProfitAtRisk", round2(Math.max(0, gross - revenueAtRisk * commissionFrac)));
+        }
+        m.put("timeWindow", timeWindow);
+        try { return objectMapper.writeValueAsString(m); } catch (Exception e) { return null; }
+    }
+
+    /** Realised loss impact (e.g. below-cost selling): the profit actively bleeding. */
+    private String lossImpact(double revenueAffected, double grossLoss, double commissionFrac, String timeWindow) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("revenueAtRisk", round2(Math.max(0, revenueAffected)));
+        m.put("grossProfitAtRisk", round2(Math.max(0, grossLoss)));
+        m.put("netProfitAtRisk", round2(Math.max(0, grossLoss + revenueAffected * commissionFrac)));
+        m.put("timeWindow", timeWindow);
+        try { return objectMapper.writeValueAsString(m); } catch (Exception e) { return null; }
+    }
+
+    /**
      * Upsert an alert so it always reflects the latest data:
      *  - records the key as "active" this scan (so it isn't auto-resolved);
      *  - if a NEW alert with this key exists, REFRESH its title/body/action
@@ -256,6 +321,11 @@ public class SmartAlertService {
      */
     private int raise(Set<String> activeKeys, Tenant tenant, String key, String severity,
                       String title, String body, Map<String, Object> action) {
+        return raise(activeKeys, tenant, key, severity, title, body, action, null);
+    }
+
+    private int raise(Set<String> activeKeys, Tenant tenant, String key, String severity,
+                      String title, String body, Map<String, Object> action, String impactJson) {
         activeKeys.add(key);
         String actionJson = null;
         if (action != null) {
@@ -269,6 +339,7 @@ public class SmartAlertService {
                 existing.setTitle(title);
                 existing.setBody(body);
                 existing.setAction(actionJson);
+                existing.setImpact(impactJson);
                 aiAlertRepository.save(existing);
                 return 0; // refreshed, not newly created
             }
@@ -285,6 +356,7 @@ public class SmartAlertService {
         a.setBody(body);
         a.setStatus("NEW");
         a.setAction(actionJson);
+        a.setImpact(impactJson);
         aiAlertRepository.save(a);
         return 1;
     }

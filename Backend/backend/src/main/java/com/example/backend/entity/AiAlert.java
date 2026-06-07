@@ -44,6 +44,14 @@ public class AiAlert {
     @Column(columnDefinition = "text")
     private String action;
 
+    /**
+     * Optional quantified money impact as JSON:
+     * {"revenueAtRisk","grossProfitAtRisk","netProfitAtRisk","timeWindow","label"}.
+     * Lets the bell show "R420 at risk" so the owner can triage by money.
+     */
+    @Column(columnDefinition = "text")
+    private String impact;
+
     @Column(nullable = false, length = 20)
     private String status = "NEW"; // NEW | DONE | DISMISSED
 

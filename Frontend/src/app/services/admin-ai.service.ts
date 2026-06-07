@@ -65,6 +65,13 @@ export interface AiBriefing {
   briefing: string;
 }
 
+export interface AiAlertImpact {
+  revenueAtRisk?: number;
+  grossProfitAtRisk?: number;
+  netProfitAtRisk?: number;
+  timeWindow?: string;
+}
+
 export interface AiAlert {
   id: string;
   severity: 'high' | 'medium' | 'info';
@@ -72,6 +79,7 @@ export interface AiAlert {
   body: string;
   createdAt: string;
   action?: AiProposedAction | null;
+  impact?: AiAlertImpact | null;
 }
 
 @Injectable({ providedIn: 'root' })

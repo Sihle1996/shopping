@@ -160,6 +160,11 @@ public class AdminAiController {
             try { action = objectMapper.readValue(a.getAction(), Map.class); } catch (Exception ignored) {}
         }
         m.put("action", action);
+        Object impact = null;
+        if (a.getImpact() != null) {
+            try { impact = objectMapper.readValue(a.getImpact(), Map.class); } catch (Exception ignored) {}
+        }
+        m.put("impact", impact);
         return m;
     }
 }

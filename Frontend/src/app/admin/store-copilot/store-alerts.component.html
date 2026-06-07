@@ -69,6 +69,15 @@
           <div class="flex-1 min-w-0">
             <p class="text-sm font-semibold text-textDark leading-snug">{{ a.title }}</p>
             <p class="text-xs text-textMuted mt-0.5 leading-snug">{{ a.body }}</p>
+            <!-- Financial impact -->
+            <div *ngIf="a.impact && a.impact.revenueAtRisk" class="mt-1.5 flex items-center flex-wrap gap-1.5">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-[11px] font-bold">
+                <i class="bi bi-graph-down-arrow"></i>R{{ a.impact.revenueAtRisk | number:'1.0-0' }} at risk
+              </span>
+              <span *ngIf="a.impact.netProfitAtRisk != null" class="text-[11px] text-textMuted">
+                ≈ R{{ a.impact.netProfitAtRisk | number:'1.0-0' }} profit<span *ngIf="a.impact.timeWindow"> · {{ a.impact.timeWindow }}</span>
+              </span>
+            </div>
             <div class="flex items-center gap-2 mt-2">
               <button *ngIf="a.action" (click)="apply(a)" [disabled]="applyingId"
                       class="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold
@@ -99,6 +108,9 @@
       <div class="min-w-0 flex-1">
         <p class="text-sm font-semibold text-textDark leading-snug truncate">{{ a.title }}</p>
         <p class="text-xs text-textMuted leading-snug truncate">{{ a.body }}</p>
+        <p *ngIf="a.impact && a.impact.revenueAtRisk" class="text-[11px] font-bold text-red-700 leading-snug mt-0.5">
+          R{{ a.impact.revenueAtRisk | number:'1.0-0' }} at risk
+        </p>
       </div>
       <i class="bi bi-chevron-right text-textMuted text-xs mt-1 flex-shrink-0"></i>
     </button>
