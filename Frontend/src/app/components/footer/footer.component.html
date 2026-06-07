@@ -6,9 +6,9 @@
        class="flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-2xl transition-all duration-200 min-w-[60px]"
        [class.text-primary]="isActive(homeRoute)"
        [class.text-textLight]="!isActive(homeRoute)">
-      <i class="ph-house text-2xl transition-all duration-200"
-         [class.ph-fill]="isActive(homeRoute)"
-         [class.ph]="!isActive(homeRoute)"></i>
+      <i class="bi text-2xl transition-all duration-200"
+         [class.bi-house-door-fill]="isActive(homeRoute)"
+         [class.bi-house-door]="!isActive(homeRoute)"></i>
       <span class="text-[11px] font-medium">Home</span>
     </a>
 
@@ -17,9 +17,9 @@
        class="flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-2xl transition-all duration-200 min-w-[60px]"
        [class.text-primary]="isActive(ordersRoute)"
        [class.text-textLight]="!isActive(ordersRoute)">
-      <i class="ph-receipt text-2xl transition-all duration-200"
-         [class.ph-fill]="isActive(ordersRoute)"
-         [class.ph]="!isActive(ordersRoute)"></i>
+      <i class="bi text-2xl transition-all duration-200"
+         [class.bi-receipt-cutoff]="isActive(ordersRoute)"
+         [class.bi-receipt]="!isActive(ordersRoute)"></i>
       <span class="text-[11px] font-medium">Orders</span>
     </a>
 
@@ -29,9 +29,9 @@
        [class.text-primary]="isActive(cartRoute)"
        [class.text-textLight]="!isActive(cartRoute)">
       <div class="relative">
-        <i class="ph-shopping-bag text-2xl transition-all duration-200"
-           [class.ph-fill]="isActive(cartRoute)"
-           [class.ph]="!isActive(cartRoute)"></i>
+        <i class="bi text-2xl transition-all duration-200"
+           [class.bi-bag-fill]="isActive(cartRoute)"
+           [class.bi-bag]="!isActive(cartRoute)"></i>
         <span *ngIf="cartItemCount > 0"
               class="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] bg-primary text-white text-[10px]
                      font-bold rounded-full flex items-center justify-center px-1 leading-none">
@@ -46,9 +46,7 @@
        class="flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-2xl transition-all duration-200 min-w-[60px]"
        [class.text-primary]="isActive('/support')"
        [class.text-textLight]="!isActive('/support')">
-      <i class="ph-headset text-2xl transition-all duration-200"
-         [class.ph-fill]="isActive('/support')"
-         [class.ph]="!isActive('/support')"></i>
+      <i class="bi bi-headset text-2xl transition-all duration-200"></i>
       <span class="text-[11px] font-medium">Support</span>
     </a>
 
@@ -57,9 +55,7 @@
        class="flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-2xl transition-all duration-200 min-w-[60px]"
        [class.text-primary]="isActive('/login')"
        [class.text-textLight]="!isActive('/login')">
-      <i class="ph-user text-2xl"
-         [class.ph-fill]="isActive('/login')"
-         [class.ph]="!isActive('/login')"></i>
+      <i class="bi bi-person text-2xl"></i>
       <span class="text-[11px] font-medium">Sign In</span>
     </a>
 
