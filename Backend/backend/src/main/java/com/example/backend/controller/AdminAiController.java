@@ -50,6 +50,13 @@ public class AdminAiController {
         return ResponseEntity.ok(adminAiService.draftSupportReply(subject, message));
     }
 
+    /** POST /api/admin/ai/menu/bulk-describe — fill descriptions for items missing one */
+    @PostMapping("/menu/bulk-describe")
+    public ResponseEntity<Map<String, Object>> bulkDescribe() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        return ResponseEntity.ok(adminAiService.bulkGenerateDescriptions(tenantId));
+    }
+
     /** POST /api/admin/ai/review/draft-reply — draft a public reply to one review */
     @PostMapping("/review/draft-reply")
     public ResponseEntity<Map<String, Object>> reviewReply(@RequestBody Map<String, Object> body) {

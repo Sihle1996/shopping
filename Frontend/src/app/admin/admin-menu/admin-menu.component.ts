@@ -49,6 +49,7 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
   // ── CSV import state ────────────────────────────────────────────────────
   importLoading = false;
   importResult: string | null = null;
+  bulkDescribing = false;
   private activeDriver: any = null;
 
   // ── Bulk price edit state ────────────────────────────────────────────────
@@ -295,6 +296,24 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
 
   triggerCsvImport(): void {
     document.getElementById('csvImportInput')?.click();
+  }
+
+  /** Generate appetising descriptions for every item missing one, in one AI call. */
+  generateMissingDescriptions(): void {
+    if (this.bulkDescribing) return;
+    this.bulkDescribing = true;
+    this.adminAiService.bulkDescribe().subscribe({
+      next: (r) => {
+        this.bulkDescribing = false;
+        if (r.updated > 0) {
+          this.toastr.success(`Wrote ${r.updated} description${r.updated > 1 ? 's' : ''}`, 'AI');
+          this.fetchMenuItems();
+        } else {
+          this.toastr.info('Every item already has a description');
+        }
+      },
+      error: () => { this.bulkDescribing = false; this.toastr.error('AI description generation is unavailable'); }
+    });
   }
 
   onCsvSelected(event: any): void {

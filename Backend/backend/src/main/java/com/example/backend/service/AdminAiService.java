@@ -321,6 +321,53 @@ public class AdminAiService {
         return (raw != null && !raw.isBlank()) ? parseJsonOrFallback(raw, Map.of("reply", fb)) : Map.of("reply", fb);
     }
 
+    /**
+     * Bulk-write appetising descriptions for every menu item that's missing one,
+     * in a single AI call. Only fills blanks (never overwrites). Returns the count.
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public Map<String, Object> bulkGenerateDescriptions(UUID tenantId) {
+        if (tenantId == null || !anthropicClient.isConfigured()) return Map.of("updated", 0);
+        List<MenuItem> missing = menuItemRepository.findByTenant_Id(tenantId).stream()
+                .filter(i -> i.getName() != null && (i.getDescription() == null || i.getDescription().isBlank()))
+                .limit(40)
+                .collect(Collectors.toList());
+        if (missing.isEmpty()) return Map.of("updated", 0);
+
+        StringBuilder sb = new StringBuilder();
+        for (MenuItem mi : missing) {
+            sb.append("- ").append(mi.getName())
+              .append(" | ").append(mi.getCategory() != null ? mi.getCategory() : "").append('\n');
+        }
+        String prompt =
+                "You are a menu copywriter for a South African food-delivery app called CraveIt.\n" +
+                "Write a short (UNDER 120 characters), appetising description for EACH item below.\n" +
+                "Return JSON only, no markdown:\n" +
+                "{ \"items\": [ { \"name\": \"<exact item name>\", \"description\": \"<text>\" } ] }\n" +
+                "Items (name | category):\n" + sb;
+        String raw = anthropicClient.call(prompt, 1500);
+        Map<String, Object> parsed = parseJsonOrFallback(raw, Map.of("items", List.of()));
+
+        int updated = 0;
+        if (parsed.get("items") instanceof List<?> list) {
+            Map<String, MenuItem> byName = missing.stream()
+                    .collect(Collectors.toMap(m -> m.getName().toLowerCase(), m -> m, (a, b) -> a));
+            for (Object o : list) {
+                if (!(o instanceof Map<?, ?> m)) continue;
+                Object n = m.get("name");
+                Object d = m.get("description");
+                if (n == null || d == null) continue;
+                MenuItem item = byName.get(n.toString().toLowerCase());
+                if (item != null && !d.toString().isBlank()) {
+                    item.setDescription(d.toString().trim());
+                    menuItemRepository.save(item);
+                    updated++;
+                }
+            }
+        }
+        return Map.of("updated", updated);
+    }
+
     // ── Feature 4: Conversational Analytics ────────────────────────────────
 
     public Map<String, Object> queryAnalytics(String question, UUID tenantId) {

@@ -11,6 +11,12 @@
                   (clicked)="triggerCsvImport()">
         {{ importLoading ? 'Importing...' : 'Import CSV' }}
       </app-button>
+      <app-button actions variant="ghost" size="md"
+                  [iconLeft]="bulkDescribing ? 'bi bi-arrow-repeat' : 'bi bi-stars'"
+                  [disabled]="bulkDescribing"
+                  (clicked)="generateMissingDescriptions()">
+        {{ bulkDescribing ? 'Writing…' : 'AI Descriptions' }}
+      </app-button>
       <app-button actions
         [variant]="bulkMode ? 'ghost' : 'outline'"
         size="md"

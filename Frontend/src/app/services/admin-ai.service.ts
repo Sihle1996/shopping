@@ -123,6 +123,11 @@ export class AdminAiService {
     return this.http.post<{ reply: string }>(`${this.base}/review/draft-reply`, { rating, comment });
   }
 
+  /** Generate descriptions for all menu items missing one (single batched call). */
+  bulkDescribe(): Observable<{ updated: number }> {
+    return this.http.post<{ updated: number }>(`${this.base}/menu/bulk-describe`, {});
+  }
+
   /** Apply an action the copilot proposed, after the admin confirms. */
   act(action: string, params: Record<string, any>): Observable<AiActResult> {
     return this.http.post<AiActResult>(`${this.base}/act`, { action, params });
