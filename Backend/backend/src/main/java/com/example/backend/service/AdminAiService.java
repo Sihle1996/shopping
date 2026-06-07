@@ -11,6 +11,9 @@ import com.example.backend.model.Promotion;
 import com.example.backend.repository.AlertOutcomeRepository;
 import com.example.backend.repository.PromoOutcomeRecordRepository;
 import com.example.backend.repository.PromotionRepository;
+import com.example.backend.repository.UserRepository;
+import com.example.backend.user.Role;
+import com.example.backend.user.User;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.ReviewRepository;
@@ -40,6 +43,7 @@ public class AdminAiService {
     private final PromoOutcomeRecordRepository promoOutcomeRecordRepository;
     private final AlertOutcomeRepository alertOutcomeRepository;
     private final BookkeepingService bookkeepingService;
+    private final UserRepository userRepository;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final AnalyticsService analyticsService;
     private final ObjectMapper objectMapper;
@@ -873,6 +877,111 @@ public class AdminAiService {
             if (insights.size() < 4 && oi < opportunities.size()) insights.add(opportunities.get(oi++));
         }
         return Map.of("insights", insights);
+    }
+
+    // ── Feature: Driver Operations Insights (admin) ─────────────────────────
+
+    /**
+     * Deterministic driver analytics for the admin: a scorecard (deliveries, avg delivery
+     * time, customer rating per driver), templated top-performer / opportunity insights, and
+     * a coverage note for the peak delivery window. Pure data — no LLM, observational only.
+     */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public Map<String, Object> driverInsights(UUID tenantId) {
+        List<User> drivers = userRepository.findByRoleAndTenant_Id(Role.DRIVER, tenantId);
+        Instant now = Instant.now();
+        List<Order> delivered = orderRepository
+                .findByOrderDateBetweenAndTenant_Id(now.minus(Duration.ofDays(30)), now, tenantId).stream()
+                .filter(o -> OrderStatus.DELIVERED.matches(o.getStatus()) && o.getDriver() != null)
+                .collect(Collectors.toList());
+
+        ZoneId sast = ZoneId.of("Africa/Johannesburg");
+        Map<UUID, long[]> stats = new HashMap<>();  // driverId -> [deliveries, sumMinutes, timedCount]
+        Map<Integer, Integer> hourHist = new HashMap<>();
+        for (Order o : delivered) {
+            long[] s = stats.computeIfAbsent(o.getDriver().getId(), k -> new long[3]);
+            s[0]++;
+            if (o.getOrderDate() != null && o.getDeliveredAt() != null) {
+                long mins = Duration.between(o.getOrderDate(), o.getDeliveredAt()).toMinutes();
+                if (mins >= 0 && mins < 600) { s[1] += mins; s[2]++; }
+                hourHist.merge(o.getDeliveredAt().atZone(sast).getHour(), 1, Integer::sum);
+            }
+        }
+        Map<UUID, double[]> ratings = new HashMap<>(); // driverId -> [ratingSum, count]
+        for (Review rv : reviewRepository.findByTenant_IdOrderByCreatedAtDesc(tenantId)) {
+            if (rv.getOrder() != null && rv.getOrder().getDriver() != null) {
+                double[] r = ratings.computeIfAbsent(rv.getOrder().getDriver().getId(), k -> new double[2]);
+                r[0] += rv.getRating(); r[1]++;
+            }
+        }
+
+        List<Map<String, Object>> scorecard = new ArrayList<>();
+        for (User d : drivers) {
+            long[] s = stats.get(d.getId());
+            double[] r = ratings.get(d.getId());
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("name", d.getFullName() != null && !d.getFullName().isBlank() ? d.getFullName() : d.getEmail());
+            row.put("deliveries", s != null ? s[0] : 0L);
+            row.put("avgDeliveryMinutes", (s != null && s[2] > 0) ? (int) (s[1] / s[2]) : null);
+            row.put("avgRating", (r != null && r[1] > 0) ? Math.round(r[0] / r[1] * 10.0) / 10.0 : null);
+            row.put("status", d.getDriverStatus() != null ? d.getDriverStatus().name() : null);
+            scorecard.add(row);
+        }
+        scorecard.sort((a, b) -> Long.compare((Long) b.get("deliveries"), (Long) a.get("deliveries")));
+
+        long sumMin = stats.values().stream().mapToLong(x -> x[1]).sum();
+        long timed = stats.values().stream().mapToLong(x -> x[2]).sum();
+        Integer fleetAvg = timed > 0 ? (int) (sumMin / timed) : null;
+
+        // Templated, observational insights (top performer + an opportunity if one stands out).
+        List<Map<String, Object>> insights = new ArrayList<>();
+        List<Map<String, Object>> rated = scorecard.stream()
+                .filter(d -> d.get("avgDeliveryMinutes") != null && (Long) d.get("deliveries") >= 5)
+                .collect(Collectors.toList());
+        if (!rated.isEmpty() && fleetAvg != null) {
+            Map<String, Object> top = rated.stream()
+                    .min(Comparator.comparingInt(d -> (Integer) d.get("avgDeliveryMinutes"))).orElse(null);
+            if (top != null) {
+                String rt = top.get("avgRating") != null ? ", with a " + top.get("avgRating") + "/5 rating" : "";
+                insights.add(insightRow("TOP", top.get("name") + " has the fastest average delivery time ("
+                        + top.get("avgDeliveryMinutes") + " min over " + top.get("deliveries") + " deliveries)" + rt + "."));
+            }
+            Map<String, Object> slow = rated.stream()
+                    .max(Comparator.comparingInt(d -> (Integer) d.get("avgDeliveryMinutes"))).orElse(null);
+            if (slow != null && (Integer) slow.get("avgDeliveryMinutes") > fleetAvg * 1.2) {
+                int pct = (int) Math.round(((Integer) slow.get("avgDeliveryMinutes") - fleetAvg) / (double) fleetAvg * 100);
+                insights.add(insightRow("OPPORTUNITY", slow.get("name") + "'s average delivery time ("
+                        + slow.get("avgDeliveryMinutes") + " min) is " + pct + "% above the fleet average of " + fleetAvg + " min."));
+            }
+        }
+
+        Map<String, Object> coverage = null;
+        if (!hourHist.isEmpty()) {
+            int peakHour = hourHist.entrySet().stream().max(Map.Entry.comparingByValue()).get().getKey();
+            int peakCount = hourHist.get(peakHour);
+            int total = hourHist.values().stream().mapToInt(Integer::intValue).sum();
+            if (peakCount >= 8 && peakCount >= total * 0.2) { // a real concentration, not noise
+                coverage = new LinkedHashMap<>();
+                coverage.put("window", String.format("%02d:00-%02d:00", peakHour, (peakHour + 2) % 24));
+                coverage.put("deliveries", peakCount);
+                coverage.put("message", "Most deliveries cluster around " + String.format("%02d:00", peakHour)
+                        + " (" + peakCount + " of " + total + "). Extra cover in this window could ease delays.");
+            }
+        }
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("scorecard", scorecard);
+        out.put("insights", insights);
+        out.put("coverage", coverage);
+        out.put("fleetAvgMinutes", fleetAvg);
+        return out;
+    }
+
+    private Map<String, Object> insightRow(String type, String message) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("type", type);
+        m.put("message", message);
+        return m;
     }
 
     // ── Feature 4: Conversational Analytics ────────────────────────────────

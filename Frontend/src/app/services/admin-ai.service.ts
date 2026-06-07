@@ -173,6 +173,11 @@ export class AdminAiService {
     return this.http.get<{ insights: any[] }>(`${this.base}/review-book-insights`);
   }
 
+  /** Driver scorecard + performance insights + coverage (deterministic, admin-only). */
+  driverInsights(): Observable<any> {
+    return this.http.get<any>(`${this.base}/driver-insights`);
+  }
+
   /** Plan-fit advice: verdict + recommendation + structured usage stats. */
   planAdvice(): Observable<AiPlanAdvice> {
     return this.http.get<AiPlanAdvice>(`${this.base}/plan-advice`);

@@ -66,6 +66,12 @@ public class AdminAiController {
         return ResponseEntity.ok(adminAiService.draftSupportReply(subject, message));
     }
 
+    /** GET /api/admin/ai/driver-insights — driver scorecard + performance insights + coverage */
+    @GetMapping("/driver-insights")
+    public ResponseEntity<Map<String, Object>> driverInsights() {
+        return ResponseEntity.ok(adminAiService.driverInsights(TenantContext.getCurrentTenantId()));
+    }
+
     /** GET /api/admin/ai/review-book-insights — opportunities/risks from profit x review sentiment */
     @GetMapping("/review-book-insights")
     public ResponseEntity<Map<String, Object>> reviewBookInsights() {

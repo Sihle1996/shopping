@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { driver } from 'driver.js';
 import { AdminService } from 'src/app/services/admin.service';
+import { AdminAiService } from 'src/app/services/admin-ai.service';
 import { ConfirmService } from 'src/app/shared/services/confirm.service';
 
 @Component({
@@ -32,11 +33,21 @@ export class AdminDriversComponent implements OnInit, OnDestroy {
     try { this.activeDriver?.destroy(); } catch { /* ignore */ }
   }
 
+  // Driver operations insights (admin scorecard)
+  driverInsights: any = null;
+  loadDriverInsights(): void {
+    this.adminAiService.driverInsights().subscribe({
+      next: (d) => this.driverInsights = d,
+      error: () => {}
+    });
+  }
+
   constructor(private adminService: AdminService, private route: ActivatedRoute,
-              private confirm: ConfirmService) {}
+              private confirm: ConfirmService, private adminAiService: AdminAiService) {}
 
   ngOnInit(): void {
     this.loadDrivers();
+    this.loadDriverInsights();
     const tour = this.route.snapshot.queryParamMap.get('tour');
     if (tour === 'add-driver') {
       setTimeout(() => {
