@@ -276,6 +276,18 @@
     <!-- Charts + metrics (PRO/ENTERPRISE only) -->
     <ng-container *ngIf="hasAnalytics">
 
+      <!-- Period filter -->
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5">
+        <h2 class="font-heading text-base font-semibold text-textDark">Analytics</h2>
+        <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-gray-100 overflow-x-auto self-start sm:self-auto">
+          <button *ngFor="let opt of periodOptions" type="button" (click)="setPeriod(opt.key)"
+                  class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors"
+                  [ngClass]="selectedPeriod === opt.key ? 'bg-white text-primary shadow-sm' : 'text-textMuted hover:text-textDark'">
+            {{ opt.label }}
+          </button>
+        </div>
+      </div>
+
       <!-- Loading skeleton for charts -->
       <div *ngIf="analyticsLoading" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div class="bg-white rounded-2xl shadow-card p-5">
@@ -327,25 +339,45 @@
 
       <!-- Secondary metrics -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        <div class="bg-white rounded-2xl shadow-card p-5">
-          <p class="text-textMuted text-xs mb-1">Avg Order Value</p>
-          <p *ngIf="!analyticsLoading" class="font-numbers text-xl font-bold text-textDark">R{{ aov | number:'1.2-2' }}</p>
-          <div *ngIf="analyticsLoading" class="h-6 w-20 bg-gray-100 rounded animate-pulse mt-1"></div>
+        <div class="bg-white rounded-2xl shadow-card p-4 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-cash-coin text-primary text-lg"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="text-textMuted text-[11px] uppercase tracking-wide leading-tight">Avg Order Value</p>
+            <p *ngIf="!analyticsLoading" class="font-numbers text-xl font-bold text-textDark leading-tight">R{{ aov | number:'1.2-2' }}</p>
+            <div *ngIf="analyticsLoading" class="h-6 w-20 bg-gray-100 rounded animate-pulse mt-1"></div>
+          </div>
         </div>
-        <div class="bg-white rounded-2xl shadow-card p-5">
-          <p class="text-textMuted text-xs mb-1">On-time Delivery</p>
-          <p *ngIf="!analyticsLoading" class="font-numbers text-xl font-bold text-success">{{ onTime | number:'1.0-0' }}%</p>
-          <div *ngIf="analyticsLoading" class="h-6 w-16 bg-gray-100 rounded animate-pulse mt-1"></div>
+        <div class="bg-white rounded-2xl shadow-card p-4 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-clock-history text-success text-lg"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="text-textMuted text-[11px] uppercase tracking-wide leading-tight">On-time Delivery</p>
+            <p *ngIf="!analyticsLoading" class="font-numbers text-xl font-bold text-success leading-tight">{{ onTime | number:'1.0-0' }}%</p>
+            <div *ngIf="analyticsLoading" class="h-6 w-16 bg-gray-100 rounded animate-pulse mt-1"></div>
+          </div>
         </div>
-        <div class="bg-white rounded-2xl shadow-card p-5">
-          <p class="text-textMuted text-xs mb-1">Cancellation Rate</p>
-          <p *ngIf="!analyticsLoading" class="font-numbers text-xl font-bold text-danger">{{ cancellations | number:'1.0-0' }}%</p>
-          <div *ngIf="analyticsLoading" class="h-6 w-16 bg-gray-100 rounded animate-pulse mt-1"></div>
+        <div class="bg-white rounded-2xl shadow-card p-4 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-x-circle text-danger text-lg"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="text-textMuted text-[11px] uppercase tracking-wide leading-tight">Cancellation Rate</p>
+            <p *ngIf="!analyticsLoading" class="font-numbers text-xl font-bold text-danger leading-tight">{{ cancellations | number:'1.0-0' }}%</p>
+            <div *ngIf="analyticsLoading" class="h-6 w-16 bg-gray-100 rounded animate-pulse mt-1"></div>
+          </div>
         </div>
-        <div class="bg-white rounded-2xl shadow-card p-5">
-          <p class="text-textMuted text-xs mb-1">Avg Delivery Time</p>
-          <p *ngIf="!analyticsLoading" class="font-numbers text-xl font-bold text-textDark">{{ avgDeliveryMinutes | number:'1.0-0' }}<span class="text-sm font-normal text-textMuted ml-1">min</span></p>
-          <div *ngIf="analyticsLoading" class="h-6 w-16 bg-gray-100 rounded animate-pulse mt-1"></div>
+        <div class="bg-white rounded-2xl shadow-card p-4 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-truck text-amber-600 text-lg"></i>
+          </div>
+          <div class="min-w-0">
+            <p class="text-textMuted text-[11px] uppercase tracking-wide leading-tight">Avg Delivery Time</p>
+            <p *ngIf="!analyticsLoading" class="font-numbers text-xl font-bold text-textDark leading-tight">{{ avgDeliveryMinutes | number:'1.0-0' }}<span class="text-sm font-normal text-textMuted ml-1">min</span></p>
+            <div *ngIf="analyticsLoading" class="h-6 w-16 bg-gray-100 rounded animate-pulse mt-1"></div>
+          </div>
         </div>
       </div>
 

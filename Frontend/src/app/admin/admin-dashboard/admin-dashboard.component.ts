@@ -60,6 +60,13 @@ interface SetupStep {
 export class AdminDashboardComponent implements OnInit, OnDestroy {
   startDate!: string;
   endDate!: string;
+  selectedPeriod: 'today' | '7d' | '30d' | 'month' = 'month';
+  readonly periodOptions: { key: 'today' | '7d' | '30d' | 'month'; label: string }[] = [
+    { key: 'today', label: 'Today' },
+    { key: '7d',    label: '7 days' },
+    { key: '30d',   label: '30 days' },
+    { key: 'month', label: 'This month' },
+  ];
 
   // All-time stats
   totalOrders = 0;
@@ -322,6 +329,24 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Switch the analytics date range and reload all charts/metrics. */
+  setPeriod(period: 'today' | '7d' | '30d' | 'month'): void {
+    if (this.selectedPeriod === period) return;
+    this.selectedPeriod = period;
+    const now = new Date();
+    let start: Date;
+    switch (period) {
+      case 'today': start = new Date(now); break;
+      case '7d':    start = new Date(now); start.setDate(now.getDate() - 6); break;
+      case '30d':   start = new Date(now); start.setDate(now.getDate() - 29); break;
+      case 'month':
+      default:      start = new Date(now.getFullYear(), now.getMonth(), 1); break;
+    }
+    this.startDate = start.toISOString().substring(0, 10);
+    this.endDate = now.toISOString().substring(0, 10);
+    this.loadAnalytics();
+  }
+
   loadAnalytics(): void {
     this.analyticsLoading = true;
     const { startDate: start, endDate: end } = this;
@@ -456,10 +481,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       series: [{ name: 'Orders', data: values }],
       chart: { type: 'bar', height: 280, toolbar: { show: false } },
       colors: [color],
-      plotOptions: { bar: { horizontal: true, borderRadius: 6, barHeight: '60%' } },
-      xaxis: { categories: labels, labels: { style: { fontSize: '11px' } } },
-      yaxis: { labels: { style: { fontSize: '11px' } } },
-      dataLabels: { enabled: true, style: { fontSize: '11px' } },
+      plotOptions: { bar: { horizontal: true, borderRadius: 6, barHeight: '55%' } },
+      xaxis: { categories: labels, labels: { style: { fontSize: '11px' } }, tickAmount: 4 },
+      yaxis: { labels: { style: { fontSize: '12px' } } },
+      dataLabels: {
+        enabled: true,
+        style: { fontSize: '12px', fontWeight: 700, colors: ['#fff'] },
+        offsetX: 0,
+        dropShadow: { enabled: true, blur: 1, opacity: 0.25 } as any
+      },
       tooltip: { y: { formatter: (v: number) => `${v} orders` } },
       grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
       noData: { text: 'No product data for this period', style: { color: '#94a3b8' } }
