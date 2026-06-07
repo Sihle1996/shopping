@@ -40,7 +40,6 @@
             <th class="text-left font-semibold px-5 py-2">Driver</th>
             <th class="text-right font-semibold px-3 py-2">Deliveries</th>
             <th class="text-right font-semibold px-3 py-2">Avg time</th>
-            <th class="text-right font-semibold px-3 py-2">Rating</th>
             <th class="text-right font-semibold px-5 py-2">Status</th>
           </tr>
         </thead>
@@ -49,10 +48,6 @@
             <td class="px-5 py-2.5 font-medium text-textDark">{{ d.name }}</td>
             <td class="px-3 py-2.5 text-right text-textDark">{{ d.deliveries }}</td>
             <td class="px-3 py-2.5 text-right text-textDark">{{ d.avgDeliveryMinutes != null ? d.avgDeliveryMinutes + ' min' : '—' }}</td>
-            <td class="px-3 py-2.5 text-right">
-              <span *ngIf="d.avgRating != null" class="inline-flex items-center gap-1"><i class="bi bi-star-fill text-amber-400 text-[10px]"></i>{{ d.avgRating }}</span>
-              <span *ngIf="d.avgRating == null" class="text-textMuted">—</span>
-            </td>
             <td class="px-5 py-2.5 text-right">
               <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
                     [ngClass]="d.status === 'AVAILABLE' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'">

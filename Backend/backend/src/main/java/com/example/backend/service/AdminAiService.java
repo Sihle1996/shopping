@@ -907,23 +907,16 @@ public class AdminAiService {
                 hourHist.merge(o.getDeliveredAt().atZone(sast).getHour(), 1, Integer::sum);
             }
         }
-        Map<UUID, double[]> ratings = new HashMap<>(); // driverId -> [ratingSum, count]
-        for (Review rv : reviewRepository.findByTenant_IdOrderByCreatedAtDesc(tenantId)) {
-            if (rv.getOrder() != null && rv.getOrder().getDriver() != null) {
-                double[] r = ratings.computeIfAbsent(rv.getOrder().getDriver().getId(), k -> new double[2]);
-                r[0] += rv.getRating(); r[1]++;
-            }
-        }
-
+        // No driver rating: CraveIt reviews score the ORDER (food + experience), not the
+        // driver, so attributing them to a driver would conflate kitchen issues with driving.
+        // Deliveries and average time ARE genuinely driver-attributable; those are what we show.
         List<Map<String, Object>> scorecard = new ArrayList<>();
         for (User d : drivers) {
             long[] s = stats.get(d.getId());
-            double[] r = ratings.get(d.getId());
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("name", d.getFullName() != null && !d.getFullName().isBlank() ? d.getFullName() : d.getEmail());
             row.put("deliveries", s != null ? s[0] : 0L);
             row.put("avgDeliveryMinutes", (s != null && s[2] > 0) ? (int) (s[1] / s[2]) : null);
-            row.put("avgRating", (r != null && r[1] > 0) ? Math.round(r[0] / r[1] * 10.0) / 10.0 : null);
             row.put("status", d.getDriverStatus() != null ? d.getDriverStatus().name() : null);
             scorecard.add(row);
         }
@@ -942,9 +935,8 @@ public class AdminAiService {
             Map<String, Object> top = rated.stream()
                     .min(Comparator.comparingInt(d -> (Integer) d.get("avgDeliveryMinutes"))).orElse(null);
             if (top != null) {
-                String rt = top.get("avgRating") != null ? ", with a " + top.get("avgRating") + "/5 rating" : "";
                 insights.add(insightRow("TOP", top.get("name") + " has the fastest average delivery time ("
-                        + top.get("avgDeliveryMinutes") + " min over " + top.get("deliveries") + " deliveries)" + rt + "."));
+                        + top.get("avgDeliveryMinutes") + " min over " + top.get("deliveries") + " deliveries)."));
             }
             Map<String, Object> slow = rated.stream()
                     .max(Comparator.comparingInt(d -> (Integer) d.get("avgDeliveryMinutes"))).orElse(null);
