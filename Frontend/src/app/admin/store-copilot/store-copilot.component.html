@@ -7,7 +7,7 @@
        style="height: 440px;">
     <div class="flex items-center justify-between px-4 py-3 border-b border-borderColor bg-surface">
       <div class="flex items-center gap-2">
-        <span class="text-base">✨</span>
+        <i class="bi bi-stars text-base text-primary ai-twinkle"></i>
         <div>
           <p class="text-sm font-semibold text-textDark">Store Copilot</p>
           <p class="text-xs text-textMuted">Knows your store · powered by Claude</p>
@@ -94,7 +94,8 @@
   <!-- Toggle button -->
   <button (click)="toggle()"
           class="w-14 h-14 rounded-full bg-primary text-white shadow-lg hover:bg-primary-600
-                 transition-all flex items-center justify-center text-xl">
-    <i [ngClass]="open ? 'bi bi-x-lg' : 'bi bi-chat-dots'"></i>
+                 transition-all flex items-center justify-center text-xl"
+          [class.ai-glow]="!open">
+    <i [ngClass]="open ? 'bi bi-x-lg' : 'bi bi-stars'"></i>
   </button>
 </div>

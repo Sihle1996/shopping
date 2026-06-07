@@ -76,7 +76,7 @@
            style="background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));">
         <div class="flex items-center gap-2.5 min-w-0">
           <div class="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-            <span class="text-lg">☀️</span>
+            <i class="bi bi-stars text-lg text-white ai-twinkle"></i>
           </div>
           <div class="min-w-0">
             <h3 class="font-heading text-sm font-bold leading-tight truncate">Your daily briefing</h3>
@@ -90,11 +90,16 @@
         </button>
       </div>
 
-      <!-- Loading -->
-      <div *ngIf="briefingLoading" class="p-4 sm:p-5 space-y-2.5">
-        <div class="h-3 bg-gray-100 rounded animate-pulse w-3/4"></div>
-        <div class="h-3 bg-gray-100 rounded animate-pulse w-2/3"></div>
-        <div class="h-3 bg-gray-100 rounded animate-pulse w-1/2"></div>
+      <!-- Generating -->
+      <div *ngIf="briefingLoading" class="p-4 sm:p-5">
+        <p class="flex items-center gap-2 text-sm text-primary font-medium ai-generating-text mb-3">
+          <i class="bi bi-stars ai-twinkle"></i> Generating your briefing…
+        </p>
+        <div class="space-y-2.5">
+          <div class="h-3 rounded ai-sheen bg-gray-100 w-3/4"></div>
+          <div class="h-3 rounded ai-sheen bg-gray-100 w-2/3"></div>
+          <div class="h-3 rounded ai-sheen bg-gray-100 w-1/2"></div>
+        </div>
       </div>
 
       <div *ngIf="!briefingLoading" class="p-4 sm:p-5 space-y-4">

@@ -5,7 +5,7 @@
     <app-page-header title="Inventory" subtitle="Track stock, spot low items, and adjust in real time">
       <button actions type="button" (click)="askRestockAdvice()"
               class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary border border-primary px-3 py-2 rounded-xl hover:bg-primary-50 transition-colors">
-        ✨ Restock advice
+        <i class="bi bi-stars"></i> Restock advice
       </button>
       <app-button actions variant="outline" size="md" iconLeft="bi bi-arrow-repeat" [loading]="syncing" (clicked)="syncAvailability()">
         Sync Availability

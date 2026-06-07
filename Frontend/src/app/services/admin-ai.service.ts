@@ -71,6 +71,15 @@ export interface AiBriefing {
   reminders: AiReminder[];
 }
 
+export interface AiAlert {
+  id: string;
+  severity: 'high' | 'medium' | 'info';
+  title: string;
+  body: string;
+  createdAt: string;
+  action?: AiProposedAction | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminAiService {
   private readonly base = `${environment.apiUrl}/api/admin/ai`;
@@ -102,5 +111,18 @@ export class AdminAiService {
   /** Proactive daily briefing + reminders for the dashboard. */
   briefing(): Observable<AiBriefing> {
     return this.http.get<AiBriefing>(`${this.base}/briefing`);
+  }
+
+  /** Proactive Smart Alerts for the bell. */
+  alerts(): Observable<AiAlert[]> {
+    return this.http.get<AiAlert[]>(`${this.base}/alerts`);
+  }
+
+  applyAlert(id: string): Observable<AiActResult> {
+    return this.http.post<AiActResult>(`${this.base}/alerts/${id}/apply`, {});
+  }
+
+  dismissAlert(id: string): Observable<{ ok: boolean }> {
+    return this.http.post<{ ok: boolean }>(`${this.base}/alerts/${id}/dismiss`, {});
   }
 }

@@ -1,15 +1,20 @@
 package com.example.backend.controller;
 
 import com.example.backend.dto.AiDescribeItemRequest;
+import com.example.backend.entity.AiAlert;
+import com.example.backend.repository.AiAlertRepository;
 import com.example.backend.service.AdminAiService;
 import com.example.backend.service.AdminAgentService;
+import com.example.backend.service.SmartAlertService;
 import com.example.backend.tenant.TenantContext;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -23,6 +28,9 @@ public class AdminAiController {
 
     private final AdminAiService adminAiService;
     private final AdminAgentService adminAgentService;
+    private final SmartAlertService smartAlertService;
+    private final AiAlertRepository aiAlertRepository;
+    private final ObjectMapper objectMapper;
 
     /** POST /api/admin/ai/describe-item — generate description + tags for a menu item */
     @PostMapping("/describe-item")
@@ -94,5 +102,63 @@ public class AdminAiController {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId == null) return ResponseEntity.ok(Map.of("briefing", "", "reminders", java.util.List.of()));
         return ResponseEntity.ok(adminAgentService.dailyBriefing(tenantId));
+    }
+
+    /** GET /api/admin/ai/alerts — proactive Smart Alerts for the bell (refreshes on load). */
+    @GetMapping("/alerts")
+    public ResponseEntity<List<Map<String, Object>>> alerts() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return ResponseEntity.ok(List.of());
+        try { smartAlertService.scan(tenantId); } catch (Exception ignored) {}
+        List<Map<String, Object>> out = aiAlertRepository
+                .findByTenant_IdAndStatusOrderByCreatedAtDesc(tenantId, "NEW")
+                .stream().map(this::toAlertDto).toList();
+        return ResponseEntity.ok(out);
+    }
+
+    /** POST /api/admin/ai/alerts/{id}/apply — run the alert's one-tap action. */
+    @PostMapping("/alerts/{id}/apply")
+    public ResponseEntity<Map<String, Object>> applyAlert(@PathVariable UUID id) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        AiAlert a = aiAlertRepository.findByIdAndTenant_Id(id, tenantId).orElse(null);
+        if (a == null) return ResponseEntity.notFound().build();
+        if (a.getAction() == null) return ResponseEntity.badRequest().body(Map.of("ok", false, "message", "No action on this alert"));
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> act = objectMapper.readValue(a.getAction(), Map.class);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> params = act.get("params") instanceof Map ? (Map<String, Object>) act.get("params") : Map.of();
+            Map<String, Object> result = adminAgentService.executeAction((String) act.get("action"), params);
+            if (Boolean.TRUE.equals(result.get("ok"))) { a.setStatus("DONE"); aiAlertRepository.save(a); }
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("ok", false, "message", "Couldn't apply: " + e.getMessage()));
+        }
+    }
+
+    /** POST /api/admin/ai/alerts/{id}/dismiss — hide an alert. */
+    @PostMapping("/alerts/{id}/dismiss")
+    public ResponseEntity<Map<String, Object>> dismissAlert(@PathVariable UUID id) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        aiAlertRepository.findByIdAndTenant_Id(id, tenantId).ifPresent(a -> {
+            a.setStatus("DISMISSED");
+            aiAlertRepository.save(a);
+        });
+        return ResponseEntity.ok(Map.of("ok", true));
+    }
+
+    private Map<String, Object> toAlertDto(AiAlert a) {
+        Map<String, Object> m = new java.util.LinkedHashMap<>();
+        m.put("id", a.getId());
+        m.put("severity", a.getSeverity());
+        m.put("title", a.getTitle());
+        m.put("body", a.getBody());
+        m.put("createdAt", a.getCreatedAt());
+        Object action = null;
+        if (a.getAction() != null) {
+            try { action = objectMapper.readValue(a.getAction(), Map.class); } catch (Exception ignored) {}
+        }
+        m.put("action", action);
+        return m;
     }
 }

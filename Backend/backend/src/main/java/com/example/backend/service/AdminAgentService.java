@@ -155,8 +155,8 @@ public class AdminAgentService {
                 + "fix a low average order value),\n"
                 + "• clear WARNINGS about risks (store closed, rising cancellations, sold-out best-sellers, a sales dip, "
                 + "low ratings).\n"
-                + "Lead with the most important. Be specific with numbers, warm but direct. No preamble or sign-off — "
-                + "just the bullets, each starting with a relevant emoji.";
+                + "Lead with the most important. Be specific with numbers, warm but direct. No preamble or sign-off, "
+                + "no emoji — just plain bullet points, each starting with '- '.";
 
         String out = anthropicClient.isConfigured() ? anthropicClient.call(prompt, 500) : null;
         String briefing = (out != null && !out.isBlank()) ? out.trim() : ruleBasedBriefing(snap, soldOut);

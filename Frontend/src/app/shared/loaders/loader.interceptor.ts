@@ -19,6 +19,7 @@ const SILENT_PATTERNS = [
   '/api/admin/orders/stats',
   '/api/admin/analytics',
   '/api/admin/inventory/adjust',
+  '/api/admin/ai',
   '/api/driver/',
   '/api/promotions/',
   '/api/tenants/',

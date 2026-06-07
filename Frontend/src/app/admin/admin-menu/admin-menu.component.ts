@@ -204,7 +204,7 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
         const msg = applyPrice
           ? 'Wrote the description; suggested a price from your similar items — adjust to your costs'
           : 'Wrote the description';
-        this.toastr.success(msg, '✨ AI');
+        this.toastr.success(msg, 'AI');
       },
       error: () => {
         this.aiGenerating = false;
