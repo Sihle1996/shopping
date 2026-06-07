@@ -63,15 +63,16 @@ public class AdminAiController {
     /** POST /api/admin/ai/query — conversational analytics */
     @PostMapping("/query")
     public ResponseEntity<Map<String, Object>> query(
-            @RequestBody Map<String, String> body) {
-        String question = body.getOrDefault("question", "").trim();
+            @RequestBody Map<String, Object> body) {
+        String question = body.get("question") != null ? body.get("question").toString().trim() : "";
         if (question.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "question is required"));
         }
         UUID tenantId = TenantContext.getCurrentTenantId();
+        java.util.List<?> history = body.get("history") instanceof java.util.List<?> h ? h : null;
         // Prefer the agentic copilot (tool use); fall back to the rule-based path
         // when AI isn't configured or the agent can't answer.
-        AdminAgentService.AgentResult agent = adminAgentService.chat(question);
+        AdminAgentService.AgentResult agent = adminAgentService.chat(question, history);
         if (agent != null && agent.answer() != null && !agent.answer().isBlank()) {
             Map<String, Object> res = new java.util.LinkedHashMap<>();
             res.put("answer", agent.answer());

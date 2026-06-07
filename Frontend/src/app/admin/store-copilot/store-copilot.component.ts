@@ -44,10 +44,12 @@ export class StoreCopilotComponent implements OnInit, OnDestroy {
   send(): void {
     const q = this.input.trim();
     if (!q || this.loading) return;
+    // Prior turns (everything before the message we just pushed) give the copilot memory.
+    const history = this.messages.map(m => ({ role: m.role, text: m.text }));
     this.messages.push({ role: 'user', text: q });
     this.input = '';
     this.loading = true;
-    this.adminAiService.query(q).subscribe({
+    this.adminAiService.query(q, history).subscribe({
       next: (res) => {
         this.loading = false;
         this.messages.push({ role: 'ai', text: res.answer, actions: res.proposedActions || [] });

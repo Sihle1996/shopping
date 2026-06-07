@@ -93,8 +93,8 @@ export class AdminAiService {
     return this.http.post<AiPromoSuggestionsResponse>(`${this.base}/suggest-promotions`, {});
   }
 
-  query(question: string): Observable<AiQueryResponse> {
-    return this.http.post<AiQueryResponse>(`${this.base}/query`, { question });
+  query(question: string, history?: { role: string; text: string }[]): Observable<AiQueryResponse> {
+    return this.http.post<AiQueryResponse>(`${this.base}/query`, { question, history: history || [] });
   }
 
   /** Apply an action the copilot proposed, after the admin confirms. */

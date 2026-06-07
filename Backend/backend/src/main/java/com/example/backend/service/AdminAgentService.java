@@ -62,20 +62,57 @@ public class AdminAgentService {
 
     private static final ZoneId SAST = ZoneId.of("Africa/Johannesburg");
 
-    /** Returns the copilot's answer + proposed actions, or null if AI is unavailable. */
-    @Transactional(readOnly = true)
     public AgentResult chat(String question) {
+        return chat(question, null);
+    }
+
+    /**
+     * Returns the copilot's answer + proposed actions, or null if AI is unavailable.
+     * {@code history} are the prior chat turns (each a map with role user/ai and
+     * text) so the copilot has short-term memory and can handle follow-ups.
+     */
+    @Transactional(readOnly = true)
+    public AgentResult chat(String question, List<?> history) {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId == null || !anthropicClient.isConfigured()) return null;
         Tenant tenant = tenantRepository.findById(tenantId).orElse(null);
         String system = buildSystemPrompt(tenant);
         List<Map<String, Object>> proposals = new ArrayList<>();
         String answer = anthropicClient.runAgent(
-                system, question, buildTools(),
+                system, question, buildHistory(history), buildTools(),
                 (name, input) -> executeTool(tenantId, name, input, proposals),
                 8, 1500);
         if (answer == null) return null;
         return new AgentResult(answer, proposals);
+    }
+
+    /**
+     * Normalise prior chat turns into a valid Anthropic message list: strictly
+     * alternating, starting with a user turn and ending with an assistant turn
+     * (so the current user message appended after it keeps the alternation).
+     * Caps to the last 10 turns to bound the prompt size.
+     */
+    private List<Map<String, Object>> buildHistory(List<?> history) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        if (history == null || history.isEmpty()) return out;
+        int start = Math.max(0, history.size() - 10);
+        String lastRole = null;
+        for (int i = start; i < history.size(); i++) {
+            if (!(history.get(i) instanceof Map<?, ?> m)) continue;
+            Object textO = m.get("text") != null ? m.get("text") : m.get("content");
+            if (textO == null || textO.toString().isBlank()) continue;
+            Object roleO = m.get("role");
+            String role = roleO != null && ("assistant".equals(roleO) || "ai".equals(roleO)) ? "assistant" : "user";
+            if (out.isEmpty() && "assistant".equals(role)) continue; // must start with user
+            if (role.equals(lastRole)) {
+                out.set(out.size() - 1, Map.of("role", role, "content", textO.toString()));
+            } else {
+                out.add(Map.of("role", role, "content", textO.toString()));
+                lastRole = role;
+            }
+        }
+        if (!out.isEmpty() && "user".equals(lastRole)) out.remove(out.size() - 1); // end on assistant
+        return out;
     }
 
     /**

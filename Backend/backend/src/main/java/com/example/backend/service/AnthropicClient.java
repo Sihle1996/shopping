@@ -104,9 +104,21 @@ public class AnthropicClient {
      */
     public String runAgent(String system, String userMessage, List<Map<String, Object>> tools,
                            ToolExecutor executor, int maxSteps, int tokens) {
+        return runAgent(system, userMessage, null, tools, executor, maxSteps, tokens);
+    }
+
+    /**
+     * Agentic loop with prior conversation turns. {@code priorMessages} are
+     * plain user/assistant text turns (no tool blocks) prepended before the
+     * current user message, giving the copilot short-term memory.
+     */
+    public String runAgent(String system, String userMessage, List<Map<String, Object>> priorMessages,
+                           List<Map<String, Object>> tools,
+                           ToolExecutor executor, int maxSteps, int tokens) {
         if (!isConfigured()) return null;
         try {
             List<Map<String, Object>> messages = new ArrayList<>();
+            if (priorMessages != null) messages.addAll(priorMessages);
             messages.add(Map.of("role", "user", "content", userMessage));
 
             for (int step = 0; step < maxSteps; step++) {
