@@ -109,24 +109,27 @@
             <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded"
                   [ngClass]="o.status === 'running' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'">{{ o.status }}</span>
           </div>
-          <div class="grid grid-cols-3 gap-2 text-xs">
-            <div>
-              <p class="text-[10px] uppercase tracking-wide text-textMuted">Before ({{ o.windowDays }}d)</p>
-              <p class="text-textDark">{{ o.before.units }} sold · R{{ o.before.revenue | number:'1.0-0' }}</p>
+          <!-- Pending: not enough events yet to measure (not "no effect") -->
+          <p *ngIf="o.signal === 'PENDING'" class="text-xs text-textMuted italic">
+            Outcome pending — no orders for this item in the window yet. (Insufficient signal, not "no effect".)
+          </p>
+          <!-- Measured: early (ordered) + final (delivered) signals, before → during -->
+          <div *ngIf="o.signal !== 'PENDING'" class="space-y-1 text-xs">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-textMuted">Ordered <span class="text-[10px]">(early)</span>:
+                <span class="text-textDark">{{ o.ordered.before.units }} → {{ o.ordered.during.units }} over {{ o.windowDays }}d</span></span>
+              <span class="font-semibold" [ngClass]="changeClass(o.ordered.unitsPercent)">
+                {{ o.ordered.unitsPercent == null ? 'n/a' : (o.ordered.unitsPercent > 0 ? '+' : '') + o.ordered.unitsPercent + '%' }}
+              </span>
             </div>
-            <div>
-              <p class="text-[10px] uppercase tracking-wide text-textMuted">During</p>
-              <p class="text-textDark">{{ o.during.units }} sold · R{{ o.during.revenue | number:'1.0-0' }}</p>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-textMuted">Delivered <span class="text-[10px]">(final)</span>:
+                <span class="text-textDark">{{ o.delivered.before.units }} → {{ o.delivered.during.units }}</span></span>
+              <span class="font-semibold" [ngClass]="changeClass(o.delivered.unitsPercent)">
+                {{ o.delivered.unitsPercent == null ? 'pending' : (o.delivered.unitsPercent > 0 ? '+' : '') + o.delivered.unitsPercent + '%' }}
+              </span>
             </div>
-            <div>
-              <p class="text-[10px] uppercase tracking-wide text-textMuted">Change</p>
-              <p class="font-semibold" [ngClass]="changeClass(o.change.unitsPercent)">
-                {{ o.change.unitsPercent == null ? 'n/a' : (o.change.unitsPercent > 0 ? '+' : '') + o.change.unitsPercent + '% units' }}
-              </p>
-              <p class="text-[11px]" [ngClass]="changeClass(o.change.revenuePercent)">
-                {{ o.change.revenuePercent == null ? '' : (o.change.revenuePercent > 0 ? '+' : '') + o.change.revenuePercent + '% rev' }}
-              </p>
-            </div>
+            <p class="text-[10px] text-textMuted">Revenue (delivered): R{{ o.delivered.before.revenue | number:'1.0-0' }} → R{{ o.delivered.during.revenue | number:'1.0-0' }}</p>
           </div>
         </div>
       </div>

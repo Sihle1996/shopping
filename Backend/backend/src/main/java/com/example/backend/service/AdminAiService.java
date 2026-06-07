@@ -225,12 +225,12 @@ public class AdminAiService {
             if (len.isZero() || len.isNegative()) continue;
             Instant beforeStart = start.minus(len);
 
+            // [orderedUnits, orderedRevenue, deliveredUnits, deliveredRevenue]
             double[] before = productSales(tenantId, p.getTargetProductId(), beforeStart, start);
             double[] during = productSales(tenantId, p.getTargetProductId(), start, duringEnd);
 
-            Map<String, Object> change = new LinkedHashMap<>();
-            change.put("unitsPercent", before[0] > 0 ? Math.round((during[0] - before[0]) / before[0] * 100.0) : null);
-            change.put("revenuePercent", before[1] > 0 ? Math.round((during[1] - before[1]) / before[1] * 100.0) : null);
+            // ORDERED is the dense EARLY signal; DELIVERED is the sparse FINAL signal.
+            boolean hasSignal = (before[0] + during[0]) > 0;
 
             String targetName = p.getTargetProductName();
             if (targetName == null || targetName.isBlank()) {
@@ -243,28 +243,48 @@ public class AdminAiService {
             r.put("discountPercent", p.getDiscountPercent());
             r.put("status", ended ? "ended" : "running");
             r.put("windowDays", Math.max(1, len.toDays()));
-            r.put("before", Map.of("units", (long) before[0], "revenue", Math.round(before[1] * 100.0) / 100.0));
-            r.put("during", Map.of("units", (long) during[0], "revenue", Math.round(during[1] * 100.0) / 100.0));
-            r.put("change", change);
+            // PENDING = not enough completed events yet to measure (not "no effect").
+            r.put("signal", hasSignal ? "MEASURED" : "PENDING");
+            r.put("ordered", signalBlock(before[0], before[1], during[0], during[1]));   // early
+            r.put("delivered", signalBlock(before[2], before[3], during[2], during[3])); // final
             out.add(r);
         }
         return Map.of("outcomes", out);
     }
 
-    /** Units sold & revenue of one product from DELIVERED orders in a window. [units, revenue] */
+    /**
+     * Sales of one product in a window, split into two signals:
+     *  - ORDERED (placed, not cancelled/rejected) — the dense EARLY signal
+     *  - DELIVERED — the sparse FINAL signal
+     * Returns [orderedUnits, orderedRevenue, deliveredUnits, deliveredRevenue].
+     */
     private double[] productSales(UUID tenantId, UUID productId, Instant from, Instant to) {
-        long units = 0;
-        double revenue = 0;
+        long oUnits = 0, dUnits = 0;
+        double oRev = 0, dRev = 0;
         for (Order o : orderRepository.findByOrderDateBetweenAndTenant_Id(from, to, tenantId)) {
-            if (!OrderStatus.DELIVERED.matches(o.getStatus()) || o.getOrderItems() == null) continue;
+            OrderStatus st = OrderStatus.fromLabel(o.getStatus());
+            if (st != null && st.isVoided()) continue; // exclude cancelled/rejected
+            if (o.getOrderItems() == null) continue;
+            boolean delivered = OrderStatus.DELIVERED.matches(o.getStatus());
             for (var oi : o.getOrderItems()) {
                 if (oi.getMenuItem() != null && productId.equals(oi.getMenuItem().getId())) {
-                    units += oi.getQuantity() != null ? oi.getQuantity() : 0;
-                    revenue += oi.getTotalPrice() != null ? oi.getTotalPrice() : 0;
+                    long q = oi.getQuantity() != null ? oi.getQuantity() : 0;
+                    double rev = oi.getTotalPrice() != null ? oi.getTotalPrice() : 0;
+                    oUnits += q; oRev += rev;
+                    if (delivered) { dUnits += q; dRev += rev; }
                 }
             }
         }
-        return new double[]{units, revenue};
+        return new double[]{oUnits, oRev, dUnits, dRev};
+    }
+
+    /** before/during units+revenue for one signal, with the % unit change (null if no baseline). */
+    private Map<String, Object> signalBlock(double beforeUnits, double beforeRev, double duringUnits, double duringRev) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("before", Map.of("units", (long) beforeUnits, "revenue", Math.round(beforeRev * 100.0) / 100.0));
+        m.put("during", Map.of("units", (long) duringUnits, "revenue", Math.round(duringRev * 100.0) / 100.0));
+        m.put("unitsPercent", beforeUnits > 0 ? Math.round((duringUnits - beforeUnits) / beforeUnits * 100.0) : null);
+        return m;
     }
 
     // ── Feature 3: Review Digest ────────────────────────────────────────────
