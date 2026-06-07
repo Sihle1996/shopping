@@ -51,6 +51,7 @@ public class AdminAgentService {
     private final InventoryService inventoryService;
     private final PayoutLedgerService payoutLedgerService;
     private final AdminDriverService adminDriverService;
+    private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final AiActionLogRepository aiActionLogRepository;
     private final ObjectMapper objectMapper;
 
@@ -244,7 +245,9 @@ public class AdminAgentService {
             items, sales dips, standout or slow products, bad reviews).
 
             You can also PROPOSE changes using the propose_* tools: open/close the store, set an item's
-            availability, adjust stock, or change a price. These are NOT applied automatically — they
+            availability, adjust stock, change a price, create a promotion (a %% off everything for N days),
+            or change a store setting (delivery fee, minimum order, driver earning %%, loyalty on/off,
+            estimated delivery minutes, delivery radius). These are NOT applied automatically — they
             become confirmation cards the owner taps "Apply" on. So: propose clearly, state the expected
             impact, and NEVER say a change is done — say you've proposed it for their approval. Only
             propose when the owner is clearly asking to change something. If a tool returns no data, say
@@ -357,6 +360,22 @@ public class AdminAgentService {
                        "price", numProp("New price in Rand")),
                 List.of("item", "price")));
 
+        tools.add(tool("propose_create_promotion",
+                "Propose a store-wide promotion (a % off everything) running for a number of days. "
+                        + "Use when the owner wants to run a deal or discount.",
+                Map.of("title", strProp("Short promo title, e.g. 'Weekend Special'"),
+                       "discountPercent", numProp("Discount percent, 1-100"),
+                       "days", intProp("How many days it runs (default 3)")),
+                List.of("title", "discountPercent")));
+
+        tools.add(tool("propose_update_setting",
+                "Propose changing one store setting.",
+                Map.of("setting", enumProp("Which setting to change",
+                            List.of("delivery_fee", "minimum_order", "driver_earning_percent",
+                                    "loyalty_enabled", "estimated_delivery_minutes", "delivery_radius_km")),
+                       "value", numProp("New value (for loyalty_enabled use 1 = on, 0 = off)")),
+                List.of("setting", "value")));
+
         return tools;
     }
 
@@ -368,6 +387,8 @@ public class AdminAgentService {
             case "propose_set_item_availability": return proposeAvailability(tenantId, input, proposals);
             case "propose_adjust_stock":         return proposeAdjustStock(tenantId, input, proposals);
             case "propose_set_item_price":       return proposeSetPrice(tenantId, input, proposals);
+            case "propose_create_promotion":     return proposeCreatePromotion(input, proposals);
+            case "propose_update_setting":       return proposeUpdateSetting(input, proposals);
             case "get_store_overview": return toolStoreOverview(tenantId);
             case "get_analytics":      return toolAnalytics(input.path("range").asText("30d"));
             case "list_orders":        return toolListOrders(tenantId,
@@ -698,6 +719,40 @@ public class AdminAgentService {
         return "Proposed for the owner to confirm — not applied yet.";
     }
 
+    private String proposeCreatePromotion(JsonNode input, List<Map<String, Object>> proposals) {
+        String title = input.path("title").asText("Special offer");
+        double pct = input.path("discountPercent").asDouble(0);
+        if (pct < 1 || pct > 100) return "Discount must be between 1 and 100%.";
+        int days = input.path("days").asInt(3);
+        if (days < 1) days = 3;
+        addProposal(proposals, "create_promotion",
+                "Run '" + title + "' — " + (int) pct + "% off everything for " + days + " day" + (days > 1 ? "s" : ""),
+                Map.of("title", title, "discountPercent", pct, "days", days));
+        return "Proposed for the owner to confirm — not applied yet.";
+    }
+
+    private String proposeUpdateSetting(JsonNode input, List<Map<String, Object>> proposals) {
+        String setting = input.path("setting").asText(null);
+        double value = input.path("value").asDouble(Double.NaN);
+        if (setting == null || Double.isNaN(value)) return "Provide a setting and value.";
+        String label = settingLabel(setting, value);
+        if (label == null) return "That setting can't be changed here.";
+        addProposal(proposals, "update_setting", label, Map.of("setting", setting, "value", value));
+        return "Proposed for the owner to confirm — not applied yet.";
+    }
+
+    private String settingLabel(String s, double v) {
+        switch (s) {
+            case "delivery_fee": return "Set delivery fee to R" + String.format(Locale.UK, "%.2f", v);
+            case "minimum_order": return "Set minimum order to R" + String.format(Locale.UK, "%.2f", v);
+            case "driver_earning_percent": return "Set driver earnings to " + (int) v + "%";
+            case "loyalty_enabled": return v != 0 ? "Turn loyalty ON" : "Turn loyalty OFF";
+            case "estimated_delivery_minutes": return "Set estimated delivery to " + (int) v + " min";
+            case "delivery_radius_km": return "Set delivery radius to " + (int) v + " km";
+            default: return null;
+        }
+    }
+
     private void addProposal(List<Map<String, Object>> proposals, String action, String label, Map<String, Object> params) {
         Map<String, Object> p = new LinkedHashMap<>();
         p.put("action", action);
@@ -765,7 +820,41 @@ public class AdminAgentService {
                 MenuItem mi = menuItemRepository.findByIdAndTenant_Id(id, tenantId).orElseThrow();
                 mi.setPrice(price);
                 menuItemRepository.save(mi);
-                return "'" + mi.getName() + "' price set to R" + String.format("%.2f", price) + ".";
+                return "'" + mi.getName() + "' price set to R" + String.format(Locale.UK, "%.2f", price) + ".";
+            }
+            case "create_promotion": {
+                String title = (String) p.getOrDefault("title", "Special offer");
+                double pct = ((Number) p.get("discountPercent")).doubleValue();
+                int days = p.get("days") != null ? ((Number) p.get("days")).intValue() : 3;
+                subscriptionEnforcementService.assertPromotionLimit(tenantId); // respect plan limits
+                Tenant t = tenantRepository.findById(tenantId).orElseThrow();
+                Promotion promo = new Promotion();
+                promo.setTenant(t);
+                promo.setTitle(title);
+                promo.setDiscountPercent(java.math.BigDecimal.valueOf(pct));
+                promo.setAppliesTo(Promotion.AppliesTo.ALL);
+                promo.setStartAt(OffsetDateTime.now());
+                promo.setEndAt(OffsetDateTime.now().plusDays(days));
+                promo.setActive(true);
+                promo.setFeatured(false);
+                promotionRepository.save(promo);
+                return "Created '" + title + "' — " + (int) pct + "% off everything for " + days + " day(s).";
+            }
+            case "update_setting": {
+                String s = (String) p.get("setting");
+                double v = ((Number) p.get("value")).doubleValue();
+                Tenant t = tenantRepository.findById(tenantId).orElseThrow();
+                switch (s) {
+                    case "delivery_fee": t.setDeliveryFeeBase(java.math.BigDecimal.valueOf(v)); break;
+                    case "minimum_order": t.setMinimumOrderAmount(java.math.BigDecimal.valueOf(v)); break;
+                    case "driver_earning_percent": t.setDriverEarningPercent(java.math.BigDecimal.valueOf(v)); break;
+                    case "loyalty_enabled": t.setLoyaltyEnabled(v != 0); break;
+                    case "estimated_delivery_minutes": t.setEstimatedDeliveryMinutes((int) v); break;
+                    case "delivery_radius_km": t.setDeliveryRadiusKm((int) v); break;
+                    default: throw new IllegalArgumentException("Unknown setting: " + s);
+                }
+                tenantRepository.save(t);
+                return settingLabel(s, v) + " — done.";
             }
             default:
                 throw new IllegalArgumentException("Unknown action: " + action);
