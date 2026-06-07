@@ -168,10 +168,24 @@ public class AdminAgentService {
         double cancelRate = round2(analyticsService.getCancellationRate(mAgo, now));
         List<String> topProducts = analyticsService.getTopProducts(mAgo, now).stream()
                 .limit(3).map(p -> p.getName() + " (" + p.getQuantity() + ")").toList();
-        var peak = analyticsService.getPeakHours(mAgo, now).stream()
+        // Peak hour is only a real signal if it's a genuine CONCENTRATION backed by volume.
+        // With sparse data the "busiest hour" is just noise — never surface it as a directive.
+        List<Map<String, Object>> peakHours = analyticsService.getPeakHours(mAgo, now);
+        long orders30 = peakHours.stream().mapToLong(p -> ((Number) p.getOrDefault("orderCount", 0)).longValue()).sum();
+        int activeHours = (int) peakHours.stream().filter(p -> ((Number) p.getOrDefault("orderCount", 0)).longValue() > 0).count();
+        var peak = peakHours.stream()
                 .max(Comparator.comparingLong(p -> ((Number) p.getOrDefault("orderCount", 0)).longValue()))
                 .orElse(null);
-        String busiestHour = peak != null ? peak.get("hour") + ":00" : null;
+        long peakCount = peak != null ? ((Number) peak.getOrDefault("orderCount", 0)).longValue() : 0;
+        double avgActiveHour = activeHours > 0 ? (double) orders30 / activeHours : 0;
+        boolean peakSignificant = peakCount >= 8 && peakCount >= 1.5 * avgActiveHour; // a real concentration
+        String busiestHour = null;
+        if (peak != null && peakSignificant) {
+            // Stamp the absolute confidence: a relative peak on thin volume (< ~1 order/day)
+            // is NOT actionable for staffing — embed that so it can't be read as a directive.
+            String conf = peakCount >= 30 ? "" : " — TENTATIVE, low volume (~" + String.format(Locale.UK, "%.1f", peakCount / 30.0) + " orders/day), not yet actionable";
+            busiestHour = peak.get("hour") + ":00 (" + peakCount + " orders in 30 days" + conf + ")";
+        }
 
         // inventory health
         List<String> soldOut = new ArrayList<>();
@@ -210,7 +224,8 @@ public class AdminAgentService {
         snap.put("avgOrderValue30d", aov);
         snap.put("cancellationRatePercent30d", cancelRate);
         snap.put("topProducts30d", topProducts);
-        snap.put("busiestHour", busiestHour);
+        snap.put("ordersLast30Days", orders30); // sample size — so weak signals can be judged
+        snap.put("busiestHour", busiestHour);    // null unless it's a real, well-supported peak
         snap.put("soldOutItems", soldOut);
         snap.put("lowStockCount", low);
         snap.put("activePromotions", activePromos);
@@ -224,6 +239,10 @@ public class AdminAgentService {
                 + "- AT MOST 3 bullets, the single most important first.\n"
                 + "- Each bullet is ONE short sentence (max ~18 words), opening with a 2-3 word **bold** label.\n"
                 + "- INTERPRET the data (a trend, a piece of advice, or a strategic risk) — never just restate numbers.\n"
+                + "- Ground every point in a WELL-SUPPORTED signal. Check ordersLast30Days: if a metric rests on "
+                + "few orders (small sample) it is WEAK — say it's early/limited, never turn a thin number into a "
+                + "confident directive. busiestHour is null when there's no real peak — if so, do NOT mention peak "
+                + "hours or staffing. A single noisy week-on-week swing on low volume is not proof of a pricing problem.\n"
                 + "- Use specific Rand (R) figures.\n"
                 + "- Do NOT mention operational to-dos (sold-out items, pending/unprepared orders, a closed store) — "
                 + "those are separate alerts.\n"
