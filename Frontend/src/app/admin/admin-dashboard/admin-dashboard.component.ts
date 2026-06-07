@@ -11,7 +11,6 @@ import { debounceTime, takeUntil } from 'rxjs/operators';
 import { driver } from 'driver.js';
 import { AnalyticsService } from './analytics.service';
 import { AdminService } from 'src/app/services/admin.service';
-import { AdminAiService, AiReminder } from 'src/app/services/admin-ai.service';
 import { SubscriptionService } from 'src/app/services/subscription.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ToastrService } from 'ngx-toastr';
@@ -113,11 +112,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   analyticsLoading = true;
   settingsLoading = true;
 
-  // Daily briefing
-  briefing = '';
-  reminders: AiReminder[] = [];
-  briefingLoading = true;
-
   // Onboarding checklist
   setupMenuItems: any[] = [];
   setupCategories: any[] = [];
@@ -143,7 +137,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private analyticsService: AnalyticsService,
     private adminService: AdminService,
-    private adminAiService: AdminAiService,
     private subscriptionService: SubscriptionService,
     private notificationService: NotificationService,
     private router: Router,
@@ -159,7 +152,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.loadStats();
     this.loadStoreSettings();
     this.loadRecentOrders();
-    this.loadBriefing();
 
     this.notificationService.orderEvents
       .pipe(debounceTime(200), takeUntil(this.destroy$))
@@ -175,18 +167,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.subscriptionPlan = info.plan;
       if (this.hasAnalytics) this.loadAnalytics();
       else this.analyticsLoading = false;
-    });
-  }
-
-  loadBriefing(): void {
-    this.briefingLoading = true;
-    this.adminAiService.briefing().subscribe({
-      next: (res) => {
-        this.briefing = res.briefing || '';
-        this.reminders = res.reminders || [];
-        this.briefingLoading = false;
-      },
-      error: () => { this.briefingLoading = false; }
     });
   }
 

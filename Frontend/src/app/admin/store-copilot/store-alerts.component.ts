@@ -12,9 +12,21 @@ export class StoreAlertsComponent implements OnInit {
   loading = true;
   applyingId: string | null = null;
 
+  // Daily briefing (lives here now — pops up in the notification panel)
+  briefing = '';
+  briefingLoading = true;
+
   constructor(private ai: AdminAiService, private toastr: ToastrService) {}
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.load();
+    this.loadBriefing();
+    // Pop the panel open once per session so the briefing greets the owner.
+    if (!sessionStorage.getItem('copilotBriefingShown')) {
+      this.open = true;
+      sessionStorage.setItem('copilotBriefingShown', '1');
+    }
+  }
 
   get count(): number { return this.alerts.length; }
 
@@ -26,9 +38,22 @@ export class StoreAlertsComponent implements OnInit {
     });
   }
 
+  loadBriefing(): void {
+    this.briefingLoading = true;
+    this.ai.briefing().subscribe({
+      next: (r) => { this.briefing = r.briefing || ''; this.briefingLoading = false; },
+      error: () => { this.briefingLoading = false; }
+    });
+  }
+
+  refresh(): void {
+    this.load();
+    this.loadBriefing();
+  }
+
   toggle(): void {
     this.open = !this.open;
-    if (this.open) this.load();
+    if (this.open) this.refresh();
   }
 
   apply(a: AiAlert): void {

@@ -33,13 +33,17 @@
         </button>
       </div>
 
-      <div *ngFor="let msg of messages" class="flex flex-col"
+      <div *ngFor="let msg of messages" class="flex flex-col w-full"
            [ngClass]="msg.role === 'user' ? 'items-end' : 'items-start'">
-        <div class="max-w-[85%] px-3 py-2 rounded-2xl text-sm whitespace-pre-line"
-             [ngClass]="msg.role === 'user'
-               ? 'bg-primary text-white rounded-br-sm'
-               : 'bg-surface border border-borderColor text-textDark rounded-bl-sm'">
+        <!-- User message -->
+        <div *ngIf="msg.role === 'user'"
+             class="max-w-[85%] px-3 py-2 rounded-2xl rounded-br-sm text-sm whitespace-pre-line bg-primary text-white">
           {{ msg.text }}
+        </div>
+        <!-- AI message (rich formatted) -->
+        <div *ngIf="msg.role !== 'user'"
+             class="max-w-full w-full px-3 py-2.5 rounded-2xl rounded-bl-sm bg-surface border border-borderColor ai-prose"
+             [innerHTML]="msg.text | aiFormat">
         </div>
 
         <!-- Proposed action confirm cards -->

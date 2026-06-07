@@ -252,6 +252,10 @@ public class AdminAgentService {
             impact, and NEVER say a change is done — say you've proposed it for their approval. Only
             propose when the owner is clearly asking to change something. If a tool returns no data, say
             so. Keep answers tight — a few sentences or a short list, not an essay.
+
+            Formatting: reply in clean markdown. Use a markdown table (with a |---| header row) whenever
+            you list several items with attributes (e.g. menu items with prices, orders with status).
+            Use short **bold** labels and '- ' bullet points. Do NOT use any emojis.
             """.formatted(name, cuisine, today);
     }
 

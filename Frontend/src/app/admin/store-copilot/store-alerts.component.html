@@ -3,32 +3,59 @@
 
   <!-- Panel -->
   <div *ngIf="open"
-       class="w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-borderColor flex flex-col overflow-hidden"
-       style="max-height: 440px;">
-    <div class="flex items-center justify-between px-4 py-3 border-b border-borderColor bg-surface">
-      <div class="flex items-center gap-2">
-        <i class="bi bi-bell-fill text-primary"></i>
-        <div>
-          <p class="text-sm font-semibold text-textDark leading-tight">Smart Alerts</p>
-          <p class="text-xs text-textMuted">Spotted by your Store Copilot</p>
+       class="ai-pop-in w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-borderColor flex flex-col overflow-hidden"
+       style="max-height: 520px;">
+    <!-- Header band -->
+    <div class="flex items-center justify-between px-4 py-3 text-white"
+         style="background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));">
+      <div class="flex items-center gap-2 min-w-0">
+        <i class="bi bi-stars text-base ai-twinkle text-white"></i>
+        <div class="min-w-0">
+          <p class="text-sm font-semibold leading-tight truncate">Your daily briefing</p>
+          <p class="text-[11px] text-white/80 truncate">Briefing & alerts · Store Copilot</p>
         </div>
       </div>
-      <button (click)="toggle()" class="text-textMuted hover:text-textDark transition-colors">
-        <i class="bi bi-x-lg text-sm"></i>
-      </button>
+      <div class="flex items-center gap-1 flex-shrink-0">
+        <button (click)="refresh()" [disabled]="loading || briefingLoading"
+                class="text-white/90 hover:text-white disabled:opacity-50 transition-colors p-1.5" title="Refresh">
+          <i class="bi bi-arrow-clockwise" [class.animate-spin]="loading || briefingLoading"></i>
+        </button>
+        <button (click)="toggle()" class="text-white/90 hover:text-white transition-colors p-1.5">
+          <i class="bi bi-x-lg text-sm"></i>
+        </button>
+      </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-3 space-y-2">
+    <div class="flex-1 overflow-y-auto p-3 space-y-3">
+      <!-- Daily briefing -->
+      <div class="rounded-xl border border-primary-100 bg-primary-50/40 p-3">
+        <div *ngIf="briefingLoading">
+          <p class="flex items-center gap-2 text-sm text-primary font-medium ai-generating-text">
+            <i class="bi bi-stars ai-twinkle"></i> Generating your briefing…
+          </p>
+          <div class="mt-2.5 space-y-2">
+            <div class="h-2.5 rounded ai-sheen bg-white w-3/4"></div>
+            <div class="h-2.5 rounded ai-sheen bg-white w-2/3"></div>
+          </div>
+        </div>
+        <div *ngIf="!briefingLoading" class="ai-prose" [innerHTML]="briefing | aiFormat"></div>
+      </div>
+
+      <!-- Needs attention -->
+      <p class="text-[11px] font-semibold text-textMuted uppercase tracking-wide flex items-center gap-1.5 px-0.5">
+        <i class="bi bi-bell-fill text-primary"></i> Needs attention
+      </p>
+
       <!-- Loading -->
       <div *ngIf="loading" class="space-y-2">
         <div *ngFor="let _ of [1,2]" class="h-16 rounded-xl ai-sheen bg-surface"></div>
       </div>
 
       <!-- Empty -->
-      <div *ngIf="!loading && alerts.length === 0" class="flex flex-col items-center text-center py-8 gap-2">
+      <div *ngIf="!loading && alerts.length === 0" class="flex flex-col items-center text-center py-6 gap-2">
         <i class="bi bi-check2-circle text-3xl text-success"></i>
         <p class="text-sm text-textDark font-medium">All clear</p>
-        <p class="text-xs text-textMuted">No issues need your attention right now.</p>
+        <p class="text-xs text-textMuted">Nothing needs your attention right now.</p>
       </div>
 
       <!-- Alerts -->

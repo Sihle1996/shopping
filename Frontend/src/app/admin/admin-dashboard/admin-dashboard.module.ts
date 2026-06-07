@@ -16,6 +16,7 @@ import { InventoryManagementComponent } from '../inventory-management/inventory-
 import { AdminLayoutComponent } from '../admin-layout/admin-layout.component';
 import { StoreCopilotComponent } from '../store-copilot/store-copilot.component';
 import { StoreAlertsComponent } from '../store-copilot/store-alerts.component';
+import { AiFormatPipe } from '../store-copilot/ai-format.pipe';
 import { SharedModule } from '../../shared/shared.module';
 import { AdminRoutingModule } from '../admin-routing.module';
 import { AdminPromotionsComponent } from '../admin-promotions/admin-promotions.component';
@@ -41,6 +42,7 @@ import { AdminPayoutsComponent } from '../admin-payouts/admin-payouts.component'
     AdminLayoutComponent,
     StoreCopilotComponent,
     StoreAlertsComponent,
+    AiFormatPipe,
     AdminPromotionsComponent,
     AdminSettingsComponent,
     AdminSubscriptionComponent,
