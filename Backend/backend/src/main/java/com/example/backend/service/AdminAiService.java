@@ -169,6 +169,27 @@ public class AdminAiService {
             return Map.of("suggestions", List.of());
         }
 
+        // Exclude items that ALREADY have an IN-FLIGHT promo (active OR scheduled = not yet
+        // expired). Suggestions should find the NEXT experiment, not stack a duplicate promo on
+        // an item that's already running one (which would corrupt pricing, measurement & learning).
+        OffsetDateTime nowOdt = OffsetDateTime.now();
+        Set<UUID> promotedItems = new HashSet<>();
+        Set<String> promotedCategories = new HashSet<>(); // lowercase names
+        boolean storeWidePromo = false;
+        for (Promotion p : promotionRepository.findByTenant_Id(tenantId)) {
+            if (p.getEndAt() != null && p.getEndAt().isBefore(nowOdt)) continue; // expired -> item eligible again
+            switch (p.getAppliesTo() == null ? Promotion.AppliesTo.ALL : p.getAppliesTo()) {
+                case PRODUCT -> { if (p.getTargetProductId() != null) promotedItems.add(p.getTargetProductId()); }
+                case MULTI_PRODUCT -> {
+                    if (p.getTargetProducts() != null)
+                        p.getTargetProducts().forEach(mi -> { if (mi != null && mi.getId() != null) promotedItems.add(mi.getId()); });
+                }
+                case CATEGORY -> { if (p.getTargetCategoryName() != null) promotedCategories.add(p.getTargetCategoryName().toLowerCase()); }
+                case ALL -> storeWidePromo = true;
+            }
+        }
+        if (storeWidePromo) return Map.of("suggestions", List.of()); // a store-wide deal already covers everything
+
         // LEVEL-3: the BACKEND decides deterministically (no LLM) — there is no
         // elasticity/promo-history data to "reason" over. Pick the store's most-ordered
         // items that it can afford to discount (margin at/above its OWN median, in stock),
@@ -179,6 +200,8 @@ public class AdminAiService {
 
         List<MenuItem> candidates = menuItems.stream()
                 .filter(i -> itemCounts.getOrDefault(i.getId(), 0L) > 0)
+                .filter(i -> !promotedItems.contains(i.getId()))  // not already promoted (PRODUCT/MULTI)
+                .filter(i -> i.getCategory() == null || !promotedCategories.contains(i.getCategory().toLowerCase())) // nor via a category promo
                 .filter(i -> i.getMarginPercent() != null && (medianMargin == null || i.getMarginPercent() >= medianMargin))
                 .filter(i -> (i.getStock() - i.getReservedStock()) > 0 && i.getPrice() != null && i.getPrice() > 0)
                 .sorted((a, b) -> Long.compare(itemCounts.getOrDefault(b.getId(), 0L), itemCounts.getOrDefault(a.getId(), 0L)))
