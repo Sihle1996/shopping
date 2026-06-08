@@ -122,8 +122,20 @@
           <p *ngIf="o.signal === 'PENDING'" class="text-xs text-textMuted italic">
             Outcome pending — no orders for this item in the window yet. (Insufficient signal, not "no effect".)
           </p>
+          <!-- Early: window too short / baseline too thin — show counts, suppress noisy percentages -->
+          <div *ngIf="o.signal === 'EARLY'" class="space-y-1 text-xs">
+            <p class="text-[11px] text-amber-700 italic flex items-start gap-1">
+              <i class="bi bi-hourglass-split mt-0.5"></i><span>{{ o.note }}</span>
+            </p>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-textMuted">Ordered <span class="text-[10px]">(early)</span>:
+                <span class="text-textDark">{{ o.ordered.before.units }} → {{ o.ordered.during.units }} over {{ o.windowDays }}d</span></span>
+              <span class="text-textMuted text-[10px]">measuring…</span>
+            </div>
+            <p class="text-[10px] text-textMuted">Revenue (delivered): R{{ o.delivered.before.revenue | number:'1.0-0' }} → R{{ o.delivered.during.revenue | number:'1.0-0' }}</p>
+          </div>
           <!-- Measured: early (ordered) + final (delivered) signals, before → during -->
-          <div *ngIf="o.signal !== 'PENDING'" class="space-y-1 text-xs">
+          <div *ngIf="o.signal === 'MEASURED'" class="space-y-1 text-xs">
             <div class="flex items-center justify-between gap-2">
               <span class="text-textMuted">Ordered <span class="text-[10px]">(early)</span>:
                 <span class="text-textDark">{{ o.ordered.before.units }} → {{ o.ordered.during.units }} over {{ o.windowDays }}d</span></span>

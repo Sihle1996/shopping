@@ -277,6 +277,12 @@ public class AdminAiService {
 
     // ── Feature: Promotion outcomes (the feedback loop) ─────────────────────
 
+    // Guards against meaningless percentages: a % needs a real measurement window AND a
+    // non-trivial baseline. A "0 -> 56 over 1 day" is not "+99400%" — it's too early / no baseline.
+    private static final double MIN_PROMO_DAYS = 2.0;     // < 2 days of data = too early to read
+    private static final int    MIN_BASELINE_UNITS = 5;  // need >= 5 prior units for a stable item %
+    private static final int    MIN_STORE_BASELINE = 10; // need >= 10 store orders in the 14-day baseline
+
     /**
      * Closes the experiment loop: for each PRODUCT promotion that has started,
      * measures the target item's sales DURING the promo vs an equal-length window
@@ -302,17 +308,24 @@ public class AdminAiService {
             double[] before = productSales(tenantId, p.getTargetProductId(), beforeStart, start);
             double[] during = productSales(tenantId, p.getTargetProductId(), start, duringEnd);
 
-            // ORDERED is the dense EARLY signal; DELIVERED is the sparse FINAL signal.
             boolean hasSignal = (before[0] + during[0]) > 0;
+            double durDays = len.toHours() / 24.0;
+            // TOO EARLY: a window shorter than MIN_PROMO_DAYS, or a near-zero item baseline,
+            // makes any percentage noise (3->33 = "+1000%", 0->56 = divide-by-zero). Show the
+            // absolute counts but suppress the percentages until there's enough to measure.
+            boolean tooEarly = durDays < MIN_PROMO_DAYS || before[0] < MIN_BASELINE_UNITS;
+            boolean allowPct = !tooEarly;
 
-            // BASELINE: net lift isolates the item from the store-wide trend, rate-normalised
-            // over a STABLE 14-day pre-promo window (see computeLift) so it's always
-            // computable when the store has history, instead of "n/a".
-            LiftCalc lift = computeLift(tenantId, p.getTargetProductId(), start, duringEnd);
-            Long storePercent = lift.storePercent();
-            Long netLift = lift.netLift();
+            // Net lift vs the store-wide trend — only when the baselines support it.
+            LiftCalc lift = tooEarly ? null : computeLift(tenantId, p.getTargetProductId(), start, duringEnd);
+            Long storePercent = lift != null ? lift.storePercent() : null;
+            Long netLift = lift != null ? lift.netLift() : null;
+
+            // Data quality reflects window + BASELINE, not raw volume (56 sales on a 0 baseline
+            // is not "HIGH" — it's unmeasurable).
             long itemEvents = (long) (before[0] + during[0]);
-            String dataQuality = itemEvents >= 15 ? "HIGH" : itemEvents >= 4 ? "MEDIUM" : "LOW";
+            String dataQuality = tooEarly ? "LOW"
+                    : itemEvents >= 15 ? "HIGH" : itemEvents >= 4 ? "MEDIUM" : "LOW";
 
             String targetName = p.getTargetProductName();
             if (targetName == null || targetName.isBlank()) {
@@ -325,13 +338,15 @@ public class AdminAiService {
             r.put("discountPercent", p.getDiscountPercent());
             r.put("status", ended ? "ended" : "running");
             r.put("windowDays", Math.max(1, len.toDays()));
-            // PENDING = not enough completed events yet to measure (not "no effect").
-            r.put("signal", hasSignal ? "MEASURED" : "PENDING");
-            r.put("ordered", signalBlock(before[0], before[1], during[0], during[1]));   // early
-            r.put("delivered", signalBlock(before[2], before[3], during[2], during[3])); // final
+            // EARLY = running but too soon / no baseline to trust a %; MEASURED once it's stable.
+            r.put("signal", tooEarly ? "EARLY" : hasSignal ? "MEASURED" : "PENDING");
+            if (tooEarly) r.put("note", "Too early to measure — needs at least " + (int) MIN_PROMO_DAYS
+                    + " days of data against a real baseline before a change is meaningful.");
+            r.put("ordered", signalBlock(before[0], before[1], during[0], during[1], allowPct));   // early
+            r.put("delivered", signalBlock(before[2], before[3], during[2], during[3], allowPct)); // final
             r.put("storeChangePercent", storePercent); // background trend (store-wide orders)
             r.put("netLiftPercent", netLift);          // item lift minus store-wide trend
-            r.put("dataQuality", dataQuality);         // LOW | MEDIUM | HIGH — sample size, not a prediction
+            r.put("dataQuality", dataQuality);         // window + baseline, not raw volume
             out.add(r);
         }
         return Map.of("outcomes", out);
@@ -383,15 +398,19 @@ public class AdminAiService {
         Instant baseStart = start.minus(Duration.ofDays(14));
         double baseDays = Math.max(1.0, Duration.between(baseStart, start).toHours() / 24.0);
 
-        double storeBasePerDay = storeOrders(tenantId, baseStart, start) / baseDays;
+        long storeBaseCount = storeOrders(tenantId, baseStart, start);
+        double storeBasePerDay = storeBaseCount / baseDays;
         double storeDurPerDay = storeOrders(tenantId, start, duringEnd) / durDays;
-        Long storePercent = storeBasePerDay > 0
+        // Suppress the store % when the baseline is too thin to normalise against — else a
+        // near-zero baseline produces absurd figures (e.g. +5000%).
+        Long storePercent = (storeBaseCount >= MIN_STORE_BASELINE && storeBasePerDay > 0)
                 ? Math.round((storeDurPerDay - storeBasePerDay) / storeBasePerDay * 100.0) : null;
 
-        double itemBasePerDay = productSales(tenantId, productId, baseStart, start)[0] / baseDays;
+        double itemBaseUnits = productSales(tenantId, productId, baseStart, start)[0];
         double duringUnits = productSales(tenantId, productId, start, duringEnd)[0];
+        double itemBasePerDay = itemBaseUnits / baseDays;
         double itemDurPerDay = duringUnits / durDays;
-        Long itemPercent = itemBasePerDay > 0
+        Long itemPercent = (itemBaseUnits >= MIN_BASELINE_UNITS && itemBasePerDay > 0)
                 ? Math.round((itemDurPerDay - itemBasePerDay) / itemBasePerDay * 100.0) : null;
 
         Long netLift = (itemPercent != null && storePercent != null) ? itemPercent - storePercent : null;
@@ -553,12 +572,17 @@ public class AdminAiService {
         return out;
     }
 
-    /** before/during units+revenue for one signal, with the % unit change (null if no baseline). */
-    private Map<String, Object> signalBlock(double beforeUnits, double beforeRev, double duringUnits, double duringRev) {
+    /**
+     * before/during units+revenue for one signal. The % unit change is only included when
+     * {@code allowPct} (the window is long enough) AND the baseline is non-trivial — otherwise
+     * the percentage would be noise (e.g. 3 -> 33 = "+1000%" on a 1-day window).
+     */
+    private Map<String, Object> signalBlock(double beforeUnits, double beforeRev, double duringUnits, double duringRev, boolean allowPct) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("before", Map.of("units", (long) beforeUnits, "revenue", Math.round(beforeRev * 100.0) / 100.0));
         m.put("during", Map.of("units", (long) duringUnits, "revenue", Math.round(duringRev * 100.0) / 100.0));
-        m.put("unitsPercent", beforeUnits > 0 ? Math.round((duringUnits - beforeUnits) / beforeUnits * 100.0) : null);
+        m.put("unitsPercent", (allowPct && beforeUnits >= MIN_BASELINE_UNITS)
+                ? Math.round((duringUnits - beforeUnits) / beforeUnits * 100.0) : null);
         return m;
     }
 
