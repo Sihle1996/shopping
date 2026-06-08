@@ -226,14 +226,39 @@ public class SmartAlertService {
             }
         }
 
-        // 6) Pending orders aging — something's sitting unprepared past your prep window.
-        //    Revenue at risk = each waiting order's value × its cancellation probability.
+        // 6a) Unaccepted orders nearing AUTO-CANCEL — warn the owner to ACCEPT before it's killed.
+        //     Fires from halfway through the store's auto-cancel window, so there's always a heads-up.
+        int autoCancelMin = tenant.getAutoCancelMinutes() != null ? tenant.getAutoCancelMinutes() : 15;
+        if (autoCancelMin > 0) {
+            long oldestUnaccepted = 0; int unaccepted = 0; double acceptRevAtRisk = 0;
+            for (Order o : last30) {
+                if (!OrderStatus.PENDING.matches(o.getStatus()) || o.getOrderDate() == null) continue;
+                long mins = Duration.between(o.getOrderDate(), now).toMinutes();
+                if (mins >= 0 && mins < autoCancelMin) {   // still savable (not yet auto-cancelled)
+                    unaccepted++;
+                    oldestUnaccepted = Math.max(oldestUnaccepted, mins);
+                    acceptRevAtRisk += o.getTotalAmount() != null ? o.getTotalAmount() : 0;
+                }
+            }
+            int warnAt = Math.max(2, autoCancelMin / 2);
+            if (unaccepted > 0 && oldestUnaccepted >= warnAt) {
+                long remaining = Math.max(1, autoCancelMin - oldestUnaccepted);
+                created += raise(activeKeys, tenant, "pending-accept", "high",
+                        unaccepted + " order" + (unaccepted > 1 ? "s" : "") + " awaiting your acceptance",
+                        "Oldest is " + oldestUnaccepted + " min old and will auto-cancel in ~" + remaining
+                                + " min. Accept it to keep the sale.",
+                        null,
+                        riskImpact(acceptRevAtRisk, marginFrac, commissionFrac, "if it auto-cancels"));
+            }
+        }
+
+        // 6b) ACCEPTED orders aging — something the kitchen took on is sitting past your prep window.
         long oldestPending = 0; int awaiting = 0; double agingRevAtRisk = 0;
         for (Order o : last30) {
             String s = o.getStatus();
             if (s == null || o.getOrderDate() == null) continue;
             OrderStatus os = OrderStatus.fromLabel(s);
-            if (os == OrderStatus.PENDING || os == OrderStatus.CONFIRMED || os == OrderStatus.SCHEDULED) {
+            if (os == OrderStatus.CONFIRMED || os == OrderStatus.PREPARING) { // accepted, not yet out
                 long mins = Duration.between(o.getOrderDate(), now).toMinutes();
                 if (mins >= 0 && mins < 1440) {
                     awaiting++;
@@ -265,6 +290,19 @@ public class SmartAlertService {
             created += raise(activeKeys, tenant, "milestone:" + today, "info",
                     "Best sales day in two weeks",
                     String.format(Locale.UK, "R%.0f today beats your recent best of R%.0f. Keep it going.", todayRev, maxPrior),
+                    null);
+        }
+
+        // 8) Auto-cancel pattern — repeated timeouts mean sales are slipping through unaccepted.
+        long autoCancels7d = last30.stream()
+                .filter(o -> "AUTO_TIMEOUT".equals(o.getCancellationReason()))
+                .filter(o -> o.getOrderDate() != null && Duration.between(o.getOrderDate(), now).toDays() < 7)
+                .count();
+        if (autoCancels7d >= 3) {
+            created += raise(activeKeys, tenant, "auto-cancel-pattern", "medium",
+                    autoCancels7d + " orders auto-cancelled this week",
+                    "These weren't accepted in time and were cancelled automatically. Watching the order bell "
+                            + "during peak hours — or lengthening the auto-cancel window in Settings — would save them.",
                     null);
         }
 

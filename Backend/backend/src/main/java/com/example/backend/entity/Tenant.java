@@ -82,6 +82,11 @@ public class Tenant {
     @Builder.Default
     private Integer estimatedDeliveryMinutes = 30;
 
+    /** Auto-cancel an unaccepted (Pending) order after this many minutes. 0 = disabled. */
+    @Column(name = "auto_cancel_minutes")
+    @Builder.Default
+    private Integer autoCancelMinutes = 15;
+
     @Column(length = 500)
     private String openingHours;
 

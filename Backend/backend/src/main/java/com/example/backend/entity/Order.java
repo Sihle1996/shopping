@@ -45,6 +45,11 @@ public class Order {
     private Double totalAmount;
     private Instant orderDate;
     private String status;
+
+    /** Why the order was cancelled, e.g. AUTO_TIMEOUT — null for active/non-cancelled orders. */
+    @Column(name = "cancellation_reason", length = 50)
+    private String cancellationReason;
+
     private String deliveryAddress;
 
     private String paymentId;

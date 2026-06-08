@@ -27,6 +27,7 @@ interface TenantSettings {
   isOpen: boolean;
   minimumOrderAmount: number | null;
   estimatedDeliveryMinutes: number;
+  autoCancelMinutes: number;
   cuisineType: string;
   driverEarningPercent: number;
   loyaltyEnabled: boolean;
@@ -54,6 +55,7 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     isOpen: true,
     minimumOrderAmount: null,
     estimatedDeliveryMinutes: 30,
+    autoCancelMinutes: 15,
     cuisineType: '',
     driverEarningPercent: 10,
     loyaltyEnabled: true

@@ -29,22 +29,32 @@ public class OrderAutoRejectService {
     private final EmailService emailService;
     private final LoyaltyService loyaltyService;
 
-    private static final int TIMEOUT_MINUTES = 5;
+    /** Fallback window when a store has no auto-cancel setting. */
+    private static final int DEFAULT_AUTO_CANCEL_MINUTES = 15;
 
     @Scheduled(fixedDelay = 60_000)
     @Transactional
     public void autoRejectTimedOutOrders() {
-        Instant cutoff = Instant.now().minusSeconds(TIMEOUT_MINUTES * 60L);
-        List<Order> timedOut = orderRepository.findByStatusAndOrderDateBefore("Pending", cutoff);
+        Instant now = Instant.now();
+        // All still-Pending orders; the cancel window is applied PER STORE (configurable).
+        List<Order> pending = orderRepository.findByStatusAndOrderDateBefore("Pending", now);
+        int cancelled = 0;
 
-        for (Order order : timedOut) {
+        for (Order order : pending) {
+            Tenant tenant = order.getTenant();
+            int minutes = (tenant != null && tenant.getAutoCancelMinutes() != null)
+                    ? tenant.getAutoCancelMinutes() : DEFAULT_AUTO_CANCEL_MINUTES;
+            if (minutes <= 0) continue;                                              // disabled for this store
+            if (order.getOrderDate() == null
+                    || order.getOrderDate().isAfter(now.minusSeconds(minutes * 60L))) continue; // not timed out yet
+
             releaseReservedStock(order);
-
             if (order.getUser() != null) {
                 loyaltyService.refundPoints(order.getUser(), order);
             }
 
             order.setStatus("Cancelled");
+            order.setCancellationReason("AUTO_TIMEOUT");
             orderRepository.save(order);
 
             messagingTemplate.convertAndSend("/topic/orders", Map.of(
@@ -53,40 +63,33 @@ public class OrderAutoRejectService {
                     "status", "Cancelled",
                     "reason", "AUTO_REJECTED_TIMEOUT"
             ));
-
             if (order.getUser() != null) {
                 messagingTemplate.convertAndSend(
                         "/topic/orders/" + order.getUser().getId(),
                         Map.of("type", "ORDER_CANCELLED",
                                "orderId", order.getId().toString(),
-                               "status", "Cancelled")
-                );
+                               "status", "Cancelled"));
             }
 
-            String customerEmail = order.getUser() != null
-                    ? order.getUser().getEmail()
-                    : order.getGuestEmail();
+            String customerEmail = order.getUser() != null ? order.getUser().getEmail() : order.getGuestEmail();
             String storeName = order.getTenant() != null ? order.getTenant().getName() : "The restaurant";
-
             if (customerEmail != null && !customerEmail.isBlank()) {
                 emailService.sendRaw(customerEmail,
                         "Order Cancelled — Restaurant Did Not Respond",
                         "<p>Hi,</p>" +
                         "<p>Your order <strong>#" + order.getId().toString().substring(0, 8) +
                         "</strong> from <strong>" + storeName +
-                        "</strong> was automatically cancelled because the restaurant did not respond within " +
-                        TIMEOUT_MINUTES + " minutes.</p>" +
-                        "<p>If you were charged, a refund will be processed automatically.</p>" +
+                        "</strong> was automatically cancelled because the restaurant did not accept it within " +
+                        minutes + " minutes.</p>" +
+                        "<p>If you were charged, please contact the store and they'll assist with a refund.</p>" +
                         "<p>We apologise for the inconvenience.</p>");
             }
 
-            log.info("Auto-rejected order {} — restaurant did not respond within {} minutes",
-                    order.getId(), TIMEOUT_MINUTES);
+            log.info("Auto-rejected order {} — not accepted within {} minutes", order.getId(), minutes);
+            cancelled++;
         }
 
-        if (!timedOut.isEmpty()) {
-            log.info("Auto-rejected {} timed-out orders", timedOut.size());
-        }
+        if (cancelled > 0) log.info("Auto-rejected {} timed-out orders", cancelled);
     }
 
     private void releaseReservedStock(Order order) {

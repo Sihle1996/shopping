@@ -59,6 +59,7 @@ public class TenantService {
         if (updates.getMinimumOrderAmount() != null) tenant.setMinimumOrderAmount(updates.getMinimumOrderAmount());
         if (updates.getIsOpen() != null) tenant.setIsOpen(updates.getIsOpen());
         if (updates.getEstimatedDeliveryMinutes() != null) tenant.setEstimatedDeliveryMinutes(updates.getEstimatedDeliveryMinutes());
+        if (updates.getAutoCancelMinutes() != null) tenant.setAutoCancelMinutes(updates.getAutoCancelMinutes());
         if (updates.getOpeningHours() != null) tenant.setOpeningHours(updates.getOpeningHours());
         if (updates.getCuisineType() != null) tenant.setCuisineType(updates.getCuisineType());
         if (updates.getDriverEarningPercent() != null) tenant.setDriverEarningPercent(updates.getDriverEarningPercent());
