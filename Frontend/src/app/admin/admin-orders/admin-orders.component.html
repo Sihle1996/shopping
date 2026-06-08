@@ -205,6 +205,15 @@
           </div>
         </header>
 
+        <!-- Scheduled delivery — the whole point of a scheduled order: when to have it ready -->
+        <div *ngIf="so.scheduledDeliveryTime" class="mb-4 flex items-center gap-3 rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3">
+          <i class="bi bi-clock-history text-amber-600 text-lg"></i>
+          <div>
+            <p class="text-[11px] uppercase tracking-wide text-amber-700 font-semibold">Scheduled for</p>
+            <p class="text-sm font-bold text-textDark">{{ so.scheduledDeliveryTime | date:'EEE, MMM d · HH:mm' }}</p>
+          </div>
+        </div>
+
         <!-- Meta -->
         <div class="grid grid-cols-2 gap-x-4 gap-y-3 rounded-2xl bg-white border border-borderColor p-4 text-sm mb-5 shadow-sm">
           <div>

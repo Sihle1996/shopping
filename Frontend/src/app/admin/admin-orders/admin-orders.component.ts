@@ -22,6 +22,7 @@ interface Order {
   totalAmount: number;
   status: Status | string;   // API tolerance
   orderDate: string;         // ISO string
+  scheduledDeliveryTime?: string | null; // ISO — set when the customer scheduled for later
   deliveryAddress: string;
   userEmail: string;
   paymentId?: string;
