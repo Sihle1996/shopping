@@ -1,5 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { AdminAiService, AiAlert } from 'src/app/services/admin-ai.service';
+import { NotificationService } from 'src/app/services/notification.service';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
@@ -21,16 +23,25 @@ export class StoreAlertsComponent implements OnInit, OnDestroy {
   peekClosing = false;
   peekAlerts: AiAlert[] = [];
   private timers: any[] = [];
+  private alertSub?: Subscription;
 
-  constructor(private ai: AdminAiService, private toastr: ToastrService) {}
+  constructor(private ai: AdminAiService, private toastr: ToastrService,
+              private notifications: NotificationService) {}
 
   ngOnInit(): void {
     this.load(true); // peek on first load
     this.loadBriefing();
+    // Live: the background scan pushes here when a new alert is raised — reload + peek it,
+    // so a scheduled order due soon reaches you without opening the bell.
+    const tenantId = localStorage.getItem('tenantId');
+    if (tenantId) {
+      this.alertSub = this.notifications.subscribeToAdminAlerts(tenantId).subscribe(() => this.load(true));
+    }
   }
 
   ngOnDestroy(): void {
     this.timers.forEach(clearTimeout);
+    this.alertSub?.unsubscribe();
   }
 
   get count(): number { return this.alerts.length; }

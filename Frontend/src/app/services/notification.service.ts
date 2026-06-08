@@ -135,6 +135,26 @@ export class NotificationService implements OnDestroy {
   }
 
   /** Subscribe to real-time order updates for a specific customer user ID. */
+  /** Live admin alert nudges (background scan pushes here when a new alert is raised). */
+  subscribeToAdminAlerts(tenantId: string): Observable<any> {
+    const subject = new Subject<any>();
+    const topic = `/topic/admin/${tenantId}/alerts`;
+
+    const doSubscribe = () => {
+      this.client.subscribe(topic, (msg: IMessage) => {
+        try { subject.next(JSON.parse(msg.body)); } catch { /* ignore */ }
+      });
+    };
+
+    if (this.client?.connected) {
+      doSubscribe();
+    } else {
+      const orig = this.client.onConnect;
+      this.client.onConnect = (frame) => { orig?.(frame); doSubscribe(); };
+    }
+    return subject.asObservable();
+  }
+
   subscribeToOrderUpdates(userId: string): Observable<any> {
     const subject = new Subject<any>();
     const topic = `/topic/orders/${userId}`;
