@@ -14,6 +14,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Every minute: opens or closes each store automatically based on its weekly schedule.
@@ -50,6 +51,16 @@ public class StoreHoursScheduler {
     }
 
     private void applySchedule(Tenant tenant, StoreHours today, StoreHours yesterday, LocalTime now) {
+        boolean shouldBeOpen = computeShouldBeOpen(today, yesterday, now);
+        if (!Boolean.valueOf(shouldBeOpen).equals(tenant.getIsOpen())) {
+            tenant.setIsOpen(shouldBeOpen);
+            tenantRepository.save(tenant);
+            log.info("StoreHoursScheduler: tenant {} is now {}", tenant.getSlug(), shouldBeOpen ? "OPEN" : "CLOSED");
+        }
+    }
+
+    /** Pure schedule math — whether the store should be open at {@code now} given today/yesterday. */
+    private static boolean computeShouldBeOpen(StoreHours today, StoreHours yesterday, LocalTime now) {
         boolean shouldBeOpen = false;
 
         // Today's window — handles overnight ranges (close earlier than open = spills past midnight).
@@ -71,11 +82,26 @@ public class StoreHoursScheduler {
                 shouldBeOpen = true;                                         // midnight → close
             }
         }
+        return shouldBeOpen;
+    }
 
-        if (!Boolean.valueOf(shouldBeOpen).equals(tenant.getIsOpen())) {
-            tenant.setIsOpen(shouldBeOpen);
-            tenantRepository.save(tenant);
-            log.info("StoreHoursScheduler: tenant {} is now {}", tenant.getSlug(), shouldBeOpen ? "OPEN" : "CLOSED");
+    /**
+     * Is this store within its scheduled trading hours right now? Used by alerts to avoid
+     * nagging "you're closed" off-hours. Returns true when no schedule is configured (can't
+     * tell) or on any parsing error, so it never suppresses a genuine alert by mistake.
+     */
+    @Transactional(readOnly = true)
+    public boolean shouldBeOpenNow(UUID tenantId) {
+        try {
+            ZonedDateTime now = ZonedDateTime.now(ZONE);
+            int today = now.getDayOfWeek().getValue();
+            int yesterday = today == 1 ? 7 : today - 1;
+            StoreHours t = storeHoursRepository.findByTenant_IdAndDayOfWeek(tenantId, today).orElse(null);
+            StoreHours y = storeHoursRepository.findByTenant_IdAndDayOfWeek(tenantId, yesterday).orElse(null);
+            if (t == null && y == null) return true; // no schedule -> can't tell, don't suppress
+            return computeShouldBeOpen(t, y, now.toLocalTime());
+        } catch (Exception e) {
+            return true; // never let an hours-parse error swallow the alert
         }
     }
 }

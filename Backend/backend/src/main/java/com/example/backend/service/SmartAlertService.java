@@ -36,6 +36,7 @@ public class SmartAlertService {
     private final ObjectMapper objectMapper;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final AdminAiService adminAiService;
+    private final StoreHoursScheduler storeHoursScheduler;
 
     private static final ZoneId SAST = ZoneId.of("Africa/Johannesburg");
     /** Ignore week-to-week sales noise below this drop before suggesting a deal. */
@@ -89,11 +90,12 @@ public class SmartAlertService {
         // Closed loop: scale forecasts by how this store's PAST fixes actually played out.
         Map<String, AdminAiService.Calibration> calibration = adminAiService.alertCalibration(tenantId);
 
-        // 0) Store closed — you're not taking orders. One tap to open.
-        if (Boolean.FALSE.equals(tenant.getIsOpen())) {
+        // 0) Store closed DURING trading hours — you should be open but aren't. Stays quiet
+        //    off-hours (closed at night is correct, not a problem worth nagging about).
+        if (Boolean.FALSE.equals(tenant.getIsOpen()) && storeHoursScheduler.shouldBeOpenNow(tenantId)) {
             created += raise(activeKeys, tenant, "store-closed", "high",
-                    "Your store is closed",
-                    "You're not accepting orders right now. Open the store to start receiving them.",
+                    "Your store is closed during trading hours",
+                    "You're inside your opening hours but not accepting orders. Open the store to start receiving them.",
                     action("set_store_open", "Open the store", Map.of("open", true)),
                     revPerActiveHour > 0 ? riskImpact(revPerActiveHour, marginFrac, commissionFrac, "per hour closed") : null);
         }
