@@ -279,6 +279,23 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     return this.orderStatuses.indexOf(status as Status);
   }
 
+  /** Cancelled/Rejected are terminal off-ramps, not a step on the fulfilment bar. */
+  isTerminalCancel(status: string): boolean {
+    return status === 'Cancelled' || status === 'Rejected';
+  }
+
+  /** The actual fulfilment path for THIS order — 'Scheduled' only appears if it was scheduled. */
+  progressSteps(order: any): string[] {
+    const wasScheduled = order?.status === 'Scheduled' || !!order?.scheduledDeliveryTime;
+    return wasScheduled
+      ? ['Pending', 'Scheduled', 'Preparing', 'Out for Delivery', 'Delivered']
+      : ['Pending', 'Preparing', 'Out for Delivery', 'Delivered'];
+  }
+
+  progressIndex(order: any): number {
+    return this.progressSteps(order).indexOf(order?.status);
+  }
+
   statusChip(s: string) {
     return {
       'bg-amber-100 text-amber-800': s === 'Pending',
