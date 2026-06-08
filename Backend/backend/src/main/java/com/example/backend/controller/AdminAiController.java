@@ -6,6 +6,7 @@ import com.example.backend.repository.AiAlertRepository;
 import com.example.backend.service.AdminAiService;
 import com.example.backend.service.AdminAgentService;
 import com.example.backend.service.CapabilityRegistry;
+import com.example.backend.service.DriverAssignmentService;
 import com.example.backend.service.SmartAlertService;
 import com.example.backend.tenant.TenantContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,6 +33,7 @@ public class AdminAiController {
     private final SmartAlertService smartAlertService;
     private final AiAlertRepository aiAlertRepository;
     private final CapabilityRegistry capabilityRegistry;
+    private final DriverAssignmentService driverAssignmentService;
     private final ObjectMapper objectMapper;
 
     /** GET /api/admin/ai/capabilities — the per-tenant capability manifest (AI + UI share it) */
@@ -70,6 +72,14 @@ public class AdminAiController {
     @GetMapping("/driver-insights")
     public ResponseEntity<Map<String, Object>> driverInsights() {
         return ResponseEntity.ok(adminAiService.driverInsights(TenantContext.getCurrentTenantId()));
+    }
+
+    /** GET /api/admin/ai/driver-recommendations/{orderId} — ranked, explained driver suggestions
+     *  for an order (deterministic; recommend-only — the admin still assigns). */
+    @GetMapping("/driver-recommendations/{orderId}")
+    public ResponseEntity<Map<String, Object>> driverRecommendations(@PathVariable UUID orderId) {
+        return ResponseEntity.ok(
+                driverAssignmentService.recommendDrivers(TenantContext.getCurrentTenantId(), orderId));
     }
 
     /** GET /api/admin/ai/review-book-insights — opportunities/risks from profit x review sentiment */

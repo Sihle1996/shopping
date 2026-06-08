@@ -125,6 +125,30 @@ export interface AiAlert {
   impact?: AiAlertImpact | null;
 }
 
+export interface DriverRecommendation {
+  driverId: string;
+  name: string;
+  email: string;
+  available: boolean;
+  recommended: boolean;
+  isCurrentDriver: boolean;
+  score: number;
+  distanceKm: number | null;
+  locationAgeMinutes: number | null;
+  activeOrders: number;
+  avgDeliveryMinutes: number | null;
+  deliveries: number;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  reasons: string[];
+}
+export interface DriverRecommendationsResponse {
+  orderId: string;
+  proximityAvailable?: boolean;
+  fleetAvgMinutes?: number | null;
+  drivers: DriverRecommendation[];
+  note?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminAiService {
   private readonly base = `${environment.apiUrl}/api/admin/ai`;
@@ -176,6 +200,11 @@ export class AdminAiService {
   /** Driver scorecard + performance insights + coverage (deterministic, admin-only). */
   driverInsights(): Observable<any> {
     return this.http.get<any>(`${this.base}/driver-insights`);
+  }
+
+  /** Ranked, explained driver suggestions for an order (deterministic; recommend-only). */
+  driverRecommendations(orderId: string): Observable<DriverRecommendationsResponse> {
+    return this.http.get<DriverRecommendationsResponse>(`${this.base}/driver-recommendations/${orderId}`);
   }
 
   /** Plan-fit advice: verdict + recommendation + structured usage stats. */

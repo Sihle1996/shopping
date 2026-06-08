@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { AdminService } from 'src/app/services/admin.service';
+import { AdminAiService, DriverRecommendation } from 'src/app/services/admin-ai.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ToastrService } from 'ngx-toastr';
 
@@ -53,6 +54,12 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   selectedDriverId: string | null = null;
   assigning = false;
 
+  // Driver recommendations (deterministic assist layer; falls back to the plain list on failure)
+  recommendations: DriverRecommendation[] = [];
+  recsLoading = false;
+  recsFailed = false;
+  recsNote = '';
+
   // Filters / search / sort / paging
   statuses: ReadonlyArray<StatusOption> = [
     { value: 'All',              label: 'All' },
@@ -83,6 +90,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
 
   constructor(
     private adminSerivce: AdminService,
+    private adminAiService: AdminAiService,
     private route: ActivatedRoute,
     private router: Router,
     private toastr: ToastrService,
@@ -240,10 +248,42 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   openDrawer(order: Order): void {
     this.selectedOrder = order;
     this.selectedDriverId = null;
+    // Plain list — stays the override + the fallback if recommendations fail.
     this.adminSerivce.getAvailableDrivers().subscribe({
       next: (drivers: Array<{ id: string; email: string }>) => (this.availableDrivers = drivers ?? []),
       error: () => {}
     });
+    // Assist layer — ranked, explained suggestions. Never auto-selects a driver.
+    this.recommendations = [];
+    this.recsFailed = false;
+    this.recsNote = '';
+    this.recsLoading = true;
+    this.adminAiService.driverRecommendations(order.id).subscribe({
+      next: (res) => {
+        this.recommendations = res?.drivers ?? [];
+        this.recsNote = res?.note ?? '';
+        this.recsLoading = false;
+      },
+      error: () => { this.recsFailed = true; this.recsLoading = false; } // plain dropdown still works
+    });
+  }
+
+  /** Admin picks a suggested driver — only sets the selection; assignment is still a manual click. */
+  selectRecommended(d: DriverRecommendation): void {
+    if (!d.available) return;
+    this.selectedDriverId = d.driverId;
+  }
+
+  confidenceLabel(c: string): string {
+    return ({ HIGH: 'High confidence', MEDIUM: 'Medium', LOW: 'Low confidence' } as any)[c] ?? c;
+  }
+
+  confidenceClass(c: string): string {
+    return ({
+      HIGH: 'bg-emerald-100 text-emerald-700',
+      MEDIUM: 'bg-amber-100 text-amber-700',
+      LOW: 'bg-gray-100 text-gray-600'
+    } as any)[c] ?? 'bg-gray-100 text-gray-600';
   }
 
   closeDrawer(): void {

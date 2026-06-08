@@ -310,6 +310,43 @@
         <div *ngIf="selectedOrder && !['Cancelled','Rejected','Delivered'].includes(selectedOrder.status)"
              class="p-6 pt-4 pb-20 border-t border-borderColor bg-white">
           <h4 class="text-sm font-semibold text-textDark mb-3 pl-3 border-l-2 border-primary">Assign Driver</h4>
+
+          <!-- Assist layer: ranked, explained suggestions. Never auto-selected — the admin clicks. -->
+          <div *ngIf="recsLoading" class="text-xs text-textMuted mb-3 flex items-center gap-1">
+            <i class="bi bi-arrow-repeat animate-spin"></i> Ranking drivers…
+          </div>
+          <div *ngIf="recommendations.length && !recsFailed" class="mb-4">
+            <p class="text-[11px] uppercase tracking-wide text-textMuted mb-2 flex items-center gap-1">
+              <i class="bi bi-stars text-primary"></i> Suggested drivers
+            </p>
+            <div class="space-y-2">
+              <button type="button" *ngFor="let d of recommendations"
+                      (click)="selectRecommended(d)" [disabled]="!d.available"
+                      class="w-full text-left rounded-xl border px-3 py-2.5 transition-all"
+                      [ngClass]="{
+                        'border-primary bg-primary-50 ring-1 ring-primary-300': selectedDriverId === d.driverId,
+                        'border-borderColor bg-surface hover:border-primary': selectedDriverId !== d.driverId && d.available,
+                        'border-borderColor bg-gray-50 opacity-60 cursor-not-allowed': !d.available
+                      }">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="text-sm font-medium text-textDark truncate">{{ d.name }}</span>
+                    <span *ngIf="d.recommended" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">Recommended</span>
+                    <span *ngIf="d.isCurrentDriver" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Current</span>
+                    <span *ngIf="!d.available" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">Unavailable</span>
+                  </div>
+                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0" [ngClass]="confidenceClass(d.confidence)">{{ confidenceLabel(d.confidence) }}</span>
+                </div>
+                <div class="mt-1 flex flex-wrap gap-1">
+                  <span *ngFor="let r of d.reasons" class="text-[10px] text-textMuted bg-white border border-borderColor rounded px-1.5 py-0.5">{{ r }}</span>
+                </div>
+              </button>
+            </div>
+          </div>
+          <p *ngIf="recsNote && !recsFailed" class="text-[11px] text-textMuted italic mb-2">{{ recsNote }}</p>
+
+          <!-- Manual select — primary control + automatic fallback if suggestions fail -->
+          <p *ngIf="recommendations.length && !recsFailed" class="text-[11px] text-textMuted mb-1">or choose manually</p>
           <div class="flex gap-2">
             <select [(ngModel)]="selectedDriverId"
                     class="flex-1 rounded-xl border border-borderColor bg-surface px-3 py-2.5 text-sm text-textDark

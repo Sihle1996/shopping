@@ -41,4 +41,11 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     List<Order> findByOrderDateBetweenAndTenant_Id(Instant start, Instant end, UUID tenantId);
 
     List<Order> findByStatusAndOrderDateBefore(String status, Instant cutoff);
+
+    /** Active (in-progress) order count per driver for a tenant — rows of [driverId, count]. */
+    @Query("SELECT o.driver.id, COUNT(o) FROM Order o " +
+           "WHERE o.tenant.id = :tenantId AND o.driver IS NOT NULL AND o.status IN :statuses " +
+           "GROUP BY o.driver.id")
+    List<Object[]> countActiveOrdersByDriver(@Param("tenantId") UUID tenantId,
+                                             @Param("statuses") List<String> statuses);
 }
