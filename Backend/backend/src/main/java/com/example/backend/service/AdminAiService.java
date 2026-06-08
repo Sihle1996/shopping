@@ -279,9 +279,16 @@ public class AdminAiService {
 
     // Guards against meaningless percentages: a % needs a real measurement window AND a
     // non-trivial baseline. A "0 -> 56 over 1 day" is not "+99400%" — it's too early / no baseline.
-    private static final double MIN_PROMO_DAYS = 2.0;     // < 2 days of data = too early to read
+    private static final double MIN_PROMO_DAYS = 2.0;     // < 2 days of data = EARLY (no %)
+    private static final double FULL_CONF_DAYS = 7.0;     // >= 7 days = full confidence (HIGH) possible
     private static final int    MIN_BASELINE_UNITS = 5;  // need >= 5 prior units for a stable item %
     private static final int    MIN_STORE_BASELINE = 10; // need >= 10 store orders in the 14-day baseline
+
+    /** Clamp a quality tier so it never exceeds {@code max} (LOW < MEDIUM < HIGH). */
+    private static String capQuality(String raw, String max) {
+        List<String> order = List.of("LOW", "MEDIUM", "HIGH");
+        return order.indexOf(raw) <= order.indexOf(max) ? raw : max;
+    }
 
     /**
      * Closes the experiment loop: for each PRODUCT promotion that has started,
@@ -310,22 +317,34 @@ public class AdminAiService {
 
             boolean hasSignal = (before[0] + during[0]) > 0;
             double durDays = len.toHours() / 24.0;
-            // TOO EARLY: a window shorter than MIN_PROMO_DAYS, or a near-zero item baseline,
-            // makes any percentage noise (3->33 = "+1000%", 0->56 = divide-by-zero). Show the
-            // absolute counts but suppress the percentages until there's enough to measure.
-            boolean tooEarly = durDays < MIN_PROMO_DAYS || before[0] < MIN_BASELINE_UNITS;
-            boolean allowPct = !tooEarly;
+            boolean baselineOk = before[0] >= MIN_BASELINE_UNITS;
 
-            // Net lift vs the store-wide trend — only when the baselines support it.
-            LiftCalc lift = tooEarly ? null : computeLift(tenantId, p.getTargetProductId(), start, duringEnd);
+            // STATE separates eligibility-to-show-a-% from confidence-in-it:
+            //   PENDING   — no orders at all
+            //   EARLY     — < 2 days OR no real baseline → counts only, no percentages
+            //   MEASURING — 2-6 days with a baseline → directional %, confidence capped (never HIGH)
+            //   MEASURED  — >= 7 days → full confidence allowed
+            String signal;
+            if (!hasSignal) signal = "PENDING";
+            else if (durDays < MIN_PROMO_DAYS || !baselineOk) signal = "EARLY";
+            else if (durDays < FULL_CONF_DAYS) signal = "MEASURING";
+            else signal = "MEASURED";
+            boolean allowPct = signal.equals("MEASURING") || signal.equals("MEASURED");
+
+            LiftCalc lift = allowPct ? computeLift(tenantId, p.getTargetProductId(), start, duringEnd) : null;
             Long storePercent = lift != null ? lift.storePercent() : null;
             Long netLift = lift != null ? lift.netLift() : null;
 
-            // Data quality reflects window + BASELINE, not raw volume (56 sales on a 0 baseline
-            // is not "HIGH" — it's unmeasurable).
-            long itemEvents = (long) (before[0] + during[0]);
-            String dataQuality = tooEarly ? "LOW"
-                    : itemEvents >= 15 ? "HIGH" : itemEvents >= 4 ? "MEDIUM" : "LOW";
+            // CONFIDENCE = strength of the WEAKER side of the comparison (a strong promo volume
+            // on a thin baseline is still a thin comparison), CAPPED by duration: never HIGH
+            // before ~7 days, never above LOW when too early.
+            double minVol = Math.min(before[0], during[0]);
+            String rawQuality = minVol >= 15 ? "HIGH" : minVol >= 6 ? "MEDIUM" : "LOW";
+            String dataQuality = switch (signal) {
+                case "MEASURED"  -> rawQuality;                      // day 7+: HIGH possible
+                case "MEASURING" -> capQuality(rawQuality, "MEDIUM"); // day 2-6: capped at MEDIUM
+                default           -> "LOW";                           // EARLY / PENDING
+            };
 
             String targetName = p.getTargetProductName();
             if (targetName == null || targetName.isBlank()) {
@@ -338,15 +357,19 @@ public class AdminAiService {
             r.put("discountPercent", p.getDiscountPercent());
             r.put("status", ended ? "ended" : "running");
             r.put("windowDays", Math.max(1, len.toDays()));
-            // EARLY = running but too soon / no baseline to trust a %; MEASURED once it's stable.
-            r.put("signal", tooEarly ? "EARLY" : hasSignal ? "MEASURED" : "PENDING");
-            if (tooEarly) r.put("note", "Too early to measure — needs at least " + (int) MIN_PROMO_DAYS
-                    + " days of data against a real baseline before a change is meaningful.");
+            r.put("signal", signal); // PENDING | EARLY | MEASURING | MEASURED
+            if (signal.equals("EARLY")) {
+                r.put("note", "Too early to measure — needs at least " + (int) MIN_PROMO_DAYS
+                        + " days of data against a real baseline before a change is meaningful.");
+            } else if (signal.equals("MEASURING")) {
+                r.put("note", "Directional only — still measuring; treat as early evidence until ~"
+                        + (int) FULL_CONF_DAYS + " days of data.");
+            }
             r.put("ordered", signalBlock(before[0], before[1], during[0], during[1], allowPct));   // early
             r.put("delivered", signalBlock(before[2], before[3], during[2], during[3], allowPct)); // final
             r.put("storeChangePercent", storePercent); // background trend (store-wide orders)
             r.put("netLiftPercent", netLift);          // item lift minus store-wide trend
-            r.put("dataQuality", dataQuality);         // window + baseline, not raw volume
+            r.put("dataQuality", dataQuality);         // baseline + promo volume + duration
             out.add(r);
         }
         return Map.of("outcomes", out);
