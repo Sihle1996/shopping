@@ -275,6 +275,26 @@ public class SmartAlertService {
                     riskImpact(agingRevAtRisk, marginFrac, commissionFrac, "if not started soon"));
         }
 
+        // 6c) Scheduled orders due soon — nothing auto-starts them, so remind the kitchen to
+        //     begin in time (fires within the next hour, or while overdue and still Scheduled).
+        int dueSoon = 0; Instant soonest = null;
+        for (Order o : last30) {
+            if (!OrderStatus.SCHEDULED.matches(o.getStatus()) || o.getScheduledDeliveryTime() == null) continue;
+            long minsUntil = Duration.between(now, o.getScheduledDeliveryTime()).toMinutes();
+            if (minsUntil <= 60 && minsUntil >= -120) { // due within an hour, or up to 2h overdue
+                dueSoon++;
+                if (soonest == null || o.getScheduledDeliveryTime().isBefore(soonest)) soonest = o.getScheduledDeliveryTime();
+            }
+        }
+        if (dueSoon > 0 && soonest != null) {
+            long m = Duration.between(now, soonest).toMinutes();
+            String body = m >= 0
+                    ? "The soonest is due in ~" + m + " min. Start preparing so it's ready on time."
+                    : "The soonest was due " + (-m) + " min ago and is still Scheduled — start it now.";
+            created += raise(activeKeys, tenant, "scheduled-due", "high",
+                    dueSoon + " scheduled order" + (dueSoon > 1 ? "s" : "") + " due soon", body, null);
+        }
+
         // 7) Milestone — today is beating the last fortnight (a little delight).
         Map<LocalDate, Double> daily = new HashMap<>();
         for (Order o : last30) {
