@@ -395,6 +395,17 @@ public class OrderService {
     }
 
     @Transactional
+    /** Reserved-only states: stock is held (reserved) but not yet removed from inventory. */
+    private boolean isReservedOnly(String s) {
+        return "Pending".equals(s) || "Scheduled".equals(s);
+    }
+
+    /** Consumed states: the order is active/fulfilled, so its stock has been deducted. */
+    private boolean isConsumedStatus(String s) {
+        return "Confirmed".equals(s) || "Preparing".equals(s)
+                || "Out for Delivery".equals(s) || "Delivered".equals(s);
+    }
+
     public OrderDTO updateOrderStatus(UUID orderId, String status) {
         UUID tenantId = TenantContext.getCurrentTenantId();
         Order order = (tenantId != null)
@@ -403,8 +414,12 @@ public class OrderService {
                 : orderRepository.findById(orderId)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
 
-        boolean isConfirming = "Confirmed".equals(status) && "Pending".equals(order.getStatus());
-        if (isConfirming) {
+        // Consume stock (deduct + release the reservation) the FIRST time an order leaves a
+        // reserved-only state (Pending/Scheduled) for an active one (Confirmed/Preparing/Out for
+        // Delivery/Delivered). The admin flow skips "Confirmed", so keying only on it left stock
+        // reserved-but-never-deducted right through delivery.
+        boolean isConsuming = isReservedOnly(order.getStatus()) && isConsumedStatus(status);
+        if (isConsuming) {
             for (OrderItem oi : order.getOrderItems()) {
                 MenuItem menuItem = oi.getMenuItem();
                 if (menuItem == null) continue;
@@ -431,13 +446,15 @@ public class OrderService {
                 && !"Rejected".equals(order.getStatus());
 
         if (isCancelling) {
-            boolean wasConfirmed = !"Pending".equals(order.getStatus()) && !"Scheduled".equals(order.getStatus());
+            // Mirror the consume rule: if the order's stock had been deducted (a consumed status),
+            // restore it; if it was only reserved (Pending/Scheduled), release the reservation.
+            boolean wasConsumed = isConsumedStatus(order.getStatus());
             for (OrderItem oi : order.getOrderItems()) {
                 MenuItem menuItem = oi.getMenuItem();
                 if (menuItem == null) continue;
                 if (menuItem.getStock() >= 0) {
-                    if (wasConfirmed) {
-                        // Stock was deducted at confirmation — restore it
+                    if (wasConsumed) {
+                        // Stock was deducted when the order went active — restore it
                         menuItem.setStock(menuItem.getStock() + oi.getQuantity());
                     } else {
                         // Stock was only reserved — release reservation
@@ -447,8 +464,8 @@ public class OrderService {
 
                     InventoryLog log = new InventoryLog();
                     log.setMenuItem(menuItem);
-                    log.setStockChange(wasConfirmed ? oi.getQuantity() : 0);
-                    log.setReservedChange(wasConfirmed ? 0 : -oi.getQuantity());
+                    log.setStockChange(wasConsumed ? oi.getQuantity() : 0);
+                    log.setReservedChange(wasConsumed ? 0 : -oi.getQuantity());
                     log.setType("ORDER_CANCELLED");
                     if (tenantId != null) {
                         tenantRepository.findById(tenantId).ifPresent(log::setTenant);
