@@ -113,7 +113,7 @@
           <div class="flex items-center justify-between gap-2 mb-1">
             <span class="text-sm font-semibold text-textDark truncate">{{ o.target }} <span class="text-textMuted font-normal">· {{ o.discountPercent }}% off</span></span>
             <span class="flex items-center gap-1 flex-shrink-0">
-              <span *ngIf="o.dataQuality" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded" [ngClass]="qualityClass(o.dataQuality)" title="Sample size, not a prediction">{{ o.dataQuality }} data</span>
+              <span *ngIf="o.dataQuality" class="text-[9px] font-bold px-1.5 py-0.5 rounded" [ngClass]="qualityClass(o.dataQuality)" title="Confidence from baseline + promo volume + duration">{{ confidenceLabel(o.dataQuality) }}</span>
               <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded"
                     [ngClass]="o.status === 'running' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'">{{ o.status }}</span>
             </span>

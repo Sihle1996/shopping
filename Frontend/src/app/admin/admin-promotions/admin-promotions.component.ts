@@ -164,6 +164,14 @@ export class AdminPromotionsComponent implements OnInit {
     } as any)[q || ''] ?? 'bg-gray-100 text-gray-600';
   }
 
+  confidenceLabel(q?: string): string {
+    return ({
+      HIGH: 'High Confidence',
+      MEDIUM: 'Medium Confidence',
+      LOW: 'Low Confidence'
+    } as any)[q || ''] ?? q;
+  }
+
   signed(pct: number | null): string {
     return pct == null ? 'n/a' : (pct > 0 ? '+' : '') + pct + '%';
   }
