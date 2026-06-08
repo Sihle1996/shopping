@@ -477,7 +477,7 @@ public class OrderService {
             if (order.getUser() != null) {
                 loyaltyService.refundPoints(order.getUser(), order);
             }
-            if (wasConfirmed) {
+            if (wasConsumed) {
                 payoutLedgerService.recordRefundDebit(order);
             }
         }
