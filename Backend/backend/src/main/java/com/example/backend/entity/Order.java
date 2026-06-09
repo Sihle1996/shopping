@@ -80,6 +80,9 @@ public class Order {
      *  All NULL when no promo applied. waivedDeliveryFee is set ONLY for FREE_DELIVERY (never 0.0-for-N/A). */
     @Column(name = "promo_type", length = 20)
     private String promoType;                 // PERCENT_OFF | AMOUNT_OFF | FREE_DELIVERY
+    /** Stable id of the applied promotion (V53) — anchors cost attribution against code/title edits. */
+    @Column(name = "promo_id")
+    private UUID promoId;
     @Column(name = "waived_delivery_fee")
     private Double waivedDeliveryFee;
     @Column(name = "promo_funded_by", length = 16)

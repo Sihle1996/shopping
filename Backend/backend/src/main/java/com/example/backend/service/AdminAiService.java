@@ -325,9 +325,16 @@ public class AdminAiService {
         List<Map<String, Object>> out = new ArrayList<>();
         Instant now = Instant.now();
         for (Promotion p : promotionRepository.findByTenant_Id(tenantId)) {
-            if (p.getAppliesTo() != Promotion.AppliesTo.PRODUCT || p.getTargetProductId() == null || p.getStartAt() == null) continue;
+            if (p.getStartAt() == null) continue;
             Instant start = p.getStartAt().toInstant();
             if (start.isAfter(now)) continue; // not started yet
+            // ALL-scoped (free delivery / amount off / ALL %) -> order-level Net Revenue Lift (Layer C).
+            if (p.getAppliesTo() == Promotion.AppliesTo.ALL) {
+                out.add(orderScopeOutcome(tenantId, p, start, now));
+                continue;
+            }
+            // PRODUCT keeps the per-product lift path; CATEGORY/MULTI_PRODUCT are out of scope for now.
+            if (p.getAppliesTo() != Promotion.AppliesTo.PRODUCT || p.getTargetProductId() == null) continue;
             boolean ended = p.getEndAt() != null && p.getEndAt().toInstant().isBefore(now);
             Instant duringEnd = ended ? p.getEndAt().toInstant() : now;
             Duration len = Duration.between(start, duringEnd);
@@ -393,6 +400,7 @@ public class AdminAiService {
             r.put("storeChangePercent", storePercent); // background trend (store-wide orders)
             r.put("netLiftPercent", netLift);          // item lift minus store-wide trend
             r.put("dataQuality", dataQuality);         // baseline + promo volume + duration
+            r.put("comparisonGroup", "PRODUCT_SCOPE"); // NOT magnitude-comparable to ORDER_SCOPE rows
             out.add(r);
         }
         return Map.of("outcomes", out);
@@ -461,6 +469,104 @@ public class AdminAiService {
 
         Long netLift = (itemPercent != null && storePercent != null) ? itemPercent - storePercent : null;
         return new LiftCalc(storePercent, itemPercent, netLift, duringUnits);
+    }
+
+    // ── Layer C (V53): order-level Net Revenue Lift for ALL-scoped promos ──────────────────────
+
+    /** Store-wide non-voided [orderCount, revenue] in a window — the order-level baseline. */
+    private double[] orderRevenue(UUID tenantId, Instant from, Instant to) {
+        long count = 0; double revenue = 0;
+        for (Order o : orderRepository.findByOrderDateBetweenAndTenant_Id(from, to, tenantId)) {
+            OrderStatus s = OrderStatus.fromLabel(o.getStatus());
+            if (s != null && s.isVoided()) continue;
+            count++;
+            revenue += o.getTotalAmount() != null ? o.getTotalAmount() : 0;
+        }
+        return new double[]{count, revenue};
+    }
+
+    /** EXACT promo cost (V52) over a window for ONE promo — anchored on the stable promo_id (V53),
+     *  immune to code/title edits. Returns [redeemedOrders, cost = Σ(discountAmount + waivedDeliveryFee)]. */
+    private double[] promoCost(UUID tenantId, UUID promoId, Instant from, Instant to) {
+        long redeemed = 0; double cost = 0;
+        for (Order o : orderRepository.findByOrderDateBetweenAndTenant_Id(from, to, tenantId)) {
+            if (!promoId.equals(o.getPromoId())) continue;
+            redeemed++;
+            cost += (o.getDiscountAmount() != null ? o.getDiscountAmount() : 0)
+                  + (o.getWaivedDeliveryFee() != null ? o.getWaivedDeliveryFee() : 0);
+        }
+        return new double[]{redeemed, cost};
+    }
+
+    private record OrderLiftCalc(Long expectedRevenue, double duringRevenue, Long incrementalRevenue,
+                                 long exposedOrders, long baselineOrders) {}
+
+    /** Order-level revenue lift over [start, duringEnd] vs a 14-day temporal baseline. There is NO
+     *  store-trend control (an ALL promo IS the store), so this is correlational, not causal. When
+     *  the baseline is too thin the whole estimated set is meaningless -> all null (cost stays exact). */
+    private OrderLiftCalc computeOrderLift(UUID tenantId, Instant start, Instant duringEnd) {
+        Duration len = Duration.between(start, duringEnd);
+        double durDays = Math.max(0.25, len.toHours() / 24.0);
+        Instant baseStart = start.minus(Duration.ofDays(14));
+        double baseDays = Math.max(1.0, Duration.between(baseStart, start).toHours() / 24.0);
+
+        double[] base = orderRevenue(tenantId, baseStart, start);
+        double[] during = orderRevenue(tenantId, start, duringEnd);
+        long baselineOrders = (long) base[0];
+        long exposedOrders = (long) during[0];
+
+        if (baselineOrders < MIN_STORE_BASELINE) {
+            return new OrderLiftCalc(null, during[1], null, exposedOrders, baselineOrders);
+        }
+        long expected = Math.round(base[1] / baseDays * durDays);
+        long incremental = Math.round(during[1] - expected);
+        return new OrderLiftCalc(expected, during[1], incremental, exposedOrders, baselineOrders);
+    }
+
+    /** Net-Revenue-Lift outcome row for an ALL-scoped promo. Cost is EXACT (V52); revenue is an
+     *  explicitly correlational temporal estimate. Not magnitude-comparable to PRODUCT-scope rows. */
+    private Map<String, Object> orderScopeOutcome(UUID tenantId, Promotion p, Instant start, Instant now) {
+        boolean ended = p.getEndAt() != null && p.getEndAt().toInstant().isBefore(now);
+        Instant duringEnd = ended ? p.getEndAt().toInstant() : now;
+        Duration len = Duration.between(start, duringEnd);
+        double durDays = len.toHours() / 24.0;
+
+        OrderLiftCalc lift = computeOrderLift(tenantId, start, duringEnd);
+        double[] cost = promoCost(tenantId, p.getId(), start, duringEnd);
+        long redeemed = (long) cost[0];
+
+        // Tier driven by BOTH duration AND baseline volume — a long promo on a thin baseline is
+        // never MEASURED.
+        boolean baselineOk = lift.baselineOrders() >= MIN_STORE_BASELINE;
+        String signal;
+        if (lift.exposedOrders() == 0 && redeemed == 0) signal = "PENDING";
+        else if (durDays < MIN_PROMO_DAYS || !baselineOk) signal = "EARLY";
+        else if (durDays < FULL_CONF_DAYS) signal = "MEASURING";
+        else signal = "MEASURED";
+        boolean allow = signal.equals("MEASURING") || signal.equals("MEASURED");
+
+        Long expected = allow ? lift.expectedRevenue() : null;
+        Long incremental = allow ? lift.incrementalRevenue() : null;
+        Long netLift = (incremental != null) ? incremental - Math.round(cost[1]) : null;
+
+        Map<String, Object> r = new LinkedHashMap<>();
+        r.put("title", p.getTitle());
+        r.put("scope", "ALL");
+        r.put("promoType", p.getType() != null ? p.getType().name() : "PERCENT_OFF");
+        r.put("fundedBy", p.getType() == Promotion.PromoType.FREE_DELIVERY ? "PLATFORM" : "STORE");
+        r.put("status", ended ? "ended" : "running");
+        r.put("windowDays", Math.max(1, len.toDays()));
+        r.put("signal", signal);                                  // PENDING | EARLY | MEASURING | MEASURED
+        r.put("exposedOrders", lift.exposedOrders());             // TIME-exposed, not behaviorally-exposed
+        r.put("redeemedOrders", redeemed);
+        r.put("promoCost", Math.round(cost[1] * 100.0) / 100.0);  // EXACT (V52) — always shown
+        r.put("duringRevenue", Math.round(lift.duringRevenue() * 100.0) / 100.0);
+        r.put("expectedRevenue", expected);                       // estimated — null below the floor
+        r.put("incrementalRevenue", incremental);                 // estimated
+        r.put("netRevenueLift", netLift);                         // estimated
+        r.put("basis", "correlational/time-exposed");
+        r.put("comparisonGroup", "ORDER_SCOPE");                  // NOT comparable to PRODUCT_SCOPE
+        return r;
     }
 
     /**

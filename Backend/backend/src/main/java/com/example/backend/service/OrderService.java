@@ -156,6 +156,7 @@ public class OrderService {
         String appliedPromoCode = null;
         boolean freeDelivery = false;
         Promotion.PromoType appliedPromoType = null; // V52 capture — frozen at assignment
+        UUID appliedPromoId = null;                  // V53 — stable attribution anchor
 
         java.util.Optional<Promotion> promoOpt = (request.getPromoCode() != null && !request.getPromoCode().isBlank())
                 ? promotionService.validateCode(request.getPromoCode())
@@ -210,6 +211,7 @@ public class OrderService {
                 discountAmount = BigDecimal.valueOf(discountAmount).setScale(2, RoundingMode.HALF_UP).doubleValue();
                 appliedPromoCode = promo.getCode() != null ? promo.getCode().trim() : promo.getTitle();
                 appliedPromoType = promoType;
+                appliedPromoId = promo.getId();
             }
         }
 
@@ -329,9 +331,9 @@ public class OrderService {
             });
         }
 
-        // V52 — capture promo economics (type, who funded it, the platform-waived fee) and waive the
-        // free-delivery fee. Centralized so future promo types can't silently skip the capture.
-        applyPromoSnapshot(order, appliedPromoType, freeDelivery);
+        // V52/V53 — capture promo economics (id, type, who funded it, the platform-waived fee) and
+        // waive the free-delivery fee. Centralized so future promo types can't silently skip capture.
+        applyPromoSnapshot(order, appliedPromoId, appliedPromoType, freeDelivery);
 
         for (OrderItem item : orderItems) {
             item.setOrder(order);
@@ -450,8 +452,9 @@ public class OrderService {
     /** V52 — freeze per-order promo economics at assignment: which lever applied, who funded it, and
      *  (for FREE_DELIVERY only) the delivery fee the platform waived — snapshotted BEFORE zeroing.
      *  Single capture point so new promo types can't silently skip it. */
-    private void applyPromoSnapshot(Order order, Promotion.PromoType type, boolean freeDelivery) {
+    private void applyPromoSnapshot(Order order, UUID promoId, Promotion.PromoType type, boolean freeDelivery) {
         if (type != null) {
+            order.setPromoId(promoId);
             order.setPromoType(type.name());
             order.setPromoFundedBy(type == Promotion.PromoType.FREE_DELIVERY ? "PLATFORM" : "STORE");
         }
