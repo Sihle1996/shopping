@@ -32,6 +32,7 @@ interface Order {
   driverName?: string | null;
   deliveredBy?: string | null; // DRIVER_OTP | DRIVER | ADMIN_OVERRIDE
   cancellationReason?: string | null;
+  paid?: boolean; // payment confirmed (PayFast ITN) — unpaid orders can't be advanced into fulfilment
   items: OrderItem[];
 }
 interface PageResp<T> {
@@ -266,6 +267,15 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     return !!from && (this.statusFlow[from] ?? []).includes(to);
   }
 
+  /** Block advancing an UNPAID order into fulfilment (mirrors the backend gate). Cancel/Reject stay
+   *  allowed so the admin can clear an abandoned order. */
+  isUnpaidBlock(order: Order | null | undefined, to: string): boolean {
+    if (!order || order.paid !== false) return false;
+    const advancing = ['Confirmed', 'Preparing', 'Out for Delivery', 'Delivered'].includes(to);
+    const reserved = order.status === 'Pending' || order.status === 'Scheduled';
+    return advancing && reserved;
+  }
+
   /** A driver may only be dispatched once the kitchen is on it (Preparing), or reassigned (OFD). */
   canAssignDriver(status?: string | null): boolean {
     return status === 'Preparing' || status === 'Out for Delivery';
@@ -298,6 +308,10 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
                 : this.orders.find(o => o.id === orderId) || null;
     if (!order || order.status === newStatus || this.isTerminal(order.status)
         || !this.canMoveTo(order.status, newStatus)) return;
+    if (this.isUnpaidBlock(order, newStatus)) {
+      this.toastr.warning("This order hasn't been paid yet — wait for payment confirmation.");
+      return;
+    }
 
     if (newStatus === 'Delivered') {
       if (!order.driverName) { this.toastr.warning('Assign a driver before marking this order delivered.'); return; }

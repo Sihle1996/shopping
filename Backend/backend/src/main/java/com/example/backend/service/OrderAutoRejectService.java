@@ -48,6 +48,13 @@ public class OrderAutoRejectService {
             if (minutes <= 0) continue;                                              // disabled for this store
             if (order.getOrderDate() == null
                     || order.getOrderDate().isAfter(now.minusSeconds(minutes * 60L))) continue; // not timed out yet
+            // Never auto-cancel a PAID order — that would take the customer's money and leave them
+            // with nothing (we have no automatic refund). A paid order sits for the admin to accept.
+            if (order.isPaid()) {
+                log.warn("Order {} is PAID but unaccepted past {} min — leaving for the admin (not auto-cancelling).",
+                        order.getId(), minutes);
+                continue;
+            }
 
             releaseReservedStock(order);
             if (order.getUser() != null) {

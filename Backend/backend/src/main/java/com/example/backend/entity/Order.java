@@ -102,4 +102,13 @@ public class Order {
             item.setOrder(this);
         }
     }
+
+    /** True once payment is confirmed (paymentId set by the PayFast ITN) — or there's nothing to
+     *  pay (a fully-covered / zero-total order). Used to gate fulfilment and auto-cancel. */
+    public boolean isPaid() {
+        boolean hasPayment = paymentId != null && !paymentId.isBlank();
+        double payable = (totalAmount != null ? totalAmount : 0.0)
+                + (deliveryFee != null ? deliveryFee : 0.0);
+        return hasPayment || payable <= 0.0;
+    }
 }

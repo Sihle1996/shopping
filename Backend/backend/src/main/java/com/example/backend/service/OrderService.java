@@ -538,6 +538,14 @@ public class OrderService {
                     "Can't move a " + current + " order to " + status + ". Allowed next: " + allowed + ".");
         }
 
+        // Payment gate: don't let an UNPAID order advance into fulfilment (a customer who abandoned
+        // PayFast leaves a Pending order that looks identical to a paid one). Cancelling/Rejecting an
+        // unpaid order is still allowed — only forward motion into prep/delivery is blocked.
+        if (isReservedOnly(current) && isConsumedStatus(status) && !order.isPaid()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "This order hasn't been paid yet — wait for payment confirmation before preparing it.");
+        }
+
         // Can't deliver an order nobody is delivering. The canonical path is the driver confirming
         // with the customer's OTP; an admin marking it here is an explicit manual override.
         if ("Delivered".equals(status)) {
@@ -789,7 +797,8 @@ public class OrderService {
                 null,  // deliveryOtp — set below if active
                 order.getScheduledDeliveryTime() != null ? order.getScheduledDeliveryTime().toString() : null,
                 order.getDeliveredBy(),
-                order.getCancellationReason()
+                order.getCancellationReason(),
+                order.isPaid()
         );
 
         if (order.getDriver() != null) {

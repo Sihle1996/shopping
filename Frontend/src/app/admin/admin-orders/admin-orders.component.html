@@ -137,6 +137,10 @@
                 <span class="h-1.5 w-1.5 rounded-full" [ngClass]="statusDot(order.status)"></span>
                 {{ order.status }}
               </span>
+              <span *ngIf="order.paid === false && order.status !== 'Cancelled' && order.status !== 'Rejected'"
+                    class="ml-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700">
+                <i class="bi bi-exclamation-triangle-fill text-[9px]"></i> Unpaid
+              </span>
             </td>
             <td class="px-5 py-3.5 text-right">
               <app-button variant="secondary" size="sm" (clicked)="openDrawer(order)">
@@ -157,11 +161,17 @@
             <h3 class="font-heading font-bold text-sm text-textDark font-numbers">#{{ order.id | slice:0:8 | uppercase }}</h3>
             <p class="text-xs text-textMuted truncate mt-0.5">{{ order.userEmail }}</p>
           </div>
-          <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold flex-shrink-0"
-                [ngClass]="statusChip(order.status)">
-            <span class="h-1.5 w-1.5 rounded-full" [ngClass]="statusDot(order.status)"></span>
-            {{ order.status }}
-          </span>
+          <div class="flex flex-col items-end gap-1 flex-shrink-0">
+            <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold"
+                  [ngClass]="statusChip(order.status)">
+              <span class="h-1.5 w-1.5 rounded-full" [ngClass]="statusDot(order.status)"></span>
+              {{ order.status }}
+            </span>
+            <span *ngIf="order.paid === false && order.status !== 'Cancelled' && order.status !== 'Rejected'"
+                  class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700">
+              <i class="bi bi-exclamation-triangle-fill text-[9px]"></i> Unpaid
+            </span>
+          </div>
         </div>
         <div class="flex items-center justify-between mb-3">
           <span class="text-xs text-textMuted">{{ order.orderDate | date:'MMM d, HH:mm' }}</span>
@@ -288,16 +298,20 @@
           <div class="flex flex-wrap gap-2">
             <button *ngFor="let s of orderStatuses"
                     (click)="requestStatusChange(so.id, s)"
-                    [disabled]="so.status === s || isTerminal(so.status) || !canMoveTo(so.status, s)"
+                    [disabled]="so.status === s || isTerminal(so.status) || !canMoveTo(so.status, s) || isUnpaidBlock(so, s)"
                     class="px-3 py-2 rounded-xl text-xs font-semibold transition-all border disabled:cursor-not-allowed"
                     [ngClass]="so.status === s
                       ? 'border-primary bg-primary-100 text-primary cursor-default'
-                      : (isTerminal(so.status) || !canMoveTo(so.status, s))
+                      : (isTerminal(so.status) || !canMoveTo(so.status, s) || isUnpaidBlock(so, s))
                         ? 'border-borderColor bg-white text-textMuted opacity-40'
                         : 'border-borderColor bg-white text-textDark hover:border-primary hover:text-primary'">
               {{ s }}
             </button>
           </div>
+          <p *ngIf="so.paid === false && !isTerminal(so.status)" class="mt-2 text-[11px] text-amber-600 flex items-center gap-1">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Awaiting payment — this order can't be prepared until PayFast confirms. You can still cancel it.
+          </p>
           <p *ngIf="isTerminal(so.status)" class="mt-2 text-[11px] text-textMuted italic">
             This order is {{ so.status | lowercase }} — its status is final.
           </p>
