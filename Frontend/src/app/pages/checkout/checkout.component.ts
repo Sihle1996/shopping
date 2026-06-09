@@ -11,7 +11,7 @@ import { CartService } from 'src/app/services/cart.service';
 import { GroupCartService } from 'src/app/services/group-cart.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { GeocodingService, AddressSuggestion } from 'src/app/services/geocoding.service';
-import { PromotionService, Promotion } from 'src/app/services/promotion.service';
+import { PromotionService, Promotion, ThresholdNudge, thresholdNudge } from 'src/app/services/promotion.service';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, switchMap, map } from 'rxjs/operators';
@@ -50,6 +50,8 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   promoCode: string = '';
   promoLoading = false;
   appliedPromo: Promotion | null = null;
+  activePromotions: Promotion[] = [];
+  nudge: ThresholdNudge | null = null; // "spend RX more to unlock …"
   promoError: string = '';
 
   // Loyalty
@@ -208,6 +210,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
 
     this.promotionService.getActivePromotions().pipe(
       switchMap(promos => {
+        this.activePromotions = promos;
         if (!this.appliedPromo) {
           const autoAll = promos.find(p => !p.code && p.appliesTo === 'ALL' && p.discountPercent);
           if (autoAll) {
@@ -240,6 +243,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       next: (items: any[]) => {
         this.cartItems = items;
         this.subtotal = items.reduce((sum: number, item: any) => sum + (item.totalPrice ?? item.menuItemPrice * item.quantity), 0);
+        this.nudge = thresholdNudge(this.activePromotions, this.subtotal);
         this.recalcDiscount();
         this.cdr.detectChanges();
       },

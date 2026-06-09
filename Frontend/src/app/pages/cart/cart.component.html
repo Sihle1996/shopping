@@ -29,6 +29,20 @@
     (action)="goToMenu()">
   </app-empty-state>
 
+  <!-- Threshold nudge — "spend RX more to unlock …" -->
+  <div *ngIf="nudge && cartItems.length > 0" class="px-4 lg:px-8 mb-3">
+    <div *ngIf="!nudge.qualified"
+         class="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
+      <i class="bi bi-arrow-up-circle-fill flex-shrink-0"></i>
+      <span>Spend <strong>R{{ nudge.gap | number:'1.2-2' }}</strong> more to unlock <strong>{{ nudge.rewardLabel }}</strong>.</span>
+    </div>
+    <div *ngIf="nudge.qualified"
+         class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-800">
+      <i class="bi bi-check-circle-fill flex-shrink-0"></i>
+      <span>{{ nudge.rewardLabel | titlecase }} unlocked!</span>
+    </div>
+  </div>
+
   <!-- Cart Items -->
   <div *ngIf="cartItems.length > 0" class="px-4 lg:px-8 space-y-3">
     <div *ngFor="let item of cartItems; trackBy: trackById"

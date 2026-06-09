@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap, map } from 'rxjs/operators';
 import { CartService, CartItem } from 'src/app/services/cart.service';
-import { PromotionService, Promotion } from 'src/app/services/promotion.service';
+import { PromotionService, Promotion, ThresholdNudge, thresholdNudge } from 'src/app/services/promotion.service';
 import { GroupCartService } from 'src/app/services/group-cart.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
@@ -19,6 +19,7 @@ import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
 export class CartComponent implements OnInit {
   cartItems: CartItem[] = [];
   subtotal = 0;
+  nudge: ThresholdNudge | null = null; // "spend RX more to unlock …"
   discount = 0;
   activePromotions: Promotion[] = [];
   bestPromo: Promotion | null = null;
@@ -62,6 +63,7 @@ export class CartComponent implements OnInit {
 
   private updateTotals(): void {
     this.subtotal = this.cartItems.reduce((sum, item) => sum + (item.totalPrice ?? item.menuItemPrice * item.quantity), 0);
+    this.nudge = thresholdNudge(this.activePromotions, this.subtotal);
     this.bestPromo = this.pickBestPromo();
     if (!this.bestPromo || !this.bestPromo.discountPercent) { this.discount = 0; return; }
     const pct = this.bestPromo.discountPercent / 100;
