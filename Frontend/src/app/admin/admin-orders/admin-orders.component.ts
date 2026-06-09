@@ -59,6 +59,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   recsLoading = false;
   recsFailed = false;
   recsNote = '';
+  recsReadinessNote = '';
 
   // Filters / search / sort / paging
   statuses: ReadonlyArray<StatusOption> = [
@@ -257,11 +258,13 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     this.recommendations = [];
     this.recsFailed = false;
     this.recsNote = '';
+    this.recsReadinessNote = '';
     this.recsLoading = true;
     this.adminAiService.driverRecommendations(order.id).subscribe({
       next: (res) => {
         this.recommendations = res?.drivers ?? [];
         this.recsNote = res?.note ?? '';
+        this.recsReadinessNote = res?.readinessNote ?? '';
         this.recsLoading = false;
       },
       error: () => { this.recsFailed = true; this.recsLoading = false; } // plain dropdown still works

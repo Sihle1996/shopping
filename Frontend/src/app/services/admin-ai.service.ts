@@ -145,6 +145,9 @@ export interface DriverRecommendationsResponse {
   orderId: string;
   proximityAvailable?: boolean;
   fleetAvgMinutes?: number | null;
+  orderStatus?: string;
+  readiness?: 'NOT_STARTED' | 'PREPARING' | 'SCHEDULED' | 'READY';
+  readinessNote?: string;
   drivers: DriverRecommendation[];
   note?: string;
 }

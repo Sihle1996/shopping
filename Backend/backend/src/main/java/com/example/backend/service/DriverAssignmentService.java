@@ -69,6 +69,28 @@ public class DriverAssignmentService {
         boolean proximityAvailable = tenant.getLatitude() != null && tenant.getLongitude() != null;
         out.put("proximityAvailable", proximityAvailable);
 
+        // Order-ready context: assigning a driver before the food is ready leaves them idling at
+        // the store (wasted capacity). We don't predict prep time (no ML) — we surface readiness so
+        // the admin assigns at the right moment. Doesn't affect ranking (it's about the order).
+        out.put("orderStatus", status);
+        String readiness;
+        switch (status) {
+            case "Preparing" -> {
+                readiness = "PREPARING";
+                out.put("readinessNote", "Order is being prepared — assign close to ready so the driver isn't left waiting at the store.");
+            }
+            case "Scheduled" -> {
+                readiness = "SCHEDULED";
+                out.put("readinessNote", "Scheduled order — assign a driver near the scheduled delivery time, not now.");
+            }
+            case "Out for Delivery" -> readiness = "READY"; // already dispatched / re-assignment
+            default -> { // Pending, Confirmed — kitchen not working on it yet
+                readiness = "NOT_STARTED";
+                out.put("readinessNote", "Kitchen hasn't started this order yet — a driver assigned now may wait at the store.");
+            }
+        }
+        out.put("readiness", readiness);
+
         UUID currentDriverId = order.getDriver() != null ? order.getDriver().getId() : null;
 
         List<User> drivers = userRepository.findByRoleAndTenant_Id(Role.DRIVER, tenantId);
