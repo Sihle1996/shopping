@@ -200,6 +200,15 @@ public class AdminAiController {
         return ResponseEntity.ok(adminAgentService.dailyBriefing(tenantId));
     }
 
+    /** GET /api/admin/ai/promo-economics — deterministic last-7-days ALL-scope promo net-lift for the
+     *  briefing panel (reporting-only; separate from the LLM briefing so it can't be editorialised). */
+    @GetMapping("/promo-economics")
+    public ResponseEntity<Map<String, Object>> promoEconomics() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return ResponseEntity.ok(Map.of("promos", java.util.List.of()));
+        return ResponseEntity.ok(adminAiService.promoEconomics7d(tenantId));
+    }
+
     /** GET /api/admin/ai/alerts — proactive Smart Alerts for the bell (refreshes on load). */
     @GetMapping("/alerts")
     public ResponseEntity<List<Map<String, Object>>> alerts() {

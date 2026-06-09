@@ -550,6 +550,7 @@ public class AdminAiService {
         Long netLift = (incremental != null) ? incremental - Math.round(cost[1]) : null;
 
         Map<String, Object> r = new LinkedHashMap<>();
+        r.put("promoId", p.getId().toString());
         r.put("title", p.getTitle());
         r.put("scope", "ALL");
         r.put("promoType", p.getType() != null ? p.getType().name() : "PERCENT_OFF");
@@ -567,6 +568,29 @@ public class AdminAiService {
         r.put("basis", "correlational/time-exposed");
         r.put("comparisonGroup", "ORDER_SCOPE");                  // NOT comparable to PRODUCT_SCOPE
         return r;
+    }
+
+    /** Last-7-days promo economics for the daily-briefing panel — ALL-scope net-lift rows for promos
+     *  running OR ended within the last 7 days. Deterministic, reporting-only (NOT through the LLM),
+     *  reusing the V53 engine. Each promo is measured over its OWN window; the 7 days only selects WHICH. */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public Map<String, Object> promoEconomics7d(UUID tenantId) {
+        Instant now = Instant.now();
+        Instant weekAgo = now.minus(Duration.ofDays(7));
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Promotion p : promotionRepository.findByTenant_Id(tenantId)) {
+            if (p.getAppliesTo() != Promotion.AppliesTo.ALL || p.getStartAt() == null) continue;
+            Instant start = p.getStartAt().toInstant();
+            boolean started = !start.isAfter(now);
+            boolean running = p.getEndAt() == null || p.getEndAt().toInstant().isAfter(now);
+            boolean endedThisWeek = p.getEndAt() != null
+                    && p.getEndAt().toInstant().isAfter(weekAgo)
+                    && !p.getEndAt().toInstant().isAfter(now);
+            if (started && (running || endedThisWeek)) {
+                out.add(orderScopeOutcome(tenantId, p, start, now));
+            }
+        }
+        return Map.of("promos", out);
     }
 
     /**

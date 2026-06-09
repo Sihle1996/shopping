@@ -18,6 +18,9 @@ export class StoreAlertsComponent implements OnInit, OnDestroy {
   briefing = '';
   briefingLoading = true;
 
+  // Promo economics (last 7 days) — deterministic, reporting-only (NOT the LLM briefing)
+  promoEconomics: any[] = [];
+
   // Transient "peek": alerts pop out, then glide back into the bell
   peeking = false;
   peekClosing = false;
@@ -31,6 +34,7 @@ export class StoreAlertsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.load(true); // peek on first load
     this.loadBriefing();
+    this.loadPromoEconomics();
     // Live: the background scan pushes here when a new alert is raised — reload + peek it,
     // so a scheduled order due soon reaches you without opening the bell.
     const tenantId = localStorage.getItem('tenantId');
@@ -84,9 +88,31 @@ export class StoreAlertsComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadPromoEconomics(): void {
+    this.ai.promoEconomics().subscribe({
+      next: (r) => this.promoEconomics = r.promos || [],
+      error: () => {}
+    });
+  }
+
+  // Net-lift verdict + formatting — same vocabulary as the V53.1 card (no second interpretation layer).
+  liftStatus(o: any): string {
+    if (o?.netRevenueLift == null) return 'INCONCLUSIVE';
+    return o.netRevenueLift > 0 ? 'POSITIVE' : o.netRevenueLift < 0 ? 'NEGATIVE' : 'INCONCLUSIVE';
+  }
+  liftStatusClass(o: any): string {
+    return ({ POSITIVE: 'bg-emerald-100 text-emerald-700', NEGATIVE: 'bg-red-100 text-red-700',
+              INCONCLUSIVE: 'bg-gray-100 text-gray-600' } as any)[this.liftStatus(o)];
+  }
+  randSigned(v: number | null): string {
+    if (v == null) return 'measuring…';
+    return (v > 0 ? '+R' : v < 0 ? '-R' : 'R') + Math.abs(v).toLocaleString('en-ZA');
+  }
+
   refresh(): void {
     this.load();
     this.loadBriefing();
+    this.loadPromoEconomics();
   }
 
   toggle(): void {

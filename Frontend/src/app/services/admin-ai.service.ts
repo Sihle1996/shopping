@@ -249,6 +249,11 @@ export class AdminAiService {
     return this.http.get<AiBriefing>(`${this.base}/briefing`);
   }
 
+  /** Deterministic last-7-days ALL-scope promo net-lift for the briefing panel (reporting-only). */
+  promoEconomics(): Observable<{ promos: any[] }> {
+    return this.http.get<{ promos: any[] }>(`${this.base}/promo-economics`);
+  }
+
   /** Proactive Smart Alerts for the bell. */
   alerts(): Observable<AiAlert[]> {
     return this.http.get<AiAlert[]>(`${this.base}/alerts`);

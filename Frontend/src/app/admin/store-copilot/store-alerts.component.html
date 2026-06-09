@@ -41,6 +41,30 @@
         <div *ngIf="!briefingLoading" class="ai-prose" [innerHTML]="briefing | aiFormat"></div>
       </div>
 
+      <!-- Promo economics · last 7 days — deterministic, reporting-only (NOT the LLM briefing) -->
+      <div *ngIf="promoEconomics.length" class="rounded-xl border border-borderColor bg-white p-3">
+        <p class="text-[11px] font-semibold text-textMuted uppercase tracking-wide flex items-center gap-1.5 mb-2">
+          <i class="bi bi-graph-up-arrow text-primary"></i> Promo economics · last 7 days
+        </p>
+        <div class="space-y-2.5">
+          <div *ngFor="let o of promoEconomics">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-semibold text-textDark truncate">{{ o.title }}</span>
+              <span class="flex items-center gap-1 flex-shrink-0">
+                <span [ngClass]="liftStatusClass(o)" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded">{{ liftStatus(o) }}</span>
+                <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{{ o.signal }}</span>
+              </span>
+            </div>
+            <p class="text-[11px] text-textMuted mt-0.5">
+              {{ o.status }} ({{ o.windowDays }}d) · net
+              <span class="font-semibold" [ngClass]="o.netRevenueLift == null ? 'text-textMuted' : o.netRevenueLift > 0 ? 'text-emerald-600' : o.netRevenueLift < 0 ? 'text-red-600' : 'text-textMuted'">{{ randSigned(o.netRevenueLift) }}</span>
+              · cost R{{ o.promoCost | number:'1.0-0' }} · {{ o.redeemedOrders }} redeemed
+            </p>
+          </div>
+        </div>
+        <p class="text-[10px] text-textMuted italic mt-2 pt-2 border-t border-borderColor">est. correlational — vs the previous 14-day baseline, not a controlled result.</p>
+      </div>
+
       <!-- Needs attention -->
       <p class="text-[11px] font-semibold text-textMuted uppercase tracking-wide flex items-center gap-1.5 px-0.5">
         <i class="bi bi-bell-fill text-primary"></i> Needs attention
