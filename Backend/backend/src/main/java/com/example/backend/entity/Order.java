@@ -50,6 +50,10 @@ public class Order {
     @Column(name = "cancellation_reason", length = 50)
     private String cancellationReason;
 
+    /** How delivery was confirmed: DRIVER_OTP | DRIVER | ADMIN_OVERRIDE — null until delivered. */
+    @Column(name = "delivered_by", length = 20)
+    private String deliveredBy;
+
     private String deliveryAddress;
 
     private String paymentId;

@@ -38,6 +38,7 @@ public class OrderDTO {
     private String userPhone;
     private String deliveryOtp;
     private String scheduledDeliveryTime;
+    private String deliveredBy;
 
     public OrderDTO(UUID id, Double totalAmount, String status, Instant orderDate,
                     String deliveryAddress, UUID userId, String userEmail) {

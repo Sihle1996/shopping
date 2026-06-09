@@ -93,6 +93,8 @@ public class DriverService {
         order.setDeliveryOtp(null);
         order.setOtpExpiresAt(null);
         order.setStatus("Delivered");
+        order.setDeliveredBy("DRIVER_OTP"); // gold standard — customer-confirmed
+        if (order.getDeliveredAt() == null) order.setDeliveredAt(java.time.Instant.now());
         orderRepository.save(order);
 
         var dto = orderService.convertToOrderDTO(order);
@@ -123,6 +125,8 @@ public class DriverService {
         }
 
         order.setStatus("Delivered");
+        order.setDeliveredBy("DRIVER"); // driver-confirmed without an OTP
+        if (order.getDeliveredAt() == null) order.setDeliveredAt(java.time.Instant.now());
         orderRepository.save(order);
 
         var dto = orderService.convertToOrderDTO(order);

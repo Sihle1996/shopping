@@ -437,6 +437,16 @@ public class OrderService {
                     "Can't move a " + current + " order to " + status + ". Allowed next: " + allowed + ".");
         }
 
+        // Can't deliver an order nobody is delivering. The canonical path is the driver confirming
+        // with the customer's OTP; an admin marking it here is an explicit manual override.
+        if ("Delivered".equals(status)) {
+            if (order.getDriver() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Assign a driver before marking this order delivered.");
+            }
+            order.setDeliveredBy("ADMIN_OVERRIDE");
+        }
+
         // Consume stock (deduct + release the reservation) the FIRST time an order leaves a
         // reserved-only state (Pending/Scheduled) for an active one (Confirmed/Preparing/Out for
         // Delivery/Delivered). The admin flow skips "Confirmed", so keying only on it left stock
@@ -651,7 +661,8 @@ public class OrderService {
                 order.getOrderNotes(),
                 userPhone,
                 null,  // deliveryOtp — set below if active
-                order.getScheduledDeliveryTime() != null ? order.getScheduledDeliveryTime().toString() : null
+                order.getScheduledDeliveryTime() != null ? order.getScheduledDeliveryTime().toString() : null,
+                order.getDeliveredBy()
         );
 
         if (order.getDriver() != null) {

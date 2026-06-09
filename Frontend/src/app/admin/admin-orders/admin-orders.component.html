@@ -196,11 +196,16 @@
           <div class="flex items-start justify-between gap-2">
             <h3 class="font-heading text-xl font-bold text-textDark font-numbers" [title]="so.id">Order #{{ so.id | slice:0:8 | uppercase }}</h3>
           </div>
-          <div class="mt-2">
+          <div class="mt-2 flex items-center gap-2 flex-wrap">
             <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
                   [ngClass]="statusChip(so.status)">
               <span class="h-1.5 w-1.5 rounded-full" [ngClass]="statusDot(so.status)"></span>
               {{ so.status }}
+            </span>
+            <span *ngIf="so.status === 'Delivered' && deliveredByLabel(so.deliveredBy)"
+                  class="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                  [ngClass]="so.deliveredBy === 'ADMIN_OVERRIDE' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'">
+              {{ deliveredByLabel(so.deliveredBy) }}
             </span>
           </div>
         </header>
@@ -282,7 +287,7 @@
           <div class="bg-white border border-borderColor rounded-2xl p-4 shadow-sm">
           <div class="flex flex-wrap gap-2">
             <button *ngFor="let s of orderStatuses"
-                    (click)="updateStatus(so.id, s)"
+                    (click)="requestStatusChange(so.id, s)"
                     [disabled]="so.status === s || isTerminal(so.status) || !canMoveTo(so.status, s)"
                     class="px-3 py-2 rounded-xl text-xs font-semibold transition-all border disabled:cursor-not-allowed"
                     [ngClass]="so.status === s

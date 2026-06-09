@@ -5,6 +5,7 @@ import { debounceTime, takeUntil } from 'rxjs/operators';
 import { AdminService } from 'src/app/services/admin.service';
 import { AdminAiService, DriverRecommendation } from 'src/app/services/admin-ai.service';
 import { NotificationService } from 'src/app/services/notification.service';
+import { ConfirmService } from 'src/app/shared/services/confirm.service';
 import { ToastrService } from 'ngx-toastr';
 
 /** Strict status unions */
@@ -29,6 +30,7 @@ interface Order {
   paymentId?: string;
   orderNotes?: string;
   driverName?: string | null;
+  deliveredBy?: string | null; // DRIVER_OTP | DRIVER | ADMIN_OVERRIDE
   items: OrderItem[];
 }
 interface PageResp<T> {
@@ -97,7 +99,8 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private toastr: ToastrService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private confirm: ConfirmService
   ) {}
 
   ngOnInit(): void {
@@ -257,6 +260,38 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   };
   canMoveTo(from: string | undefined | null, to: string): boolean {
     return !!from && (this.statusFlow[from] ?? []).includes(to);
+  }
+
+  /** How a delivered order was confirmed — for the audit-at-a-glance label. */
+  deliveredByLabel(by?: string | null): string {
+    return ({ DRIVER_OTP: 'OTP confirmed', DRIVER: 'driver confirmed', ADMIN_OVERRIDE: 'admin override' } as any)[by || ''] ?? '';
+  }
+
+  /** Button entry point — confirms outward/irreversible actions before applying them. */
+  requestStatusChange(orderId: string, newStatus: Status): void {
+    const order = this.selectedOrder?.id === orderId ? this.selectedOrder
+                : this.orders.find(o => o.id === orderId) || null;
+    if (!order || order.status === newStatus || this.isTerminal(order.status)
+        || !this.canMoveTo(order.status, newStatus)) return;
+
+    if (newStatus === 'Delivered') {
+      if (!order.driverName) { this.toastr.warning('Assign a driver before marking this order delivered.'); return; }
+      this.confirm.ask({
+        title: 'Mark as delivered?',
+        message: 'This emails the customer that their order was delivered and finalises the sale. It can\'t be undone.',
+        confirmLabel: 'Mark delivered', variant: 'warning'
+      }).subscribe(ok => { if (ok) this.updateStatus(orderId, newStatus); });
+      return;
+    }
+    if (newStatus === 'Cancelled') {
+      this.confirm.ask({
+        title: 'Cancel this order?',
+        message: 'This notifies the customer, releases the reserved stock, and can\'t be undone.',
+        confirmLabel: 'Cancel order', variant: 'danger'
+      }).subscribe(ok => { if (ok) this.updateStatus(orderId, newStatus); });
+      return;
+    }
+    this.updateStatus(orderId, newStatus);
   }
 
   updateStatus(orderId: string, newStatus: Status): void {
