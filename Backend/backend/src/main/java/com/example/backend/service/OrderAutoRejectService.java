@@ -28,6 +28,7 @@ public class OrderAutoRejectService {
     private final SimpMessagingTemplate messagingTemplate;
     private final EmailService emailService;
     private final LoyaltyService loyaltyService;
+    private final AuditService auditService;
 
     /** Fallback window when a store has no auto-cancel setting. */
     private static final int DEFAULT_AUTO_CANCEL_MINUTES = 15;
@@ -56,6 +57,9 @@ public class OrderAutoRejectService {
             order.setStatus("Cancelled");
             order.setCancellationReason("AUTO_TIMEOUT");
             orderRepository.save(order);
+            auditService.log(order.getTenant() != null ? order.getTenant().getId() : null,
+                    AuditService.SYSTEM, "ORDER_AUTO_CANCELLED", "ORDER", order.getId(),
+                    "Auto-cancelled — not accepted within " + minutes + " min");
 
             messagingTemplate.convertAndSend("/topic/orders", Map.of(
                     "type", "ORDER_CANCELLED",

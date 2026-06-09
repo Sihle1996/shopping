@@ -24,6 +24,7 @@ public class DriverService {
     private final OrderService orderService;
     private final EmailService emailService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final AuditService auditService;
 
     public List<OrderDTO> getOrdersAssignedToDriver(User driver) {
         return orderRepository.findByDriver(driver)
@@ -96,6 +97,7 @@ public class DriverService {
         order.setDeliveredBy("DRIVER_OTP"); // gold standard — customer-confirmed
         if (order.getDeliveredAt() == null) order.setDeliveredAt(java.time.Instant.now());
         orderRepository.save(order);
+        auditService.log(AuditService.DRIVER, "ORDER_DELIVERED", "ORDER", orderId, "Delivered — OTP confirmed");
 
         var dto = orderService.convertToOrderDTO(order);
         if (order.getUser() != null) {
@@ -131,6 +133,7 @@ public class DriverService {
         order.setDeliveredBy("DRIVER"); // driver-confirmed without an OTP
         if (order.getDeliveredAt() == null) order.setDeliveredAt(java.time.Instant.now());
         orderRepository.save(order);
+        auditService.log(AuditService.DRIVER, "ORDER_DELIVERED", "ORDER", orderId, "Delivered by driver");
 
         var dto = orderService.convertToOrderDTO(order);
         if (order.getUser() != null) {

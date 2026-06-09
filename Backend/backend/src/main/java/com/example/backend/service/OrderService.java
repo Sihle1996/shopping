@@ -51,6 +51,7 @@ public class OrderService {
     private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final WebPushService webPushService;
     private final PayoutLedgerService payoutLedgerService;
+    private final AuditService auditService;
 
     private void checkLowStock(MenuItem menuItem) {
         if (menuItem.getStock() >= 0 && menuItem.getStock() <= menuItem.getLowStockThreshold()) {
@@ -532,6 +533,9 @@ public class OrderService {
             order.setDeliveredAt(Instant.now());
         }
         Order updated = orderRepository.save(order);
+        auditService.log(AuditService.ADMIN, "ORDER_STATUS_CHANGED", "ORDER", orderId,
+                current + " → " + status
+                        + (cancelReason != null && !cancelReason.isBlank() ? " (" + cancelReason.trim() + ")" : ""));
         OrderDTO dto = convertToOrderDTO(updated);
 
         // Push real-time status update to the customer (only if authenticated user)
@@ -615,6 +619,9 @@ public class OrderService {
         order.setStatus("Out for Delivery");
 
         Order updated = orderRepository.save(order);
+        auditService.log(AuditService.ADMIN, "DRIVER_ASSIGNED", "ORDER", orderId,
+                "Assigned " + (driver.getFullName() != null && !driver.getFullName().isBlank()
+                        ? driver.getFullName() : driver.getEmail()));
         OrderDTO dto = convertToOrderDTO(updated);
         if (updated.getUser() != null) {
             messagingTemplate.convertAndSend("/topic/orders/" + updated.getUser().getId(), dto);

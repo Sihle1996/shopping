@@ -5,6 +5,7 @@ import com.example.backend.entity.AiAlert;
 import com.example.backend.repository.AiAlertRepository;
 import com.example.backend.service.AdminAiService;
 import com.example.backend.service.AdminAgentService;
+import com.example.backend.service.AuditService;
 import com.example.backend.service.CapabilityRegistry;
 import com.example.backend.service.DriverAssignmentService;
 import com.example.backend.service.SmartAlertService;
@@ -34,6 +35,7 @@ public class AdminAiController {
     private final AiAlertRepository aiAlertRepository;
     private final CapabilityRegistry capabilityRegistry;
     private final DriverAssignmentService driverAssignmentService;
+    private final AuditService auditService;
     private final ObjectMapper objectMapper;
 
     /** GET /api/admin/ai/capabilities — the per-tenant capability manifest (AI + UI share it) */
@@ -220,6 +222,7 @@ public class AdminAiController {
             if (Boolean.TRUE.equals(result.get("ok"))) {
                 a.setStatus("DONE");
                 aiAlertRepository.save(a);
+                auditService.log(AuditService.AI, "ALERT_APPLIED", "ALERT", a.getId(), "Applied: " + a.getTitle());
                 // CALIBRATION: remember what this fix predicted + the item baseline, to measure later.
                 try { adminAiService.recordAlertApplied(tenantId, a.getAlertKey(), a.getImpact(), a.getAction()); }
                 catch (Exception ignored) {}
@@ -237,6 +240,7 @@ public class AdminAiController {
         aiAlertRepository.findByIdAndTenant_Id(id, tenantId).ifPresent(a -> {
             a.setStatus("DISMISSED");
             aiAlertRepository.save(a);
+            auditService.log(AuditService.AI, "ALERT_DISMISSED", "ALERT", a.getId(), "Dismissed: " + a.getTitle());
         });
         return ResponseEntity.ok(Map.of("ok", true));
     }

@@ -320,6 +320,24 @@
           </div><!-- end status white card -->
         </div>
 
+        <!-- Activity trail (audit) -->
+        <div *ngIf="auditEvents.length" class="mb-6">
+          <h4 class="text-sm font-semibold text-textDark mb-3 pl-3 border-l-2 border-primary">Activity</h4>
+          <div class="bg-white border border-borderColor rounded-2xl p-4 shadow-sm space-y-3">
+            <div *ngFor="let ev of auditEvents" class="flex items-start gap-2.5">
+              <span class="mt-0.5 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" [ngClass]="auditSourceMeta(ev.source).cls">
+                <i class="bi text-[11px]" [ngClass]="auditSourceMeta(ev.source).icon"></i>
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="text-xs text-textDark">{{ ev.summary }}</p>
+                <p class="text-[10px] text-textMuted truncate">
+                  {{ ev.actor || ev.source }}<span *ngIf="ev.createdAt"> · {{ ev.createdAt | date:'MMM d, HH:mm' }}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         </div><!-- end scrollable content -->
 
         <!-- Assign Driver — active orders only -->

@@ -237,7 +237,12 @@ orders$ = this.ordersSubject.asObservable();
     headers: this.getAuthHeaders()
   });
   }
-  
+
+  /** Activity trail for one order (status moves, driver assignment, delivery, auto-cancel). */
+  getOrderAudit(orderId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/audit/order/${orderId}`, { headers: this.getAuthHeaders() });
+  }
+
   uploadImage(formData: FormData): Observable<string> {
     return this.http.post<{ imageUrl: string }>(`${environment.apiUrl}/api/admin/menu/upload-image`, formData).pipe(
       map((res: { imageUrl: string }) => res.imageUrl) // ✅ FIX: Add proper type to res

@@ -66,6 +66,9 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   recsNote = '';
   recsReadinessNote = '';
 
+  // Activity trail (audit) for the open order
+  auditEvents: Array<{ source: string; action: string; summary: string; actor?: string; createdAt: string }> = [];
+
   // Filters / search / sort / paging
   statuses: ReadonlyArray<StatusOption> = [
     { value: 'All',              label: 'All' },
@@ -268,6 +271,16 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     return status === 'Preparing' || status === 'Out for Delivery';
   }
 
+  /** Icon + colour for an activity-trail source (ADMIN/DRIVER/AI/SYSTEM). */
+  auditSourceMeta(source: string): { icon: string; cls: string } {
+    return ({
+      ADMIN:  { icon: 'bi-person-fill', cls: 'bg-blue-100 text-blue-600' },
+      DRIVER: { icon: 'bi-truck',       cls: 'bg-emerald-100 text-emerald-600' },
+      AI:     { icon: 'bi-stars',       cls: 'bg-primary-100 text-primary' },
+      SYSTEM: { icon: 'bi-gear-fill',   cls: 'bg-gray-100 text-gray-500' }
+    } as any)[source] ?? { icon: 'bi-dot', cls: 'bg-gray-100 text-gray-500' };
+  }
+
   /** Friendly label for a stored cancellation reason (markers map to text; free text passes through). */
   cancelReasonLabel(reason?: string | null): string {
     if (!reason) return '';
@@ -323,6 +336,8 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     this.selectedOrder = order;
     this.selectedDriverId = null;
     this.reassigning = false;
+    this.auditEvents = [];
+    this.adminSerivce.getOrderAudit(order.id).subscribe({ next: e => this.auditEvents = e ?? [], error: () => {} });
     // Plain list — stays the override + the fallback if recommendations fail.
     this.adminSerivce.getAvailableDrivers().subscribe({
       next: (drivers: Array<{ id: string; email: string }>) => (this.availableDrivers = drivers ?? []),
