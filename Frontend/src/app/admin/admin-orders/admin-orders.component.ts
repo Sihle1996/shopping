@@ -286,6 +286,15 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     } as any)[c] ?? 'bg-gray-100 text-gray-600';
   }
 
+  /** Location freshness badge — colours read faster than a confidence label. */
+  locationBadge(d: DriverRecommendation): { label: string; cls: string; dot: string } {
+    const m = d.locationAgeMinutes;
+    if (m == null) return { label: 'No location', cls: 'bg-gray-100 text-gray-500', dot: 'bg-gray-400' };
+    if (m <= 5)    return { label: 'Live',         cls: 'bg-emerald-50 text-emerald-700', dot: 'bg-emerald-500' };
+    if (m <= 30)   return { label: m + 'm ago',    cls: 'bg-amber-50 text-amber-700',     dot: 'bg-amber-500' };
+    return { label: m + 'm ago', cls: 'bg-red-50 text-red-700', dot: 'bg-red-500' };
+  }
+
   closeDrawer(): void {
     this.selectedOrder = null;
     this.selectedDriverId = null;
