@@ -155,6 +155,7 @@ public class OrderService {
         double discountAmount = 0.0;
         String appliedPromoCode = null;
         boolean freeDelivery = false;
+        Promotion.PromoType appliedPromoType = null; // V52 capture — frozen at assignment
 
         java.util.Optional<Promotion> promoOpt = (request.getPromoCode() != null && !request.getPromoCode().isBlank())
                 ? promotionService.validateCode(request.getPromoCode())
@@ -165,15 +166,12 @@ public class OrderService {
             Promotion.PromoType promoType = promo.getType() != null ? promo.getType() : Promotion.PromoType.PERCENT_OFF;
             // Spend-threshold gate — the reward only applies once the subtotal reaches minSpend.
             boolean qualifies = promo.getMinSpend() == null || subtotal >= promo.getMinSpend().doubleValue();
-            boolean applied = false;
+            boolean applied;
             if (qualifies && promoType == Promotion.PromoType.FREE_DELIVERY) {
                 freeDelivery = true;
-                applied = true;
             } else if (qualifies && promoType == Promotion.PromoType.AMOUNT_OFF && promo.getDiscountAmount() != null) {
                 discountAmount = Math.min(promo.getDiscountAmount().doubleValue(), subtotal);
-                applied = true;
             } else if (qualifies && promo.getDiscountPercent() != null) {
-                applied = true;
                 double pct = promo.getDiscountPercent().doubleValue() / 100.0;
                 if (promo.getAppliesTo() == Promotion.AppliesTo.ALL) {
                     discountAmount = subtotal * pct;
@@ -205,9 +203,13 @@ public class OrderService {
                     }
                 }
             }
+            // A promo counts as applied only if it conferred value (a discount or free delivery);
+            // a scoped promo that matched nothing in the cart must not tag the order.
+            applied = freeDelivery || discountAmount > 0;
             if (applied) {
                 discountAmount = BigDecimal.valueOf(discountAmount).setScale(2, RoundingMode.HALF_UP).doubleValue();
                 appliedPromoCode = promo.getCode() != null ? promo.getCode().trim() : promo.getTitle();
+                appliedPromoType = promoType;
             }
         }
 
@@ -327,8 +329,9 @@ public class OrderService {
             });
         }
 
-        // Free-delivery promo qualified — waive the fee computed above.
-        if (freeDelivery) order.setDeliveryFee(0.0);
+        // V52 — capture promo economics (type, who funded it, the platform-waived fee) and waive the
+        // free-delivery fee. Centralized so future promo types can't silently skip the capture.
+        applyPromoSnapshot(order, appliedPromoType, freeDelivery);
 
         for (OrderItem item : orderItems) {
             item.setOrder(order);
@@ -442,6 +445,21 @@ public class OrderService {
     /** Reserved-only states: stock is held (reserved) but not yet removed from inventory. */
     private boolean isReservedOnly(String s) {
         return "Pending".equals(s) || "Scheduled".equals(s);
+    }
+
+    /** V52 — freeze per-order promo economics at assignment: which lever applied, who funded it, and
+     *  (for FREE_DELIVERY only) the delivery fee the platform waived — snapshotted BEFORE zeroing.
+     *  Single capture point so new promo types can't silently skip it. */
+    private void applyPromoSnapshot(Order order, Promotion.PromoType type, boolean freeDelivery) {
+        if (type != null) {
+            order.setPromoType(type.name());
+            order.setPromoFundedBy(type == Promotion.PromoType.FREE_DELIVERY ? "PLATFORM" : "STORE");
+        }
+        if (freeDelivery) {
+            Double originalFee = order.getDeliveryFee();   // snapshot before mutation
+            order.setWaivedDeliveryFee(originalFee);        // NULL unless FREE_DELIVERY; never 0.0-for-N/A
+            order.setDeliveryFee(0.0);
+        }
     }
 
     /** Consumed states: the order is active/fulfilled, so its stock has been deducted. */

@@ -75,6 +75,15 @@ public class Order {
     private Double deliveryFee;
     private Double discountAmount;
     private String promoCode;
+
+    /** Promo-economics capture (V52) — what lever applied, what the platform waived, who funded it.
+     *  All NULL when no promo applied. waivedDeliveryFee is set ONLY for FREE_DELIVERY (never 0.0-for-N/A). */
+    @Column(name = "promo_type", length = 20)
+    private String promoType;                 // PERCENT_OFF | AMOUNT_OFF | FREE_DELIVERY
+    @Column(name = "waived_delivery_fee")
+    private Double waivedDeliveryFee;
+    @Column(name = "promo_funded_by", length = 16)
+    private String promoFundedBy;             // PLATFORM | STORE | (SHARED reserved)
     private Integer loyaltyPointsRedeemed;
     private Double deliveryLat;
     private Double deliveryLon;
