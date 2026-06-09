@@ -190,6 +190,25 @@ export class AdminPromotionsComponent implements OnInit {
     return pct == null ? 'n/a' : (pct > 0 ? '+' : '') + pct + '%';
   }
 
+  // ── V53.1 — ALL-scope Net Revenue Lift card helpers ──
+  /** Signed rand, e.g. +R700 / -R531 / measuring… (null = not yet measurable). */
+  randSigned(v: number | null): string {
+    if (v == null) return 'measuring…';
+    return (v > 0 ? '+R' : v < 0 ? '-R' : 'R') + Math.abs(v).toLocaleString('en-ZA');
+  }
+  /** Verdict badge: POSITIVE / NEGATIVE / INCONCLUSIVE (net lift > 0 / < 0 / not measurable). */
+  liftStatus(o: any): string {
+    if (o?.netRevenueLift == null) return 'INCONCLUSIVE';
+    return o.netRevenueLift > 0 ? 'POSITIVE' : o.netRevenueLift < 0 ? 'NEGATIVE' : 'INCONCLUSIVE';
+  }
+  liftStatusClass(o: any): string {
+    return ({ POSITIVE: 'bg-emerald-100 text-emerald-700', NEGATIVE: 'bg-red-100 text-red-700',
+              INCONCLUSIVE: 'bg-gray-100 text-gray-600' } as any)[this.liftStatus(o)];
+  }
+  typeLabel(t?: string): string {
+    return ({ FREE_DELIVERY: 'free delivery', AMOUNT_OFF: 'amount off', PERCENT_OFF: '% off' } as any)[t || ''] || 'promo';
+  }
+
   openForm(): void {
     this.formOpen = true;
   }
