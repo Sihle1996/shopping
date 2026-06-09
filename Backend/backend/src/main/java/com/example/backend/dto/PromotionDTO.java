@@ -16,6 +16,9 @@ public class PromotionDTO {
     private String imageUrl;
     private String badgeText;
     private BigDecimal discountPercent;
+    private String type;              // PERCENT_OFF | AMOUNT_OFF | FREE_DELIVERY
+    private BigDecimal minSpend;
+    private BigDecimal discountAmount;
     private String startAt;   // ISO string — avoids OffsetDateTime serialization issues
     private String endAt;
     private String appliesTo;
@@ -42,6 +45,9 @@ public class PromotionDTO {
         dto.setImageUrl(p.getImageUrl());
         dto.setBadgeText(p.getBadgeText());
         dto.setDiscountPercent(p.getDiscountPercent());
+        dto.setType(p.getType() != null ? p.getType().name() : "PERCENT_OFF");
+        dto.setMinSpend(p.getMinSpend());
+        dto.setDiscountAmount(p.getDiscountAmount());
         dto.setStartAt(p.getStartAt() != null ? p.getStartAt().toString() : null);
         dto.setEndAt(p.getEndAt() != null ? p.getEndAt().toString() : null);
         dto.setAppliesTo(p.getAppliesTo() != null ? p.getAppliesTo().name() : null);

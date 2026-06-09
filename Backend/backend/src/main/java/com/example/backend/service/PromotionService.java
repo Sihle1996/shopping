@@ -87,14 +87,24 @@ public class PromotionService {
     public Optional<Promotion> findBestAutoAppliedPromo() {
         List<Promotion> candidates = getActivePromotions().stream()
                 .filter(p -> p.getCode() == null || p.getCode().isBlank())
-                .filter(p -> p.getDiscountPercent() != null)
+                .filter(PromotionService::hasUsableReward)
                 .toList();
         if (candidates.isEmpty()) return Optional.empty();
-        // Prefer ALL scope, then pick highest discount percent within scope
+        // Prefer ALL scope, then higher % (free-delivery/amount promos sort neutral on %).
         return candidates.stream()
                 .max(java.util.Comparator
                         .comparingInt((Promotion p) -> scopePriority(p.getAppliesTo()))
-                        .thenComparingDouble(p -> p.getDiscountPercent().doubleValue()));
+                        .thenComparingDouble(p -> p.getDiscountPercent() != null ? p.getDiscountPercent().doubleValue() : 0.0));
+    }
+
+    /** A promo can actually reward something: a %, a fixed amount, or free delivery. */
+    private static boolean hasUsableReward(Promotion p) {
+        Promotion.PromoType t = p.getType() != null ? p.getType() : Promotion.PromoType.PERCENT_OFF;
+        return switch (t) {
+            case FREE_DELIVERY -> true;
+            case AMOUNT_OFF -> p.getDiscountAmount() != null;
+            case PERCENT_OFF -> p.getDiscountPercent() != null;
+        };
     }
 
     private int scopePriority(Promotion.AppliesTo scope) {

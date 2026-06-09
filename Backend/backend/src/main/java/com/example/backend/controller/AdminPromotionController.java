@@ -141,6 +141,9 @@ public class AdminPromotionController {
         target.setImageUrl(req.getImageUrl());
         target.setBadgeText(req.getBadgeText());
         target.setDiscountPercent(req.getDiscountPercent());
+        target.setType(req.getType() != null ? req.getType() : Promotion.PromoType.PERCENT_OFF);
+        target.setMinSpend(req.getMinSpend());
+        target.setDiscountAmount(req.getDiscountAmount());
         target.setStartAt(req.getStartAt());
         target.setEndAt(req.getEndAt());
         target.setAppliesTo(req.getAppliesTo());

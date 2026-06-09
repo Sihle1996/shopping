@@ -22,6 +22,14 @@ public class PromotionRequest {
     @DecimalMax(value = "100.0")
     private BigDecimal discountPercent;
 
+    private Promotion.PromoType type; // PERCENT_OFF (default), AMOUNT_OFF, FREE_DELIVERY
+
+    @DecimalMin(value = "0.0")
+    private BigDecimal minSpend;       // qualifying threshold (null = no minimum)
+
+    @DecimalMin(value = "0.0")
+    private BigDecimal discountAmount; // fixed rand off, for AMOUNT_OFF
+
     @NotNull
     private OffsetDateTime startAt;
 

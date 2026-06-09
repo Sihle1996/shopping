@@ -154,6 +154,7 @@ public class OrderService {
         // Apply promotion discount server-side
         double discountAmount = 0.0;
         String appliedPromoCode = null;
+        boolean freeDelivery = false;
 
         java.util.Optional<Promotion> promoOpt = (request.getPromoCode() != null && !request.getPromoCode().isBlank())
                 ? promotionService.validateCode(request.getPromoCode())
@@ -161,7 +162,18 @@ public class OrderService {
 
         if (promoOpt.isPresent()) {
             Promotion promo = promoOpt.get();
-            if (promo.getDiscountPercent() != null) {
+            Promotion.PromoType promoType = promo.getType() != null ? promo.getType() : Promotion.PromoType.PERCENT_OFF;
+            // Spend-threshold gate — the reward only applies once the subtotal reaches minSpend.
+            boolean qualifies = promo.getMinSpend() == null || subtotal >= promo.getMinSpend().doubleValue();
+            boolean applied = false;
+            if (qualifies && promoType == Promotion.PromoType.FREE_DELIVERY) {
+                freeDelivery = true;
+                applied = true;
+            } else if (qualifies && promoType == Promotion.PromoType.AMOUNT_OFF && promo.getDiscountAmount() != null) {
+                discountAmount = Math.min(promo.getDiscountAmount().doubleValue(), subtotal);
+                applied = true;
+            } else if (qualifies && promo.getDiscountPercent() != null) {
+                applied = true;
                 double pct = promo.getDiscountPercent().doubleValue() / 100.0;
                 if (promo.getAppliesTo() == Promotion.AppliesTo.ALL) {
                     discountAmount = subtotal * pct;
@@ -192,6 +204,8 @@ public class OrderService {
                         }
                     }
                 }
+            }
+            if (applied) {
                 discountAmount = BigDecimal.valueOf(discountAmount).setScale(2, RoundingMode.HALF_UP).doubleValue();
                 appliedPromoCode = promo.getCode() != null ? promo.getCode().trim() : promo.getTitle();
             }
@@ -312,6 +326,9 @@ public class OrderService {
                 }
             });
         }
+
+        // Free-delivery promo qualified — waive the fee computed above.
+        if (freeDelivery) order.setDeliveryFee(0.0);
 
         for (OrderItem item : orderItems) {
             item.setOrder(order);

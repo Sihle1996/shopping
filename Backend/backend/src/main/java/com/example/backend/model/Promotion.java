@@ -38,6 +38,19 @@ public class Promotion {
     @Column(precision = 10, scale = 2)
     private BigDecimal discountPercent;
 
+    /** Reward lever. Null is treated as PERCENT_OFF (back-compat with pre-V51 promos). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "promo_type", length = 20)
+    private PromoType type;
+
+    /** Qualifying threshold — the order subtotal must reach this for the reward to apply (null = none). */
+    @Column(name = "min_spend", precision = 10, scale = 2)
+    private BigDecimal minSpend;
+
+    /** Fixed rand amount off, for type = AMOUNT_OFF. */
+    @Column(name = "discount_amount", precision = 10, scale = 2)
+    private BigDecimal discountAmount;
+
     @Column(nullable = false)
     private OffsetDateTime startAt;
 
@@ -84,5 +97,12 @@ public class Promotion {
         CATEGORY,
         PRODUCT,
         MULTI_PRODUCT
+    }
+
+    /** What the promotion rewards. PERCENT_OFF keeps the original % behaviour. */
+    public enum PromoType {
+        PERCENT_OFF,
+        AMOUNT_OFF,
+        FREE_DELIVERY
     }
 }
