@@ -39,6 +39,7 @@ public class OrderDTO {
     private String deliveryOtp;
     private String scheduledDeliveryTime;
     private String deliveredBy;
+    private String cancellationReason;
 
     public OrderDTO(UUID id, Double totalAmount, String status, Instant orderDate,
                     String deliveryAddress, UUID userId, String userEmail) {

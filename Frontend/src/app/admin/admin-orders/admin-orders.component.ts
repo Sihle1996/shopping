@@ -31,6 +31,7 @@ interface Order {
   orderNotes?: string;
   driverName?: string | null;
   deliveredBy?: string | null; // DRIVER_OTP | DRIVER | ADMIN_OVERRIDE
+  cancellationReason?: string | null;
   items: OrderItem[];
 }
 interface PageResp<T> {
@@ -262,6 +263,12 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     return !!from && (this.statusFlow[from] ?? []).includes(to);
   }
 
+  /** Friendly label for a stored cancellation reason (markers map to text; free text passes through). */
+  cancelReasonLabel(reason?: string | null): string {
+    if (!reason) return '';
+    return ({ AUTO_TIMEOUT: 'Auto-cancelled — not accepted in time', ADMIN_CANCELLED: 'Cancelled by the store' } as any)[reason] ?? reason;
+  }
+
   /** How a delivered order was confirmed — for the audit-at-a-glance label. */
   deliveredByLabel(by?: string | null): string {
     return ({ DRIVER_OTP: 'OTP confirmed', DRIVER: 'driver confirmed', ADMIN_OVERRIDE: 'admin override' } as any)[by || ''] ?? '';
@@ -287,14 +294,15 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
       this.confirm.ask({
         title: 'Cancel this order?',
         message: 'This notifies the customer, releases the reserved stock, and can\'t be undone.',
-        confirmLabel: 'Cancel order', variant: 'danger'
-      }).subscribe(ok => { if (ok) this.updateStatus(orderId, newStatus); });
+        confirmLabel: 'Cancel order', variant: 'danger',
+        input: { placeholder: 'Reason (saved on the order) — e.g. out of stock, customer request' }
+      }).subscribe(ok => { if (ok) this.updateStatus(orderId, newStatus, this.confirm.lastValue); });
       return;
     }
     this.updateStatus(orderId, newStatus);
   }
 
-  updateStatus(orderId: string, newStatus: Status): void {
+  updateStatus(orderId: string, newStatus: Status, reason?: string): void {
     const order = this.selectedOrder?.id === orderId ? this.selectedOrder
                 : this.orders.find(o => o.id === orderId) || null;
     // Block no-ops, terminal orders, and any non-adjacent (skip/backward) transition.
@@ -303,7 +311,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     // Optimistic UI — toastr feedback handled by OptimisticService
     this.orders = this.orders.map(o => (o.id === orderId ? { ...o, status: newStatus } : o));
     if (this.selectedOrder?.id === orderId) this.selectedOrder = { ...this.selectedOrder, status: newStatus };
-    this.adminSerivce.updateOrderStatus(orderId, newStatus);
+    this.adminSerivce.updateOrderStatus(orderId, newStatus, reason);
   }
 
   openDrawer(order: Order): void {

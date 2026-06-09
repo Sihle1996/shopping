@@ -55,6 +55,14 @@ public class ReviewController {
         ));
     }
 
+    /** Order IDs the signed-in customer has already reviewed — so the UI persists the "reviewed"
+     *  state across reloads instead of relying on in-session memory. */
+    @GetMapping("/api/reviews/my-order-ids")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> myReviewedOrderIds(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(reviewRepository.findReviewedOrderIdsByUserId(user.getId()));
+    }
+
     /** Authenticated user submits a review for their own delivered order */
     @PostMapping("/api/reviews/order/{orderId}")
     @PreAuthorize("isAuthenticated()")

@@ -17,7 +17,8 @@ import { ConfirmService } from '../../services/confirm.service';
         [confirmLabel]="opts.confirmLabel || 'Confirm'"
         [cancelLabel]="opts.cancelLabel || 'Cancel'"
         [variant]="opts.variant || 'danger'"
-        (confirmed)="confirm.respond(true)"
+        [input]="opts.input || null"
+        (confirmed)="confirm.respond(true, $event)"
         (cancelled)="confirm.respond(false)">
       </app-confirm-modal>
     </ng-container>

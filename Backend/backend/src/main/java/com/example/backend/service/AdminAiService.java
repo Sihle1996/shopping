@@ -708,7 +708,7 @@ public class AdminAiService {
      * (category, urgency) and an internal suggested resolution (e.g. a credit).
      * One-shot, read-only — the owner reviews/edits before anything is sent.
      */
-    public Map<String, Object> draftSupportReply(String subject, String message) {
+    public Map<String, Object> draftSupportReply(String subject, String message, UUID orderId) {
         Map<String, Object> fallback = Map.of(
                 "category", "Other",
                 "urgency", "medium",
@@ -716,11 +716,39 @@ public class AdminAiService {
                 "suggestedResolution", "Review the ticket and respond",
                 "suggestedStatus", "IN_PROGRESS");
         if (!anthropicClient.isConfigured()) return fallback;
+
+        // Pull the linked order's real details so the reply references THEM instead of asking the
+        // customer for an order number they already gave.
+        String orderContext = "";
+        if (orderId != null) {
+            Order o = orderRepository.findById(orderId).orElse(null);
+            if (o != null) {
+                StringBuilder sb = new StringBuilder("\nThis ticket is about order #")
+                        .append(o.getId().toString().substring(0, 8))
+                        .append(" — current status: ").append(o.getStatus());
+                if (o.getDriver() != null) {
+                    sb.append("; driver: ").append(o.getDriver().getFullName() != null
+                            ? o.getDriver().getFullName() : o.getDriver().getEmail());
+                }
+                if (o.getOrderItems() != null && !o.getOrderItems().isEmpty()) {
+                    sb.append("; items: ").append(o.getOrderItems().stream()
+                            .map(oi -> oi.getQuantity() + "x " + oi.getName())
+                            .reduce((a, b) -> a + ", " + b).orElse(""));
+                }
+                if (o.getOrderDate() != null) {
+                    sb.append("; placed ").append(java.time.Duration.between(o.getOrderDate(), java.time.Instant.now()).toMinutes()).append(" min ago");
+                }
+                orderContext = sb.append(".\nYou already have the order details above — DO NOT ask the customer "
+                        + "for their order number. Reference the actual status and give a specific next step.\n").toString();
+            }
+        }
+
         String prompt =
                 "You are a warm, professional customer-support agent for a South African food-delivery store on CraveIt.\n" +
                 "A customer raised this support ticket:\n" +
                 "Subject: " + (subject != null ? subject : "") + "\n" +
-                "Message: " + (message != null ? message : "") + "\n\n" +
+                "Message: " + (message != null ? message : "") + "\n" +
+                orderContext + "\n" +
                 "Return JSON only, no markdown:\n" +
                 "{\n" +
                 "  \"category\": \"<one of: Delivery, Food quality, Payment/Refund, Order issue, Account, Other>\",\n" +

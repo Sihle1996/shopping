@@ -113,9 +113,10 @@ public class AdminOrderController {
     // ✅ Update Order Status (Admin)
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/update/{orderId}")
-    public ResponseEntity<?> updateOrderStatus(@PathVariable UUID orderId, @RequestParam String status) {
+    public ResponseEntity<?> updateOrderStatus(@PathVariable UUID orderId, @RequestParam String status,
+                                               @RequestParam(required = false) String reason) {
         try {
-            OrderDTO updatedOrder = orderService.updateOrderStatus(orderId, status);
+            OrderDTO updatedOrder = orderService.updateOrderStatus(orderId, status, reason);
             return ResponseEntity.ok(updatedOrder);
         } catch (org.springframework.web.server.ResponseStatusException e) {
             // Surface the real status + reason (e.g. 400 "Cannot change a Delivered order")

@@ -175,14 +175,12 @@ orders$ = this.ordersSubject.asObservable();
     );
   }
 
-  updateOrderStatus(orderId: string, status: string): void {
+  updateOrderStatus(orderId: string, status: string, reason?: string): void {
     const current = this.ordersSubject.getValue();
     const updated = current.map(o => (o.id === orderId ? { ...o, status } : o));
-    const request$ = this.http.put(
-      `${this.baseUrl}/orders/update/${orderId}?status=${status}`,
-      null,
-      { headers: this.getAuthHeaders() }
-    );
+    const url = `${this.baseUrl}/orders/update/${orderId}?status=${encodeURIComponent(status)}`
+      + (reason ? `&reason=${encodeURIComponent(reason)}` : '');
+    const request$ = this.http.put(url, null, { headers: this.getAuthHeaders() });
 
     this.optimistic.enqueue(
       () => this.ordersSubject.next(updated),

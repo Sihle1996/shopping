@@ -89,6 +89,7 @@ export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewCheck
 
   ngOnInit(): void {
     this.fetchOrders();
+    this.loadReviewedOrders(); // persist the "reviewed" state across reloads (was in-session only)
     if (this.authService.isLoggedIn()) {
       this.loyaltyService.getBalance().subscribe({ next: b => this.loyaltyBalance = b, error: () => {} });
     }
@@ -152,6 +153,17 @@ export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewCheck
         .setLngLat([this.trackingOrder.deliveryLon, this.trackingOrder.deliveryLat])
         .addTo(this.trackingMap!);
     }
+  }
+
+  /** Which of my orders are already reviewed — from the server, so it survives a page reload. */
+  private loadReviewedOrders(): void {
+    const token = this.authService.getToken();
+    if (!token) return;
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+    this.http.get<string[]>(`${environment.apiUrl}/api/reviews/my-order-ids`, { headers }).subscribe({
+      next: ids => (ids || []).forEach(id => this.reviewedOrderIds.add(id)),
+      error: () => {}
+    });
   }
 
   fetchOrders(): void {

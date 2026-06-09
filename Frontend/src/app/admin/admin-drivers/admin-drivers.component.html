@@ -32,6 +32,13 @@
       </div>
     </div>
 
+    <!-- No delivery-time data yet — explain instead of showing a blank section (don't fake times) -->
+    <div *ngIf="driverInsights?.scorecard?.length && !driverInsights.insights?.length && !driverInsights.coverage && !driverInsights.fleetAvgMinutes"
+         class="px-5 py-3 border-b border-borderColor flex items-start gap-2 text-xs text-textMuted">
+      <i class="bi bi-info-circle mt-0.5"></i>
+      <span>Delivery-time insights appear once orders are completed with recorded timestamps. New deliveries are now timed, so this fills in as drivers complete orders.</span>
+    </div>
+
     <!-- Scorecard -->
     <div class="overflow-x-auto">
       <table class="w-full text-sm">

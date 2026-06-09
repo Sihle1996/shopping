@@ -407,6 +407,10 @@ public class OrderService {
     }
 
     public OrderDTO updateOrderStatus(UUID orderId, String status) {
+        return updateOrderStatus(orderId, status, null);
+    }
+
+    public OrderDTO updateOrderStatus(UUID orderId, String status, String cancelReason) {
         UUID tenantId = TenantContext.getCurrentTenantId();
         Order order = (tenantId != null)
                 ? orderRepository.findByIdAndTenant_Id(orderId, tenantId)
@@ -479,6 +483,8 @@ public class OrderService {
                 && !"Rejected".equals(order.getStatus());
 
         if (isCancelling) {
+            order.setCancellationReason(cancelReason != null && !cancelReason.isBlank()
+                    ? cancelReason.trim() : "ADMIN_CANCELLED");
             // Mirror the consume rule: if the order's stock had been deducted (a consumed status),
             // restore it; if it was only reserved (Pending/Scheduled), release the reservation.
             boolean wasConsumed = isConsumedStatus(order.getStatus());
@@ -662,7 +668,8 @@ public class OrderService {
                 userPhone,
                 null,  // deliveryOtp — set below if active
                 order.getScheduledDeliveryTime() != null ? order.getScheduledDeliveryTime().toString() : null,
-                order.getDeliveredBy()
+                order.getDeliveredBy(),
+                order.getCancellationReason()
         );
 
         if (order.getDriver() != null) {

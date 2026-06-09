@@ -180,9 +180,10 @@ export class AdminAiService {
     return this.http.post<AiQueryResponse>(`${this.base}/query`, { question, history: history || [] });
   }
 
-  /** Draft a support-ticket reply + triage (category, urgency, suggested resolution & status). */
-  draftSupport(subject: string, message: string): Observable<AiSupportDraft> {
-    return this.http.post<AiSupportDraft>(`${this.base}/support/draft`, { subject, message });
+  /** Draft a support-ticket reply + triage. Pass the linked orderId so the reply can reference
+   *  the actual order instead of asking the customer for a number they already gave. */
+  draftSupport(subject: string, message: string, orderId?: string): Observable<AiSupportDraft> {
+    return this.http.post<AiSupportDraft>(`${this.base}/support/draft`, { subject, message, orderId: orderId || '' });
   }
 
   /** Draft a short public reply to a single customer review. */

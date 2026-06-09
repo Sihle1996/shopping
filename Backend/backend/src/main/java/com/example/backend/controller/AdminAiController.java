@@ -65,7 +65,12 @@ public class AdminAiController {
         if (message.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "message is required"));
         }
-        return ResponseEntity.ok(adminAiService.draftSupportReply(subject, message));
+        UUID orderId = null;
+        String oid = body.get("orderId");
+        if (oid != null && !oid.isBlank()) {
+            try { orderId = UUID.fromString(oid.trim()); } catch (IllegalArgumentException ignored) {}
+        }
+        return ResponseEntity.ok(adminAiService.draftSupportReply(subject, message, orderId));
     }
 
     /** GET /api/admin/ai/driver-insights — driver scorecard + performance insights + coverage */

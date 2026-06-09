@@ -338,6 +338,10 @@
           </div>
 
           <ng-container *ngIf="!so.driverName || reassigning">
+          <div *ngIf="reassigning && so.driverName" class="flex items-center justify-between mb-2">
+            <span class="text-[11px] text-textMuted">Reassigning (currently <strong>{{ so.driverName }}</strong>)</span>
+            <button type="button" (click)="reassigning = false" class="text-xs text-textMuted hover:underline shrink-0">Cancel</button>
+          </div>
           <!-- Order-ready context: don't send a driver to wait at the store before the food's ready -->
           <div *ngIf="recsReadinessNote && !recsFailed" class="mb-3 flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
             <i class="bi bi-hourglass-split text-amber-600 mt-0.5"></i>
@@ -407,6 +411,11 @@
              class="p-6 pt-4 pb-20 border-t border-borderColor bg-white">
           <p class="text-sm text-textLight">
             Driver assignment is not available for <strong>{{ selectedOrder.status }}</strong> orders.
+          </p>
+          <p *ngIf="selectedOrder.cancellationReason && (selectedOrder.status === 'Cancelled' || selectedOrder.status === 'Rejected')"
+             class="text-xs text-textMuted mt-2 flex items-start gap-1.5">
+            <i class="bi bi-info-circle mt-0.5"></i>
+            <span><span class="font-medium">Reason:</span> {{ cancelReasonLabel(selectedOrder.cancellationReason) }}</span>
           </p>
         </div>
       </aside>

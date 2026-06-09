@@ -18,7 +18,12 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
         <!-- Title -->
         <h3 class="font-heading text-lg font-bold text-textDark text-center mb-1">{{ title }}</h3>
         <!-- Message -->
-        <p class="text-textLight text-sm text-center mb-6">{{ message }}</p>
+        <p class="text-textLight text-sm text-center mb-4">{{ message }}</p>
+        <!-- Optional reason / note input -->
+        <textarea *ngIf="input" #reasonBox (input)="inputValue = reasonBox.value" rows="2"
+                  [placeholder]="input.placeholder || 'Add a note…'"
+                  class="w-full mb-5 rounded-xl border border-borderColor bg-surface px-3 py-2 text-sm text-textDark
+                         focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"></textarea>
         <!-- Actions -->
         <div class="flex gap-3">
           <app-button *ngIf="showCancel" variant="ghost" size="md" [fullWidth]="true" (clicked)="onCancel()">
@@ -41,8 +46,11 @@ export class ConfirmModalComponent {
   @Input() cancelLabel = 'Cancel';
   @Input() variant: 'danger' | 'warning' | 'primary' = 'danger';
   @Input() showCancel = true;
+  @Input() input: { placeholder?: string } | null = null;
 
-  @Output() confirmed = new EventEmitter<void>();
+  inputValue = '';
+
+  @Output() confirmed = new EventEmitter<string>();
   @Output() cancelled = new EventEmitter<void>();
 
   get confirmVariant(): 'danger' | 'primary' {
@@ -74,7 +82,7 @@ export class ConfirmModalComponent {
   }
 
   onConfirm(): void {
-    this.confirmed.emit();
+    this.confirmed.emit(this.inputValue);
   }
 
   onCancel(): void {

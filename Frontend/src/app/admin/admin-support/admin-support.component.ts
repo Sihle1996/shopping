@@ -77,7 +77,7 @@ export class AdminSupportComponent implements OnInit {
   draftWithAi(): void {
     if (!this.selected || this.aiDrafting) return;
     this.aiDrafting = true;
-    this.ai.draftSupport(this.selected.subject, this.selected.message).subscribe({
+    this.ai.draftSupport(this.selected.subject, this.selected.message, this.selected.orderId).subscribe({
       next: (d) => {
         this.aiDrafting = false;
         this.aiCategory = d.category || '';

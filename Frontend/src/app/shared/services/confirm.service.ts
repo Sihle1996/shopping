@@ -7,6 +7,8 @@ export interface ConfirmOptions {
   confirmLabel?: string;
   cancelLabel?: string;
   variant?: 'danger' | 'warning' | 'primary';
+  /** When set, the dialog shows a text box; read the entered text from `lastValue` after confirm. */
+  input?: { placeholder?: string };
 }
 
 /**
@@ -23,8 +25,11 @@ export interface ConfirmOptions {
 export class ConfirmService {
   readonly current$ = new BehaviorSubject<ConfirmOptions | null>(null);
   private result$?: Subject<boolean>;
+  /** Text the user typed into the optional input, available after the confirm resolves. */
+  lastValue = '';
 
   ask(opts: ConfirmOptions): Observable<boolean> {
+    this.lastValue = '';
     this.result$?.complete();
     this.result$ = new Subject<boolean>();
     this.current$.next({
@@ -37,7 +42,8 @@ export class ConfirmService {
     return this.result$.asObservable();
   }
 
-  respond(ok: boolean): void {
+  respond(ok: boolean, value = ''): void {
+    this.lastValue = value;
     this.current$.next(null);
     this.result$?.next(ok);
     this.result$?.complete();
