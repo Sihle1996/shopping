@@ -46,6 +46,7 @@
           <tr class="text-[11px] uppercase tracking-wide text-textMuted border-b border-borderColor">
             <th class="text-left font-semibold px-5 py-2">Driver</th>
             <th class="text-right font-semibold px-3 py-2">Deliveries</th>
+            <th class="text-right font-semibold px-3 py-2">On-time</th>
             <th class="text-right font-semibold px-3 py-2">Avg time</th>
             <th class="text-right font-semibold px-5 py-2">Status</th>
           </tr>
@@ -54,6 +55,12 @@
           <tr *ngFor="let d of driverInsights.scorecard" class="border-b border-borderColor last:border-0 hover:bg-surface">
             <td class="px-5 py-2.5 font-medium text-textDark">{{ d.name }}</td>
             <td class="px-3 py-2.5 text-right text-textDark">{{ d.deliveries }}</td>
+            <td class="px-3 py-2.5 text-right">
+              <span *ngIf="d.onTimeRate != null" class="font-semibold"
+                    [ngClass]="d.onTimeRate >= 85 ? 'text-emerald-600' : d.onTimeRate >= 70 ? 'text-amber-600' : 'text-red-600'">{{ d.onTimeRate }}%</span>
+              <span *ngIf="d.onTimeRate == null" class="text-textMuted">—</span>
+              <span *ngIf="d.ratedDeliveries" class="block text-[10px] text-textMuted">{{ d.ratedDeliveries }} rated</span>
+            </td>
             <td class="px-3 py-2.5 text-right text-textDark">{{ d.avgDeliveryMinutes != null ? d.avgDeliveryMinutes + ' min' : '—' }}</td>
             <td class="px-5 py-2.5 text-right">
               <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"

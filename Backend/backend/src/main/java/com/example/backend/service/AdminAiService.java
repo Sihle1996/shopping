@@ -1015,6 +1015,9 @@ public class AdminAiService {
             row.put("name", d.getFullName() != null && !d.getFullName().isBlank() ? d.getFullName() : d.getEmail());
             row.put("deliveries", s != null ? s[0] : 0L);
             row.put("avgDeliveryMinutes", (s != null && s[2] > 0) ? (int) (s[1] / s[2]) : null);
+            // Recency-weighted on-time rate — the same signal the recommendation engine uses.
+            row.put("onTimeRate", d.getDeliveryScoreEwma() != null ? (int) Math.round(d.getDeliveryScoreEwma() * 100) : null);
+            row.put("ratedDeliveries", d.getDeliveryScoreSamples() != null ? d.getDeliveryScoreSamples() : 0);
             row.put("status", d.getDriverStatus() != null ? d.getDriverStatus().name() : null);
             scorecard.add(row);
         }

@@ -54,6 +54,10 @@ public class Order {
     @Column(name = "delivered_by", length = 20)
     private String deliveredBy;
 
+    /** When the order was dispatched (Out for Delivery) — start of the driver leg. */
+    @Column(name = "out_for_delivery_at")
+    private Instant outForDeliveryAt;
+
     private String deliveryAddress;
 
     private String paymentId;

@@ -423,14 +423,17 @@ public class OrderService {
         userRepository.save(driver);
     }
 
-    /** Did the order reach the customer within the promised window (+grace)? Whole-order time vs the
-     *  customer-facing estimate / scheduled time — directional reliability, smoothed by the EWMA.
-     *  (Includes prep time; a future refinement could isolate the dispatch->delivered leg.) */
+    /** Did the DRIVER deliver within the promised window (+grace)? Measures the dispatch->delivered
+     *  leg (outForDeliveryAt) so kitchen/admin delay doesn't count against the driver; falls back to
+     *  order placement for older orders without a dispatch timestamp. Benchmarked against the
+     *  customer estimate / scheduled time, smoothed by the EWMA. */
     private boolean wasOnTime(Order order) {
-        if (order.getOrderDate() == null || order.getDeliveredAt() == null) return true; // can't judge -> don't penalise
-        long actualMin = Duration.between(order.getOrderDate(), order.getDeliveredAt()).toMinutes();
+        if (order.getDeliveredAt() == null) return true; // can't judge -> don't penalise
+        Instant legStart = order.getOutForDeliveryAt() != null ? order.getOutForDeliveryAt() : order.getOrderDate();
+        if (legStart == null) return true;
+        long actualMin = Duration.between(legStart, order.getDeliveredAt()).toMinutes();
         long promisedMin;
-        if (order.getScheduledDeliveryTime() != null) {
+        if (order.getScheduledDeliveryTime() != null && order.getOrderDate() != null) {
             promisedMin = Math.max(0, Duration.between(order.getOrderDate(), order.getScheduledDeliveryTime()).toMinutes());
         } else {
             Integer est = order.getTenant() != null ? order.getTenant().getEstimatedDeliveryMinutes() : null;
@@ -561,6 +564,9 @@ public class OrderService {
         }
 
         order.setStatus(status);
+        if ("Out for Delivery".equals(status) && order.getOutForDeliveryAt() == null) {
+            order.setOutForDeliveryAt(Instant.now());
+        }
         if ("Delivered".equals(status) && order.getDeliveredAt() == null) {
             order.setDeliveredAt(Instant.now());
         }
@@ -650,6 +656,7 @@ public class OrderService {
 
         order.setDriver(driver);
         order.setStatus("Out for Delivery");
+        if (order.getOutForDeliveryAt() == null) order.setOutForDeliveryAt(Instant.now());
 
         Order updated = orderRepository.save(order);
         auditService.log(AuditService.ADMIN, "DRIVER_ASSIGNED", "ORDER", orderId,
