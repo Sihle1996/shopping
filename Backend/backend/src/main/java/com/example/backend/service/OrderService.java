@@ -259,6 +259,12 @@ public class OrderService {
                             .map(i -> i.getAddedBy() != null ? i.getAddedBy().getId() : null)
                             .filter(java.util.Objects::nonNull).distinct().count();
                     order.setGroupParticipantCount((int) participants);
+                    // Close the cart atomically with the order so it can't be orphaned (left OPEN
+                    // and re-checked-out) if the client's separate close() call fails or is skipped.
+                    if (!"CHECKED_OUT".equals(gc.getStatus())) {
+                        gc.setStatus("CHECKED_OUT");
+                        groupCartRepository.save(gc);
+                    }
                 }
             });
         }

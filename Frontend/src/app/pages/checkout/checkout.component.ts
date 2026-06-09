@@ -593,9 +593,9 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
           return;
         }
         if (groupToken) {
-          this.groupCartService.close(groupToken).subscribe({
-            error: () => this.toastr.warning('Order placed, but could not close the group cart.')
-          });
+          // The server already closed the cart atomically with the order; this call is just the
+          // live broadcast to any other participants. Best-effort — failure no longer orphans it.
+          this.groupCartService.close(groupToken).subscribe({ error: () => {} });
           this.groupCheckoutToken = null;
         }
         this.cartService.clearCart();
