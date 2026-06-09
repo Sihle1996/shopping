@@ -414,6 +414,15 @@ public class OrderService {
                 : orderRepository.findById(orderId)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
 
+        // Terminal orders are final — you can't un-deliver or un-cancel. Reject any change away
+        // from a completed/cancelled/rejected state (the UI also hides these, this is the guard).
+        String current = order.getStatus();
+        if (current != null && !current.equals(status)
+                && ("Delivered".equals(current) || "Cancelled".equals(current) || "Rejected".equals(current))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Cannot change the status of a " + current + " order");
+        }
+
         // Consume stock (deduct + release the reservation) the FIRST time an order leaves a
         // reserved-only state (Pending/Scheduled) for an active one (Confirmed/Preparing/Out for
         // Delivery/Delivered). The admin flow skips "Confirmed", so keying only on it left stock

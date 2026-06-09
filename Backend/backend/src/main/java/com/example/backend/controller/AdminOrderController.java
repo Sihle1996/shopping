@@ -117,6 +117,9 @@ public class AdminOrderController {
         try {
             OrderDTO updatedOrder = orderService.updateOrderStatus(orderId, status);
             return ResponseEntity.ok(updatedOrder);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            // Surface the real status + reason (e.g. 400 "Cannot change a Delivered order")
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
         } catch (RuntimeException e) {
             log.error("Order not found with id {}", orderId, e);
             return ResponseEntity.status(404).body("Order not found.");

@@ -28,6 +28,7 @@ interface Order {
   userEmail: string;
   paymentId?: string;
   orderNotes?: string;
+  driverName?: string | null;
   items: OrderItem[];
 }
 interface PageResp<T> {
@@ -53,6 +54,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   availableDrivers: Array<{ id: string; email: string }> = [];
   selectedDriverId: string | null = null;
   assigning = false;
+  reassigning = false; // an already-assigned order reveals the picker only on explicit "Reassign"
 
   // Driver recommendations (deterministic assist layer; falls back to the plain list on failure)
   recommendations: DriverRecommendation[] = [];
@@ -240,15 +242,25 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   trackById = (_: number, o: Order) => o.id;
 
   // ──────────────────────────────────────────────────────────────────────────────
+  /** Delivered/Cancelled/Rejected are final — no further status changes. */
+  isTerminal(status?: string | null): boolean {
+    return status === 'Delivered' || status === 'Cancelled' || status === 'Rejected';
+  }
+
   updateStatus(orderId: string, newStatus: Status): void {
+    const order = this.selectedOrder?.id === orderId ? this.selectedOrder
+                : this.orders.find(o => o.id === orderId) || null;
+    if (order && (this.isTerminal(order.status) || order.status === newStatus)) return; // final / no-op
     // Optimistic UI — toastr feedback handled by OptimisticService
     this.orders = this.orders.map(o => (o.id === orderId ? { ...o, status: newStatus } : o));
+    if (this.selectedOrder?.id === orderId) this.selectedOrder = { ...this.selectedOrder, status: newStatus };
     this.adminSerivce.updateOrderStatus(orderId, newStatus);
   }
 
   openDrawer(order: Order): void {
     this.selectedOrder = order;
     this.selectedDriverId = null;
+    this.reassigning = false;
     // Plain list — stays the override + the fallback if recommendations fail.
     this.adminSerivce.getAvailableDrivers().subscribe({
       next: (drivers: Array<{ id: string; email: string }>) => (this.availableDrivers = drivers ?? []),
@@ -318,6 +330,8 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
           );
         }
         this.assigning = false;
+        this.reassigning = false;
+        this.selectedDriverId = null;
         this.toastr.success('Driver assigned successfully');
       },
       error: () => {
