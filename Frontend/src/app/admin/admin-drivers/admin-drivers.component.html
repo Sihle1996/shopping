@@ -9,6 +9,34 @@
     </span>
   </app-page-header>
 
+  <!-- Recommendation feedback — is the AI suggestion actually helping? -->
+  <div *ngIf="recStats?.decisions" class="bg-white rounded-2xl shadow-card border border-borderColor mb-6 overflow-hidden">
+    <div class="px-5 py-3.5 border-b border-borderColor flex items-center gap-2">
+      <i class="bi bi-stars text-primary"></i>
+      <h3 class="text-sm font-semibold text-textDark">Recommendation feedback</h3>
+    </div>
+    <div class="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div>
+        <p class="text-[11px] uppercase tracking-wide text-textMuted">Accepted</p>
+        <p class="text-xl font-bold text-textDark">{{ recStats.acceptanceRate }}%</p>
+        <p class="text-[10px] text-textMuted">{{ recStats.decisions }} assignment{{ recStats.decisions === 1 ? '' : 's' }}</p>
+      </div>
+      <div *ngIf="recStats.comparable">
+        <p class="text-[11px] uppercase tracking-wide text-textMuted">Leg — accepted</p>
+        <p class="text-xl font-bold text-emerald-600">{{ recStats.avgLegAcceptedMin }} min</p>
+        <p class="text-[10px] text-textMuted">{{ recStats.acceptedSamples }} delivered</p>
+      </div>
+      <div *ngIf="recStats.comparable">
+        <p class="text-[11px] uppercase tracking-wide text-textMuted">Leg — overridden</p>
+        <p class="text-xl font-bold" [ngClass]="recStats.avgLegOverriddenMin > recStats.avgLegAcceptedMin ? 'text-red-600' : 'text-textDark'">{{ recStats.avgLegOverriddenMin }} min</p>
+        <p class="text-[10px] text-textMuted">{{ recStats.overriddenSamples }} delivered</p>
+      </div>
+    </div>
+    <p *ngIf="!recStats.comparable" class="px-5 pb-4 -mt-1 text-[11px] text-textMuted">
+      Accepted-vs-overridden delivery times appear once there are enough completed orders in each group (avoids noisy early numbers).
+    </p>
+  </div>
+
   <!-- Driver Operations Insights (admin scorecard) -->
   <div *ngIf="driverInsights?.scorecard?.length" class="bg-white rounded-2xl shadow-card border border-borderColor mb-6 overflow-hidden">
     <div class="px-5 py-3.5 border-b border-borderColor flex items-center gap-2">

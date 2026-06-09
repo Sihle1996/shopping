@@ -89,6 +89,12 @@ public class AdminAiController {
                 driverAssignmentService.recommendDrivers(TenantContext.getCurrentTenantId(), orderId));
     }
 
+    /** GET /api/admin/ai/recommendation-stats — is the engine helping? Acceptance rate + outcomes. */
+    @GetMapping("/recommendation-stats")
+    public ResponseEntity<Map<String, Object>> recommendationStats() {
+        return ResponseEntity.ok(driverAssignmentService.recommendationStats(TenantContext.getCurrentTenantId()));
+    }
+
     /** GET /api/admin/ai/review-book-insights — opportunities/risks from profit x review sentiment */
     @GetMapping("/review-book-insights")
     public ResponseEntity<Map<String, Object>> reviewBookInsights() {

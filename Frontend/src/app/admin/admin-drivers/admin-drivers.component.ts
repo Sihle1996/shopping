@@ -42,12 +42,22 @@ export class AdminDriversComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Recommendation feedback — is the AI suggestion helping?
+  recStats: any = null;
+  loadRecStats(): void {
+    this.adminAiService.recommendationStats().subscribe({
+      next: (s) => this.recStats = s,
+      error: () => {}
+    });
+  }
+
   constructor(private adminService: AdminService, private route: ActivatedRoute,
               private confirm: ConfirmService, private adminAiService: AdminAiService) {}
 
   ngOnInit(): void {
     this.loadDrivers();
     this.loadDriverInsights();
+    this.loadRecStats();
     const tour = this.route.snapshot.queryParamMap.get('tour');
     if (tour === 'add-driver') {
       setTimeout(() => {

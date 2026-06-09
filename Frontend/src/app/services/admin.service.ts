@@ -224,12 +224,12 @@ orders$ = this.ordersSubject.asObservable();
     });
   }
 
-  assignDriver(orderId: string, driverId: string): Observable<any> {
-  return this.http.post(
-    `${this.baseUrl}/orders/${orderId}/assign-driver?driverId=${driverId}`,
-    null,
-    { headers: this.getAuthHeaders() }
-  );
+  assignDriver(orderId: string, driverId: string,
+               recommendedDriverId?: string | null, recommendationScore?: number | null): Observable<any> {
+    let url = `${this.baseUrl}/orders/${orderId}/assign-driver?driverId=${driverId}`;
+    if (recommendedDriverId) url += `&recommendedDriverId=${recommendedDriverId}`;
+    if (recommendationScore != null) url += `&recommendationScore=${recommendationScore}`;
+    return this.http.post(url, null, { headers: this.getAuthHeaders() });
   }
 
   getAvailableDrivers(): Observable<any[]> {

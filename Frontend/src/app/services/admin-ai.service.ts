@@ -213,6 +213,11 @@ export class AdminAiService {
     return this.http.get<DriverRecommendationsResponse>(`${this.base}/driver-recommendations/${orderId}`);
   }
 
+  /** Is the recommendation engine helping? Acceptance rate + accepted-vs-overridden outcomes. */
+  recommendationStats(): Observable<any> {
+    return this.http.get<any>(`${this.base}/recommendation-stats`);
+  }
+
   /** Plan-fit advice: verdict + recommendation + structured usage stats. */
   planAdvice(): Observable<AiPlanAdvice> {
     return this.http.get<AiPlanAdvice>(`${this.base}/plan-advice`);

@@ -53,6 +53,7 @@ public class OrderService {
     private final WebPushService webPushService;
     private final PayoutLedgerService payoutLedgerService;
     private final AuditService auditService;
+    private final com.example.backend.repository.RecommendationDecisionRepository recommendationDecisionRepository;
 
     private void checkLowStock(MenuItem menuItem) {
         if (menuItem.getStock() >= 0 && menuItem.getStock() <= menuItem.getLowStockThreshold()) {
@@ -415,12 +416,42 @@ public class OrderService {
     public void recordDeliveryPerformance(Order order) {
         if (order == null || order.getDriver() == null) return;
         User driver = order.getDriver();
-        double onTime = wasOnTime(order) ? 1.0 : 0.0;
+        boolean onTime = wasOnTime(order);
         Double cur = driver.getDeliveryScoreEwma();
-        double next = (cur == null) ? onTime : EWMA_ALPHA * onTime + (1 - EWMA_ALPHA) * cur;
+        double next = (cur == null) ? (onTime ? 1.0 : 0.0)
+                : EWMA_ALPHA * (onTime ? 1.0 : 0.0) + (1 - EWMA_ALPHA) * cur;
         driver.setDeliveryScoreEwma(Math.round(next * 1000.0) / 1000.0);
         driver.setDeliveryScoreSamples((driver.getDeliveryScoreSamples() == null ? 0 : driver.getDeliveryScoreSamples()) + 1);
         userRepository.save(driver);
+
+        // Fill the recommendation-decision outcome for this order (driver leg + on-time).
+        try {
+            recommendationDecisionRepository.findByOrderId(order.getId()).ifPresent(dec -> {
+                if (order.getOutForDeliveryAt() != null && order.getDeliveredAt() != null) {
+                    dec.setDriverLegMinutes((int) Duration.between(order.getOutForDeliveryAt(), order.getDeliveredAt()).toMinutes());
+                }
+                dec.setOnTime(onTime);
+                dec.setDeliveredAt(order.getDeliveredAt() != null ? order.getDeliveredAt() : Instant.now());
+                recommendationDecisionRepository.save(dec);
+            });
+        } catch (Exception ignored) { /* outcome capture must not break delivery */ }
+    }
+
+    /** Upsert the per-order recommendation decision: what was recommended vs what was assigned. */
+    private void recordRecommendationDecision(UUID tenantId, UUID orderId, UUID recommendedDriverId,
+                                              Double score, UUID assignedDriverId) {
+        try {
+            com.example.backend.entity.RecommendationDecision dec = recommendationDecisionRepository
+                    .findByOrderId(orderId).orElseGet(com.example.backend.entity.RecommendationDecision::new);
+            dec.setTenantId(tenantId);
+            dec.setOrderId(orderId);
+            dec.setRecommendedDriverId(recommendedDriverId);
+            dec.setRecommendationScore(score);
+            dec.setAssignedDriverId(assignedDriverId);
+            dec.setAccepted(recommendedDriverId != null && recommendedDriverId.equals(assignedDriverId));
+            if (dec.getCreatedAt() == null) dec.setCreatedAt(Instant.now());
+            recommendationDecisionRepository.save(dec);
+        } catch (Exception ignored) { /* never break assignment because we couldn't log the decision */ }
     }
 
     /** Did the DRIVER deliver within the promised window (+grace)? Measures the dispatch->delivered
@@ -625,8 +656,13 @@ public class OrderService {
         return userRepository.findByRole(Role.DRIVER);
     }
 
-    @Transactional
     public OrderDTO assignDriverToOrder(UUID orderId, UUID driverId) {
+        return assignDriverToOrder(orderId, driverId, null, null);
+    }
+
+    @Transactional
+    public OrderDTO assignDriverToOrder(UUID orderId, UUID driverId,
+                                        UUID recommendedDriverId, Double recommendationScore) {
         UUID tenantId = TenantContext.getCurrentTenantId();
         Order order = (tenantId != null
                 ? orderRepository.findByIdAndTenant_Id(orderId, tenantId)
@@ -662,6 +698,7 @@ public class OrderService {
         auditService.log(AuditService.ADMIN, "DRIVER_ASSIGNED", "ORDER", orderId,
                 "Assigned " + (driver.getFullName() != null && !driver.getFullName().isBlank()
                         ? driver.getFullName() : driver.getEmail()));
+        recordRecommendationDecision(tenantId, orderId, recommendedDriverId, recommendationScore, driverId);
         OrderDTO dto = convertToOrderDTO(updated);
         if (updated.getUser() != null) {
             messagingTemplate.convertAndSend("/topic/orders/" + updated.getUser().getId(), dto);

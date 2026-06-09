@@ -167,12 +167,14 @@ public class AdminOrderController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> assignDriverToOrder(
             @PathVariable UUID orderId,
-            @RequestParam(required = false) UUID driverId) {
+            @RequestParam(required = false) UUID driverId,
+            @RequestParam(required = false) UUID recommendedDriverId,
+            @RequestParam(required = false) Double recommendationScore) {
         if (driverId == null) {
             return ResponseEntity.badRequest().body("Invalid driver ID");
         }
         try {
-            OrderDTO updated = orderService.assignDriverToOrder(orderId, driverId);
+            OrderDTO updated = orderService.assignDriverToOrder(orderId, driverId, recommendedDriverId, recommendationScore);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
             log.error("Error assigning driver {} to order {}", driverId, orderId, e);

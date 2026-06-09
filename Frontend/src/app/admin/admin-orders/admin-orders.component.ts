@@ -396,7 +396,8 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     if (!this.selectedOrder || !this.selectedDriverId) return;
     this.assigning = true;
 
-    this.adminSerivce.assignDriver(this.selectedOrder.id, this.selectedDriverId).subscribe({
+    const rec = this.recommendations.find(r => r.recommended); // what the engine suggested
+    this.adminSerivce.assignDriver(this.selectedOrder.id, this.selectedDriverId, rec?.driverId, rec?.score).subscribe({
       next: (updated: Order | void) => {
         if (updated) {
           this.selectedOrder = updated;

@@ -42,8 +42,11 @@ public class DriverAssignmentService {
     private static final double NEUTRAL_PERFORMANCE = 0.5;
     private static final List<String> ACTIVE_STATUSES = List.of("Out for Delivery", "Preparing");
 
+    private static final int MIN_OUTCOME_SAMPLE = 5; // before showing accepted-vs-overridden timing
+
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
+    private final com.example.backend.repository.RecommendationDecisionRepository recommendationDecisionRepository;
 
     @Transactional(readOnly = true)
     public Map<String, Object> recommendDrivers(UUID tenantId, UUID orderId) {
@@ -223,6 +226,35 @@ public class DriverAssignmentService {
             out.put("note", "Store location not set — ranking by workload and speed only.");
         }
         out.put("drivers", rows);
+        return out;
+    }
+
+    /** Does following the recommendation actually help? Acceptance rate + accepted-vs-overridden
+     *  driver-leg times (the comparison gated behind a minimum sample so it isn't noise). */
+    @Transactional(readOnly = true)
+    public Map<String, Object> recommendationStats(UUID tenantId) {
+        var all = recommendationDecisionRepository.findByTenantId(tenantId);
+        // Only decisions where a recommendation was actually shown count toward acceptance.
+        var withRec = all.stream().filter(d -> d.getRecommendedDriverId() != null).toList();
+        long total = withRec.size();
+        long accepted = withRec.stream().filter(com.example.backend.entity.RecommendationDecision::isAccepted).count();
+
+        var timed = withRec.stream().filter(d -> d.getDriverLegMinutes() != null).toList();
+        var accStats = timed.stream().filter(com.example.backend.entity.RecommendationDecision::isAccepted)
+                .mapToInt(com.example.backend.entity.RecommendationDecision::getDriverLegMinutes).summaryStatistics();
+        var ovrStats = timed.stream().filter(d -> !d.isAccepted())
+                .mapToInt(com.example.backend.entity.RecommendationDecision::getDriverLegMinutes).summaryStatistics();
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("decisions", total);
+        out.put("acceptanceRate", total > 0 ? (int) Math.round(100.0 * accepted / total) : null);
+        Integer avgAccepted = accStats.getCount() >= MIN_OUTCOME_SAMPLE ? (int) Math.round(accStats.getAverage()) : null;
+        Integer avgOverridden = ovrStats.getCount() >= MIN_OUTCOME_SAMPLE ? (int) Math.round(ovrStats.getAverage()) : null;
+        out.put("avgLegAcceptedMin", avgAccepted);
+        out.put("avgLegOverriddenMin", avgOverridden);
+        out.put("acceptedSamples", (int) accStats.getCount());
+        out.put("overriddenSamples", (int) ovrStats.getCount());
+        out.put("comparable", avgAccepted != null && avgOverridden != null);
         return out;
     }
 }
