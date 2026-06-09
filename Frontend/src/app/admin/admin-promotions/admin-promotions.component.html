@@ -229,11 +229,26 @@
           </div>
         </div>
 
-        <!-- Section: Discount -->
-        <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-3">Discount</p>
+        <!-- Section: Reward -->
+        <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-3">Reward</p>
+
+        <!-- Reward type -->
+        <div class="mb-4">
+          <div class="flex flex-wrap gap-2">
+            <label *ngFor="let rt of rewardTypes" class="flex-1 min-w-[130px]">
+              <input type="radio" formControlName="type" [value]="rt.value" class="peer sr-only" />
+              <span class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold cursor-pointer transition-colors
+                           border-borderColor bg-surface text-textDark
+                           peer-checked:border-primary peer-checked:bg-primary-100 peer-checked:text-primary">
+                <i class="bi" [ngClass]="rt.icon"></i>{{ rt.label }}
+              </span>
+            </label>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
 
-          <div>
+          <div *ngIf="form.get('type')?.value === 'PERCENT_OFF'">
             <label class="block text-xs font-medium text-textDark mb-1">Discount % <span class="text-danger">*</span></label>
             <div class="relative">
               <input type="number" min="1" max="100" formControlName="discountPercent" placeholder="e.g. 20"
@@ -245,6 +260,27 @@
             </div>
             <p *ngIf="form.get('discountPercent')?.touched && (form.get('discountPercent')?.hasError('min') || form.get('discountPercent')?.hasError('max'))"
                class="text-danger text-xs mt-1">Enter a value between 1 and 100</p>
+          </div>
+
+          <!-- Fixed amount off (AMOUNT_OFF) -->
+          <div *ngIf="form.get('type')?.value === 'AMOUNT_OFF'">
+            <label class="block text-xs font-medium text-textDark mb-1">Amount off (R) <span class="text-danger">*</span></label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-3 flex items-center text-textMuted text-sm font-medium">R</span>
+              <input type="number" min="1" formControlName="discountAmount" placeholder="e.g. 50"
+                     class="w-full pl-8 pr-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:border-transparent" />
+            </div>
+          </div>
+
+          <!-- Minimum spend — qualifying threshold (any type, optional) -->
+          <div>
+            <label class="block text-xs font-medium text-textDark mb-1">Minimum spend (R)</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-3 flex items-center text-textMuted text-sm font-medium">R</span>
+              <input type="number" min="0" formControlName="minSpend" placeholder="optional, e.g. 200"
+                     class="w-full pl-8 pr-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:border-transparent" />
+            </div>
+            <p class="text-[11px] text-textMuted mt-1">Subtotal must reach this for the reward.</p>
           </div>
 
           <div>
@@ -501,7 +537,7 @@
             <!-- Stats row -->
             <div class="flex items-center gap-2 mb-3 flex-wrap">
               <span class="inline-flex items-center gap-1 bg-green-50 text-green-700 text-xs font-bold px-2 py-1 rounded-lg">
-                <i class="bi bi-percent"></i>{{ p.discountPercent ?? 0 }}% off
+                <i class="bi" [ngClass]="rewardIcon(p)"></i>{{ promoLabel(p) }}
               </span>
               <span class="inline-flex items-center gap-1 bg-surface text-textMuted text-xs px-2 py-1 rounded-lg">
                 <i class="bi bi-bullseye"></i>{{ scopeLabel(p) }}

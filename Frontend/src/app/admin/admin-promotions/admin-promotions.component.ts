@@ -57,6 +57,12 @@ export class AdminPromotionsComponent implements OnInit {
     { value: 'MULTI_PRODUCT', label: 'Multiple Products' },
   ];
 
+  rewardTypes = [
+    { value: 'PERCENT_OFF',   label: '% off',         icon: 'bi-percent' },
+    { value: 'AMOUNT_OFF',    label: 'R off',         icon: 'bi-cash-stack' },
+    { value: 'FREE_DELIVERY', label: 'Free delivery', icon: 'bi-truck' },
+  ];
+
   categories: any[] = [];
   menuItems: any[] = [];
 
@@ -113,6 +119,9 @@ export class AdminPromotionsComponent implements OnInit {
       imageUrl: [''],
       badgeText: [''],
       discountPercent: [null, [Validators.min(1), Validators.max(100)]],
+      type: ['PERCENT_OFF', Validators.required],
+      minSpend: [null, [Validators.min(0)]],
+      discountAmount: [null, [Validators.min(1)]],
       startAt: ['', Validators.required],
       endAt: ['', Validators.required],
       appliesTo: ['ALL', Validators.required],
@@ -123,9 +132,14 @@ export class AdminPromotionsComponent implements OnInit {
       featured: [false],
     }, {
       validators: (g: AbstractControl) => {
-        const start = (g as FormGroup).get('startAt')?.value;
-        const end = (g as FormGroup).get('endAt')?.value;
-        return start && end && end <= start ? { dateOrder: true } : null;
+        const fg = g as FormGroup;
+        const start = fg.get('startAt')?.value;
+        const end = fg.get('endAt')?.value;
+        if (start && end && end <= start) return { dateOrder: true };
+        const type = fg.get('type')?.value;
+        if (type === 'PERCENT_OFF' && !fg.get('discountPercent')?.value) return { rewardRequired: true };
+        if (type === 'AMOUNT_OFF' && !fg.get('discountAmount')?.value) return { rewardRequired: true };
+        return null;
       }
     });
     this.refresh();
@@ -233,6 +247,9 @@ export class AdminPromotionsComponent implements OnInit {
       imageUrl: p.imageUrl,
       badgeText: p.badgeText,
       discountPercent: p.discountPercent ?? null,
+      type: p.type ?? 'PERCENT_OFF',
+      minSpend: p.minSpend ?? null,
+      discountAmount: p.discountAmount ?? null,
       startAt: p.startAt?.substring(0, 10),
       endAt: p.endAt?.substring(0, 10),
       appliesTo: p.appliesTo,
@@ -251,7 +268,7 @@ export class AdminPromotionsComponent implements OnInit {
     this.submitError = null;
     this.selectedProductIds = [];
     this.productSearch = '';
-    this.form.reset({ appliesTo: 'ALL', active: true, featured: false });
+    this.form.reset({ appliesTo: 'ALL', type: 'PERCENT_OFF', active: true, featured: false });
   }
 
   toggleProductSelection(id: string): void {
@@ -393,6 +410,19 @@ export class AdminPromotionsComponent implements OnInit {
 
   getProductNameById(id: string): string {
     return this.availableMenuItems.find(i => i.id === id)?.name ?? id.substring(0, 8);
+  }
+
+  /** Human label for a promo's reward, e.g. "Free delivery over R200" / "R50 off over R300" / "20% off". */
+  promoLabel(p: Promotion): string {
+    const min = p.minSpend ? ` over R${p.minSpend}` : '';
+    if (p.type === 'FREE_DELIVERY') return `Free delivery${min}`;
+    if (p.type === 'AMOUNT_OFF') return `R${p.discountAmount ?? 0} off${min}`;
+    return `${p.discountPercent ?? 0}% off${min}`;
+  }
+  rewardIcon(p: Promotion): string {
+    if (p.type === 'FREE_DELIVERY') return 'bi-truck';
+    if (p.type === 'AMOUNT_OFF') return 'bi-cash-stack';
+    return 'bi-percent';
   }
 
   scopeLabel(p: Promotion): string {

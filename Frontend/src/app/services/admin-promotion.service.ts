@@ -10,6 +10,9 @@ export interface PromotionRequest {
   imageUrl?: string;
   badgeText?: string;
   discountPercent?: number;
+  type?: 'PERCENT_OFF' | 'AMOUNT_OFF' | 'FREE_DELIVERY';
+  minSpend?: number | null;
+  discountAmount?: number | null;
   startAt: string; // ISO string
   endAt: string;   // ISO string
   appliesTo: 'ALL' | 'CATEGORY' | 'PRODUCT' | 'MULTI_PRODUCT';
