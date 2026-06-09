@@ -54,6 +54,7 @@ public class OrderService {
     private final PayoutLedgerService payoutLedgerService;
     private final AuditService auditService;
     private final com.example.backend.repository.RecommendationDecisionRepository recommendationDecisionRepository;
+    private final com.example.backend.repository.GroupCartRepository groupCartRepository;
 
     private void checkLowStock(MenuItem menuItem) {
         if (menuItem.getStock() >= 0 && menuItem.getStock() <= menuItem.getLowStockThreshold()) {
@@ -244,6 +245,23 @@ public class OrderService {
         String notes = request.getOrderNotes();
         if (notes != null && notes.length() > 500) notes = notes.substring(0, 500);
         order.setOrderNotes(notes);
+
+        // Group-order attribution — preserve the link to the originating group cart (capture only;
+        // not yet wired into any scoring). participantCount = distinct people who added items.
+        String groupToken = request.getGroupCartToken();
+        if (groupToken != null && !groupToken.isBlank()) {
+            UUID currentTenant = TenantContext.getCurrentTenantId();
+            groupCartRepository.findByToken(groupToken.trim()).ifPresent(gc -> {
+                if (gc.getTenant() == null || currentTenant == null || gc.getTenant().getId().equals(currentTenant)) {
+                    order.setGroupCartId(gc.getId());
+                    order.setGroupOrder(true);
+                    long participants = gc.getItems() == null ? 0 : gc.getItems().stream()
+                            .map(i -> i.getAddedBy() != null ? i.getAddedBy().getId() : null)
+                            .filter(java.util.Objects::nonNull).distinct().count();
+                    order.setGroupParticipantCount((int) participants);
+                }
+            });
+        }
 
         // Set tenant from context and compute platform commission fee
         UUID tenantId = TenantContext.getCurrentTenantId();

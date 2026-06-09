@@ -26,4 +26,5 @@ public class OrderRequestDTO {
     private int loyaltyPointsRedeemed;
     private Double deliveryFee;
     private String scheduledDeliveryTime;
+    private String groupCartToken; // set when this order originates from a group cart
 }

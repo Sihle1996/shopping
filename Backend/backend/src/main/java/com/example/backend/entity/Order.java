@@ -58,6 +58,14 @@ public class Order {
     @Column(name = "out_for_delivery_at")
     private Instant outForDeliveryAt;
 
+    /** Originating group cart (if this order came from a shared/group cart) + capture-only signals. */
+    @Column(name = "group_cart_id")
+    private UUID groupCartId;
+    @Column(name = "is_group_order", nullable = false)
+    private boolean groupOrder = false;
+    @Column(name = "group_participant_count")
+    private Integer groupParticipantCount;
+
     private String deliveryAddress;
 
     private String paymentId;

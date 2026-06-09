@@ -574,7 +574,8 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       status: 'PENDING',
       scheduledDeliveryTime: this.scheduleForLater && this.scheduledDeliveryTime
         ? new Date(this.scheduledDeliveryTime).toISOString()
-        : null
+        : null,
+      groupCartToken: this.groupCheckoutToken || null // preserve the originating group cart link
     };
 
     const headers: any = { 'Content-Type': 'application/json' };
