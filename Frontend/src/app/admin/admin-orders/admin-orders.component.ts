@@ -247,10 +247,24 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     return status === 'Delivered' || status === 'Cancelled' || status === 'Rejected';
   }
 
+  /** Lifecycle state machine — mirrors the backend; no skipping straight to Delivered. */
+  private statusFlow: Record<string, string[]> = {
+    'Pending':          ['Preparing', 'Cancelled'],
+    'Scheduled':        ['Preparing', 'Cancelled'],
+    'Confirmed':        ['Preparing', 'Cancelled'],
+    'Preparing':        ['Out for Delivery', 'Cancelled'],
+    'Out for Delivery': ['Delivered', 'Cancelled'],
+  };
+  canMoveTo(from: string | undefined | null, to: string): boolean {
+    return !!from && (this.statusFlow[from] ?? []).includes(to);
+  }
+
   updateStatus(orderId: string, newStatus: Status): void {
     const order = this.selectedOrder?.id === orderId ? this.selectedOrder
                 : this.orders.find(o => o.id === orderId) || null;
-    if (order && (this.isTerminal(order.status) || order.status === newStatus)) return; // final / no-op
+    // Block no-ops, terminal orders, and any non-adjacent (skip/backward) transition.
+    if (order && (order.status === newStatus || this.isTerminal(order.status)
+        || !this.canMoveTo(order.status, newStatus))) return;
     // Optimistic UI — toastr feedback handled by OptimisticService
     this.orders = this.orders.map(o => (o.id === orderId ? { ...o, status: newStatus } : o));
     if (this.selectedOrder?.id === orderId) this.selectedOrder = { ...this.selectedOrder, status: newStatus };

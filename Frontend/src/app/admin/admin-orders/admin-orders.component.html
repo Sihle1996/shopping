@@ -283,11 +283,11 @@
           <div class="flex flex-wrap gap-2">
             <button *ngFor="let s of orderStatuses"
                     (click)="updateStatus(so.id, s)"
-                    [disabled]="so.status === s || isTerminal(so.status)"
+                    [disabled]="so.status === s || isTerminal(so.status) || !canMoveTo(so.status, s)"
                     class="px-3 py-2 rounded-xl text-xs font-semibold transition-all border disabled:cursor-not-allowed"
                     [ngClass]="so.status === s
                       ? 'border-primary bg-primary-100 text-primary cursor-default'
-                      : isTerminal(so.status)
+                      : (isTerminal(so.status) || !canMoveTo(so.status, s))
                         ? 'border-borderColor bg-white text-textMuted opacity-40'
                         : 'border-borderColor bg-white text-textDark hover:border-primary hover:text-primary'">
               {{ s }}

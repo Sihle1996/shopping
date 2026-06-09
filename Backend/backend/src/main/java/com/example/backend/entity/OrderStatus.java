@@ -47,8 +47,11 @@ public enum OrderStatus {
      */
     public List<OrderStatus> nextStatuses() {
         return switch (this) {
-            case PENDING          -> List.of(CONFIRMED, CANCELLED, REJECTED);
-            case SCHEDULED        -> List.of(CONFIRMED, CANCELLED);
+            // The admin flow accepts-and-starts an order directly (Pending -> Preparing), so that
+            // edge is allowed — but a jump straight to Delivered/Out for Delivery is NOT: an order
+            // must pass through Preparing then Out for Delivery before it can be Delivered.
+            case PENDING          -> List.of(CONFIRMED, PREPARING, CANCELLED, REJECTED);
+            case SCHEDULED        -> List.of(CONFIRMED, PREPARING, CANCELLED);
             case CONFIRMED        -> List.of(PREPARING, CANCELLED);
             case PREPARING        -> List.of(OUT_FOR_DELIVERY, CANCELLED);
             case OUT_FOR_DELIVERY -> List.of(DELIVERED, CANCELLED);

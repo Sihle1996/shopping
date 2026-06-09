@@ -423,6 +423,20 @@ public class OrderService {
                     "Cannot change the status of a " + current + " order");
         }
 
+        // Enforce the lifecycle state machine — no skipping straight to Delivered, no going
+        // backward. An order must walk Preparing -> Out for Delivery -> Delivered.
+        OrderStatus from = OrderStatus.fromLabel(current);
+        OrderStatus to = OrderStatus.fromLabel(status);
+        if (to == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown status: " + status);
+        }
+        if (from != null && from != to && !from.canTransitionTo(to)) {
+            String allowed = from.nextStatuses().stream().map(OrderStatus::label)
+                    .reduce((a, b) -> a + ", " + b).orElse("none");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Can't move a " + current + " order to " + status + ". Allowed next: " + allowed + ".");
+        }
+
         // Consume stock (deduct + release the reservation) the FIRST time an order leaves a
         // reserved-only state (Pending/Scheduled) for an active one (Confirmed/Preparing/Out for
         // Delivery/Delivered). The admin flow skips "Confirmed", so keying only on it left stock
