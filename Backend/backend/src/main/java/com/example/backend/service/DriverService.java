@@ -97,6 +97,7 @@ public class DriverService {
         order.setDeliveredBy("DRIVER_OTP"); // gold standard — customer-confirmed
         if (order.getDeliveredAt() == null) order.setDeliveredAt(java.time.Instant.now());
         orderRepository.save(order);
+        orderService.recordDeliveryPerformance(order);
         auditService.log(AuditService.DRIVER, "ORDER_DELIVERED", "ORDER", orderId, "Delivered — OTP confirmed");
 
         var dto = orderService.convertToOrderDTO(order);
@@ -133,6 +134,7 @@ public class DriverService {
         order.setDeliveredBy("DRIVER"); // driver-confirmed without an OTP
         if (order.getDeliveredAt() == null) order.setDeliveredAt(java.time.Instant.now());
         orderRepository.save(order);
+        orderService.recordDeliveryPerformance(order);
         auditService.log(AuditService.DRIVER, "ORDER_DELIVERED", "ORDER", orderId, "Delivered by driver");
 
         var dto = orderService.convertToOrderDTO(order);

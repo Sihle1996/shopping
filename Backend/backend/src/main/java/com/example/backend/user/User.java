@@ -67,6 +67,13 @@ public class User implements UserDetails {
     private Double speed;
     private Instant lastPing;
 
+    /** Recency-weighted on-time rate (EWMA, 0..1) + how many deliveries have fed it. */
+    @Column(name = "delivery_score_ewma")
+    private Double deliveryScoreEwma;
+    @Column(name = "delivery_score_samples")
+    @Builder.Default
+    private Integer deliveryScoreSamples = 0;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id")
     @JsonIgnore

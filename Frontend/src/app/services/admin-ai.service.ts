@@ -138,6 +138,8 @@ export interface DriverRecommendation {
   activeOrders: number;
   avgDeliveryMinutes: number | null;
   deliveries: number;
+  onTimeRate?: number | null;   // recency-weighted on-time % (EWMA)
+  onTimeSamples?: number;
   confidence: 'HIGH' | 'MEDIUM' | 'LOW';
   reasons: string[];
 }

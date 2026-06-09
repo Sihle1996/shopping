@@ -153,12 +153,12 @@ public class DriverAssignmentService {
 
             double freeness = 1.0 / (1 + active);
 
-            boolean hasHistory = avg != null;
-            double performance = NEUTRAL_PERFORMANCE;
-            if (avg != null && fleetAvg != null && fleetAvg > 0) {
-                double ratio = (double) avg / fleetAvg;
-                performance = Math.max(0.0, Math.min(1.0, 1.5 - ratio));
-            }
+            // Performance = recency-weighted on-time rate (EWMA), not raw average time. Needs a few
+            // deliveries before it counts; otherwise neutral.
+            Double onTime = d.getDeliveryScoreEwma();
+            int onTimeSamples = d.getDeliveryScoreSamples() != null ? d.getDeliveryScoreSamples() : 0;
+            boolean hasHistory = onTime != null && onTimeSamples >= MIN_TIMED_DELIVERIES;
+            double performance = hasHistory ? Math.max(0.0, Math.min(1.0, onTime)) : NEUTRAL_PERFORMANCE;
 
             double score = W_PROX * proximity + W_FREE * freeness + W_PERF * performance;
             String confidence = (locationFresh && hasHistory) ? "HIGH"
@@ -178,8 +178,9 @@ public class DriverAssignmentService {
             }
             reasons.add(active == 0 ? "free now (0 active orders)"
                     : active + " active " + (active == 1 ? "delivery" : "deliveries"));
-            if (avg != null && fleetAvg != null) {
-                reasons.add("avg " + avg + " min vs fleet " + fleetAvg);
+            Integer onTimePct = hasHistory ? (int) Math.round(onTime * 100) : null;
+            if (hasHistory) {
+                reasons.add(onTimePct + "% on-time (" + onTimeSamples + " deliveries)");
             } else {
                 reasons.add("limited delivery history");
             }
@@ -197,6 +198,8 @@ public class DriverAssignmentService {
             r.put("activeOrders", active);
             r.put("avgDeliveryMinutes", avg);
             r.put("deliveries", deliveries);
+            r.put("onTimeRate", onTimePct);
+            r.put("onTimeSamples", onTimeSamples);
             r.put("confidence", confidence);
             r.put("reasons", reasons);
             rows.add(r);

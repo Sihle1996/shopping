@@ -25,6 +25,7 @@ import com.example.backend.service.LoyaltyService;
 import com.example.backend.service.SubscriptionEnforcementService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -407,6 +408,37 @@ public class OrderService {
                 || "Out for Delivery".equals(s) || "Delivered".equals(s);
     }
 
+    private static final double EWMA_ALPHA = 0.25;     // weight on the latest delivery
+    private static final long   ONTIME_GRACE_MIN = 15; // leeway over the promised window
+
+    /** O(1) update of the driver's recency-weighted on-time score when a delivery completes. */
+    public void recordDeliveryPerformance(Order order) {
+        if (order == null || order.getDriver() == null) return;
+        User driver = order.getDriver();
+        double onTime = wasOnTime(order) ? 1.0 : 0.0;
+        Double cur = driver.getDeliveryScoreEwma();
+        double next = (cur == null) ? onTime : EWMA_ALPHA * onTime + (1 - EWMA_ALPHA) * cur;
+        driver.setDeliveryScoreEwma(Math.round(next * 1000.0) / 1000.0);
+        driver.setDeliveryScoreSamples((driver.getDeliveryScoreSamples() == null ? 0 : driver.getDeliveryScoreSamples()) + 1);
+        userRepository.save(driver);
+    }
+
+    /** Did the order reach the customer within the promised window (+grace)? Whole-order time vs the
+     *  customer-facing estimate / scheduled time — directional reliability, smoothed by the EWMA.
+     *  (Includes prep time; a future refinement could isolate the dispatch->delivered leg.) */
+    private boolean wasOnTime(Order order) {
+        if (order.getOrderDate() == null || order.getDeliveredAt() == null) return true; // can't judge -> don't penalise
+        long actualMin = Duration.between(order.getOrderDate(), order.getDeliveredAt()).toMinutes();
+        long promisedMin;
+        if (order.getScheduledDeliveryTime() != null) {
+            promisedMin = Math.max(0, Duration.between(order.getOrderDate(), order.getScheduledDeliveryTime()).toMinutes());
+        } else {
+            Integer est = order.getTenant() != null ? order.getTenant().getEstimatedDeliveryMinutes() : null;
+            promisedMin = est != null ? est : 45;
+        }
+        return actualMin <= promisedMin + ONTIME_GRACE_MIN;
+    }
+
     public OrderDTO updateOrderStatus(UUID orderId, String status) {
         return updateOrderStatus(orderId, status, null);
     }
@@ -536,6 +568,7 @@ public class OrderService {
         auditService.log(AuditService.ADMIN, "ORDER_STATUS_CHANGED", "ORDER", orderId,
                 current + " → " + status
                         + (cancelReason != null && !cancelReason.isBlank() ? " (" + cancelReason.trim() + ")" : ""));
+        if ("Delivered".equals(status)) recordDeliveryPerformance(updated);
         OrderDTO dto = convertToOrderDTO(updated);
 
         // Push real-time status update to the customer (only if authenticated user)
