@@ -30,6 +30,7 @@ public class SmartAlertService {
 
     private final MenuItemRepository menuItemRepository;
     private final OrderRepository orderRepository;
+    private final com.example.backend.repository.UserRepository userRepository;
     private final PromotionRepository promotionRepository;
     private final TenantRepository tenantRepository;
     private final AiAlertRepository aiAlertRepository;
@@ -324,6 +325,32 @@ public class SmartAlertService {
                     "These weren't accepted in time and were cancelled automatically. Watching the order bell "
                             + "during peak hours — or lengthening the auto-cancel window in Settings — would save them.",
                     null);
+        }
+
+        // 9) Capacity vs peak — your busiest window is starting and barely anyone's on shift.
+        Map<Integer, Integer> deliveryHours = new HashMap<>();
+        for (Order o : last30) {
+            if (o.getDeliveredAt() != null) deliveryHours.merge(o.getDeliveredAt().atZone(SAST).getHour(), 1, Integer::sum);
+        }
+        if (!deliveryHours.isEmpty()) {
+            int peakHour = deliveryHours.entrySet().stream().max(Map.Entry.comparingByValue()).get().getKey();
+            int peakCount = deliveryHours.get(peakHour);
+            int totalDeliveries = deliveryHours.values().stream().mapToInt(Integer::intValue).sum();
+            int nowHour = now.atZone(SAST).getHour();
+            boolean realPeak = peakCount >= 8 && peakCount >= totalDeliveries * 0.2;     // a genuine rush, not noise
+            boolean approaching = nowHour == ((peakHour + 23) % 24) || nowHour == peakHour; // the hour before, or in it
+            if (realPeak && approaching) {
+                long availableDrivers = userRepository.findByRoleAndTenant_Id(com.example.backend.user.Role.DRIVER, tenantId)
+                        .stream().filter(u -> u.getDriverStatus() == com.example.backend.user.DriverStatus.AVAILABLE).count();
+                if (availableDrivers <= 1) {
+                    created += raise(activeKeys, tenant, "capacity-peak", "high",
+                            "Low driver cover for your busy window",
+                            String.format("Your busiest window (~%02d:00) is starting and only %d driver%s available. "
+                                    + "Getting more on shift now will keep deliveries on time.",
+                                    peakHour, availableDrivers, availableDrivers == 1 ? " is" : "s are"),
+                            null);
+                }
+            }
         }
 
         // Self-clear: any alert still showing (NEW) or dismissed whose condition no longer

@@ -1005,6 +1005,17 @@ public class AdminAiService {
                 hourHist.merge(o.getDeliveredAt().atZone(sast).getHour(), 1, Integer::sum);
             }
         }
+        // This week's load distribution (grounded — real deliveries, last 7 days).
+        Instant weekAgo = now.minus(Duration.ofDays(7));
+        Map<UUID, Long> weekCount = new HashMap<>();
+        long weekTotal = 0;
+        for (Order o : delivered) {
+            if (o.getDeliveredAt() != null && o.getDeliveredAt().isAfter(weekAgo)) {
+                weekCount.merge(o.getDriver().getId(), 1L, Long::sum);
+                weekTotal++;
+            }
+        }
+
         // No driver rating: CraveIt reviews score the ORDER (food + experience), not the
         // driver, so attributing them to a driver would conflate kitchen issues with driving.
         // Deliveries and average time ARE genuinely driver-attributable; those are what we show.
@@ -1014,6 +1025,8 @@ public class AdminAiService {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("name", d.getFullName() != null && !d.getFullName().isBlank() ? d.getFullName() : d.getEmail());
             row.put("deliveries", s != null ? s[0] : 0L);
+            long wk = weekCount.getOrDefault(d.getId(), 0L);
+            row.put("weekShare", weekTotal > 0 ? (int) Math.round(100.0 * wk / weekTotal) : null);
             row.put("avgDeliveryMinutes", (s != null && s[2] > 0) ? (int) (s[1] / s[2]) : null);
             // Recency-weighted on-time rate — the same signal the recommendation engine uses.
             row.put("onTimeRate", d.getDeliveryScoreEwma() != null ? (int) Math.round(d.getDeliveryScoreEwma() * 100) : null);
@@ -1045,6 +1058,28 @@ public class AdminAiService {
                 int pct = (int) Math.round(((Integer) slow.get("avgDeliveryMinutes") - fleetAvg) / (double) fleetAvg * 100);
                 insights.add(insightRow("OPPORTUNITY", slow.get("name") + "'s average delivery time ("
                         + slow.get("avgDeliveryMinutes") + " min) is " + pct + "% above the fleet average of " + fleetAvg + " min."));
+            }
+        }
+
+        // Load distribution — flag when one driver is carrying a large share this week.
+        if (weekTotal >= 10) {
+            scorecard.stream()
+                    .filter(d -> d.get("weekShare") != null && (Integer) d.get("weekShare") >= 40)
+                    .max(Comparator.comparingInt(d -> (Integer) d.get("weekShare")))
+                    .ifPresent(d -> insights.add(insightRow("OPPORTUNITY",
+                            d.get("name") + " handled " + d.get("weekShare") + "% of deliveries this week — consider spreading the load.")));
+        }
+
+        // Stale-location risk — a driver mid-delivery whose location hasn't updated recently.
+        for (Order o : orderRepository.findByStatusAndTenant_IdOrderByOrderDateDesc("Out for Delivery", tenantId)) {
+            User drv = o.getDriver();
+            if (drv == null) continue;
+            long ageMin = drv.getLastPing() != null ? Duration.between(drv.getLastPing(), now).toMinutes() : Long.MAX_VALUE;
+            if (ageMin >= 30) {
+                String who = drv.getFullName() != null && !drv.getFullName().isBlank() ? drv.getFullName() : drv.getEmail();
+                insights.add(insightRow("RISK", who + " has an active delivery but " + (drv.getLastPing() == null
+                        ? "has never shared a location." : "hasn't updated location in " + ageMin + " min.")));
+                break; // one stale-location flag is enough; don't flood the card
             }
         }
 

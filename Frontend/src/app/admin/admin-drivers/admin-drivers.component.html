@@ -49,8 +49,8 @@
     <div *ngIf="driverInsights.insights?.length || driverInsights.coverage" class="px-5 py-3 space-y-2 border-b border-borderColor">
       <div *ngFor="let ins of driverInsights.insights" class="flex items-start gap-2 text-xs">
         <span class="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-              [ngClass]="ins.type === 'TOP' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'">
-          <i class="bi text-[10px]" [ngClass]="ins.type === 'TOP' ? 'bi-trophy-fill' : 'bi-exclamation-triangle-fill'"></i>
+              [ngClass]="ins.type === 'TOP' ? 'bg-emerald-100 text-emerald-600' : ins.type === 'RISK' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'">
+          <i class="bi text-[10px]" [ngClass]="ins.type === 'TOP' ? 'bi-trophy-fill' : ins.type === 'RISK' ? 'bi-exclamation-octagon-fill' : 'bi-exclamation-triangle-fill'"></i>
         </span>
         <p class="text-textDark leading-snug">{{ ins.message }}</p>
       </div>
@@ -74,6 +74,7 @@
           <tr class="text-[11px] uppercase tracking-wide text-textMuted border-b border-borderColor">
             <th class="text-left font-semibold px-5 py-2">Driver</th>
             <th class="text-right font-semibold px-3 py-2">Deliveries</th>
+            <th class="text-right font-semibold px-3 py-2">This week</th>
             <th class="text-right font-semibold px-3 py-2">On-time</th>
             <th class="text-right font-semibold px-3 py-2">Avg time</th>
             <th class="text-right font-semibold px-5 py-2">Status</th>
@@ -83,6 +84,7 @@
           <tr *ngFor="let d of driverInsights.scorecard" class="border-b border-borderColor last:border-0 hover:bg-surface">
             <td class="px-5 py-2.5 font-medium text-textDark">{{ d.name }}</td>
             <td class="px-3 py-2.5 text-right text-textDark">{{ d.deliveries }}</td>
+            <td class="px-3 py-2.5 text-right text-textDark">{{ d.weekShare != null ? d.weekShare + '%' : '—' }}</td>
             <td class="px-3 py-2.5 text-right">
               <span *ngIf="d.onTimeRate != null" class="font-semibold"
                     [ngClass]="d.onTimeRate >= 85 ? 'text-emerald-600' : d.onTimeRate >= 70 ? 'text-amber-600' : 'text-red-600'">{{ d.onTimeRate }}%</span>

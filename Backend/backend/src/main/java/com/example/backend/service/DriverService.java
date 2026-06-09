@@ -157,7 +157,14 @@ public class DriverService {
     }
 
     public void updateAvailability(User driver, DriverStatus status) {
+        DriverStatus old = driver.getDriverStatus();
         driver.setDriverStatus(status);
         userRepository.save(driver);
+        // Capture the change so availability history accumulates (for future peak-coverage insight).
+        if (status != null && status != old) {
+            auditService.log(driver.getTenant() != null ? driver.getTenant().getId() : null,
+                    AuditService.DRIVER, "DRIVER_AVAILABILITY", "DRIVER", driver.getId(),
+                    driver.getEmail() + " → " + status.name());
+        }
     }
 }
