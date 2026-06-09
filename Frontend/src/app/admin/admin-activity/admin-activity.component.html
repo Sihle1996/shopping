@@ -1,0 +1,33 @@
+<section class="p-4 sm:p-6 max-w-3xl mx-auto">
+  <header class="mb-5">
+    <h2 class="font-heading text-xl font-bold text-textDark">Activity</h2>
+    <p class="text-sm text-textMuted">Who did what, across orders, menu, promos, settings and AI — most recent first.</p>
+  </header>
+
+  <div *ngIf="loading" class="text-sm text-textMuted flex items-center gap-2">
+    <i class="bi bi-arrow-repeat animate-spin"></i> Loading activity…
+  </div>
+
+  <p *ngIf="!loading && !events.length" class="text-sm text-textMuted">No activity recorded yet.</p>
+
+  <div *ngIf="events.length" class="bg-white border border-borderColor rounded-2xl shadow-sm divide-y divide-borderColor">
+    <div *ngFor="let ev of events" class="flex items-start gap-3 px-4 py-3">
+      <span class="mt-0.5 w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" [ngClass]="sourceMeta(ev.source).cls">
+        <i class="bi text-xs" [ngClass]="sourceMeta(ev.source).icon"></i>
+      </span>
+      <div class="min-w-0 flex-1">
+        <p class="text-sm text-textDark">{{ ev.summary }}</p>
+        <p class="text-[11px] text-textMuted truncate">
+          {{ ev.actor || ev.source }}<span *ngIf="ev.entityType"> · {{ ev.entityType | titlecase }}</span><span *ngIf="ev.createdAt"> · {{ ev.createdAt | date:'MMM d, HH:mm' }}</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="hasMore" class="mt-4 text-center">
+    <button type="button" (click)="more()" [disabled]="loadingMore"
+            class="text-sm font-semibold text-primary hover:underline disabled:opacity-50">
+      {{ loadingMore ? 'Loading…' : 'Load more' }}
+    </button>
+  </div>
+</section>

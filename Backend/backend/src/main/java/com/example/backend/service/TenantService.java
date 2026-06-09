@@ -15,6 +15,7 @@ import java.util.UUID;
 public class TenantService {
 
     private final TenantRepository tenantRepository;
+    private final AuditService auditService;
 
     public Tenant createTenant(String name, String slug, String email) {
         Tenant tenant = Tenant.builder()
@@ -41,6 +42,7 @@ public class TenantService {
     public Tenant updateTenant(UUID id, Tenant updates) {
         Tenant tenant = tenantRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tenant not found with ID: " + id));
+        Boolean oldOpen = tenant.getIsOpen();
 
         if (updates.getName() != null) tenant.setName(updates.getName());
         if (updates.getSlug() != null) tenant.setSlug(updates.getSlug());
@@ -65,6 +67,10 @@ public class TenantService {
         if (updates.getDriverEarningPercent() != null) tenant.setDriverEarningPercent(updates.getDriverEarningPercent());
         if (updates.getLoyaltyEnabled() != null) tenant.setLoyaltyEnabled(updates.getLoyaltyEnabled());
 
-        return tenantRepository.save(tenant);
+        Tenant saved = tenantRepository.save(tenant);
+        boolean openChanged = oldOpen != null && saved.getIsOpen() != null && !oldOpen.equals(saved.getIsOpen());
+        auditService.log(AuditService.ADMIN, openChanged ? "STORE_OPEN_TOGGLED" : "SETTINGS_UPDATED", "TENANT", id,
+                openChanged ? ("Store " + (saved.getIsOpen() ? "opened" : "closed")) : "Store settings updated");
+        return saved;
     }
 }

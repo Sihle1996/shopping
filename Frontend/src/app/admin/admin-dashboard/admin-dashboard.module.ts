@@ -9,6 +9,7 @@ import { AdminNotificationsComponent } from '../admin-notifications/admin-notifi
 import { AdminOrdersComponent } from '../admin-orders/admin-orders.component';
 import { AdminMenuComponent } from '../admin-menu/admin-menu.component';
 import { AdminDriversComponent } from '../admin-drivers/admin-drivers.component';
+import { AdminActivityComponent } from '../admin-activity/admin-activity.component';
 import { AdminDriverMapComponent } from '../admin-drivers/admin-driver-map.component';
 import { AdminFooterComponent } from '../admin-footer/admin-footer.component';
 import { AdminDiagnosticsComponent } from '../admin-diagnostics/admin-diagnostics.component';
@@ -36,6 +37,7 @@ import { AdminBooksComponent } from '../admin-books/admin-books.component';
     AdminOrdersComponent,
     AdminMenuComponent,
     AdminDriversComponent,
+    AdminActivityComponent,
     AdminDriverMapComponent,
     AdminFooterComponent,
     AdminDiagnosticsComponent,

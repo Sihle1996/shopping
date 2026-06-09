@@ -25,6 +25,7 @@ public class MenuService {
     private final CartItemRepository cartItemRepository;
     private final InventoryLogRepository inventoryLogRepository;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
+    private final AuditService auditService;
 
     public MenuItem saveMenuItem(MenuItem menuItem) {
         UUID tenantId = TenantContext.getCurrentTenantId();
@@ -32,7 +33,10 @@ public class MenuService {
             subscriptionEnforcementService.assertMenuItemLimit(tenantId);
         }
         setTenantOnEntity(menuItem);
-        return menuItemRepository.save(menuItem);
+        MenuItem saved = menuItemRepository.save(menuItem);
+        auditService.log(AuditService.ADMIN, "MENU_ITEM_CREATED", "MENU_ITEM", saved.getId(),
+                saved.getName() + " — R" + saved.getPrice());
+        return saved;
     }
 
     public MenuItem updateMenuItem(UUID id, MenuItem updatedMenuItem) {
@@ -42,6 +46,9 @@ public class MenuService {
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Menu item not found"))
                 : menuItemRepository.findById(id)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Menu item not found"));
+
+        Double oldPrice = menuItem.getPrice();
+        Boolean oldAvail = menuItem.getIsAvailable();
 
         if (updatedMenuItem.getName() != null) menuItem.setName(updatedMenuItem.getName());
         if (updatedMenuItem.getCategory() != null) menuItem.setCategory(updatedMenuItem.getCategory());
@@ -54,7 +61,13 @@ public class MenuService {
         menuItem.setReservedStock(updatedMenuItem.getReservedStock());
         menuItem.setLowStockThreshold(updatedMenuItem.getLowStockThreshold());
 
-        return menuItemRepository.save(menuItem);
+        MenuItem saved = menuItemRepository.save(menuItem);
+        StringBuilder change = new StringBuilder(saved.getName());
+        if (oldPrice != null && !oldPrice.equals(saved.getPrice())) change.append(" · price R").append(oldPrice).append(" → R").append(saved.getPrice());
+        if (oldAvail != null && saved.getIsAvailable() != null && !oldAvail.equals(saved.getIsAvailable()))
+            change.append(saved.getIsAvailable() ? " · shown" : " · hidden");
+        auditService.log(AuditService.ADMIN, "MENU_ITEM_UPDATED", "MENU_ITEM", saved.getId(), change.toString());
+        return saved;
     }
 
     /**
@@ -109,9 +122,11 @@ public class MenuService {
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Menu item not found"))
                 : menuItemRepository.findById(id)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Menu item not found"));
+        String name = menuItem.getName();
         cartItemRepository.deleteByMenuItem(menuItem);
         inventoryLogRepository.nullifyMenuItemReference(menuItem);
         menuItemRepository.delete(menuItem);
+        auditService.log(AuditService.ADMIN, "MENU_ITEM_DELETED", "MENU_ITEM", id, "Deleted — " + name);
     }
 
     public MenuItem getMenuItemById(UUID id) {

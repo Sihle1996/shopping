@@ -29,6 +29,7 @@ public class AdminDriverService {
     private final TenantRepository tenantRepository;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final EmailService emailService;
+    private final AuditService auditService;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -57,6 +58,7 @@ public class AdminDriverService {
         }
 
         User saved = userRepository.save(builder.build());
+        auditService.log(AuditService.ADMIN, "DRIVER_CREATED", "DRIVER", saved.getId(), "Added driver " + saved.getEmail());
 
         String storeName = saved.getTenant() != null ? saved.getTenant().getName() : "CraveIt";
         emailService.sendDriverWelcomeEmail(
@@ -83,6 +85,7 @@ public class AdminDriverService {
             throw new RuntimeException("User is not a driver");
         }
         userRepository.delete(driver);
+        auditService.log(AuditService.ADMIN, "DRIVER_DELETED", "DRIVER", id, "Removed driver " + driver.getEmail());
     }
 
     public List<DriverLocationDTO> getDriverLocations() {

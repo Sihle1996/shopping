@@ -20,6 +20,7 @@ import java.util.UUID;
 public class AdminUserController {
 
     private final UserRepository userRepository;
+    private final com.example.backend.service.AuditService auditService;
 
     @GetMapping
     public List<UserSummary> listUsers() {
@@ -43,6 +44,8 @@ public class AdminUserController {
         if (user == null) return ResponseEntity.notFound().build();
         user.setRole(role);
         userRepository.save(user);
+        auditService.log(com.example.backend.service.AuditService.ADMIN, "USER_ROLE_CHANGED", "USER", id,
+                user.getEmail() + " → " + role.name());
         return ResponseEntity.ok(UserSummary.from(user));
     }
 
@@ -56,6 +59,8 @@ public class AdminUserController {
         if (user == null) return ResponseEntity.notFound().build();
         user.setActive(active);
         userRepository.save(user);
+        auditService.log(com.example.backend.service.AuditService.ADMIN, "USER_ACTIVE_TOGGLED", "USER", id,
+                user.getEmail() + (active ? " activated" : " deactivated"));
         return ResponseEntity.ok(UserSummary.from(user));
     }
 
@@ -65,7 +70,9 @@ public class AdminUserController {
         User user = (tenantId != null ? userRepository.findByIdAndTenant_Id(id, tenantId) : userRepository.findById(id))
                 .orElse(null);
         if (user == null) return ResponseEntity.notFound().build();
+        String email = user.getEmail();
         userRepository.delete(user);
+        auditService.log(com.example.backend.service.AuditService.ADMIN, "USER_DELETED", "USER", id, "Removed " + email);
         return ResponseEntity.noContent().build();
     }
 

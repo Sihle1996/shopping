@@ -37,6 +37,7 @@ public class AdminPromotionController {
     private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final com.example.backend.service.AuditService auditService;
 
     @GetMapping
     @Transactional
@@ -59,6 +60,8 @@ public class AdminPromotionController {
             tenantRepository.findById(tenantId).ifPresent(p::setTenant);
         }
         Promotion saved = promotionRepository.save(p);
+        auditService.log(com.example.backend.service.AuditService.ADMIN, "PROMO_CREATED", "PROMOTION",
+                saved.getId(), saved.getDiscountPercent() + "% off — " + saved.getTitle());
         return ResponseEntity.created(URI.create("/api/admin/promotions/" + saved.getId()))
                 .body(PromotionDTO.from(saved));
     }
@@ -77,7 +80,13 @@ public class AdminPromotionController {
     public ResponseEntity<PromotionDTO> activate(@PathVariable UUID id, @RequestParam boolean value) {
         UUID tenantId = TenantContext.getCurrentTenantId();
         return (tenantId != null ? promotionRepository.findByIdAndTenant_Id(id, tenantId) : promotionRepository.findById(id))
-                .map(p -> { p.setActive(value); return ResponseEntity.ok(PromotionDTO.from(promotionRepository.save(p))); })
+                .map(p -> {
+                    p.setActive(value);
+                    Promotion s = promotionRepository.save(p);
+                    auditService.log(com.example.backend.service.AuditService.ADMIN, "PROMO_TOGGLED", "PROMOTION",
+                            s.getId(), (value ? "Activated" : "Paused") + " — " + s.getTitle());
+                    return ResponseEntity.ok(PromotionDTO.from(s));
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -121,6 +130,8 @@ public class AdminPromotionController {
                 .orElse(null);
         if (promo == null) return ResponseEntity.notFound().build();
         promotionRepository.delete(promo);
+        auditService.log(com.example.backend.service.AuditService.ADMIN, "PROMO_DELETED", "PROMOTION",
+                id, "Deleted — " + promo.getTitle());
         return ResponseEntity.noContent().build();
     }
 

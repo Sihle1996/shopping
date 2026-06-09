@@ -5,6 +5,7 @@ import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard.compo
 import { AdminOrdersComponent } from './admin-orders/admin-orders.component';
 import { AdminMenuComponent } from './admin-menu/admin-menu.component';
 import { AdminDriversComponent } from './admin-drivers/admin-drivers.component';
+import { AdminActivityComponent } from './admin-activity/admin-activity.component';
 import { InventoryManagementComponent } from './inventory-management/inventory-management.component';
 import { AdminDiagnosticsComponent } from './admin-diagnostics/admin-diagnostics.component';
 import { AdminGuard } from '../guards/admin.guard';
@@ -30,6 +31,7 @@ const routes: Routes = [
       { path: 'orders', canActivate: [EnrollmentGuard], component: AdminOrdersComponent },
       { path: 'menu', canActivate: [EnrollmentGuard], component: AdminMenuComponent },
       { path: 'drivers', canActivate: [EnrollmentGuard], component: AdminDriversComponent },
+      { path: 'activity', canActivate: [EnrollmentGuard], component: AdminActivityComponent },
       { path: 'inventory', canActivate: [EnrollmentGuard], component: InventoryManagementComponent },
       { path: 'promotions', canActivate: [EnrollmentGuard], component: AdminPromotionsComponent },
       { path: 'settings', canActivate: [EnrollmentGuard], component: AdminSettingsComponent },
