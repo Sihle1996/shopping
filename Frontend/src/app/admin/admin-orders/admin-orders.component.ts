@@ -263,6 +263,11 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     return !!from && (this.statusFlow[from] ?? []).includes(to);
   }
 
+  /** A driver may only be dispatched once the kitchen is on it (Preparing), or reassigned (OFD). */
+  canAssignDriver(status?: string | null): boolean {
+    return status === 'Preparing' || status === 'Out for Delivery';
+  }
+
   /** Friendly label for a stored cancellation reason (markers map to text; free text passes through). */
   cancelReasonLabel(reason?: string | null): string {
     if (!reason) return '';

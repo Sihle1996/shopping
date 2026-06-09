@@ -418,6 +418,12 @@ public class OrderService {
                 : orderRepository.findById(orderId)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
 
+        // Idempotent: re-setting the same status is a no-op — never re-fire the delivered email,
+        // loyalty award, payout debit, or stock side-effects.
+        if (status != null && status.equals(order.getStatus())) {
+            return convertToOrderDTO(order);
+        }
+
         // Terminal orders are final — you can't un-deliver or un-cancel. Reject any change away
         // from a completed/cancelled/rejected state (the UI also hides these, this is the guard).
         String current = order.getStatus();
@@ -588,6 +594,12 @@ public class OrderService {
         if ("Cancelled".equals(currentStatus) || "Rejected".equals(currentStatus) || "Delivered".equals(currentStatus)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Cannot assign a driver to a " + currentStatus + " order");
+        }
+        // Don't dispatch a driver before the kitchen is working on the order — they'd idle at the
+        // store. Allowed from Preparing (food being made) and Out for Delivery (reassignment).
+        if (!"Preparing".equals(currentStatus) && !"Out for Delivery".equals(currentStatus)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Move the order to Preparing before assigning a driver — otherwise the driver waits at the store.");
         }
 
         User driver = (tenantId != null

@@ -123,6 +123,9 @@ public class DriverService {
         if (!order.getDriver().getId().equals(driver.getId())) {
             throw new RuntimeException("Unauthorized to modify this order");
         }
+        if ("Delivered".equals(order.getStatus())) {
+            return; // already delivered — don't re-fire the email / double-count
+        }
 
         order.setStatus("Delivered");
         order.setDeliveredBy("DRIVER"); // driver-confirmed without an OTP
