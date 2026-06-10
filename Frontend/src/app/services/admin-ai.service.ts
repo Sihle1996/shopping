@@ -28,6 +28,8 @@ export interface AiReviewDigestResponse {
 
 export interface AiProposedPromo {
   title: string;
+  description?: string;           // AI "hot deal" copy
+  badgeText?: string;            // e.g. "20% OFF"
   discountPercent?: number;       // PERCENT_OFF suggestions
   type?: string;                  // 'PERCENT_OFF' (default) | 'AMOUNT_OFF'
   discountAmount?: number;        // AMOUNT_OFF: fixed rand off

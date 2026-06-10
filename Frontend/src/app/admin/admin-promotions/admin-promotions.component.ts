@@ -461,6 +461,8 @@ export class AdminPromotionsComponent implements OnInit {
     this.applyingIndex = index;
     const payload: PromotionRequest = {
       title: p.title,
+      description: p.description || undefined,
+      badgeText: p.badgeText || undefined,
       discountPercent: p.discountPercent,
       type: (p.type as any) || 'PERCENT_OFF',
       discountAmount: p.discountAmount ?? null,

@@ -309,6 +309,8 @@ public class AdminAiService {
             promo.put("targetProductId", item.getId().toString());
             promo.put("startAt", today);
             promo.put("endAt", endAt);
+            promo.put("description", String.format(Locale.UK, "%d%% off %s — a limited-time deal to pull in orders.", discount, item.getName()));
+            promo.put("badgeText", discount + "% OFF");
 
             String hypothesis;
             if (avgNet != null && avgNet > 0) {
@@ -392,6 +394,8 @@ public class AdminAiService {
                 tPromo.put("appliesTo", "ALL");
                 tPromo.put("startAt", today);
                 tPromo.put("endAt", endAt);
+                tPromo.put("description", String.format(Locale.UK, "Spend R%.0f or more and take R%.0f off — a nudge to grow every basket.", threshold, amountOff));
+                tPromo.put("badgeText", String.format(Locale.UK, "R%.0f OFF", amountOff));
 
                 Map<String, Object> tAnalysis = new LinkedHashMap<>();
                 tAnalysis.put("hypothesis", String.format(Locale.UK,
@@ -452,6 +456,8 @@ public class AdminAiService {
             mPromo.put("targetProductName", names);   // card subtitle (display only)
             mPromo.put("startAt", today);
             mPromo.put("endAt", endAt);
+            mPromo.put("description", String.format(Locale.UK, "%d%% off any of these %d picks — mix, match and save.", mpDiscount, slowTail.size()));
+            mPromo.put("badgeText", mpDiscount + "% OFF");
 
             Map<String, Object> mAnalysis = new LinkedHashMap<>();
             mAnalysis.put("hypothesis", String.format(Locale.UK,
