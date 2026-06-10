@@ -80,5 +80,64 @@ public class EnrollmentController(AppDbContext db) : ControllerBase
         return Ok(new { message = "Store rejected" });
     }
 
+    // Rejected (and not-yet-archived) stores — the frontend's "Rejected" tab. Same shape as
+    // /pending plus the rejection reason. (Mirrors Spring's /api/superadmin/enrollment/rejected.)
+    [HttpGet("rejected")]
+    public async Task<IActionResult> GetRejected()
+    {
+        var rejected = await db.Tenants
+            .Where(t => t.ApprovalStatus == "REJECTED" && !t.IsArchived)
+            .Include(t => t.StoreDocuments)
+            .OrderByDescending(t => t.SubmittedForReviewAt)
+            .ToListAsync();
+
+        var result = rejected.Select(t => new
+        {
+            t.Id,
+            t.Name,
+            t.Slug,
+            t.Email,
+            t.Phone,
+            t.Address,
+            submittedAt = t.SubmittedForReviewAt,
+            t.CipcNumber,
+            t.BankName,
+            t.BankAccountNumber,
+            t.BankAccountType,
+            t.BankBranchCode,
+            rejectionReason = t.RejectionReason,
+            documents = t.StoreDocuments.Select(d => new
+            {
+                d.Id,
+                d.DocumentType,
+                d.FileUrl,
+                d.FileName,
+                d.Status,
+                d.ReviewNotes,
+                d.UploadedAt
+            })
+        });
+
+        return Ok(result);
+    }
+
+    // Archive (soft-delete) a rejected store — the "archive" action on the Rejected tab. Only a
+    // REJECTED store can be archived. Keeps the row + its data; just hides it from the queue and
+    // the customer app. (Mirrors Spring's /api/superadmin/enrollment/{id}/archive.)
+    [HttpPost("{tenantId}/archive")]
+    public async Task<IActionResult> Archive(Guid tenantId)
+    {
+        var tenant = await db.Tenants.FindAsync(tenantId);
+        if (tenant == null) return NotFound();
+        if (tenant.ApprovalStatus != "REJECTED")
+            return BadRequest(new { message = "Only rejected stores can be archived." });
+
+        tenant.IsArchived = true;
+        tenant.Active = false;
+        await db.SaveChangesAsync();
+
+        return Ok(new { message = "Store archived" });
+    }
+
     public record RejectRequest(string Reason);
 }
