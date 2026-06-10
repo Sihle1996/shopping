@@ -129,6 +129,14 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
         if (event.type === 'ORDER_CREATED') {
           // New order — fetch page 1 so it appears at the top
           this.silentRefresh();
+        } else if (event.type === 'ORDER_PAID' && event.orderId) {
+          // PayFast ITN confirmed payment — flip the order to paid live, no manual refresh
+          this.orders = this.orders.map(o =>
+            o.id === event.orderId ? { ...o, paid: true } : o
+          );
+          if (this.selectedOrder?.id === event.orderId) {
+            this.selectedOrder = { ...this.selectedOrder, paid: true };
+          }
         } else if (event.orderId && event.status) {
           // Status/cancellation/assignment — update instantly, no HTTP call
           this.orders = this.orders.map(o =>

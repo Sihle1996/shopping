@@ -8,6 +8,7 @@ import com.example.backend.service.PlanCommissionService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.BufferedReader;
@@ -30,6 +31,7 @@ public class PayFastController {
     private final TenantRepository tenantRepository;
     private final OrderRepository orderRepository;
     private final PlanCommissionService planCommissionService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -41,11 +43,13 @@ public class PayFastController {
     private String allowedOrigins;
 
     public PayFastController(PayFastService payFastService, TenantRepository tenantRepository,
-                             OrderRepository orderRepository, PlanCommissionService planCommissionService) {
+                             OrderRepository orderRepository, PlanCommissionService planCommissionService,
+                             SimpMessagingTemplate messagingTemplate) {
         this.payFastService = payFastService;
         this.tenantRepository = tenantRepository;
         this.orderRepository = orderRepository;
         this.planCommissionService = planCommissionService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -212,6 +216,20 @@ public class PayFastController {
                     }
                     order.setPaymentId(pfPaymentId != null ? pfPaymentId : mPaymentId);
                     orderRepository.save(order);
+
+                    // Push a live "paid" event so the admin (and customer) order views flip from
+                    // "pending payment" to paid without a manual refresh.
+                    Map<String, Object> paidEvent = Map.of(
+                            "type", "ORDER_PAID",
+                            "orderId", order.getId().toString(),
+                            "status", order.getStatus(),
+                            "paid", true
+                    );
+                    messagingTemplate.convertAndSend("/topic/orders", paidEvent);
+                    if (order.getUser() != null) {
+                        messagingTemplate.convertAndSend("/topic/orders/" + order.getUser().getId(), paidEvent);
+                    }
+
                     System.out.println("PayFast ITN: confirmed payment for order " + orderId
                             + " (pf_payment_id=" + pfPaymentId + ")");
                 } else {
