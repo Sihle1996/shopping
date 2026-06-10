@@ -246,10 +246,9 @@
              [class.border-l-2]="isNewOrder(order.id)"
              [class.border-primary]="isNewOrder(order.id)">
 
-          <!-- Top line: NEW badge · status · ID+amount / email+time · chevron -->
           <div class="flex items-center gap-3">
             <span *ngIf="isNewOrder(order.id)" (click)="dismissNew(order.id, $event)" title="Dismiss"
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary text-white flex-shrink-0 animate-pulse">
+                  class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary text-white flex-shrink-0">
               NEW <i class="bi bi-x text-[11px]"></i>
             </span>
 
@@ -259,26 +258,20 @@
               <span class="hidden sm:inline">{{ order.status }}</span>
             </span>
 
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between gap-2">
-                <p class="text-sm font-semibold text-textDark truncate">#{{ order.id.substring(0, 8).toUpperCase() }}</p>
-                <p class="font-numbers text-sm font-semibold text-textDark flex-shrink-0">R{{ order.totalAmount | number:'1.2-2' }}</p>
-              </div>
-              <div class="flex items-center justify-between gap-2 mt-0.5">
-                <p class="text-xs text-textMuted truncate">{{ order.userEmail || 'Guest' }}</p>
-                <p class="text-xs text-textMuted flex-shrink-0">{{ order.orderDate | date:'h:mm a' }}</p>
-              </div>
+            <!-- ID + customer·time (compact label) -->
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-textDark truncate">#{{ order.id.substring(0, 8).toUpperCase() }}</p>
+              <p class="text-xs text-textMuted truncate">{{ order.userEmail || 'Guest' }} · {{ order.orderDate | date:'h:mm a' }}</p>
             </div>
 
+            <!-- One-click actions, inline -->
+            <app-order-actions class="flex-shrink-0" [order]="order" [compact]="true"
+                               (changed)="onOrderChanged($event)"
+                               (assignDriver)="goToOrder(order.id)"></app-order-actions>
+
+            <p class="font-numbers text-sm font-semibold text-textDark flex-shrink-0 w-[72px] text-right">R{{ order.totalAmount | number:'1.2-2' }}</p>
             <i class="bi bi-chevron-right text-xs text-textMuted flex-shrink-0"></i>
           </div>
-
-          <!-- One-click actions — no navigation needed -->
-          <app-order-actions class="block mt-2" [order]="order" [compact]="true"
-                             (changed)="onOrderChanged($event)"
-                             (assignDriver)="goToOrder(order.id)"></app-order-actions>
-
-        </div>
       </div>
     </div>
 

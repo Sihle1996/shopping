@@ -483,6 +483,18 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     };
   }
 
+  /** Status-coloured left accent so operators scan an order's state at a glance down the table. */
+  statusAccent(s: string) {
+    return {
+      'border-l-amber-400': s === 'Pending',
+      'border-l-indigo-400': s === 'Scheduled',
+      'border-l-blue-400': s === 'Preparing',
+      'border-l-purple-400': s === 'Out for Delivery',
+      'border-l-emerald-400': s === 'Delivered',
+      'border-l-red-400': s === 'Cancelled' || s === 'Rejected',
+    };
+  }
+
   /** KPIs for the header cards (based on filtered list) */
   get kpi() {
     const list = this.filteredOrders();
