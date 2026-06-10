@@ -44,8 +44,7 @@ public class AdminSettingsController {
         return tenantService.getTenantById(tenantId)
                 .map(tenant -> {
                     boolean newState = !Boolean.TRUE.equals(tenant.getIsOpen());
-                    tenant.setIsOpen(newState);
-                    tenantService.updateTenant(tenantId, tenant);
+                    tenantService.setStoreOpen(tenantId, newState);
                     return ResponseEntity.ok(Map.of("isOpen", newState));
                 })
                 .orElse(ResponseEntity.notFound().build());

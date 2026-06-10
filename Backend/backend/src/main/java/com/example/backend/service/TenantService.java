@@ -76,4 +76,16 @@ public class TenantService {
                 openChanged ? ("Store " + (saved.getIsOpen() ? "opened" : "closed")) : "Store settings updated");
         return saved;
     }
+
+    /** Manually open/close the store. Sets manualOpenOverride so StoreHoursScheduler respects the
+     *  admin's choice instead of reverting it on its next tick. */
+    public void setStoreOpen(UUID tenantId, boolean open) {
+        Tenant tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> new RuntimeException("Tenant not found with ID: " + tenantId));
+        tenant.setIsOpen(open);
+        tenant.setManualOpenOverride(true);
+        tenantRepository.save(tenant);
+        auditService.log(AuditService.ADMIN, "STORE_OPEN_TOGGLED", "TENANT", tenantId,
+                "Store manually " + (open ? "opened" : "closed"));
+    }
 }

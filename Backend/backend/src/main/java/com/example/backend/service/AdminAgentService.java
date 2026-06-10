@@ -1116,6 +1116,7 @@ public class AdminAgentService {
                 boolean open = Boolean.TRUE.equals(p.get("open"));
                 Tenant t = tenantRepository.findById(tenantId).orElseThrow();
                 t.setIsOpen(open);
+                t.setManualOpenOverride(true);   // AI override — scheduler respects it until the schedule agrees
                 tenantRepository.save(t);
                 return "Store is now " + (open ? "open" : "closed") + ".";
             }

@@ -88,6 +88,13 @@ public class Tenant {
     @Builder.Default
     private Boolean isOpen = false;
 
+    /** True when an admin (or the AI) manually set isOpen, overriding the weekly hours schedule.
+     *  While true, StoreHoursScheduler leaves isOpen alone; it auto open/closes only when this is
+     *  false. The override is released once the schedule next agrees with it. */
+    @Column(name = "manual_open_override", nullable = false)
+    @Builder.Default
+    private Boolean manualOpenOverride = false;
+
     @Column(precision = 10, scale = 2)
     private BigDecimal minimumOrderAmount;
 

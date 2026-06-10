@@ -52,10 +52,26 @@ public class StoreHoursScheduler {
 
     private void applySchedule(Tenant tenant, StoreHours today, StoreHours yesterday, LocalTime now) {
         boolean shouldBeOpen = computeShouldBeOpen(today, yesterday, now);
+
+        if (Boolean.TRUE.equals(tenant.getManualOpenOverride())) {
+            // A manual/AI override is active: leave isOpen exactly as the admin set it. Hand control
+            // back to the schedule only once the schedule AGREES with the override (the next open or
+            // close that matches it), then clear the flag. No in-memory state, so it survives restarts
+            // — the admin's "open now" / "closed early" sticks instead of being reverted within 60s.
+            if (Boolean.valueOf(shouldBeOpen).equals(tenant.getIsOpen())) {
+                tenant.setManualOpenOverride(false);
+                tenantRepository.save(tenant);
+                log.info("StoreHoursScheduler: tenant {} manual override released (schedule now {})",
+                        tenant.getSlug(), shouldBeOpen ? "OPEN" : "CLOSED");
+            }
+            return;
+        }
+
+        // No override: enforce the weekly schedule continuously — auto open/close, restart-safe.
         if (!Boolean.valueOf(shouldBeOpen).equals(tenant.getIsOpen())) {
             tenant.setIsOpen(shouldBeOpen);
             tenantRepository.save(tenant);
-            log.info("StoreHoursScheduler: tenant {} is now {}", tenant.getSlug(), shouldBeOpen ? "OPEN" : "CLOSED");
+            log.info("StoreHoursScheduler: tenant {} auto-{}", tenant.getSlug(), shouldBeOpen ? "OPENED" : "CLOSED");
         }
     }
 
