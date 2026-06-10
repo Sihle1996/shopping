@@ -136,7 +136,7 @@ public class AdminSubscriptionController {
         // Payment was captured via PayFast redirect — paymentId logged for audit
         String paymentId = body.getOrDefault("paymentId", "n/a");
 
-        tenant.setSubscriptionPlan(planName);
+        tenant.applyPlan(planName);   // sets plan + syncs commission rate
         tenant.setSubscriptionStatus("ACTIVE");
         tenant.setBillingPeriodEnd(LocalDateTime.now().plusDays(30));
         tenant.setSubscriptionCancelledAt(null);

@@ -86,14 +86,15 @@ public class SubscriptionsController(AppDbContext db) : ControllerBase
         if (tenant == null) return NotFound();
 
         var planName = request.PlanName.Trim().ToUpper();
-        var planExists = await db.SubscriptionPlans.AnyAsync(p => p.Name == planName);
-        if (!planExists) return BadRequest(new { message = "Plan not found." });
+        var plan = await db.SubscriptionPlans.FirstOrDefaultAsync(p => p.Name == planName);
+        if (plan == null) return BadRequest(new { message = "Plan not found." });
 
         tenant.SubscriptionPlan = planName;
+        tenant.PlatformCommissionPercent = plan.CommissionPercent;   // sync commission to the plan's canonical rate
         tenant.SubscriptionStatus = "ACTIVE";
         tenant.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        return Ok(new { subscriptionPlan = tenant.SubscriptionPlan, subscriptionStatus = tenant.SubscriptionStatus });
+        return Ok(new { subscriptionPlan = tenant.SubscriptionPlan, platformCommissionPercent = tenant.PlatformCommissionPercent, subscriptionStatus = tenant.SubscriptionStatus });
     }
 
     [HttpPatch("stores/{tenantId}/extend-trial")]

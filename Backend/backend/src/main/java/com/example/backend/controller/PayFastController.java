@@ -145,7 +145,7 @@ public class PayFastController {
         try {
             UUID tenantId = UUID.fromString(tenantIdStr);
             tenantRepository.findById(tenantId).ifPresentOrElse(tenant -> {
-                tenant.setSubscriptionPlan(planName);
+                tenant.applyPlan(planName);   // sets plan + syncs commission rate
                 tenant.setSubscriptionStatus("ACTIVE");
                 tenantRepository.save(tenant);
                 System.out.println("PayFast ITN: activated tenant " + tenant.getName() + " on plan " + planName);
