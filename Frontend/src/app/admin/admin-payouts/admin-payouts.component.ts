@@ -53,6 +53,12 @@ export class AdminPayoutsComponent implements OnInit {
   statusClass(s: string): string {
     return ({ PENDING: 'bg-amber-100 text-amber-800', PAID: 'bg-emerald-100 text-emerald-800', ON_HOLD: 'bg-red-100 text-red-700' } as any)[s] ?? '';
   }
+  /** Refunds (cancelled-order debits) deducted this period — the gap between gross−fee and net.
+   *  Derived so the row reconciles: gross − platform fee − refunds = net. */
+  refunds(p: Payout): number {
+    return Math.max(0, +(p.grossRevenue - p.platformFee - p.netAmount).toFixed(2));
+  }
+
   /** Rounded-pill row accent colour per status. */
   statusAccent(s: string): string {
     return ({ PENDING: 'bg-amber-400', PAID: 'bg-emerald-400', ON_HOLD: 'bg-red-400' } as any)[s] ?? 'bg-gray-300';
