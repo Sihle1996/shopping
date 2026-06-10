@@ -9,6 +9,7 @@ import com.example.backend.repository.StoreHoursRepository;
 import com.example.backend.repository.TenantRepository;
 import com.example.backend.service.EmailService;
 import com.example.backend.service.PlanCommissionService;
+import com.example.backend.service.TenantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,6 +39,7 @@ public class TenantController {
     private final StoreDocumentRepository storeDocumentRepository;
     private final EmailService emailService;
     private final PlanCommissionService planCommissionService;
+    private final TenantService tenantService;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -221,12 +223,14 @@ public class TenantController {
     @PutMapping("/api/superadmin/tenants/{id}")
     @PreAuthorize("hasRole('SUPERADMIN')")
     public ResponseEntity<Tenant> updateTenant(@PathVariable UUID id, @Valid @RequestBody Tenant tenant) {
-        return tenantRepository.findById(id)
-                .map(existing -> {
-                    tenant.setId(id);
-                    return ResponseEntity.ok(tenantRepository.save(tenant));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        // Whitelisted field update (TenantService): approval_status + active are NEVER client-settable
+        // here — they change only via the review/go-live transitions. This avoids the self-approve
+        // bypass and the full-entity overwrite that clobbered any field the caller didn't send.
+        try {
+            return ResponseEntity.ok(tenantService.updateTenant(id, tenant));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     // SUPERADMIN only - delete tenant

@@ -163,7 +163,14 @@ public class StoresController(AppDbContext db) : ControllerBase
             tenant.PlatformCommissionPercent = plan.CommissionPercent;   // sync commission to the plan's rate
         }
 
-        if (request.Active.HasValue) tenant.Active = request.Active.Value;
+        // A store can only be activated once APPROVED — never go live unapproved (review gate).
+        // Deactivating is always allowed.
+        if (request.Active.HasValue)
+        {
+            if (request.Active.Value && tenant.ApprovalStatus != "APPROVED")
+                return BadRequest(new { message = "Only an approved store can be activated." });
+            tenant.Active = request.Active.Value;
+        }
 
         // An explicit commission (e.g. a negotiated rate) overrides the plan default set above.
         if (request.PlatformCommissionPercent.HasValue)
@@ -190,6 +197,10 @@ public class StoresController(AppDbContext db) : ControllerBase
     {
         var tenant = await db.Tenants.FindAsync(id);
         if (tenant == null) return NotFound();
+        // Can't activate an unapproved store (review gate). A REJECTED+archived store therefore can't be
+        // toggled live — it must be re-reviewed. Deactivating is always allowed.
+        if (!tenant.Active && tenant.ApprovalStatus != "APPROVED")
+            return BadRequest(new { message = "Only an approved store can be activated." });
         tenant.Active = !tenant.Active;
         if (tenant.Active) tenant.IsArchived = false;   // re-activating restores an archived store
         tenant.UpdatedAt = DateTime.UtcNow;
