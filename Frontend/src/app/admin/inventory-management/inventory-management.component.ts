@@ -6,6 +6,7 @@ import { AdminService } from 'src/app/services/admin.service';
 import { SubscriptionService } from 'src/app/services/subscription.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ToastrService } from 'ngx-toastr';
+import { TabItem } from 'src/app/shared/components/tabbed-list/tabbed-list.component';
 
 @Component({
   selector: 'app-inventory-management',
@@ -17,7 +18,7 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
   auditLog: any[] = [];
   auditLogLimit = 20;
   searchTerm = '';
-  lowStockOnly = false;
+  statusFilter: 'all' | 'low' | 'soldout' | 'hidden' = 'all';
   showAudit = false;
 
   hasInventoryExport = false;
@@ -81,18 +82,32 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
         && (item.stock - (item.reservedStock || 0)) <= 0;
   }
 
+  /** Search-filtered set — the basis for both the status-tab counts and the active filter. */
+  private get searched(): any[] {
+    const q = this.searchTerm.toLowerCase();
+    return this.inventory.filter(item => item.name.toLowerCase().includes(q));
+  }
+
+  get statusTabs(): TabItem[] {
+    const s = this.searched;
+    return [
+      { key: 'all',     label: 'All',       count: s.length },
+      { key: 'low',     label: 'Low stock', count: s.filter(i => this.isLowStock(i)).length },
+      { key: 'soldout', label: 'Sold out',  count: s.filter(i => this.soldOut(i)).length },
+      { key: 'hidden',  label: 'Hidden',    count: s.filter(i => !i.isAvailable).length },
+    ];
+  }
+
   get filteredInventory(): any[] {
-    return this.inventory
-      .filter(item => {
-        const matchesName = item.name.toLowerCase().includes(this.searchTerm.toLowerCase());
-        const matchesLowStock = !this.lowStockOnly || this.isLowStock(item);
-        return matchesName && matchesLowStock;
-      })
-      .sort((a, b) => {
-        if (this.sortBy === 'stock') return b.stock - a.stock;
-        if (this.sortBy === 'reserved') return b.reservedStock - a.reservedStock;
-        return a.name.localeCompare(b.name);
-      });
+    let list = this.searched;
+    if (this.statusFilter === 'low') list = list.filter(i => this.isLowStock(i));
+    else if (this.statusFilter === 'soldout') list = list.filter(i => this.soldOut(i));
+    else if (this.statusFilter === 'hidden') list = list.filter(i => !i.isAvailable);
+    return [...list].sort((a, b) => {
+      if (this.sortBy === 'stock') return b.stock - a.stock;
+      if (this.sortBy === 'reserved') return b.reservedStock - a.reservedStock;
+      return a.name.localeCompare(b.name);
+    });
   }
 
   adjust(item: any): void {

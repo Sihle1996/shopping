@@ -70,21 +70,14 @@
 
     <!-- Filter bar -->
     <div class="sticky top-0 z-10 mb-4 bg-white rounded-2xl shadow-card p-3">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex flex-1 items-center gap-3">
-          <div class="relative w-full sm:max-w-sm">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <i class="bi bi-search text-textMuted text-sm"></i>
-            </div>
-            <input [(ngModel)]="searchTerm" type="text" placeholder="Search by name..."
-                   class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
-                          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
+        <div class="relative w-full sm:max-w-sm">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <i class="bi bi-search text-textMuted text-sm"></i>
           </div>
-          <label class="inline-flex items-center gap-2 cursor-pointer whitespace-nowrap">
-            <input type="checkbox" [(ngModel)]="lowStockOnly"
-                   class="rounded border-borderColor text-primary focus:ring-primary-400" />
-            <span class="text-sm text-textDark">Low stock only</span>
-          </label>
+          <input [(ngModel)]="searchTerm" type="text" placeholder="Search by name..."
+                 class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
+                        focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
         </div>
         <select [(ngModel)]="sortBy"
                 class="rounded-xl border border-borderColor bg-white px-3 py-2.5 text-sm text-textDark
@@ -94,7 +87,12 @@
           <option value="reserved">Sort: Reserved</option>
         </select>
       </div>
+      <app-tabbed-list [tabs]="statusTabs" [selected]="statusFilter"
+                       (select)="statusFilter = $any($event)"></app-tabbed-list>
     </div>
+
+    <!-- Inventory list (desktop table + mobile cards) — paginated so it fits without scrolling -->
+    <app-paged-list [items]="filteredInventory" #pl>
 
     <!-- Desktop table -->
     <div class="hidden md:block bg-white rounded-2xl shadow-card overflow-hidden">
@@ -110,7 +108,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-borderColor">
-          <tr *ngFor="let item of filteredInventory; trackBy: trackById"
+          <tr *ngFor="let item of pl.pageItems; trackBy: trackById"
               class="hover:bg-surface/50 transition-colors"
               [class.bg-yellow-50]="isLowStock(item)">
             <td class="px-5 py-4">
@@ -183,11 +181,10 @@
 
     <!-- Mobile cards -->
     <div class="md:hidden grid grid-cols-1 gap-3">
-      <div *ngFor="let item of filteredInventory; trackBy: trackById"
-           class="bg-white rounded-2xl shadow-card p-4 animate-fade-in"
-           [class.border-l-4]="isLowStock(item) || soldOut(item)"
-           [class.border-danger]="soldOut(item)"
-           [class.border-warning]="isLowStock(item) && !soldOut(item)">
+      <div *ngFor="let item of pl.pageItems; trackBy: trackById"
+           class="relative overflow-hidden bg-white rounded-2xl shadow-card p-4 pl-5 animate-fade-in">
+        <span *ngIf="isLowStock(item) || soldOut(item)" class="absolute left-2 top-3 bottom-3 w-1.5 rounded-full"
+              [ngClass]="soldOut(item) ? 'bg-danger' : 'bg-warning'"></span>
         <div class="flex items-start justify-between mb-2">
           <div>
             <h4 class="font-semibold text-sm text-textDark">{{ item.name }}</h4>
@@ -241,6 +238,7 @@
         </div>
       </div>
     </div>
+    </app-paged-list>
 
     <!-- Audit Log -->
     <div class="mt-6 bg-white rounded-2xl shadow-card overflow-hidden">
