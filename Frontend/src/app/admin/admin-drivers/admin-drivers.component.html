@@ -9,6 +9,13 @@
     </span>
   </app-page-header>
 
+  <!-- Section tabs -->
+  <app-tabbed-list class="block mb-6" [tabs]="driverTabs" [selected]="driverTab"
+                   (select)="driverTab = $event"></app-tabbed-list>
+
+  <!-- ═══ PERFORMANCE: recommendation feedback + scorecard ═══ -->
+  <div *ngIf="driverTab === 'performance'">
+
   <!-- Recommendation feedback — is the AI suggestion actually helping? -->
   <div *ngIf="recStats?.decisions" class="bg-white rounded-2xl shadow-card border border-borderColor mb-6 overflow-hidden">
     <div class="px-5 py-3.5 border-b border-borderColor flex items-center gap-2">
@@ -104,8 +111,17 @@
     </div>
   </div>
 
-  <!-- Desktop: sidebar + map | Mobile: stacked -->
-  <div class="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6 items-start">
+    <!-- Performance has no data yet -->
+    <div *ngIf="!recStats?.decisions && !driverInsights?.scorecard?.length"
+         class="bg-white rounded-2xl shadow-card border border-borderColor p-10 text-center text-sm text-textMuted">
+      <i class="bi bi-speedometer2 text-3xl text-gray-300 block mb-2"></i>
+      Performance insights appear once drivers complete timed deliveries.
+    </div>
+  </div>
+  <!-- ═══ /PERFORMANCE ═══ -->
+
+  <!-- ═══ MANAGE: add driver + list + live map ═══ -->
+  <div *ngIf="driverTab === 'manage'" class="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6 items-start">
 
     <!-- LEFT: Add form + driver list -->
     <div class="space-y-4">

@@ -1,9 +1,26 @@
-<div class="flex overflow-x-auto rounded-xl bg-surface p-1 gap-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+<!-- Underline nav (default) — clean, scales to many tabs, the "Groups" look -->
+<div *ngIf="variant === 'underline'"
+     class="flex gap-5 sm:gap-7 overflow-x-auto border-b border-borderColor [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
   <button *ngFor="let t of tabs" type="button" (click)="onSelect(t.key)" [disabled]="t.disabled"
-          class="flex-shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-all flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+          class="group flex-shrink-0 whitespace-nowrap pb-3 pt-1 text-sm font-semibold border-b-2 -mb-px transition-colors flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+          [ngClass]="t.key === selected
+            ? 'border-primary text-primary'
+            : 'border-transparent text-textMuted hover:text-textDark'">
+    {{ t.label }}
+    <span *ngIf="t.count != null"
+          class="text-[11px] font-semibold rounded-full px-1.5 min-w-[18px] text-center transition-colors"
+          [ngClass]="t.key === selected ? 'bg-primary-100 text-primary' : 'bg-gray-100 text-textMuted group-hover:bg-gray-200'">{{ t.count }}</span>
+  </button>
+</div>
+
+<!-- Segment pills (opt-in) -->
+<div *ngIf="variant === 'segment'"
+     class="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+  <button *ngFor="let t of tabs" type="button" (click)="onSelect(t.key)" [disabled]="t.disabled"
+          class="flex-shrink-0 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition-colors flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
           [ngClass]="t.key === selected
             ? 'bg-primary text-white shadow-sm'
-            : 'text-textLight hover:text-textDark hover:bg-white'">
+            : 'bg-surface text-textMuted hover:bg-gray-100 hover:text-textDark'">
     {{ t.label }}
     <span *ngIf="t.count != null"
           class="text-[11px] font-semibold rounded-full px-1.5 min-w-[18px] text-center"

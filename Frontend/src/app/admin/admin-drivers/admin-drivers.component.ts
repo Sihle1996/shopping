@@ -4,6 +4,7 @@ import { driver } from 'driver.js';
 import { AdminService } from 'src/app/services/admin.service';
 import { AdminAiService } from 'src/app/services/admin-ai.service';
 import { ConfirmService } from 'src/app/shared/services/confirm.service';
+import { TabItem } from 'src/app/shared/components/tabbed-list/tabbed-list.component';
 
 @Component({
   selector: 'app-admin-drivers',
@@ -19,6 +20,13 @@ export class AdminDriversComponent implements OnInit, OnDestroy {
   toast: string | null = null;
   toastType: 'success' | 'error' = 'success';
   driverFormSubmitted = false;
+
+  /** Section tabs — split the long page into Manage (add + list + live map) and Performance (insights). */
+  driverTab = 'manage';
+  driverTabs: TabItem[] = [
+    { key: 'manage', label: 'Manage' },
+    { key: 'performance', label: 'Performance' },
+  ];
 
   get driverEmailValid(): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.newDriver.email?.trim() || '');

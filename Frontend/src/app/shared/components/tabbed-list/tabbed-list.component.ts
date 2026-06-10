@@ -20,6 +20,8 @@ export interface TabItem {
 export class TabbedListComponent {
   @Input() tabs: TabItem[] = [];
   @Input() selected = '';
+  /** 'underline' = clean underline nav (default, beautiful); 'segment' = filled rounded pills. */
+  @Input() variant: 'segment' | 'underline' = 'underline';
   @Output() select = new EventEmitter<string>();
 
   onSelect(key: string): void {
