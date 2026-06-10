@@ -46,6 +46,7 @@ export interface AiPromoAnalysis {
   evidence: string[];
   insightStrength?: string;        // STRONG | MODERATE | WEAK — the decision gradient
   recommendationType: string;      // 'EXPERIMENT' — the SEMANTIC confidence, not a label
+  discountBasis?: string;          // show-the-math: why this discount % (margin × demand)
   priorObserved?: AiPriorObserved; // learning data — structurally non-causal
   uncertainty?: string;            // legacy; the uncertainty note now lives in one global banner
 }

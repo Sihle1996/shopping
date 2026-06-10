@@ -37,6 +37,10 @@ export class AdminPromotionsComponent implements OnInit {
   get visibleSuggestions(): { s: AiPromoSuggestion; i: number }[] {
     return this.aiSuggestions.map((s, i) => ({ s, i })).filter(x => !this.aiSuggestionsDismissed.has(x.i));
   }
+  /** True once any suggestion carries observed prior-promo history — flips the intro banner. */
+  get hasPromoHistory(): boolean {
+    return this.aiSuggestions.some(s => !!s.analysis?.priorObserved);
+  }
   // ── Performance filtering (within the tab) ──
   perfFilter = 'all';
   /** Classify an outcome so we can filter winners / losers / still-measuring. */

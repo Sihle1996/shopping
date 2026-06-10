@@ -47,7 +47,9 @@
       <!-- Cards -->
       <div *ngIf="visibleSuggestions.length">
         <p class="text-[11px] text-textMuted mb-3 flex items-start gap-1.5">
-          <i class="bi bi-info-circle mt-0.5 flex-shrink-0"></i><span>No promo history yet — these are <strong>experiments to test</strong>, ranked by demand &amp; margin. Outcomes are unknown until you run them.</span>
+          <i class="bi bi-info-circle mt-0.5 flex-shrink-0"></i>
+          <span *ngIf="!hasPromoHistory">No promo history yet — these are <strong>experiments to test</strong>, ranked by demand &amp; margin. Outcomes are unknown until you run them.</span>
+          <span *ngIf="hasPromoHistory">Ranked by demand, margin &amp; how past promos here performed — still <strong>experiments</strong>, so outcomes aren't guaranteed.</span>
         </p>
         <app-paged-list [items]="visibleSuggestions" #pl>
         <div class="space-y-3">
@@ -70,6 +72,9 @@
               <!-- Why -->
               <p *ngIf="x.s.analysis?.hypothesis" class="text-sm text-textDark leading-snug mb-2.5">{{ x.s.analysis?.hypothesis }}</p>
               <p *ngIf="!x.s.analysis && x.s.reason" class="text-sm text-textDark leading-snug mb-2.5">{{ x.s.reason }}</p>
+
+              <!-- Why this % (show the math) -->
+              <p *ngIf="x.s.analysis?.discountBasis" class="text-[11px] text-textMuted mb-2.5 flex items-start gap-1.5"><i class="bi bi-calculator text-primary mt-0.5 flex-shrink-0"></i><span>{{ x.s.analysis?.discountBasis }}</span></p>
 
               <!-- Metric pills -->
               <div *ngIf="x.s.facts?.length" class="flex flex-wrap gap-1.5 mb-3">

@@ -250,7 +250,17 @@ public class AdminAiService {
             Double avgNet = (h != null && h[1] > 0) ? h[0] / h[1] : null;
             long samples = h != null ? (long) h[1] : 0;
             String strength = composite >= 0.66 ? "STRONG" : composite >= 0.33 ? "MODERATE" : "WEAK";
-            int discount = (int) Math.min(18, Math.max(5, Math.round(margin * 0.20)));          // varies, below margin
+            // Discount is demand-AWARE, not just margin: a deeper cut for slow movers (move stock),
+            // shallower for strong sellers (protect margin) — always a fraction of the item's margin
+            // so the promo still profits. This is what makes the % vary instead of clustering.
+            double demandShare = mu > 0 ? (double) units / mu : 0;                 // 0..1 vs the busiest item
+            double pctOfMargin = 0.15 + 0.15 * (1 - demandShare);                  // slow→0.30, busy→0.15 of margin
+            int discount = (int) Math.max(5, Math.min(18, Math.round(margin * pctOfMargin)));
+            String sellerWord = demandShare >= 0.66 ? "strong seller" : demandShare >= 0.33 ? "steady seller" : "slow mover";
+            String discountBasis = String.format(Locale.UK,
+                    "%d%% ≈ %d%% of its %.0f%% margin — %s, so the cut %s",
+                    discount, Math.round(pctOfMargin * 100), margin, sellerWord,
+                    demandShare < 0.5 ? "goes deeper to move stock" : "stays modest to protect margin");
 
             Map<String, Object> promo = new LinkedHashMap<>();
             promo.put("title", item.getName() + " — featured");
@@ -263,9 +273,11 @@ public class AdminAiService {
 
             String hypothesis;
             if (avgNet != null && avgNet > 0) {
-                hypothesis = "Repeat candidate — prior promos on this item showed a positive net change (observed, not controlled).";
+                hypothesis = String.format(Locale.UK, "Prior promos here averaged +%d%% net over %d run%s — worth repeating.",
+                        Math.round(avgNet), samples, samples == 1 ? "" : "s");
             } else if (avgNet != null) {
-                hypothesis = "Prior promos on this item showed no positive net change — test cautiously.";
+                hypothesis = String.format(Locale.UK, "Prior promos here averaged %d%% net over %d run%s — test cautiously.",
+                        Math.round(avgNet), samples, samples == 1 ? "" : "s");
             } else {
                 hypothesis = switch (strength) {
                     case "STRONG"   -> "Strongest test candidate — high demand with a clear margin buffer.";
@@ -294,6 +306,7 @@ public class AdminAiService {
                     "In stock now"));
             analysis.put("insightStrength", strength);
             analysis.put("recommendationType", "EXPERIMENT");
+            analysis.put("discountBasis", discountBasis);   // show-the-math: why THIS %
             // Learning data lives in its OWN typed block, permanently stamped OBSERVATIONAL,
             // so it can't leak into the UI (or any narration) as causal truth.
             if (samples > 0) {
