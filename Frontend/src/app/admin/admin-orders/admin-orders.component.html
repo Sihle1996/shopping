@@ -56,17 +56,8 @@
     <div class="sticky top-0 z-10 mb-4 bg-white rounded-2xl shadow-card p-3">
       <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <!-- Status filter -->
-        <div class="flex overflow-x-auto rounded-xl bg-surface p-1 gap-0.5 md:w-auto">
-          <button *ngFor="let s of statuses"
-                  type="button"
-                  (click)="setStatusFilter(s.value)"
-                  class="flex-shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-all"
-                  [ngClass]="filterStatus === s.value
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'text-textLight hover:text-textDark hover:bg-white'">
-            {{ s.label }}
-          </button>
-        </div>
+        <app-tabbed-list class="block min-w-0" [tabs]="statusTabs" [selected]="filterStatus"
+                         (select)="setStatusFilter($any($event))"></app-tabbed-list>
 
         <!-- Search + Sort -->
         <div class="flex flex-1 items-center gap-3 md:justify-end">

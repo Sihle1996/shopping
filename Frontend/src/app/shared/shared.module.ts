@@ -23,6 +23,7 @@ import { CookieConsentComponent } from './components/cookie-consent/cookie-conse
 import { PageHeaderComponent } from './components/page-header/page-header.component';
 import { ConfirmHostComponent } from './components/confirm-host/confirm-host.component';
 import { OrderActionsComponent } from './components/order-actions/order-actions.component';
+import { TabbedListComponent } from './components/tabbed-list/tabbed-list.component';
 
 @NgModule({
   declarations: [
@@ -44,6 +45,7 @@ import { OrderActionsComponent } from './components/order-actions/order-actions.
     PageHeaderComponent,
     ConfirmHostComponent,
     OrderActionsComponent,
+    TabbedListComponent,
   ],
   imports: [
     CommonModule,
@@ -75,6 +77,7 @@ import { OrderActionsComponent } from './components/order-actions/order-actions.
     PageHeaderComponent,
     ConfirmHostComponent,
     OrderActionsComponent,
+    TabbedListComponent,
   ],
 })
 export class SharedModule {}

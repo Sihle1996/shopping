@@ -6,6 +6,7 @@ import { AdminService } from 'src/app/services/admin.service';
 import { AdminAiService, DriverRecommendation } from 'src/app/services/admin-ai.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ConfirmService } from 'src/app/shared/services/confirm.service';
+import { TabItem } from 'src/app/shared/components/tabbed-list/tabbed-list.component';
 import { ToastrService } from 'ngx-toastr';
 
 /** Strict status unions */
@@ -80,6 +81,9 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     { value: 'Delivered',        label: 'Delivered' },
     { value: 'Cancelled',        label: 'Cancelled' },
   ] as const;
+
+  /** Shared <app-tabbed-list> model (no counts — orders are server-paginated). */
+  statusTabs: TabItem[] = this.statuses.map(s => ({ key: s.value, label: s.label }));
 
   orderStatuses: Status[] = ['Pending', 'Scheduled', 'Preparing', 'Out for Delivery', 'Delivered', 'Cancelled'];
 

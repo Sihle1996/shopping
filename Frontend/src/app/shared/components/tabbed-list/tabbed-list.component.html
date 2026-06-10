@@ -1,0 +1,12 @@
+<div class="flex overflow-x-auto rounded-xl bg-surface p-1 gap-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+  <button *ngFor="let t of tabs" type="button" (click)="onSelect(t.key)"
+          class="flex-shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-all flex items-center gap-1.5"
+          [ngClass]="t.key === selected
+            ? 'bg-primary text-white shadow-sm'
+            : 'text-textLight hover:text-textDark hover:bg-white'">
+    {{ t.label }}
+    <span *ngIf="t.count != null"
+          class="text-[11px] font-semibold rounded-full px-1.5 min-w-[18px] text-center"
+          [ngClass]="t.key === selected ? 'bg-white/25 text-white' : 'bg-gray-200 text-textMuted'">{{ t.count }}</span>
+  </button>
+</div>
