@@ -182,8 +182,8 @@
                       <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce [animation-delay:300ms]"></span>
                     </span>
                   </div>
-                  <p class="text-[11px] text-textMuted mt-1.5" *ngIf="o.ordered">{{ o.status === 'ended' ? 'Ended with too few orders to measure' : (o.ordered.during.units + ' order' + (o.ordered.during.units === 1 ? '' : 's') + ' collected so far') }} · revenue R{{ o.delivered.during.revenue | number:'1.0-0' }}</p>
-                  <p class="text-[11px] text-textMuted mt-1.5" *ngIf="!o.ordered">{{ o.status === 'ended' ? 'Ended with no orders for this item.' : 'No orders for this item yet.' }}</p>
+                  <p class="text-[11px] text-textMuted mt-1.5" *ngIf="o.ordered">{{ o.ordered.during.units }} order{{ o.ordered.during.units === 1 ? '' : 's' }} · revenue R{{ o.delivered.during.revenue | number:'1.0-0' }}</p>
+                  <p class="text-[11px] text-textMuted mt-1.5" *ngIf="!o.ordered">No orders.</p>
                 </div>
                 <div *ngIf="o.signal === 'MEASURED' || o.signal === 'MEASURING'">
                   <div class="flex items-baseline gap-2">
