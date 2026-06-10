@@ -78,29 +78,32 @@ public class PayFastService {
     }
 
     /**
-     * Verify an ITN (Instant Transaction Notification) callback from PayFast.
-     * Checks that the signature matches.
+     * Verify an ITN (Instant Transaction Notification) using the RAW posted body pairs.
+     * PayFast signs the parameter string built from the values EXACTLY as it posted them (already
+     * url-encoded), in the order received, excluding the signature, with the passphrase appended.
+     * Rebuilding that string from a DECODED @RequestParam map and re-encoding it does NOT reproduce
+     * the same bytes (url-encoding, ordering, and empty-field differences), so it failed every ITN
+     * with HTTP 400 — leaving paid orders unconfirmed and auto-cancelled. So we verify against the
+     * raw pairs exactly as received.
+     *
+     * @param orderedRawPairs the body split on '&', each element a raw "key=value" as PayFast sent it
      */
-    public boolean verifyItnSignature(Map<String, String> data) {
-        String receivedSignature = data.get("signature");
-        if (receivedSignature == null) return false;
-
-        // Build param string in the same order, excluding signature
+    public boolean verifyItnSignature(List<String> orderedRawPairs) {
+        String received = null;
         StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, String> entry : data.entrySet()) {
-            if ("signature".equals(entry.getKey())) continue;
-            if (entry.getValue() == null || entry.getValue().isEmpty()) continue;
+        for (String pair : orderedRawPairs) {
+            if (pair.startsWith("signature=")) {
+                received = pair.substring("signature=".length());
+                continue;
+            }
             if (sb.length() > 0) sb.append("&");
-            sb.append(entry.getKey())
-              .append("=")
-              .append(urlEncode(entry.getValue().trim()));
+            sb.append(pair);   // raw, byte-for-byte as PayFast concatenated it
         }
+        if (received == null || received.isEmpty()) return false;
         if (passphrase != null && !passphrase.isEmpty()) {
             sb.append("&passphrase=").append(urlEncode(passphrase.trim()));
         }
-
-        String calculated = md5(sb.toString());
-        return calculated.equals(receivedSignature);
+        return md5(sb.toString()).equalsIgnoreCase(received);
     }
 
     private String urlEncode(String value) {

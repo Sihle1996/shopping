@@ -5,13 +5,21 @@ import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.TenantRepository;
 import com.example.backend.service.PayFastService;
 import com.example.backend.service.PlanCommissionService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/payfast")
@@ -103,10 +111,33 @@ public class PayFastController {
      * PayFast POSTs payment confirmation here (server-to-server).
      */
     @PostMapping("/notify")
-    public ResponseEntity<String> handleItn(@RequestParam Map<String, String> data) {
-        // Verify the signature
-        if (!payFastService.verifyItnSignature(data)) {
-            System.err.println("PayFast ITN: Invalid signature");
+    public ResponseEntity<String> handleItn(HttpServletRequest request) {
+        // Read the RAW body exactly as PayFast posted it. PayFast signs the values AS SENT (already
+        // url-encoded, INCLUDING empty fields, in order). Re-encoding a decoded @RequestParam map
+        // dropped the empty fields and produced a different signature, so every ITN returned 400 →
+        // paid orders never had their paymentId set and were auto-cancelled.
+        String rawBody;
+        try (BufferedReader reader = request.getReader()) {
+            rawBody = reader.lines().collect(Collectors.joining());
+        } catch (IOException e) {
+            System.err.println("PayFast ITN: could not read body — " + e.getMessage());
+            return ResponseEntity.badRequest().body("Cannot read body");
+        }
+
+        List<String> orderedPairs = new ArrayList<>();
+        Map<String, String> data = new LinkedHashMap<>();
+        for (String pair : rawBody.split("&")) {
+            if (pair.isEmpty()) continue;
+            orderedPairs.add(pair);
+            int eq = pair.indexOf('=');
+            String key = eq >= 0 ? pair.substring(0, eq) : pair;
+            String val = eq >= 0 ? pair.substring(eq + 1) : "";
+            data.put(URLDecoder.decode(key, StandardCharsets.UTF_8),
+                     URLDecoder.decode(val, StandardCharsets.UTF_8));
+        }
+
+        if (!payFastService.verifyItnSignature(orderedPairs)) {
+            System.err.println("PayFast ITN: Invalid signature. Raw body: " + rawBody);
             return ResponseEntity.badRequest().body("Invalid signature");
         }
 
