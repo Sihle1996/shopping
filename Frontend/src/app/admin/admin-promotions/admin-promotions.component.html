@@ -11,8 +11,12 @@
       </button>
     </app-page-header>
 
-    <!-- AI Promotion Suggestions -->
-    <div class="bg-white rounded-2xl shadow-card p-5 mb-6">
+    <!-- Section tabs -->
+    <app-tabbed-list class="block mb-6" [tabs]="promoTabs" [selected]="promoTab"
+                     (select)="promoTab = $event"></app-tabbed-list>
+
+    <!-- ═══ SUGGESTIONS TAB — AI Promotion Suggestions ═══ -->
+    <div *ngIf="promoTab === 'suggestions'" class="bg-white rounded-2xl shadow-card p-5 mb-6">
       <div class="flex items-center justify-between mb-3 gap-3">
         <div>
           <h2 class="font-heading text-sm font-bold text-textDark flex items-center gap-1.5">
@@ -46,166 +50,104 @@
         </div>
         <ng-container *ngFor="let s of aiSuggestions; let i = index">
         <div *ngIf="!aiSuggestionsDismissed.has(i)"
-             class="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border border-borderColor bg-surface">
-          <div class="flex-1 min-w-0">
-            <!-- FACTS — observed data layer -->
-            <div *ngIf="s.facts?.length" class="mb-2">
-              <p class="text-[10px] font-bold uppercase tracking-wide text-textMuted mb-0.5">Facts</p>
-              <ul class="text-xs text-textDark space-y-0.5">
-                <li *ngFor="let f of s.facts" class="flex items-center gap-1.5"><i class="bi bi-dot text-primary"></i>{{ f }}</li>
-              </ul>
-            </div>
-            <!-- INSIGHT — structured analysis (templated tokens) with a decision-gradient tier -->
-            <div *ngIf="s.analysis" class="mb-2">
-              <p class="text-[10px] font-bold uppercase tracking-wide text-textMuted mb-0.5 flex items-center gap-1.5">
-                Insight
-                <span *ngIf="s.analysis.insightStrength" class="px-1.5 py-0.5 rounded text-[9px] font-bold" [ngClass]="tierClass(s.analysis.insightStrength)">
-                  {{ s.analysis.insightStrength }}
-                </span>
-                <span class="text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded text-[9px]">
-                  <i class="bi bi-flask"></i> {{ s.analysis.recommendationType }}
-                </span>
-              </p>
-              <p class="text-xs text-textDark">{{ s.analysis.hypothesis }}</p>
-              <!-- PRIOR (OBSERVED) — learning data, structurally separated & permanently hedged
-                   so it never reads as a causal/established fact -->
-              <div *ngIf="s.analysis.priorObserved as ph"
-                   class="mt-1.5 px-2 py-1 rounded border border-dashed border-borderColor bg-surface/50">
-                <span class="text-[10px] font-semibold uppercase tracking-wide text-textMuted">Prior (observed)</span>
-                <span class="text-[11px] text-textDark ml-1">avg {{ ph.avgNetPercent > 0 ? '+' : '' }}{{ ph.avgNetPercent }}% net vs store · {{ ph.samples }} sample{{ ph.samples === 1 ? '' : 's' }}</span>
-                <p class="text-[10px] italic text-textMuted mt-0.5">{{ ph.note }}</p>
-              </div>
-            </div>
-            <!-- legacy fallback -->
-            <p *ngIf="!s.analysis && s.reason" class="text-xs text-textMuted mb-1">{{ s.reason }}</p>
-            <div class="flex flex-wrap items-center gap-2">
+             class="p-4 rounded-2xl border border-borderColor bg-white hover:shadow-card transition-shadow">
+
+          <!-- Proposed promo + confidence tier -->
+          <div class="flex items-start justify-between gap-3 mb-2">
+            <div class="flex items-center gap-2 flex-wrap min-w-0">
               <span class="font-semibold text-textDark text-sm">{{ s.proposedPromo.title }}</span>
-              <span class="inline-flex items-center gap-1 text-xs font-bold bg-primary-50 text-primary px-2 py-0.5 rounded-full">
-                {{ s.proposedPromo.discountPercent }}% off
-              </span>
-              <span *ngIf="s.proposedPromo.targetProductName" class="text-xs text-textMuted">on {{ s.proposedPromo.targetProductName }}</span>
-              <span class="text-xs text-textMuted">{{ s.proposedPromo.startAt }} → {{ s.proposedPromo.endAt }}</span>
+              <span class="inline-flex items-center text-[11px] font-bold bg-primary-50 text-primary px-2 py-0.5 rounded-full flex-shrink-0">{{ s.proposedPromo.discountPercent }}% off</span>
+              <span *ngIf="s.proposedPromo.targetProductName" class="text-xs text-textMuted truncate">on {{ s.proposedPromo.targetProductName }}</span>
             </div>
+            <span *ngIf="s.analysis?.insightStrength" class="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full" [ngClass]="tierClass(s.analysis?.insightStrength || '')">{{ s.analysis?.insightStrength }}</span>
           </div>
-          <div class="flex gap-2 flex-shrink-0">
-            <button (click)="applySuggestion(i)"
-                    [disabled]="applyingIndex === i"
-                    class="px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold
-                           hover:bg-primary-600 disabled:opacity-50 transition-colors flex items-center gap-1.5">
-              <span *ngIf="applyingIndex === i" class="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-              {{ applyingIndex === i ? 'Applying…' : 'Apply' }}
-            </button>
-            <button (click)="dismissSuggestion(i)"
-                    class="px-3 py-1.5 rounded-xl border border-borderColor text-xs text-textMuted hover:bg-gray-50 transition-colors">
-              Dismiss
-            </button>
+
+          <!-- Why (hypothesis) -->
+          <p *ngIf="s.analysis?.hypothesis" class="text-sm text-textDark leading-snug mb-2">{{ s.analysis?.hypothesis }}</p>
+          <p *ngIf="!s.analysis && s.reason" class="text-sm text-textDark leading-snug mb-2">{{ s.reason }}</p>
+
+          <!-- Facts (compact, inline) -->
+          <p *ngIf="s.facts?.length" class="text-xs text-textMuted mb-3 flex flex-wrap gap-x-3 gap-y-0.5">
+            <span *ngFor="let f of s.facts" class="inline-flex items-center gap-1"><i class="bi bi-dot text-primary text-sm"></i>{{ f }}</span>
+          </p>
+
+          <!-- Footer: experiment tag · dates · actions -->
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <div class="flex items-center gap-2 text-[11px] text-textMuted">
+              <span *ngIf="s.analysis?.recommendationType" class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded font-semibold"><i class="bi bi-flask"></i> {{ s.analysis?.recommendationType }}</span>
+              <span class="whitespace-nowrap">{{ s.proposedPromo.startAt }} → {{ s.proposedPromo.endAt }}</span>
+            </div>
+            <div class="flex gap-2 flex-shrink-0">
+              <button (click)="dismissSuggestion(i)" class="px-3 py-1.5 rounded-xl text-xs font-medium text-textMuted hover:bg-gray-100 transition-colors">Dismiss</button>
+              <button (click)="applySuggestion(i)" [disabled]="applyingIndex === i"
+                      class="px-4 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition-colors inline-flex items-center gap-1.5">
+                <span *ngIf="applyingIndex === i" class="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                {{ applyingIndex === i ? 'Applying…' : 'Apply' }}
+              </button>
+            </div>
           </div>
         </div>
         </ng-container>
       </div>
     </div>
 
-    <!-- Experiment results (the feedback loop) -->
-    <div *ngIf="outcomes.length" class="bg-white rounded-2xl shadow-card p-5 mb-8">
+    <!-- ═══ PERFORMANCE TAB — Experiment results (the feedback loop) ═══ -->
+    <div *ngIf="promoTab === 'performance' && outcomes.length" class="bg-white rounded-2xl shadow-card p-5 mb-8">
       <div class="flex items-center gap-2 mb-1">
         <i class="bi bi-graph-up-arrow text-primary"></i>
         <h3 class="font-semibold text-textDark text-sm">Experiment results</h3>
       </div>
       <p class="text-xs text-textMuted mb-3">The target item's sales <strong>during</strong> each promo vs the equal window <strong>before</strong>. Observed change — other factors may also vary.</p>
       <div class="space-y-2">
-        <div *ngFor="let o of outcomes" class="p-3 rounded-xl border border-borderColor bg-surface">
+        <div *ngFor="let o of outcomes" class="p-4 rounded-2xl border border-borderColor bg-white">
 
-          <!-- ALL-scope: Net Revenue Lift card (V53.1) — revenue first, cost second, net highlighted -->
+          <!-- Header: name + status badges -->
+          <div class="flex items-center justify-between gap-2 mb-2.5">
+            <span class="text-sm font-semibold text-textDark truncate">{{ o.scope === 'ALL' ? o.title : o.target }}<span class="text-textMuted font-normal text-xs"> · {{ o.scope === 'ALL' ? typeLabel(o.promoType) : o.discountPercent + '% off' }}</span></span>
+            <span class="flex items-center gap-1 flex-shrink-0">
+              <span *ngIf="o.scope === 'ALL'" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full" [ngClass]="liftStatusClass(o)">{{ liftStatus(o) }}</span>
+              <span *ngIf="o.scope !== 'ALL' && o.dataQuality" class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full" [ngClass]="qualityClass(o.dataQuality)" title="Confidence">{{ confidenceLabel(o.dataQuality) }}</span>
+              <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">{{ o.scope === 'ALL' ? o.signal : o.status }}</span>
+            </span>
+          </div>
+
+          <!-- ALL-scope: net revenue lift hero + compact breakdown -->
           <ng-container *ngIf="o.scope === 'ALL'">
-            <div class="flex items-center justify-between gap-2 mb-2">
-              <span class="text-sm font-semibold text-textDark truncate">{{ o.title }}
-                <span class="text-textMuted font-normal text-xs">· {{ typeLabel(o.promoType) }}</span></span>
-              <span class="flex items-center gap-1 flex-shrink-0">
-                <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded" [ngClass]="liftStatusClass(o)">{{ liftStatus(o) }}</span>
-                <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-gray-100 text-gray-600" title="Confidence tier">{{ o.signal }}</span>
-              </span>
+            <div class="flex items-baseline gap-2">
+              <span class="text-2xl font-bold leading-none" [ngClass]="changeClass(o.netRevenueLift)">{{ randSigned(o.netRevenueLift) }}</span>
+              <span class="text-xs text-textMuted">est. net revenue lift</span>
             </div>
-            <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-              <span class="text-textMuted">Revenue during promo</span>
-              <span class="text-right text-textDark font-medium">R{{ o.duringRevenue | number:'1.0-0' }}</span>
-              <span class="text-textMuted">Expected (baseline)</span>
-              <span class="text-right text-textDark">{{ o.expectedRevenue == null ? '—' : 'R' + (o.expectedRevenue | number:'1.0-0') }}</span>
-              <span class="text-textMuted">Incremental revenue</span>
-              <span class="text-right font-medium" [ngClass]="changeClass(o.incrementalRevenue)">{{ randSigned(o.incrementalRevenue) }}</span>
-              <span class="text-textMuted">Promo cost <span class="text-[10px]">({{ (o.fundedBy || '') | lowercase }}-funded)</span></span>
-              <span class="text-right text-textDark">R{{ o.promoCost | number:'1.0-0' }}</span>
-            </div>
-            <div class="flex items-center justify-between gap-2 pt-1.5 mt-1.5 border-t border-borderColor">
-              <span class="text-xs font-semibold text-textDark">Est. net revenue lift</span>
-              <span class="text-sm font-bold" [ngClass]="changeClass(o.netRevenueLift)">{{ randSigned(o.netRevenueLift) }}</span>
-            </div>
-            <p class="text-[10px] text-textMuted mt-1.5">
-              {{ o.redeemedOrders }} redeemed · {{ o.exposedOrders }} orders in window · correlational vs the previous 14-day baseline.
+            <p class="text-[11px] text-textMuted mt-2 leading-relaxed">
+              R{{ o.duringRevenue | number:'1.0-0' }} during · {{ o.expectedRevenue == null ? '—' : 'R' + (o.expectedRevenue | number:'1.0-0') }} baseline · R{{ o.promoCost | number:'1.0-0' }} cost ({{ (o.fundedBy || '') | lowercase }}) · {{ o.redeemedOrders }} redeemed / {{ o.exposedOrders }} orders
             </p>
           </ng-container>
 
-          <!-- PRODUCT-scope: existing per-item card -->
+          <!-- PRODUCT-scope -->
           <ng-container *ngIf="o.scope !== 'ALL'">
-          <div class="flex items-center justify-between gap-2 mb-1">
-            <span class="text-sm font-semibold text-textDark truncate">{{ o.target }} <span class="text-textMuted font-normal">· {{ o.discountPercent }}% off</span></span>
-            <span class="flex items-center gap-1 flex-shrink-0">
-              <span *ngIf="o.dataQuality" class="text-[9px] font-bold px-1.5 py-0.5 rounded" [ngClass]="qualityClass(o.dataQuality)" title="Confidence from baseline + promo volume + duration">{{ confidenceLabel(o.dataQuality) }}</span>
-              <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded"
-                    [ngClass]="o.status === 'running' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'">{{ o.status }}</span>
-            </span>
-          </div>
-          <!-- Pending: not enough events yet to measure (not "no effect") -->
-          <p *ngIf="o.signal === 'PENDING'" class="text-xs text-textMuted italic">
-            Outcome pending — no orders for this item in the window yet. (Insufficient signal, not "no effect".)
-          </p>
-          <!-- Early: window too short / baseline too thin — show counts, suppress noisy percentages -->
-          <div *ngIf="o.signal === 'EARLY'" class="space-y-1 text-xs">
-            <p class="text-[11px] text-amber-700 italic flex items-start gap-1">
-              <i class="bi bi-hourglass-split mt-0.5"></i><span>{{ o.note }}</span>
-            </p>
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-textMuted">Ordered <span class="text-[10px]">(early)</span>:
-                <span class="text-textDark">{{ o.ordered.before.units }} → {{ o.ordered.during.units }} over {{ o.windowDays }}d</span></span>
-              <span class="text-textMuted text-[10px]">measuring…</span>
+            <p *ngIf="o.signal === 'PENDING'" class="text-xs text-textMuted italic">Outcome pending — no orders for this item in the window yet.</p>
+
+            <div *ngIf="o.signal === 'EARLY'">
+              <p class="text-[11px] text-amber-700 italic mb-1.5 flex items-start gap-1"><i class="bi bi-hourglass-split mt-0.5"></i><span>{{ o.note }}</span></p>
+              <p class="text-[11px] text-textMuted">Ordered {{ o.ordered.before.units }} → {{ o.ordered.during.units }} over {{ o.windowDays }}d · revenue R{{ o.delivered.before.revenue | number:'1.0-0' }} → R{{ o.delivered.during.revenue | number:'1.0-0' }}</p>
             </div>
-            <p class="text-[10px] text-textMuted">Revenue (delivered): R{{ o.delivered.before.revenue | number:'1.0-0' }} → R{{ o.delivered.during.revenue | number:'1.0-0' }}</p>
-          </div>
-          <!-- Measuring (directional, capped confidence) or Measured (full) -->
-          <div *ngIf="o.signal === 'MEASURED' || o.signal === 'MEASURING'" class="space-y-1 text-xs">
-            <p *ngIf="o.signal === 'MEASURING' && o.note" class="text-[11px] text-amber-700 italic flex items-start gap-1">
-              <i class="bi bi-graph-up mt-0.5"></i><span>{{ o.note }}</span>
-            </p>
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-textMuted">Ordered <span class="text-[10px]">(early)</span>:
-                <span class="text-textDark">{{ o.ordered.before.units }} → {{ o.ordered.during.units }} over {{ o.windowDays }}d</span></span>
-              <span class="font-semibold" [ngClass]="changeClass(o.ordered.unitsPercent)">
-                {{ o.ordered.unitsPercent == null ? 'n/a' : (o.ordered.unitsPercent > 0 ? '+' : '') + o.ordered.unitsPercent + '%' }}
-              </span>
+
+            <div *ngIf="o.signal === 'MEASURED' || o.signal === 'MEASURING'">
+              <div class="flex items-baseline gap-2">
+                <span class="text-2xl font-bold leading-none" [ngClass]="changeClass(o.netLiftPercent)" title="Observed vs the store baseline — not a controlled result">{{ signed(o.netLiftPercent) }}</span>
+                <span class="text-xs text-textMuted">net vs store</span>
+              </div>
+              <p *ngIf="o.signal === 'MEASURING' && o.note" class="text-[11px] text-amber-700 italic mt-1.5">{{ o.note }}</p>
+              <p class="text-[11px] text-textMuted mt-2 leading-relaxed">
+                ordered {{ o.ordered.before.units }} → {{ o.ordered.during.units }} ({{ o.ordered.unitsPercent == null ? 'n/a' : (o.ordered.unitsPercent > 0 ? '+' : '') + o.ordered.unitsPercent + '%' }}) · delivered {{ o.delivered.before.units }} → {{ o.delivered.during.units }} · store-wide {{ signed(o.storeChangePercent) }}
+              </p>
             </div>
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-textMuted">Delivered <span class="text-[10px]">(final)</span>:
-                <span class="text-textDark">{{ o.delivered.before.units }} → {{ o.delivered.during.units }}</span></span>
-              <span class="font-semibold" [ngClass]="changeClass(o.delivered.unitsPercent)">
-                {{ o.delivered.unitsPercent == null ? 'pending' : (o.delivered.unitsPercent > 0 ? '+' : '') + o.delivered.unitsPercent + '%' }}
-              </span>
-            </div>
-            <p class="text-[10px] text-textMuted">Revenue (delivered): R{{ o.delivered.before.revenue | number:'1.0-0' }} → R{{ o.delivered.during.revenue | number:'1.0-0' }}</p>
-            <!-- Baseline context: isolate the item from the store-wide trend -->
-            <div class="flex items-center justify-between gap-2 pt-1 mt-1 border-t border-borderColor">
-              <span class="text-textMuted">store-wide <span [ngClass]="changeClass(o.storeChangePercent)">{{ signed(o.storeChangePercent) }}</span></span>
-              <span class="font-semibold" [ngClass]="changeClass(o.netLiftPercent)"
-                    title="Observed performance relative to the store baseline — not a controlled/causal result">
-                Net vs store {{ signed(o.netLiftPercent) }}
-              </span>
-            </div>
-          </div>
           </ng-container>
         </div>
       </div>
     </div>
 
     <!-- Create / Edit Form (collapsible) -->
-    <div *ngIf="formOpen" class="bg-white rounded-2xl shadow-card p-6 mb-8">
+    <div *ngIf="promoTab === 'promotions' && formOpen" class="bg-white rounded-2xl shadow-card p-6 mb-8">
       <div class="flex items-center justify-between mb-5">
         <h3 class="font-heading text-base font-semibold text-textDark flex items-center gap-2">
           <i class="bi bi-tag text-primary"></i>
@@ -498,8 +440,15 @@
       </form>
     </div>
 
-    <!-- Promotions List -->
-    <div class="bg-white rounded-2xl shadow-card overflow-hidden">
+    <!-- PERFORMANCE TAB — empty state -->
+    <div *ngIf="promoTab === 'performance' && !outcomes.length"
+         class="bg-white rounded-2xl shadow-card p-10 text-center text-sm text-textMuted mb-8">
+      <i class="bi bi-graph-up-arrow text-3xl text-gray-300 block mb-2"></i>
+      Experiment results appear here once your promotions run and collect orders.
+    </div>
+
+    <!-- ═══ PROMOTIONS TAB — All Promotions list ═══ -->
+    <div *ngIf="promoTab === 'promotions'" class="bg-white rounded-2xl shadow-card overflow-hidden">
       <div class="flex items-center justify-between px-5 py-4 border-b border-borderColor">
         <h3 class="font-heading text-sm font-semibold text-textDark">All Promotions</h3>
         <app-button variant="secondary" size="sm" iconLeft="bi bi-arrow-clockwise" (clicked)="refresh()">

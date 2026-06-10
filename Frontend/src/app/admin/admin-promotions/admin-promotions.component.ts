@@ -24,6 +24,16 @@ export class AdminPromotionsComponent implements OnInit {
   submitError: string | null = null;
   formOpen = false;
 
+  /** Section tabs — split the page so the AI suggestion + outcome cards get their own clean space. */
+  promoTab = 'promotions';
+  get promoTabs(): TabItem[] {
+    return [
+      { key: 'promotions', label: 'Promotions' },
+      { key: 'suggestions', label: 'Suggestions', count: this.aiSuggestions?.length || null },
+      { key: 'performance', label: 'Performance', count: this.outcomes?.length || null },
+    ];
+  }
+
   showDeleteConfirm = false;
   deleteTarget: Promotion | null = null;
   imageUploading = false;
@@ -215,6 +225,7 @@ export class AdminPromotionsComponent implements OnInit {
   }
 
   openForm(): void {
+    this.promoTab = 'promotions';
     this.formOpen = true;
   }
 
@@ -391,6 +402,7 @@ export class AdminPromotionsComponent implements OnInit {
         this.applyingIndex = null;
         this.aiSuggestionsDismissed.add(index);
         this.toastr.success(`Promotion "${p.title}" created`);
+        this.promoTab = 'promotions';
         this.refresh();
       },
       error: (err) => {
