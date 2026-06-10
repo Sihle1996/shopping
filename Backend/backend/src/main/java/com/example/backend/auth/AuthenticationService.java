@@ -170,7 +170,7 @@ public class AuthenticationService {
         try {
             return repository.findAll();
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to fetch users", e);
+            throw new RuntimeException("Failed to fetch users", e);  // genuine server error → stays 500
         }
     }
 

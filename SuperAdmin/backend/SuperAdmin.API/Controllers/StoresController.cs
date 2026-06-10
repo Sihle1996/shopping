@@ -71,7 +71,7 @@ public class StoresController(AppDbContext db) : ControllerBase
             return new TenantDto(
                 t.Id, t.Name, t.Slug, t.LogoUrl, t.PrimaryColor, t.Email, t.Phone, t.Address,
                 t.DeliveryRadiusKm, t.DeliveryFeeBase, t.PlatformCommissionPercent,
-                t.SubscriptionStatus, t.SubscriptionPlan, t.Active, t.CreatedAt,
+                t.SubscriptionStatus, t.SubscriptionPlan, t.Active, t.IsArchived, t.CreatedAt,
                 userCounts.FirstOrDefault(u => u.TenantId == t.Id)?.Count ?? 0,
                 driverCounts.FirstOrDefault(d => d.TenantId == t.Id)?.Count ?? 0,
                 orderData.FirstOrDefault(o => o.TenantId == t.Id)?.Count ?? 0,
@@ -128,7 +128,7 @@ public class StoresController(AppDbContext db) : ControllerBase
             tenant.Id, tenant.Name, tenant.Slug, tenant.LogoUrl, tenant.PrimaryColor,
             tenant.Email, tenant.Phone, tenant.Address,
             tenant.DeliveryRadiusKm, tenant.DeliveryFeeBase, tenant.PlatformCommissionPercent,
-            tenant.SubscriptionStatus, tenant.SubscriptionPlan, tenant.Active, tenant.CreatedAt,
+            tenant.SubscriptionStatus, tenant.SubscriptionPlan, tenant.Active, tenant.IsArchived, tenant.CreatedAt,
             0, 0, 0, 0, tenant.TrialStartedAt, trialDays
         ));
     }
@@ -191,28 +191,33 @@ public class StoresController(AppDbContext db) : ControllerBase
         var tenant = await db.Tenants.FindAsync(id);
         if (tenant == null) return NotFound();
         tenant.Active = !tenant.Active;
+        if (tenant.Active) tenant.IsArchived = false;   // re-activating restores an archived store
         tenant.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        return Ok(new { active = tenant.Active });
+        return Ok(new { active = tenant.Active, archived = tenant.IsArchived });
     }
+
+    // Removing a store ARCHIVES it (soft-delete) — never a hard delete. A merchant's order /
+    // financial / review history must be retained (accounting, disputes, payouts), and a hard delete
+    // would also orphan rows in tables with no tenant FK. Blocked while orders are in-flight.
+    private static readonly string[] TerminalOrderStatuses = { "Delivered", "Cancelled", "Rejected" };
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var tenant = await db.Tenants.FindAsync(id);
         if (tenant == null) return NotFound();
-        db.Tenants.Remove(tenant);
-        try
-        {
-            await db.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            var pg = ex.InnerException as Npgsql.PostgresException;
-            if (pg?.SqlState == "23503")
-                return BadRequest(new { message = "Cannot delete this store — it still has associated orders or users. Deactivate it instead." });
-            throw;
-        }
-        return NoContent();
+
+        int inFlight = await db.Orders.CountAsync(o => o.TenantId == id && !TerminalOrderStatuses.Contains(o.Status));
+        if (inFlight > 0)
+            return Conflict(new { message =
+                $"Cannot remove this store — {inFlight} order(s) are still in progress. " +
+                "Deactivate it to stop new orders, then remove once they're delivered or cancelled." });
+
+        tenant.IsArchived = true;
+        tenant.Active = false;
+        tenant.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        return Ok(new { archived = true, message = "Store archived — its history is retained and it can be restored." });
     }
 }

@@ -303,6 +303,11 @@ public class OrderService {
                             request.getDeliveryLat(), request.getDeliveryLon());
                     subscriptionEnforcementService.assertDeliveryRadius(tenant.getId(), distKm);
                 }
+                // A deactivated or archived (removed) store does not accept NEW orders. Existing
+                // in-flight orders still complete via the store/driver flow — this guards new ones only.
+                if (!tenant.isActive() || tenant.isArchived()) {
+                    throw new IllegalStateException("This store is no longer accepting orders.");
+                }
                 // Enforce store-closed check
                 if (Boolean.FALSE.equals(tenant.getIsOpen())) {
                     throw new IllegalStateException("This store is currently closed and not accepting orders.");

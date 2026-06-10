@@ -9,7 +9,7 @@ import Table from '../../components/common/Table'
 import Badge from '../../components/common/Badge'
 import Modal from '../../components/common/Modal'
 import Pagination from '../../components/common/Pagination'
-import { Search, Pencil, Trash2, Eye, EyeOff, AlertTriangle, Download, Plus } from 'lucide-react'
+import { Search, Pencil, Archive, Eye, EyeOff, AlertTriangle, Download, Plus } from 'lucide-react'
 import { exportCsv } from '../../utils/exportCsv'
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -409,9 +409,9 @@ export default function Stores() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stores'] })
       setDeleteStore(null)
-      showToast('Store deleted')
+      showToast('Store archived — its history is retained and it can be restored')
     },
-    onError: (err: Error) => showToast(err.message || 'Failed to delete store', 'error')
+    onError: (err: Error) => showToast(err.message || 'Failed to remove store', 'error')
   })
 
   const columns = [
@@ -450,7 +450,9 @@ export default function Stores() {
       key: 'active',
       header: 'Status',
       render: (row: TenantDto) => (
-        <Badge label={row.active ? 'Active' : 'Inactive'} variant={statusVariant(row.active)} />
+        row.isArchived
+          ? <Badge label="Archived" variant="neutral" />
+          : <Badge label={row.active ? 'Active' : 'Inactive'} variant={statusVariant(row.active)} />
       )
     },
     {
@@ -494,17 +496,19 @@ export default function Stores() {
                 ? 'text-gray-600 hover:text-orange-400 hover:bg-orange-500/10'
                 : 'text-gray-600 hover:text-green-400 hover:bg-green-500/10'
             }`}
-            title={row.active ? 'Deactivate' : 'Activate'}
+            title={row.active ? 'Deactivate' : (row.isArchived ? 'Restore' : 'Activate')}
           >
             {row.active ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
-          <button
-            onClick={() => setDeleteStore(row)}
-            className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
-            title="Delete"
-          >
-            <Trash2 size={15} />
-          </button>
+          {!row.isArchived && (
+            <button
+              onClick={() => setDeleteStore(row)}
+              className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
+              title="Remove (archive)"
+            >
+              <Archive size={15} />
+            </button>
+          )}
         </div>
       )
     }
@@ -616,20 +620,22 @@ export default function Stores() {
       <Modal
         isOpen={!!deleteStore}
         onClose={() => setDeleteStore(null)}
-        title="Delete Store"
+        title="Remove store"
         size="sm"
       >
         <div className="space-y-4">
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
-              <AlertTriangle size={20} className="text-red-400" />
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+              <Archive size={20} className="text-amber-400" />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-200">
-                Delete "{deleteStore?.name}"?
+                Remove "{deleteStore?.name}"?
               </p>
               <p className="text-sm text-gray-500 mt-1">
-                This action cannot be undone. All store data will be permanently removed.
+                This archives the store — it stops accepting new orders and disappears from the
+                customer app, but all its orders, payouts and history are kept, and you can restore it
+                anytime. Removal is blocked while the store has orders in progress.
               </p>
             </div>
           </div>
@@ -643,9 +649,9 @@ export default function Stores() {
             <button
               onClick={() => deleteStore && deleteMutation.mutate(deleteStore.id)}
               disabled={deleteMutation.isPending}
-              className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium disabled:opacity-60"
+              className="px-4 py-2 text-sm bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium disabled:opacity-60"
             >
-              {deleteMutation.isPending ? 'Deleting…' : 'Delete Store'}
+              {deleteMutation.isPending ? 'Removing…' : 'Remove store'}
             </button>
           </div>
         </div>

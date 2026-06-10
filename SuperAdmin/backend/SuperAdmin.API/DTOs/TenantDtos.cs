@@ -15,6 +15,7 @@ public record TenantDto(
     string SubscriptionStatus,
     string SubscriptionPlan,
     bool Active,
+    bool IsArchived,
     DateTime CreatedAt,
     int UserCount,
     int DriverCount,

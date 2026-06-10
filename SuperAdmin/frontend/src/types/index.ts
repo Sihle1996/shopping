@@ -13,6 +13,7 @@ export interface TenantDto {
   subscriptionStatus?: string
   subscriptionPlan?: string
   active: boolean
+  isArchived: boolean
   createdAt: string
   userCount: number
   driverCount: number

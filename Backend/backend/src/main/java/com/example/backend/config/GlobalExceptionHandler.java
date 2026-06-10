@@ -35,6 +35,15 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
     }
 
+    // IllegalStateException = the request is valid but conflicts with the resource's current state
+    // (store closed / not accepting orders, "only pending orders can be cancelled", group cart closed).
+    // Without this it falls through to the generic handler and wrongly returns 500.
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(LocalDateTime.now(), HttpStatus.CONFLICT.value(), ex.getMessage()));
+    }
+
     // Handle validation exceptions
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
