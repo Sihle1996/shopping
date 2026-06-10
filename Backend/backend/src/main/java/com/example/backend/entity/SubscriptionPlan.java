@@ -45,6 +45,24 @@ public class SubscriptionPlan {
     @Column(nullable = false)
     private boolean hasInventoryExport;
 
+    // AI intelligence gates (nullable so ddl-auto can add them locally to the seeded plans;
+    // null = not included). Promo AI / driver intelligence / review+support AI / API access.
+    @Column(name = "has_promo_ai")
+    private Boolean hasPromoAi;
+
+    @Column(name = "has_driver_intel")
+    private Boolean hasDriverIntel;
+
+    @Column(name = "has_review_ai")
+    private Boolean hasReviewAi;
+
+    @Column(name = "has_api_access")
+    private Boolean hasApiAccess;
+
+    /** Monthly Copilot prompt quota (metering = margin protection); null = unlimited / fair use. */
+    @Column(name = "copilot_monthly_quota")
+    private Integer copilotMonthlyQuota;
+
     @Column(precision = 5, scale = 2)
     private BigDecimal commissionPercent;
 

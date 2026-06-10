@@ -5,10 +5,12 @@ import com.example.backend.entity.AiAlert;
 import com.example.backend.repository.AiAlertRepository;
 import com.example.backend.service.AdminAiService;
 import com.example.backend.service.AdminAgentService;
+import com.example.backend.service.AiUsageService;
 import com.example.backend.service.AuditService;
 import com.example.backend.service.CapabilityRegistry;
 import com.example.backend.service.DriverAssignmentService;
 import com.example.backend.service.SmartAlertService;
+import com.example.backend.service.SubscriptionEnforcementService;
 import com.example.backend.tenant.TenantContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +38,15 @@ public class AdminAiController {
     private final CapabilityRegistry capabilityRegistry;
     private final DriverAssignmentService driverAssignmentService;
     private final AuditService auditService;
+    private final SubscriptionEnforcementService subscriptionEnforcementService;
+    private final AiUsageService aiUsageService;
     private final ObjectMapper objectMapper;
+
+    /** Run a plan gate only when there's a tenant context (mirrors AnalyticsController). */
+    private void gate(java.util.function.Consumer<UUID> assertion) {
+        UUID t = TenantContext.getCurrentTenantId();
+        if (t != null) assertion.accept(t);
+    }
 
     /** GET /api/admin/ai/capabilities — the per-tenant capability manifest (AI + UI share it) */
     @GetMapping("/capabilities")
@@ -62,6 +72,7 @@ public class AdminAiController {
     /** POST /api/admin/ai/support/draft — draft a reply + triage for a support ticket */
     @PostMapping("/support/draft")
     public ResponseEntity<Map<String, Object>> supportDraft(@RequestBody Map<String, String> body) {
+        gate(subscriptionEnforcementService::assertReviewAiAccess);
         String subject = body.getOrDefault("subject", "").trim();
         String message = body.getOrDefault("message", "").trim();
         if (message.isEmpty()) {
@@ -78,6 +89,7 @@ public class AdminAiController {
     /** GET /api/admin/ai/driver-insights — driver scorecard + performance insights + coverage */
     @GetMapping("/driver-insights")
     public ResponseEntity<Map<String, Object>> driverInsights() {
+        gate(subscriptionEnforcementService::assertDriverIntelAccess);
         return ResponseEntity.ok(adminAiService.driverInsights(TenantContext.getCurrentTenantId()));
     }
 
@@ -92,12 +104,14 @@ public class AdminAiController {
     /** GET /api/admin/ai/recommendation-stats — is the engine helping? Acceptance rate + outcomes. */
     @GetMapping("/recommendation-stats")
     public ResponseEntity<Map<String, Object>> recommendationStats() {
+        gate(subscriptionEnforcementService::assertDriverIntelAccess);
         return ResponseEntity.ok(driverAssignmentService.recommendationStats(TenantContext.getCurrentTenantId()));
     }
 
     /** GET /api/admin/ai/review-book-insights — opportunities/risks from profit x review sentiment */
     @GetMapping("/review-book-insights")
     public ResponseEntity<Map<String, Object>> reviewBookInsights() {
+        gate(subscriptionEnforcementService::assertReviewAiAccess);
         return ResponseEntity.ok(adminAiService.reviewBookInsights(TenantContext.getCurrentTenantId()));
     }
 
@@ -117,6 +131,7 @@ public class AdminAiController {
     /** POST /api/admin/ai/review/draft-reply — draft a public reply to one review */
     @PostMapping("/review/draft-reply")
     public ResponseEntity<Map<String, Object>> reviewReply(@RequestBody Map<String, Object> body) {
+        gate(subscriptionEnforcementService::assertReviewAiAccess);
         int rating = body.get("rating") instanceof Number n ? n.intValue() : 0;
         String comment = body.get("comment") != null ? body.get("comment").toString() : "";
         return ResponseEntity.ok(adminAiService.draftReviewReply(rating, comment));
@@ -126,6 +141,7 @@ public class AdminAiController {
     @PostMapping("/review-digest")
     public ResponseEntity<Map<String, Object>> reviewDigest(
             @RequestBody(required = false) Map<String, String> body) {
+        gate(subscriptionEnforcementService::assertReviewAiAccess);
         UUID tenantId = TenantContext.getCurrentTenantId();
         LocalDate since = null;
         if (body != null && body.containsKey("since")) {
@@ -145,12 +161,14 @@ public class AdminAiController {
     /** GET /api/admin/ai/promo-outcomes — measured before-vs-during results per product promo */
     @GetMapping("/promo-outcomes")
     public ResponseEntity<Map<String, Object>> promoOutcomes() {
+        gate(subscriptionEnforcementService::assertPromoAiAccess);
         return ResponseEntity.ok(adminAiService.promoOutcomes(TenantContext.getCurrentTenantId()));
     }
 
     /** POST /api/admin/ai/suggest-promotions — AI-generated promotion suggestions */
     @PostMapping("/suggest-promotions")
     public ResponseEntity<Map<String, Object>> suggestPromotions() {
+        gate(subscriptionEnforcementService::assertPromoAiAccess);
         UUID tenantId = TenantContext.getCurrentTenantId();
         return ResponseEntity.ok(adminAiService.suggestPromotions(tenantId));
     }
@@ -163,6 +181,8 @@ public class AdminAiController {
         if (question.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "question is required"));
         }
+        gate(subscriptionEnforcementService::assertCopilotQuota);   // Copilot is metered, not blocked
+        aiUsageService.record("COPILOT_PROMPT", 0, 0);              // 1 per user query, toward the quota
         UUID tenantId = TenantContext.getCurrentTenantId();
         java.util.List<?> history = body.get("history") instanceof java.util.List<?> h ? h : null;
         // Prefer the agentic copilot (tool use); fall back to the rule-based path
@@ -206,6 +226,7 @@ public class AdminAiController {
     public ResponseEntity<Map<String, Object>> promoEconomics() {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId == null) return ResponseEntity.ok(Map.of("promos", java.util.List.of()));
+        subscriptionEnforcementService.assertPromoAiAccess(tenantId);
         return ResponseEntity.ok(adminAiService.promoEconomics7d(tenantId));
     }
 
