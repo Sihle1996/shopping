@@ -924,12 +924,22 @@ public class OrderService {
                 .mapToDouble(Order::getTotalAmount).sum();
     }
 
+    /** The dashboard "Live Orders" feed — IN-FLIGHT orders that still need action
+     *  (Pending/Scheduled/Confirmed/Preparing/Out for Delivery), newest first. Terminal orders
+     *  (Delivered/Cancelled/Rejected) are excluded so the feed is a live control surface, not history;
+     *  a quiet store correctly shows an empty "all caught up" state rather than old delivered orders. */
     public List<OrderDTO> getRecentOrders(int limit) {
         UUID tenantId = TenantContext.getCurrentTenantId();
         List<Order> orders = tenantId != null
                 ? orderRepository.findByTenant_IdOrderByOrderDateDesc(tenantId)
                 : orderRepository.findAll(Sort.by(Sort.Direction.DESC, "orderDate"));
-        return orders.stream().limit(limit).map(this::convertToOrderDTO).toList();
+        return orders.stream()
+                .filter(o -> !isTerminalStatus(o.getStatus()))
+                .limit(limit).map(this::convertToOrderDTO).toList();
+    }
+
+    private boolean isTerminalStatus(String status) {
+        return "Delivered".equals(status) || "Cancelled".equals(status) || "Rejected".equals(status);
     }
 
     @Transactional

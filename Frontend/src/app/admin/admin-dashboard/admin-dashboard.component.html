@@ -235,8 +235,8 @@
       <!-- Orders list -->
       <div *ngIf="!recentOrdersLoading">
         <div *ngIf="recentOrders.length === 0" class="px-5 py-10 text-center text-textMuted text-sm">
-          <i class="bi bi-inbox text-3xl text-gray-300 block mb-2"></i>
-          No orders yet today
+          <i class="bi bi-check2-circle text-3xl text-emerald-300 block mb-2"></i>
+          All caught up — no live orders right now
         </div>
 
         <div *ngFor="let order of recentOrders"
