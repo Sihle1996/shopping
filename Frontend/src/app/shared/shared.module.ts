@@ -24,6 +24,7 @@ import { PageHeaderComponent } from './components/page-header/page-header.compon
 import { ConfirmHostComponent } from './components/confirm-host/confirm-host.component';
 import { OrderActionsComponent } from './components/order-actions/order-actions.component';
 import { TabbedListComponent } from './components/tabbed-list/tabbed-list.component';
+import { PaginatePipe } from './pipes/paginate.pipe';
 
 @NgModule({
   declarations: [
@@ -46,6 +47,7 @@ import { TabbedListComponent } from './components/tabbed-list/tabbed-list.compon
     ConfirmHostComponent,
     OrderActionsComponent,
     TabbedListComponent,
+    PaginatePipe,
   ],
   imports: [
     CommonModule,
@@ -78,6 +80,7 @@ import { TabbedListComponent } from './components/tabbed-list/tabbed-list.compon
     ConfirmHostComponent,
     OrderActionsComponent,
     TabbedListComponent,
+    PaginatePipe,
   ],
 })
 export class SharedModule {}
