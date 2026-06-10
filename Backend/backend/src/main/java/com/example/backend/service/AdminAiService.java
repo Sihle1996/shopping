@@ -257,12 +257,16 @@ public class AdminAiService {
             // so the promo still profits. This is what makes the % vary instead of clustering.
             double demandShare = mu > 0 ? (double) units / mu : 0;                 // 0..1 vs the busiest item
             double pctOfMargin = 0.15 + 0.15 * (1 - demandShare);                  // slow→0.30, busy→0.15 of margin
-            int discount = (int) Math.max(5, Math.min(18, Math.round(margin * pctOfMargin)));
+            // BREAK-EVEN GUARD: a promo profits only while discount% < margin%. Never give up more than
+            // 60% of the margin, and never let a minimum-useful floor exceed what the margin can absorb.
+            double maxSafe = margin * 0.6;
+            int discount = (int) Math.floor(Math.min(Math.max(5.0, margin * pctOfMargin), Math.min(maxSafe, 18.0)));
+            if (discount < 4) continue;   // margin too thin to discount meaningfully without eroding it
             String sellerWord = demandShare >= 0.66 ? "strong seller" : demandShare >= 0.33 ? "steady seller" : "slow mover";
+            int marginUse = (int) Math.round(discount / margin * 100.0);           // honest: share of the margin this cut uses
             String discountBasis = String.format(Locale.UK,
-                    "%d%% ≈ %d%% of its %.0f%% margin — %s, so the cut %s",
-                    discount, Math.round(pctOfMargin * 100), margin, sellerWord,
-                    demandShare < 0.5 ? "goes deeper to move stock" : "stays modest to protect margin");
+                    "%d%% off uses %d%% of its %.0f%% margin — %s, so it stays profitable",
+                    discount, marginUse, margin, sellerWord);
 
             Map<String, Object> promo = new LinkedHashMap<>();
             promo.put("title", item.getName() + " — featured");
@@ -333,12 +337,20 @@ public class AdminAiService {
                 .filter(v -> v > 0)
                 .sorted().collect(Collectors.toList());
         if (orderTotals.size() >= 12) {
-            double aov = orderTotals.stream().mapToDouble(Double::doubleValue).average().orElse(0);
-            double threshold = Math.ceil((aov * 1.2) / 25.0) * 25.0;                  // ~20% above AOV, rounded up to R25
-            double amountOff = Math.max(10, Math.min(50, Math.round(aov * 0.10 / 5.0) * 5.0)); // ~10% of AOV, R10–50, R5 steps
-            long nearMiss = orderTotals.stream().filter(v -> v >= aov && v < threshold).count();
+            double typical = orderTotals.get(orderTotals.size() / 2);                 // MEDIAN — robust to big-order outliers
+            double threshold = Math.ceil((typical * 1.2) / 25.0) * 25.0;              // ~20% above the typical order, up to R25
+            // MARGIN GUARD: a threshold-sized order carries ~threshold × (median margin) in rand profit;
+            // cap the R-off at 60% of that so the deal can't lose money on a thin-margin store.
+            double orderMarginPct = (medianMargin != null ? medianMargin : 30.0) / 100.0;
+            double marginAtThreshold = threshold * orderMarginPct;
+            double amountOff = Math.min(50, Math.round(typical * 0.10 / 5.0) * 5.0);  // ~10% of the typical order, R5 steps
+            amountOff = Math.min(amountOff, Math.floor(marginAtThreshold * 0.6 / 5.0) * 5.0);
+            long nearMiss = orderTotals.stream().filter(v -> v >= typical && v < threshold).count();
+            long alreadyOver = orderTotals.stream().filter(v -> v >= threshold).count();   // giveaway base — would order anyway
             double nearMissShare = (double) nearMiss / orderTotals.size();
-            if (threshold > aov && amountOff < threshold && nearMissShare >= 0.12) {
+            // Only when there's a real near-threshold cluster, the R-off is meaningful AND margin-safe,
+            // and the giveaway base doesn't dwarf the orders we're nudging.
+            if (threshold > typical && amountOff >= 10 && nearMissShare >= 0.12 && alreadyOver <= nearMiss * 3) {
                 Map<String, Object> tPromo = new LinkedHashMap<>();
                 tPromo.put("title", String.format(Locale.UK, "R%.0f off orders over R%.0f", amountOff, threshold));
                 tPromo.put("type", "AMOUNT_OFF");
@@ -351,23 +363,22 @@ public class AdminAiService {
                 Map<String, Object> tAnalysis = new LinkedHashMap<>();
                 tAnalysis.put("hypothesis", String.format(Locale.UK,
                         "Gives baskets near the line a reason to add ~R%.0f more to clear R%.0f — a basket-size play, not an item discount. Test a week and compare AOV.",
-                        threshold - aov, threshold));
+                        threshold - typical, threshold));
                 tAnalysis.put("evidence", List.of(
-                        String.format(Locale.UK, "Average order R%.0f across %d delivered orders", aov, orderTotals.size()),
-                        String.format(Locale.UK, "%d (%.0f%%) landed between R%.0f and R%.0f — within reach of the threshold",
-                                nearMiss, nearMissShare * 100, aov, threshold),
-                        "Store-funded — no platform cost"));
+                        String.format(Locale.UK, "Typical (median) order R%.0f across %d delivered orders", typical, orderTotals.size()),
+                        String.format(Locale.UK, "%d (%.0f%%) landed between R%.0f and R%.0f — within reach", nearMiss, nearMissShare * 100, typical, threshold),
+                        String.format(Locale.UK, "%d already over R%.0f also get the R%.0f", alreadyOver, threshold, amountOff)));
                 tAnalysis.put("insightStrength", nearMissShare >= 0.30 ? "STRONG" : nearMissShare >= 0.22 ? "MODERATE" : "WEAK");
                 tAnalysis.put("recommendationType", "EXPERIMENT");
                 tAnalysis.put("discountBasis", String.format(Locale.UK,
-                        "R%.0f ≈ %.0f%% of the R%.0f threshold — a modest, store-funded nudge to lift basket size, not a margin giveaway.",
-                        amountOff, amountOff / threshold * 100, threshold));
+                        "R%.0f is ~%.0f%% of the ~R%.0f margin on a R%.0f order (at your median margin) — stays profitable.",
+                        amountOff, amountOff / marginAtThreshold * 100, marginAtThreshold, threshold));
 
                 Map<String, Object> tS = new LinkedHashMap<>();
                 tS.put("facts", List.of(
-                        String.format(Locale.UK, "R%.0f average order (last 30 days)", aov),
+                        String.format(Locale.UK, "R%.0f typical order (last 30 days)", typical),
                         String.format(Locale.UK, "%d of %d orders within reach of R%.0f", nearMiss, orderTotals.size(), threshold),
-                        "Applies store-wide on the order subtotal"));
+                        String.format(Locale.UK, "%d already qualify (giveaway base)", alreadyOver)));
                 tS.put("analysis", tAnalysis);
                 tS.put("proposedPromo", tPromo);
                 suggestions.add(0, tS);   // lead with the variety so it's the first thing the owner sees
@@ -379,9 +390,12 @@ public class AdminAiService {
         // instead of N separate promos. The % is sized to the LOWEST margin in the set, so even the
         // thinnest-margin item stays profitable. Fact-grounded; only emitted when ≥2 such items exist.
         List<MenuItem> slowTail = eligible.stream().skip(3).limit(4).collect(Collectors.toList());
-        if (slowTail.size() >= 2) {
-            double minMargin = slowTail.stream().mapToDouble(MenuItem::getMarginPercent).min().orElse(0);
-            int mpDiscount = (int) Math.max(5, Math.min(20, Math.round(minMargin * 0.30)));
+        double mpMinMargin = slowTail.stream().mapToDouble(MenuItem::getMarginPercent).min().orElse(0);
+        // BREAK-EVEN GUARD: size the cut to the LOWEST margin in the set and never give up more than
+        // 60% of it; if even that can't reach a meaningful discount, the thinnest item is too thin — skip.
+        int mpDiscount = (int) Math.floor(Math.min(Math.max(5.0, mpMinMargin * 0.30), Math.min(mpMinMargin * 0.6, 20.0)));
+        if (slowTail.size() >= 2 && mpDiscount >= 4) {
+            double minMargin = mpMinMargin;
             long minU = slowTail.stream().mapToLong(i -> itemCounts.getOrDefault(i.getId(), 0L)).min().orElse(0);
             long maxU = slowTail.stream().mapToLong(i -> itemCounts.getOrDefault(i.getId(), 0L)).max().orElse(0);
             List<String> ids = slowTail.stream().map(i -> i.getId().toString()).collect(Collectors.toList());
@@ -408,8 +422,8 @@ public class AdminAiService {
             mAnalysis.put("insightStrength", "MODERATE");
             mAnalysis.put("recommendationType", "EXPERIMENT");
             mAnalysis.put("discountBasis", String.format(Locale.UK,
-                    "%d%% ≈ 30%% of the LOWEST margin in the set (%.0f%%), so even the thinnest-margin item here stays profitable.",
-                    mpDiscount, minMargin));
+                    "%d%% off uses %d%% of the LOWEST margin in the set (%.0f%%) — even the thinnest item stays profitable.",
+                    mpDiscount, Math.round(mpDiscount / minMargin * 100.0), minMargin));
 
             Map<String, Object> mS = new LinkedHashMap<>();
             mS.put("facts", List.of(
@@ -421,6 +435,10 @@ public class AdminAiService {
             suggestions.add(mS);
         }
 
+        if (suggestions.isEmpty()) {
+            return Map.of("suggestions", List.of(), "reason",
+                    "Your margins are too thin to discount safely right now — even a small cut would erase the profit. Raise prices or trim item costs first, then I can suggest promos.");
+        }
         return Map.of("suggestions", suggestions);
     }
 
