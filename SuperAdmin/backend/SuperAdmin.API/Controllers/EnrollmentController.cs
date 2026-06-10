@@ -2,13 +2,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SuperAdmin.API.Data;
+using SuperAdmin.API.Services;
 
 namespace SuperAdmin.API.Controllers;
 
 [ApiController]
 [Route("api/enrollment")]
 [Authorize(Roles = "SUPERADMIN")]
-public class EnrollmentController(AppDbContext db) : ControllerBase
+public class EnrollmentController(AppDbContext db, ResendEmailService email) : ControllerBase
 {
     [HttpGet("ping")]
     [AllowAnonymous]
@@ -64,6 +65,7 @@ public class EnrollmentController(AppDbContext db) : ControllerBase
         tenant.RejectionReason = null;
         await db.SaveChangesAsync();
 
+        await email.SendStoreApprovedAsync(tenant.Name, tenant.Email);
         return Ok(new { message = "Store approved" });
     }
 
@@ -77,6 +79,7 @@ public class EnrollmentController(AppDbContext db) : ControllerBase
         tenant.RejectionReason = request.Reason;
         await db.SaveChangesAsync();
 
+        await email.SendStoreRejectedAsync(tenant.Name, tenant.Email, request.Reason);
         return Ok(new { message = "Store rejected" });
     }
 
