@@ -51,6 +51,7 @@ public class AdminPromotionController {
     @PostMapping
     @Transactional
     public ResponseEntity<PromotionDTO> create(@Valid @RequestBody PromotionRequest req) {
+        validate(req);
         Promotion p = toEntity(new Promotion(), req);
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null) {
@@ -69,6 +70,7 @@ public class AdminPromotionController {
     @PutMapping("/{id}")
     @Transactional
     public ResponseEntity<PromotionDTO> update(@PathVariable UUID id, @Valid @RequestBody PromotionRequest req) {
+        validate(req);
         UUID tenantId = TenantContext.getCurrentTenantId();
         return (tenantId != null ? promotionRepository.findByIdAndTenant_Id(id, tenantId) : promotionRepository.findById(id))
                 .map(existing -> ResponseEntity.ok(PromotionDTO.from(promotionRepository.save(toEntity(existing, req)))))
@@ -135,6 +137,28 @@ public class AdminPromotionController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Server-side cross-field validation. The form enforces these client-side, but a direct API
+     *  client would otherwise create broken promos: no reward value, no target, or end before start. */
+    private void validate(PromotionRequest req) {
+        Promotion.PromoType type = req.getType() != null ? req.getType() : Promotion.PromoType.PERCENT_OFF;
+        if (req.getStartAt() != null && req.getEndAt() != null && !req.getEndAt().isAfter(req.getStartAt()))
+            bad("End date must be after the start date.");
+        if (type == Promotion.PromoType.PERCENT_OFF && (req.getDiscountPercent() == null || req.getDiscountPercent().signum() <= 0))
+            bad("A % off promotion needs a discount percent greater than 0.");
+        if (type == Promotion.PromoType.AMOUNT_OFF && (req.getDiscountAmount() == null || req.getDiscountAmount().signum() <= 0))
+            bad("A R-off promotion needs an amount greater than 0.");
+        if (req.getAppliesTo() == Promotion.AppliesTo.PRODUCT && req.getTargetProductId() == null)
+            bad("A single-product promotion needs a target product.");
+        if (req.getAppliesTo() == Promotion.AppliesTo.CATEGORY && req.getTargetCategoryId() == null)
+            bad("A category promotion needs a target category.");
+        if (req.getAppliesTo() == Promotion.AppliesTo.MULTI_PRODUCT && (req.getTargetProductIds() == null || req.getTargetProductIds().isEmpty()))
+            bad("A multi-product promotion needs at least one product.");
+    }
+    private void bad(String msg) {
+        // GlobalExceptionHandler maps IllegalArgumentException -> 400 with the message.
+        throw new IllegalArgumentException(msg);
+    }
+
     private Promotion toEntity(Promotion target, PromotionRequest req) {
         target.setTitle(req.getTitle());
         target.setDescription(req.getDescription());
@@ -154,7 +178,10 @@ public class AdminPromotionController {
         target.setFeatured(req.isFeatured());
         // Multi-product list
         if (req.getTargetProductIds() != null && !req.getTargetProductIds().isEmpty()) {
-            List<MenuItem> products = menuItemRepository.findAllById(req.getTargetProductIds());
+            UUID tid = TenantContext.getCurrentTenantId();
+            List<MenuItem> products = menuItemRepository.findAllById(req.getTargetProductIds()).stream()
+                    .filter(m -> tid == null || (m.getTenant() != null && tid.equals(m.getTenant().getId())))
+                    .toList();
             target.setTargetProducts(products);
         } else {
             target.setTargetProducts(new ArrayList<>());
