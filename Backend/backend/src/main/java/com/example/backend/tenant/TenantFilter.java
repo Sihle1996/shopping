@@ -30,9 +30,12 @@ public class TenantFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            // 1. Check X-Tenant-Id header
+            // 1. Check X-Tenant-Id header — but ONLY when a tenant-scoped token hasn't already set the
+            // tenant (store ADMIN/DRIVER get their tenant from the JWT in JwtAuthenticationFilter). This
+            // stops a logged-in user from acting on another store by spoofing the header. Customers and
+            // SUPERADMIN carry no JWT tenant, so the header still resolves their tenant here.
             String tenantHeader = request.getHeader("X-Tenant-Id");
-            if (tenantHeader != null && !tenantHeader.isBlank()) {
+            if (tenantHeader != null && !tenantHeader.isBlank() && TenantContext.getCurrentTenantId() == null) {
                 try {
                     TenantContext.setCurrentTenantId(UUID.fromString(tenantHeader));
                 } catch (IllegalArgumentException ignored) {

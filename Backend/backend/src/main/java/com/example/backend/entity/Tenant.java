@@ -135,7 +135,9 @@ public class Tenant {
     @Enumerated(EnumType.STRING)
     @Column(name = "approval_status", nullable = false)
     @Builder.Default
-    private ApprovalStatus approvalStatus = ApprovalStatus.APPROVED;
+    // Safe default: a new tenant is unapproved until it submits documents and a SUPERADMIN approves.
+    // Creation paths that intentionally bypass review (e.g. admin-created stores) set APPROVED explicitly.
+    private ApprovalStatus approvalStatus = ApprovalStatus.DRAFT;
 
     @Column(columnDefinition = "TEXT")
     private String rejectionReason;

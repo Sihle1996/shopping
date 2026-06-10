@@ -49,6 +49,7 @@ public class TenantController {
         // PublicTenantDto excludes financial/internal fields — this is a public, unauthenticated
         // endpoint, so it must NEVER serialise the raw Tenant (bank details, commission, CIPC).
         return ResponseEntity.ok(tenantRepository.findByActiveTrue().stream()
+                .filter(t -> t.getApprovalStatus() == Tenant.ApprovalStatus.APPROVED)
                 .map(PublicTenantDto::from).toList());
     }
 
@@ -58,6 +59,7 @@ public class TenantController {
             @RequestParam double lat,
             @RequestParam double lon) {
         List<NearbyTenantDto> nearby = tenantRepository.findByActiveTrue().stream()
+                .filter(t -> t.getApprovalStatus() == Tenant.ApprovalStatus.APPROVED)
                 .filter(t -> !"SUSPENDED".equals(t.getSubscriptionStatus()))
                 .filter(t -> t.getLatitude() != null && t.getLongitude() != null)
                 .map(t -> {
@@ -106,6 +108,7 @@ public class TenantController {
             return ResponseEntity.notFound().build();
         }
         return tenantRepository.findBySlug(slug)
+                .filter(t -> !t.isArchived())   // an archived (removed) store is not customer-facing
                 .map(t -> ResponseEntity.ok(PublicTenantDto.from(t)))
                 .orElse(ResponseEntity.notFound().build());
     }

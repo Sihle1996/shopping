@@ -23,6 +23,7 @@ public class TenantService {
                 .name(name)
                 .slug(slug)
                 .email(email)
+                .active(false)   // new store starts inactive + DRAFT (entity default) until approved + go-live
                 .trialStartedAt(LocalDateTime.now())
                 .build();
         return tenantRepository.save(tenant);

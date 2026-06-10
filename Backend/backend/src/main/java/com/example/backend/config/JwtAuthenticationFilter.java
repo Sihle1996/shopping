@@ -54,8 +54,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             request.setAttribute("userId", userId);
 
-            // Set tenant context from JWT if not already set by TenantFilter
-            if (tenantId != null && TenantContext.getCurrentTenantId() == null) {
+            // A tenant-scoped token (store ADMIN/DRIVER carry a tenantId claim) is AUTHORITATIVE for
+            // tenant context: it OVERRIDES any client-supplied X-Tenant-Id header, so a logged-in user
+            // can never act on another store by spoofing the header. Customers (USER) and SUPERADMIN
+            // carry no tenantId, so their tenant is still resolved from the header/path by TenantFilter.
+            if (tenantId != null) {
                 TenantContext.setCurrentTenantId(tenantId);
             }
 
