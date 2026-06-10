@@ -28,7 +28,7 @@ public class TrialExpiryService {
                 .findBySubscriptionCancelledAtIsNotNullAndBillingPeriodEndBefore(now);
         for (Tenant tenant : cancelledExpired) {
             String previousPlan = tenant.getSubscriptionPlan();
-            tenant.setSubscriptionPlan("BASIC");
+            tenant.applyPlan("BASIC");
             tenant.setSubscriptionCancelledAt(null);
             tenant.setBillingPeriodEnd(null);
             tenantRepository.save(tenant);

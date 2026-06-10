@@ -62,6 +62,24 @@ public class Tenant {
     @Builder.Default
     private String subscriptionPlan = "BASIC";
 
+    /** Canonical platform-commission rate per plan (the agreed tiering):
+     *  STARTER 6% · BASIC 4% · PRO 3% · ENTERPRISE 2%. Unknown/trial → BASIC's 4%. */
+    public static BigDecimal commissionForPlan(String plan) {
+        if (plan == null) return new BigDecimal("4.00");
+        return switch (plan.trim().toUpperCase()) {
+            case "STARTER"    -> new BigDecimal("6.00");
+            case "PRO"        -> new BigDecimal("3.00");
+            case "ENTERPRISE" -> new BigDecimal("2.00");
+            default            -> new BigDecimal("4.00"); // BASIC / TRIAL
+        };
+    }
+
+    /** Set the plan AND sync the commission rate to that plan's agreed rate. */
+    public void applyPlan(String plan) {
+        this.subscriptionPlan = plan;
+        this.platformCommissionPercent = commissionForPlan(plan);
+    }
+
     @Column(nullable = false)
     @Builder.Default
     private boolean active = true;
