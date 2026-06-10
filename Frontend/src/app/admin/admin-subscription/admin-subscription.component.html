@@ -314,6 +314,59 @@
                 </span>
               </div>
 
+              <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2 text-sm text-textDark">
+                  <i class="bi bi-stars text-textMuted text-base"></i> Promo Intelligence
+                </span>
+                <span class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                      [ngClass]="info.features.hasPromoAi ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'">
+                  <i class="bi text-[10px]" [ngClass]="info.features.hasPromoAi ? 'bi-check-circle-fill' : 'bi-lock-fill'"></i>
+                  {{ info.features.hasPromoAi ? 'Included' : 'Locked' }}
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2 text-sm text-textDark">
+                  <i class="bi bi-truck text-textMuted text-base"></i> Driver Intelligence
+                </span>
+                <span class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                      [ngClass]="info.features.hasDriverIntel ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'">
+                  <i class="bi text-[10px]" [ngClass]="info.features.hasDriverIntel ? 'bi-check-circle-fill' : 'bi-lock-fill'"></i>
+                  {{ info.features.hasDriverIntel ? 'Included' : 'Locked' }}
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2 text-sm text-textDark">
+                  <i class="bi bi-chat-heart text-textMuted text-base"></i> Review &amp; Support AI
+                </span>
+                <span class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                      [ngClass]="info.features.hasReviewAi ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'">
+                  <i class="bi text-[10px]" [ngClass]="info.features.hasReviewAi ? 'bi-check-circle-fill' : 'bi-lock-fill'"></i>
+                  {{ info.features.hasReviewAi ? 'Included' : 'Locked' }}
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2 text-sm text-textDark">
+                  <i class="bi bi-code-slash text-textMuted text-base"></i> API Access
+                </span>
+                <span class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                      [ngClass]="info.features.hasApiAccess ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'">
+                  <i class="bi text-[10px]" [ngClass]="info.features.hasApiAccess ? 'bi-check-circle-fill' : 'bi-lock-fill'"></i>
+                  {{ info.features.hasApiAccess ? 'Included' : 'Locked' }}
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <span class="flex items-center gap-2 text-sm text-textDark">
+                  <i class="bi bi-chat-dots text-textMuted text-base"></i> Copilot prompts / month
+                </span>
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary-50 text-primary">
+                  {{ info.features.copilotMonthlyQuota == null ? 'Unlimited' : info.features.copilotMonthlyQuota }}
+                </span>
+              </div>
+
               <div class="h-px bg-borderColor"></div>
 
               <div class="flex items-center justify-between">

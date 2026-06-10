@@ -18,6 +18,11 @@ export interface SubscriptionFeatures {
   hasInventoryExport: boolean;
   maxDeliveryRadiusKm: number;
   commissionPercent: number;
+  hasPromoAi?: boolean;
+  hasDriverIntel?: boolean;
+  hasReviewAi?: boolean;
+  hasApiAccess?: boolean;
+  copilotMonthlyQuota?: number | null;
 }
 
 export interface SubscriptionInfo {

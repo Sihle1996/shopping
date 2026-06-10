@@ -71,12 +71,18 @@ public class AdminSubscriptionController {
             "activePromotions", activePromotions,
             "maxPromotions", plan.getMaxPromotions()
         ));
-        response.put("features", Map.of(
-            "hasAnalytics", plan.isHasAnalytics(),
-            "hasCustomBranding", plan.isHasCustomBranding(),
-            "hasInventoryExport", plan.isHasInventoryExport(),
-            "maxDeliveryRadiusKm", plan.getMaxDeliveryRadiusKm()
-        ));
+        Map<String, Object> features = new HashMap<>();
+        features.put("hasAnalytics", plan.isHasAnalytics());
+        features.put("hasCustomBranding", plan.isHasCustomBranding());
+        features.put("hasInventoryExport", plan.isHasInventoryExport());
+        features.put("maxDeliveryRadiusKm", plan.getMaxDeliveryRadiusKm());
+        // AI tiers (gated in C) so the Plan page can show Included/Locked per plan
+        features.put("hasPromoAi", Boolean.TRUE.equals(plan.getHasPromoAi()));
+        features.put("hasDriverIntel", Boolean.TRUE.equals(plan.getHasDriverIntel()));
+        features.put("hasReviewAi", Boolean.TRUE.equals(plan.getHasReviewAi()));
+        features.put("hasApiAccess", Boolean.TRUE.equals(plan.getHasApiAccess()));
+        features.put("copilotMonthlyQuota", plan.getCopilotMonthlyQuota()); // null = unlimited
+        response.put("features", features);
         return ResponseEntity.ok(response);
     }
 
