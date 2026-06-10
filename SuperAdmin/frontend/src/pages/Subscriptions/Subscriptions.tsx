@@ -201,18 +201,8 @@ function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
     <div className="rounded-xl border border-gray-800 overflow-hidden flex flex-col" style={{ background: '#161b22' }}>
       {/* Card header */}
       <div className={`bg-gradient-to-br ${planHeaderColor(plan.name)} px-5 py-4`}>
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center mb-2">
           <div className="bg-white/20 rounded-lg p-2">{planIcon(plan.name)}</div>
-          <div className="flex gap-1">
-            <button onClick={() => onEdit(plan)}
-              className="p-1.5 bg-white/20 hover:bg-white/30 rounded-md text-white transition-colors" title="Edit plan">
-              <Pencil size={14} />
-            </button>
-            <button onClick={() => onDelete(plan)}
-              className="p-1.5 bg-white/20 hover:bg-white/30 rounded-md text-white transition-colors" title="Delete plan">
-              <Trash2 size={14} />
-            </button>
-          </div>
         </div>
         <h3 className="text-xl font-bold text-white">{plan.name}</h3>
         <p className="text-white/80 text-2xl font-bold mt-1">
@@ -350,15 +340,8 @@ export default function Subscriptions() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-semibold text-gray-200">Subscription Plans</h2>
-          <p className="text-sm text-gray-600 mt-0.5">Manage plans assigned to stores on the platform</p>
+          <p className="text-sm text-gray-600 mt-0.5">Plans are defined in the platform backend — view them here and assign to stores</p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          <Plus size={16} />
-          Create New Plan
-        </button>
       </div>
 
       {/* Plan grid */}
@@ -377,8 +360,8 @@ export default function Subscriptions() {
       ) : plans.length === 0 ? (
         <div className="rounded-xl border border-gray-800 p-12 text-center" style={{ background: '#161b22' }}>
           <CreditCard size={36} className="text-gray-700 mx-auto mb-3" />
-          <p className="text-gray-500 font-medium">No plans created yet</p>
-          <p className="text-sm text-gray-600 mt-1">Click "Create New Plan" to add a subscription plan</p>
+          <p className="text-gray-500 font-medium">No plans found</p>
+          <p className="text-sm text-gray-600 mt-1">Plans are seeded by the platform backend.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">

@@ -16,6 +16,7 @@ public class TenantService {
 
     private final TenantRepository tenantRepository;
     private final AuditService auditService;
+    private final PlanCommissionService planCommissionService;
 
     public Tenant createTenant(String name, String slug, String email) {
         Tenant tenant = Tenant.builder()
@@ -56,7 +57,7 @@ public class TenantService {
         if (updates.getDeliveryRadiusKm() != null) tenant.setDeliveryRadiusKm(updates.getDeliveryRadiusKm());
         if (updates.getDeliveryFeeBase() != null) tenant.setDeliveryFeeBase(updates.getDeliveryFeeBase());
         if (updates.getSubscriptionStatus() != null) tenant.setSubscriptionStatus(updates.getSubscriptionStatus());
-        if (updates.getSubscriptionPlan() != null) tenant.applyPlan(updates.getSubscriptionPlan());
+        if (updates.getSubscriptionPlan() != null) planCommissionService.applyPlan(tenant, updates.getSubscriptionPlan());
         // Explicit commission (e.g. a negotiated rate) overrides the plan default set by applyPlan above.
         if (updates.getPlatformCommissionPercent() != null) tenant.setPlatformCommissionPercent(updates.getPlatformCommissionPercent());
         if (updates.getMinimumOrderAmount() != null) tenant.setMinimumOrderAmount(updates.getMinimumOrderAmount());

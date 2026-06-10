@@ -8,6 +8,7 @@ import com.example.backend.repository.StoreDocumentRepository;
 import com.example.backend.repository.StoreHoursRepository;
 import com.example.backend.repository.TenantRepository;
 import com.example.backend.service.EmailService;
+import com.example.backend.service.PlanCommissionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +37,7 @@ public class TenantController {
     private final StoreHoursRepository storeHoursRepository;
     private final StoreDocumentRepository storeDocumentRepository;
     private final EmailService emailService;
+    private final PlanCommissionService planCommissionService;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -255,7 +257,7 @@ public class TenantController {
             tenant.setSlug(slug);
         }
         if (tenant.getSubscriptionStatus() == null) tenant.setSubscriptionStatus("TRIAL");
-        tenant.applyPlan(tenant.getSubscriptionPlan() != null ? tenant.getSubscriptionPlan() : "BASIC");
+        planCommissionService.applyPlan(tenant, tenant.getSubscriptionPlan() != null ? tenant.getSubscriptionPlan() : "BASIC");
         tenant.setTrialStartedAt(LocalDateTime.now());
         Tenant saved = tenantRepository.save(tenant);
         return ResponseEntity.created(URI.create("/api/superadmin/tenants/" + saved.getId())).body(saved);
@@ -266,7 +268,7 @@ public class TenantController {
     @PreAuthorize("hasRole('SUPERADMIN')")
     public ResponseEntity<Tenant> updateSubscription(@PathVariable UUID id, @RequestBody Map<String, String> body) {
         return tenantRepository.findById(id).map(t -> {
-            if (body.containsKey("subscriptionPlan")) t.applyPlan(body.get("subscriptionPlan"));
+            if (body.containsKey("subscriptionPlan")) planCommissionService.applyPlan(t, body.get("subscriptionPlan"));
             if (body.containsKey("subscriptionStatus")) t.setSubscriptionStatus(body.get("subscriptionStatus"));
             return ResponseEntity.ok(tenantRepository.save(t));
         }).orElse(ResponseEntity.notFound().build());

@@ -12,10 +12,11 @@ import { Search, Trash2, AlertTriangle, UserCog, Users as UsersIcon, AlertCircle
 
 function roleVariant(role?: string): 'success' | 'info' | 'warning' | 'neutral' {
   switch ((role ?? '').toUpperCase()) {
-    case 'ADMIN':   return 'warning'
-    case 'MANAGER': return 'info'
-    case 'USER':    return 'neutral'
-    default:        return 'neutral'
+    case 'SUPERADMIN': return 'success'
+    case 'ADMIN':      return 'warning'
+    case 'DRIVER':     return 'info'
+    case 'USER':       return 'neutral'
+    default:           return 'neutral'
   }
 }
 
@@ -146,7 +147,7 @@ export default function Users() {
             <option value="">All Roles</option>
             <option value="USER">User</option>
             <option value="ADMIN">Admin</option>
-            <option value="MANAGER">Manager</option>
+            <option value="SUPERADMIN">Super Admin</option>
           </select>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -177,7 +178,6 @@ export default function Users() {
               style={{ background: '#0d1117' }}
             >
               <option value="USER">USER</option>
-              <option value="MANAGER">MANAGER</option>
               <option value="ADMIN">ADMIN</option>
             </select>
           </div>

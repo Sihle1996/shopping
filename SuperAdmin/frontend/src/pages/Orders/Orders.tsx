@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { ordersService } from '../../services/orders.service'
 import { storesService } from '../../services/stores.service'
-import { useToast } from '../../context/ToastContext'
 import { useDebounce } from '../../hooks/useDebounce'
 import type { OrderDto } from '../../types'
 import Table from '../../components/common/Table'
@@ -10,16 +9,17 @@ import Pagination from '../../components/common/Pagination'
 import { Search, ShoppingBag, AlertCircle, Download } from 'lucide-react'
 import { exportCsv } from '../../utils/exportCsv'
 
-const ORDER_STATUSES = ['PENDING', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED']
-
 function statusColor(status: string) {
   switch (status.toUpperCase()) {
-    case 'DELIVERED':       return 'text-green-400'
-    case 'PENDING':         return 'text-yellow-400'
-    case 'CANCELLED':       return 'text-red-400'
-    case 'PREPARING':       return 'text-blue-400'
-    case 'OUT_FOR_DELIVERY': return 'text-blue-400'
-    default:                return 'text-gray-400'
+    case 'DELIVERED':        return 'text-green-400'
+    case 'PENDING':
+    case 'SCHEDULED':        return 'text-yellow-400'
+    case 'CANCELLED':
+    case 'REJECTED':         return 'text-red-400'
+    case 'CONFIRMED':
+    case 'PREPARING':
+    case 'OUT FOR DELIVERY': return 'text-blue-400'
+    default:                 return 'text-gray-400'
   }
 }
 
@@ -31,8 +31,6 @@ function formatDate(iso: string) {
 }
 
 export default function Orders() {
-  const queryClient = useQueryClient()
-  const { showToast } = useToast()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [storeId, setStoreId] = useState('')
@@ -40,16 +38,6 @@ export default function Orders() {
   const pageSize = 20
 
   const debouncedSearch = useDebounce(search)
-
-  const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) =>
-      ordersService.updateStatus(id, status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] })
-      showToast('Order status updated')
-    },
-    onError: () => showToast('Failed to update order status', 'error')
-  })
 
   const { data: storesData } = useQuery({
     queryKey: ['stores-list'],
@@ -82,16 +70,9 @@ export default function Orders() {
       key: 'status',
       header: 'Status',
       render: (row: OrderDto) => (
-        <select
-          value={row.status}
-          onChange={e => statusMutation.mutate({ id: row.id, status: e.target.value })}
-          className={`px-2 py-1 rounded-lg border border-gray-700 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 ${statusColor(row.status)}`}
-          style={{ background: '#0d1117' }}
-        >
-          {ORDER_STATUSES.map(s => (
-            <option key={s} value={s}>{s.replace('_', ' ')}</option>
-          ))}
-        </select>
+        <span className={`inline-block px-2 py-1 rounded-lg text-xs font-medium ${statusColor(row.status)}`}>
+          {row.status}
+        </span>
       )
     },
     {
@@ -134,12 +115,15 @@ export default function Orders() {
             className="px-3 py-2 border border-gray-700 rounded-lg text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
             style={{ background: '#0d1117' }}
           >
+            {/* Values are Title Case to match the Spring order state machine ("Delivered", not "DELIVERED") */}
             <option value="">All Statuses</option>
-            <option value="PENDING">Pending</option>
-            <option value="PREPARING">Preparing</option>
-            <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
-            <option value="DELIVERED">Delivered</option>
-            <option value="CANCELLED">Cancelled</option>
+            <option value="Pending">Pending</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Preparing">Preparing</option>
+            <option value="Out for Delivery">Out for Delivery</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled</option>
+            <option value="Rejected">Rejected</option>
           </select>
           <select
             value={storeId}

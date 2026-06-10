@@ -17,6 +17,7 @@ public class TrialExpiryService {
 
     private final TenantRepository tenantRepository;
     private final EmailService emailService;
+    private final PlanCommissionService planCommissionService;
 
     /** Runs daily at 08:00 to expire/warn trial tenants and process cancellations */
     @Scheduled(cron = "0 0 8 * * *")
@@ -28,7 +29,7 @@ public class TrialExpiryService {
                 .findBySubscriptionCancelledAtIsNotNullAndBillingPeriodEndBefore(now);
         for (Tenant tenant : cancelledExpired) {
             String previousPlan = tenant.getSubscriptionPlan();
-            tenant.applyPlan("BASIC");
+            planCommissionService.applyPlan(tenant, "BASIC");
             tenant.setSubscriptionCancelledAt(null);
             tenant.setBillingPeriodEnd(null);
             tenantRepository.save(tenant);

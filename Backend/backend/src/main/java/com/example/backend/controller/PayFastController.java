@@ -4,6 +4,7 @@ import com.example.backend.entity.Order;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.repository.TenantRepository;
 import com.example.backend.service.PayFastService;
+import com.example.backend.service.PlanCommissionService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,7 @@ public class PayFastController {
     private final PayFastService payFastService;
     private final TenantRepository tenantRepository;
     private final OrderRepository orderRepository;
+    private final PlanCommissionService planCommissionService;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -31,10 +33,11 @@ public class PayFastController {
     private String allowedOrigins;
 
     public PayFastController(PayFastService payFastService, TenantRepository tenantRepository,
-                             OrderRepository orderRepository) {
+                             OrderRepository orderRepository, PlanCommissionService planCommissionService) {
         this.payFastService = payFastService;
         this.tenantRepository = tenantRepository;
         this.orderRepository = orderRepository;
+        this.planCommissionService = planCommissionService;
     }
 
     /**
@@ -145,7 +148,7 @@ public class PayFastController {
         try {
             UUID tenantId = UUID.fromString(tenantIdStr);
             tenantRepository.findById(tenantId).ifPresentOrElse(tenant -> {
-                tenant.applyPlan(planName);   // sets plan + syncs commission rate
+                planCommissionService.applyPlan(tenant, planName);   // sets plan + syncs commission from the table
                 tenant.setSubscriptionStatus("ACTIVE");
                 tenantRepository.save(tenant);
                 System.out.println("PayFast ITN: activated tenant " + tenant.getName() + " on plan " + planName);

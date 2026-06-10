@@ -70,22 +70,8 @@ public class OrdersController(AppDbContext db) : ControllerBase
         });
     }
 
-    private static readonly HashSet<string> ValidStatuses =
-        ["PENDING", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"];
-
-    [HttpPatch("{id}/status")]
-    public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateOrderStatusRequest request)
-    {
-        if (string.IsNullOrWhiteSpace(request.Status) || !ValidStatuses.Contains(request.Status.ToUpper()))
-            return BadRequest(new { message = $"Invalid status. Valid values: {string.Join(", ", ValidStatuses)}" });
-
-        var order = await db.Orders.FindAsync(id);
-        if (order == null) return NotFound();
-
-        order.Status = request.Status.ToUpper();
-        await db.SaveChangesAsync();
-        return Ok(new { id = order.Id, status = order.Status });
-    }
+    // Order status is READ-ONLY from SuperAdmin. Changing it here would bypass Spring's order
+    // pipeline (stock reconcile, delivery timestamps, customer/driver notifications, driver OTP)
+    // and write a status string Spring's state machine doesn't recognise. The order lifecycle is
+    // owned by the store/driver flow in the Spring backend.
 }
-
-public record UpdateOrderStatusRequest(string Status);

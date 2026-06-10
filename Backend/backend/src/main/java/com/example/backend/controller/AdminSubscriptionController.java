@@ -4,8 +4,10 @@ import com.example.backend.entity.SubscriptionPlan;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.PromotionRepository;
 import com.example.backend.repository.TenantRepository;
+import com.example.backend.repository.SubscriptionPlanRepository;
 import com.example.backend.repository.UserRepository;
 import com.example.backend.service.EmailService;
+import com.example.backend.service.PlanCommissionService;
 import com.example.backend.service.SubscriptionEnforcementService;
 import com.example.backend.tenant.TenantContext;
 import com.example.backend.user.Role;
@@ -34,6 +36,8 @@ public class AdminSubscriptionController {
     private final UserRepository userRepository;
     private final PromotionRepository promotionRepository;
     private final EmailService emailService;
+    private final PlanCommissionService planCommissionService;
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
 
     @GetMapping
     public ResponseEntity<?> getSubscriptionInfo() {
@@ -94,6 +98,13 @@ public class AdminSubscriptionController {
     );
     private static final List<String> PLAN_ORDER = List.of("TRIAL", "BASIC", "PRO", "ENTERPRISE");
 
+    /** Monthly price from the subscription_plans table (single source), falling back to the static map. */
+    private double priceForPlan(String planName) {
+        return subscriptionPlanRepository.findByName(planName)
+                .map(p -> p.getPrice() != null ? p.getPrice().doubleValue() : null)
+                .orElse(PLAN_PRICES_ZAR.getOrDefault(planName, 0.0));
+    }
+
     @GetMapping("/plans")
     public ResponseEntity<?> getAvailablePlans() {
         UUID tenantId = TenantContext.getCurrentTenantId();
@@ -109,7 +120,7 @@ public class AdminSubscriptionController {
             int planIdx = PLAN_ORDER.indexOf(planName);
             Map<String, Object> p = new HashMap<>();
             p.put("name", planName);
-            p.put("priceZar", PLAN_PRICES_ZAR.get(planName));
+            p.put("priceZar", priceForPlan(planName));
             p.put("isUpgrade", planIdx > currentIdx);
             plans.add(p);
         }
@@ -136,7 +147,7 @@ public class AdminSubscriptionController {
         // Payment was captured via PayFast redirect — paymentId logged for audit
         String paymentId = body.getOrDefault("paymentId", "n/a");
 
-        tenant.applyPlan(planName);   // sets plan + syncs commission rate
+        planCommissionService.applyPlan(tenant, planName);   // sets plan + syncs commission from the table
         tenant.setSubscriptionStatus("ACTIVE");
         tenant.setBillingPeriodEnd(LocalDateTime.now().plusDays(30));
         tenant.setSubscriptionCancelledAt(null);

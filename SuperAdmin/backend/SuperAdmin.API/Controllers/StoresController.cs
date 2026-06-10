@@ -155,13 +155,17 @@ public class StoresController(AppDbContext db) : ControllerBase
 
         if (request.SubscriptionPlan != null)
         {
-            if (!ValidPlans.Contains(request.SubscriptionPlan.ToUpper()))
+            var planName = request.SubscriptionPlan.ToUpper();
+            var plan = await db.SubscriptionPlans.FirstOrDefaultAsync(p => p.Name == planName);
+            if (plan == null)
                 return BadRequest(new { message = $"Invalid plan. Valid values: {string.Join(", ", ValidPlans)}" });
-            tenant.SubscriptionPlan = request.SubscriptionPlan.ToUpper();
+            tenant.SubscriptionPlan = planName;
+            tenant.PlatformCommissionPercent = plan.CommissionPercent;   // sync commission to the plan's rate
         }
 
         if (request.Active.HasValue) tenant.Active = request.Active.Value;
 
+        // An explicit commission (e.g. a negotiated rate) overrides the plan default set above.
         if (request.PlatformCommissionPercent.HasValue)
         {
             if (request.PlatformCommissionPercent.Value < 0 || request.PlatformCommissionPercent.Value > 100)

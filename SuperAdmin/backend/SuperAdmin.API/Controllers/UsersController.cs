@@ -11,7 +11,9 @@ namespace SuperAdmin.API.Controllers;
 [Authorize(Roles = "SUPERADMIN")]
 public class UsersController(AppDbContext db) : ControllerBase
 {
-    private static readonly HashSet<string> ValidRoles = ["USER", "ADMIN", "MANAGER", "SUPERADMIN"];
+    // Must match Spring's Role enum exactly — it's @Enumerated(STRING), so any other value
+    // (e.g. the old "MANAGER") makes every Spring read of that user throw on deserialization.
+    private static readonly HashSet<string> ValidRoles = ["USER", "ADMIN", "DRIVER", "SUPERADMIN"];
 
     [HttpGet]
     public async Task<IActionResult> GetAll(
