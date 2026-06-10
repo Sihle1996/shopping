@@ -33,6 +33,24 @@ export class AdminPromotionsComponent implements OnInit {
       { key: 'performance', label: 'Performance', count: this.outcomes?.length || null },
     ];
   }
+  /** Non-dismissed suggestions carrying their original index (so paginated apply/dismiss stay correct). */
+  get visibleSuggestions(): { s: AiPromoSuggestion; i: number }[] {
+    return this.aiSuggestions.map((s, i) => ({ s, i })).filter(x => !this.aiSuggestionsDismissed.has(x.i));
+  }
+  /** Performance is two different shapes of data — split + label them so it doesn't read as one mixed list. */
+  get storeWideOutcomes(): any[] { return this.outcomes.filter(o => o.scope === 'ALL'); }
+  get itemOutcomes(): any[] { return this.outcomes.filter(o => o.scope !== 'ALL'); }
+  get totalNetLiftR(): number { return this.storeWideOutcomes.reduce((sum, o) => sum + (o.netRevenueLift || 0), 0); }
+  get positiveOutcomesCount(): number {
+    return this.outcomes.filter(o => (o.scope === 'ALL' ? o.netRevenueLift > 0 : o.netLiftPercent > 0)).length;
+  }
+  get measuredOutcomesCount(): number {
+    return this.outcomes.filter(o => o.scope === 'ALL' || o.signal === 'MEASURED' || o.signal === 'MEASURING').length;
+  }
+  /** Left-accent colour for a suggestion's confidence tier. */
+  tierBar(s?: string): string {
+    return ({ STRONG: 'bg-emerald-400', MODERATE: 'bg-amber-400', WEAK: 'bg-gray-300' } as any)[s || ''] || 'bg-gray-300';
+  }
 
   showDeleteConfirm = false;
   deleteTarget: Promotion | null = null;
