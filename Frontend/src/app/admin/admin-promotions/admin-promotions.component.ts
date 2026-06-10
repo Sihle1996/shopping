@@ -136,6 +136,27 @@ export class AdminPromotionsComponent implements OnInit {
     return this.form?.get('appliesTo')?.value;
   }
 
+  /** Plain-English summary of the in-progress promo, for the live preview card. */
+  get promoSummary(): string {
+    const f = this.form?.value || {};
+    let reward: string;
+    if (f.type === 'AMOUNT_OFF') reward = `R${f.discountAmount || '—'} off`;
+    else if (f.type === 'FREE_DELIVERY') reward = 'Free delivery';
+    else reward = `${f.discountPercent || '—'}% off`;
+    let scope: string;
+    switch (f.appliesTo) {
+      case 'CATEGORY': scope = 'a category'; break;
+      case 'PRODUCT': scope = 'one product'; break;
+      case 'MULTI_PRODUCT': scope = `${this.selectedProductIds.length || 0} product${this.selectedProductIds.length === 1 ? '' : 's'}`; break;
+      default: scope = 'all products';
+    }
+    const parts: string[] = [f.type === 'FREE_DELIVERY' ? 'Free delivery' : `${reward} on ${scope}`];
+    if (f.minSpend) parts.push(`min spend R${f.minSpend}`);
+    if (f.startAt && f.endAt) parts.push(`${f.startAt} → ${f.endAt}`);
+    parts.push(f.code ? `code ${String(f.code).toUpperCase()}` : 'applies automatically');
+    return parts.join(' · ');
+  }
+
   get availableMenuItems(): any[] {
     return this.menuItems.filter(i => i.isAvailable !== false);
   }

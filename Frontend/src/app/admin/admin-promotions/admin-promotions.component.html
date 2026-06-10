@@ -217,6 +217,17 @@
 
       <form [formGroup]="form" (ngSubmit)="submit()">
 
+        <!-- Live preview — updates as you fill the form -->
+        <div class="rounded-xl bg-gradient-to-br from-primary-50 to-white border border-borderColor p-4 mb-6">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-[10px] font-bold uppercase tracking-wide text-textMuted">Live preview</span>
+            <span *ngIf="form.get('badgeText')?.value" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">{{ form.get('badgeText')?.value }}</span>
+            <span *ngIf="form.get('featured')?.value" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-100 text-primary">Featured</span>
+          </div>
+          <p class="text-base font-bold text-textDark">{{ form.get('title')?.value || 'Your promotion title' }}</p>
+          <p class="text-xs text-textMuted mt-1">{{ promoSummary }}</p>
+        </div>
+
         <!-- Section: Basics -->
         <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-3">Promotion Details</p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
