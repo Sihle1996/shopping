@@ -2,6 +2,7 @@ package com.example.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -92,6 +93,7 @@ public class Tenant {
      *  While true, StoreHoursScheduler leaves isOpen alone; it auto open/closes only when this is
      *  false. The override is released once the schedule next agrees with it. */
     @Column(name = "manual_open_override", nullable = false)
+    @ColumnDefault("false")
     @Builder.Default
     private Boolean manualOpenOverride = false;
 
