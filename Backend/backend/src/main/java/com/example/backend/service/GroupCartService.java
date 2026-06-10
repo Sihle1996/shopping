@@ -11,10 +11,13 @@ import com.example.backend.user.User;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -54,9 +57,16 @@ public class GroupCartService {
         GroupCart gc = getByToken(token);
         if (!"OPEN".equals(gc.getStatus()))
             throw new IllegalStateException("This group cart is no longer active");
+        if (quantity < 1 || quantity > 50)
+            throw new IllegalArgumentException("Quantity must be between 1 and 50");
 
         MenuItem menuItem = menuItemRepo.findById(menuItemId)
                 .orElseThrow(() -> new IllegalArgumentException("Menu item not found"));
+        // Tenant isolation — the item MUST be on THIS cart's store menu (no adding another store's items).
+        if (menuItem.getTenant() == null || !menuItem.getTenant().getId().equals(gc.getTenant().getId()))
+            throw new IllegalArgumentException("That item isn't on this store's menu");
+        if (!Boolean.TRUE.equals(menuItem.getIsAvailable()))
+            throw new IllegalArgumentException("That item is currently unavailable");
 
         double modSum = 0;
         if (selectedChoicesJson != null && !selectedChoicesJson.isBlank()) {
@@ -65,6 +75,9 @@ public class GroupCartService {
                 for (JsonNode n : arr) modSum += n.path("priceModifier").asDouble(0);
             } catch (Exception ignored) {}
         }
+        // Option modifiers can only ADD to the base price. The unit price is derived from the SERVER's
+        // menu price; a crafted negative modifier must never drive it below the real price.
+        modSum = Math.max(0, modSum);
 
         GroupCartItem item = new GroupCartItem();
         item.setGroupCart(gc);
@@ -83,8 +96,10 @@ public class GroupCartService {
                 .orElseThrow(() -> new IllegalArgumentException("Item not found"));
         if (!item.getGroupCart().getToken().equals(token))
             throw new IllegalArgumentException("Item does not belong to this cart");
+        if (!"OPEN".equals(item.getGroupCart().getStatus()))
+            throw new IllegalStateException("This group cart is no longer active");
         boolean isOwner = item.getGroupCart().getOwner().getId().equals(user.getId());
-        boolean isAdder = item.getAddedBy().getId().equals(user.getId());
+        boolean isAdder = item.getAddedBy() != null && item.getAddedBy().getId().equals(user.getId());
         if (!isOwner && !isAdder)
             throw new IllegalStateException("Not authorised to remove this item");
         groupCartItemRepo.delete(item);
@@ -99,12 +114,13 @@ public class GroupCartService {
         List<Map<String, Object>> itemDtos = new ArrayList<>();
         double total = 0;
         for (GroupCartItem item : gc.getItems()) {
+            if (item.getMenuItem() == null) continue;   // skip items whose menu item was since deleted
             total += item.getUnitPrice() * item.getQuantity();
 
             Map<String, Object> addedByDto = new HashMap<>();
-            addedByDto.put("id",       item.getAddedBy().getId().toString());
-            addedByDto.put("fullName", item.getAddedBy().getFullName());
-            addedByDto.put("email",    item.getAddedBy().getEmail());
+            User addedBy = item.getAddedBy();
+            addedByDto.put("id",       addedBy != null ? addedBy.getId().toString() : null);
+            addedByDto.put("fullName", displayName(addedBy));    // name only — email is PII, never exposed
 
             Map<String, Object> menuItemDto = new HashMap<>();
             menuItemDto.put("id",    item.getMenuItem().getId().toString());
@@ -124,8 +140,7 @@ public class GroupCartService {
             itemDtos.add(dto);
         }
 
-        String ownerName = gc.getOwner().getFullName() != null && !gc.getOwner().getFullName().isBlank()
-                ? gc.getOwner().getFullName() : gc.getOwner().getEmail();
+        String ownerName = displayName(gc.getOwner());
         String logoUrl = gc.getTenant().getLogoUrl() != null ? gc.getTenant().getLogoUrl() : "";
 
         Map<String, Object> result = new HashMap<>();
@@ -149,6 +164,27 @@ public class GroupCartService {
             throw new IllegalStateException("Only the owner can close the cart");
         gc.setStatus("CHECKED_OUT");
         groupCartRepo.save(gc);
+    }
+
+    /** Display name for a participant — full name if set, else the email's local part; never the
+     *  full email (PII), which the public summary must not expose. */
+    private String displayName(User u) {
+        if (u == null) return "Guest";
+        if (u.getFullName() != null && !u.getFullName().isBlank()) return u.getFullName();
+        String email = u.getEmail();
+        return (email != null && email.contains("@")) ? email.substring(0, email.indexOf('@')) : "Guest";
+    }
+
+    /** Group carts left OPEN for over 24h are abandoned — expire them so they can't be added to or
+     *  checked out, and so they don't pile up forever (there was no TTL at all). */
+    @Scheduled(fixedDelay = 3_600_000)   // hourly
+    @Transactional
+    public void expireStaleCarts() {
+        Instant cutoff = Instant.now().minus(Duration.ofHours(24));
+        for (GroupCart gc : groupCartRepo.findByStatusAndCreatedAtBefore("OPEN", cutoff)) {
+            gc.setStatus("EXPIRED");
+            groupCartRepo.save(gc);
+        }
     }
 
     private String uniqueToken() {

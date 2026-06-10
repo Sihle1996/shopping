@@ -10,4 +10,6 @@ import java.util.UUID;
 @Repository
 public interface GroupCartRepository extends JpaRepository<GroupCart, UUID> {
     Optional<GroupCart> findByToken(String token);
+
+    java.util.List<GroupCart> findByStatusAndCreatedAtBefore(String status, java.time.Instant cutoff);
 }
