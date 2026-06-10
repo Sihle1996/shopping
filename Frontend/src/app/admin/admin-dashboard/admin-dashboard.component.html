@@ -246,6 +246,7 @@
              [class.border-l-2]="isNewOrder(order.id)"
              [class.border-primary]="isNewOrder(order.id)">
 
+          <!-- Top line: status · id/customer · price · chevron (always fits; id never squeezed out) -->
           <div class="flex items-center gap-3">
             <span *ngIf="isNewOrder(order.id)" (click)="dismissNew(order.id, $event)" title="Dismiss"
                   class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary text-white flex-shrink-0">
@@ -255,24 +256,28 @@
             <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold flex-shrink-0"
                   [ngClass]="statusClass(order.status)">
               <i class="bi text-[10px]" [ngClass]="statusIcon(order.status)"></i>
-              <span class="hidden sm:inline">{{ order.status }}</span>
+              {{ order.status }}
             </span>
 
-            <!-- ID + customer·time (compact label) -->
             <div class="min-w-0 flex-1">
               <p class="text-sm font-semibold text-textDark truncate">#{{ order.id.substring(0, 8).toUpperCase() }}</p>
               <p class="text-xs text-textMuted truncate">{{ order.userEmail || 'Guest' }} · {{ order.orderDate | date:'h:mm a' }}</p>
             </div>
 
-            <!-- One-click actions, inline -->
-            <app-order-actions class="flex-shrink-0" [order]="order" [compact]="true"
+            <!-- Actions inline on desktop only -->
+            <app-order-actions class="hidden sm:block flex-shrink-0" [order]="order" [compact]="true"
                                (changed)="onOrderChanged($event)"
                                (assignDriver)="goToOrder(order.id)"></app-order-actions>
 
             <p class="font-numbers text-sm font-semibold text-textDark flex-shrink-0 w-[72px] text-right">R{{ order.totalAmount | number:'1.2-2' }}</p>
             <i class="bi bi-chevron-right text-xs text-textMuted flex-shrink-0"></i>
           </div>
-      </div>
+
+          <!-- Actions on their own line on mobile (so the id/customer line stays intact) -->
+          <app-order-actions class="block sm:hidden mt-2" [order]="order" [compact]="true"
+                             (changed)="onOrderChanged($event)"
+                             (assignDriver)="goToOrder(order.id)"></app-order-actions>
+        </div>
     </div>
 
     <!-- Analytics upgrade prompt (BASIC — compact) -->
