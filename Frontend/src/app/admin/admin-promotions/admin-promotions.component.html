@@ -508,19 +508,9 @@
       </div>
 
       <!-- Status filter tabs -->
-      <div class="flex overflow-x-auto border-b border-borderColor px-5 gap-0">
-        <button *ngFor="let tab of statusTabs"
-                (click)="statusFilter = tab"
-                class="flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors"
-                [ngClass]="statusFilter === tab
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-textMuted hover:text-textDark'">
-          {{ tab }}
-          <span class="text-xs px-1.5 py-0.5 rounded-full font-numbers"
-                [ngClass]="statusFilter === tab ? 'bg-primary-100 text-primary' : 'bg-surface text-textMuted'">
-            {{ statusCounts[tab] }}
-          </span>
-        </button>
+      <div class="px-5 py-3 border-b border-borderColor">
+        <app-tabbed-list [tabs]="statusTabItems" [selected]="statusFilter"
+                         (select)="statusFilter = $any($event)"></app-tabbed-list>
       </div>
 
       <!-- Loading -->

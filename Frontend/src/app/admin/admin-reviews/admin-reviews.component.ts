@@ -3,6 +3,7 @@ import { ReviewService, ReviewDTO } from 'src/app/services/review.service';
 import { AdminAiService, AiReviewDigestResponse } from 'src/app/services/admin-ai.service';
 import { ToastrService } from 'ngx-toastr';
 import { ConfirmService } from 'src/app/shared/services/confirm.service';
+import { TabItem } from 'src/app/shared/components/tabbed-list/tabbed-list.component';
 
 @Component({
   selector: 'app-admin-reviews',
@@ -104,6 +105,12 @@ export class AdminReviewsComponent implements OnInit {
   }
   get avgStars(): number { return Math.round(this.avgRating); }
   ratingCount(star: number): number { return this.reviews.filter(r => r.rating === star).length; }
+  get ratingTabs(): TabItem[] {
+    return [
+      { key: '0', label: 'All', count: this.reviews.length },
+      ...[5, 4, 3, 2, 1].map(star => ({ key: String(star), label: star + ' ★', count: this.ratingCount(star), disabled: this.ratingCount(star) === 0 })),
+    ];
+  }
   ratingPct(star: number): number {
     return this.reviews.length ? Math.round(this.ratingCount(star) / this.reviews.length * 100) : 0;
   }

@@ -6,6 +6,7 @@ import { AdminAiService, AiPromoSuggestion } from 'src/app/services/admin-ai.ser
 import { Promotion, getPromoStatus, PromoStatus } from 'src/app/services/promotion.service';
 import { environment } from 'src/environments/environment';
 import { ToastrService } from 'ngx-toastr';
+import { TabItem } from 'src/app/shared/components/tabbed-list/tabbed-list.component';
 
 type StatusFilter = 'All' | 'Active' | 'Scheduled' | 'Expired';
 
@@ -30,6 +31,9 @@ export class AdminPromotionsComponent implements OnInit {
 
   statusFilter: StatusFilter = 'All';
   statusTabs: StatusFilter[] = ['All', 'Active', 'Scheduled', 'Expired'];
+  get statusTabItems(): TabItem[] {
+    return this.statusTabs.map(t => ({ key: t, label: t, count: this.statusCounts[t] }));
+  }
 
   // AI suggestions
   aiSuggestions: AiPromoSuggestion[] = [];

@@ -4,6 +4,7 @@ import { AuthService } from 'src/app/services/auth.service';
 import { AdminAiService } from 'src/app/services/admin-ai.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
+import { TabItem } from 'src/app/shared/components/tabbed-list/tabbed-list.component';
 
 interface SupportTicket {
   id: string;
@@ -44,6 +45,12 @@ export class AdminSupportComponent implements OnInit {
   }
   countByStatus(s: string): number {
     return this.tickets.filter(t => t.status === s).length;
+  }
+  get statusTabs(): TabItem[] {
+    return [
+      { key: 'ALL', label: 'All', count: this.tickets.length },
+      ...this.statuses.map(s => ({ key: s, label: this.statusLabel(s), count: this.countByStatus(s), disabled: this.countByStatus(s) === 0 })),
+    ];
   }
 
   private get headers(): HttpHeaders {

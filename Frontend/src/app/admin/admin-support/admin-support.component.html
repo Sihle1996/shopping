@@ -4,19 +4,9 @@
     <app-page-header title="Support" subtitle="Review and respond to customer support tickets"></app-page-header>
 
     <!-- Status filter -->
-    <div *ngIf="!loading && tickets.length" class="flex flex-wrap gap-2 mb-4">
-      <button (click)="statusFilter = 'ALL'"
-              class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors"
-              [ngClass]="statusFilter === 'ALL' ? 'bg-primary text-white border-primary' : 'bg-white text-textMuted border-borderColor hover:bg-surface'">
-        All <span class="opacity-70">{{ tickets.length }}</span>
-      </button>
-      <button *ngFor="let s of statuses" (click)="statusFilter = s"
-              [disabled]="countByStatus(s) === 0"
-              class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors disabled:opacity-40"
-              [ngClass]="statusFilter === s ? 'bg-primary text-white border-primary' : 'bg-white text-textMuted border-borderColor hover:bg-surface'">
-        {{ statusLabel(s) }} <span class="opacity-70">{{ countByStatus(s) }}</span>
-      </button>
-    </div>
+    <app-tabbed-list *ngIf="!loading && tickets.length" class="block mb-4"
+                     [tabs]="statusTabs" [selected]="statusFilter"
+                     (select)="statusFilter = $event"></app-tabbed-list>
 
     <!-- Loading -->
     <div *ngIf="loading" class="space-y-3">

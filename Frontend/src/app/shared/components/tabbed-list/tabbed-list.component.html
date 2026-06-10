@@ -1,6 +1,6 @@
 <div class="flex overflow-x-auto rounded-xl bg-surface p-1 gap-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-  <button *ngFor="let t of tabs" type="button" (click)="onSelect(t.key)"
-          class="flex-shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-all flex items-center gap-1.5"
+  <button *ngFor="let t of tabs" type="button" (click)="onSelect(t.key)" [disabled]="t.disabled"
+          class="flex-shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-all flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
           [ngClass]="t.key === selected
             ? 'bg-primary text-white shadow-sm'
             : 'text-textLight hover:text-textDark hover:bg-white'">
