@@ -147,7 +147,8 @@
 
       <!-- Item promos (% vs store) -->
       <div *ngIf="itemOutcomes.length">
-        <h3 class="text-xs font-bold uppercase tracking-wide text-textMuted mb-2.5 flex items-center gap-1.5"><i class="bi bi-tag"></i> Item promotions <span class="text-gray-400 font-medium normal-case">· % vs store</span></h3>
+        <h3 class="text-xs font-bold uppercase tracking-wide text-textMuted mb-1 flex items-center gap-1.5"><i class="bi bi-tag"></i> Item promotions <span class="text-gray-400 font-medium normal-case">· % vs store</span></h3>
+        <p class="text-[11px] text-textMuted mb-2.5">A reliable read needs ~2 days of orders against the prior-window baseline — items still collecting show <span class="font-semibold text-gray-500">measuring</span>.</p>
         <app-paged-list [items]="itemOutcomes" #plB>
           <div class="space-y-2.5">
             <div *ngFor="let o of plB.pageItems" class="relative bg-white rounded-2xl shadow-card overflow-hidden">
@@ -160,14 +161,18 @@
                     <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">{{ o.status }}</span>
                   </span>
                 </div>
-                <!-- In progress (pending / too early) — a muted hero so it reads as 'measuring', not unfinished -->
+                <!-- In progress (pending / too early) — a clean animated 'measuring' state, not a wall of text -->
                 <div *ngIf="o.signal === 'PENDING' || o.signal === 'EARLY'">
-                  <div class="flex items-baseline gap-2">
-                    <span class="text-xl font-bold text-gray-300 leading-none">measuring…</span>
-                    <span class="text-xs text-textMuted">net vs store</span>
+                  <div class="inline-flex items-center gap-1.5">
+                    <span class="text-lg font-bold text-gray-400 leading-none">measuring</span>
+                    <span class="flex items-center gap-0.5 pb-1">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce"></span>
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce [animation-delay:150ms]"></span>
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce [animation-delay:300ms]"></span>
+                    </span>
                   </div>
-                  <p class="text-[11px] text-amber-700 italic mt-1.5 flex items-start gap-1"><i class="bi bi-hourglass-split mt-0.5"></i><span>{{ o.note || 'Not enough orders for this item in the window yet.' }}</span></p>
-                  <p *ngIf="o.ordered" class="text-[11px] text-textMuted mt-1.5">ordered {{ o.ordered.before.units }} → {{ o.ordered.during.units }} over {{ o.windowDays }}d · revenue R{{ o.delivered.before.revenue | number:'1.0-0' }} → R{{ o.delivered.during.revenue | number:'1.0-0' }}</p>
+                  <p class="text-[11px] text-textMuted mt-1.5" *ngIf="o.ordered">{{ o.ordered.during.units }} order{{ o.ordered.during.units === 1 ? '' : 's' }} collected so far · revenue R{{ o.delivered.during.revenue | number:'1.0-0' }}</p>
+                  <p class="text-[11px] text-textMuted mt-1.5" *ngIf="!o.ordered">No orders for this item yet.</p>
                 </div>
                 <div *ngIf="o.signal === 'MEASURED' || o.signal === 'MEASURING'">
                   <div class="flex items-baseline gap-2">
