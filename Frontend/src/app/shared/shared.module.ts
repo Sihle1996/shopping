@@ -22,6 +22,7 @@ import { ConfirmModalComponent } from './components/confirm-modal/confirm-modal.
 import { CookieConsentComponent } from './components/cookie-consent/cookie-consent.component';
 import { PageHeaderComponent } from './components/page-header/page-header.component';
 import { ConfirmHostComponent } from './components/confirm-host/confirm-host.component';
+import { OrderActionsComponent } from './components/order-actions/order-actions.component';
 
 @NgModule({
   declarations: [
@@ -42,6 +43,7 @@ import { ConfirmHostComponent } from './components/confirm-host/confirm-host.com
     CookieConsentComponent,
     PageHeaderComponent,
     ConfirmHostComponent,
+    OrderActionsComponent,
   ],
   imports: [
     CommonModule,
@@ -72,6 +74,7 @@ import { ConfirmHostComponent } from './components/confirm-host/confirm-host.com
     CookieConsentComponent,
     PageHeaderComponent,
     ConfirmHostComponent,
+    OrderActionsComponent,
   ],
 })
 export class SharedModule {}

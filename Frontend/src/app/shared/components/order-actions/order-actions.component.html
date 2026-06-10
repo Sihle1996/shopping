@@ -1,0 +1,26 @@
+<div *ngIf="items.length" class="flex items-center gap-1.5 flex-wrap">
+  <ng-container *ngFor="let a of items">
+    <!-- Hard action: link/chevron CTA — opens the driver picker (decision space) -->
+    <button *ngIf="a.kind === 'link'" type="button" (click)="onClick(a, $event)"
+            class="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+            [ngClass]="compact ? 'text-xs' : 'text-sm'">
+      {{ a.label }} <i class="bi bi-arrow-right text-[10px]"></i>
+    </button>
+
+    <!-- Soft actions: buttons (primary / danger / confirm) -->
+    <button *ngIf="a.kind !== 'link'" type="button" (click)="onClick(a, $event)"
+            class="rounded-lg font-semibold transition-colors border whitespace-nowrap"
+            [ngClass]="[
+              compact ? 'px-2.5 py-1 text-xs' : 'px-3 py-1.5 text-sm',
+              a.kind === 'primary' ? 'bg-primary text-white border-primary hover:opacity-90'
+              : a.kind === 'danger' ? 'bg-white text-red-600 border-red-200 hover:bg-red-50'
+              : 'bg-amber-500 text-white border-amber-500 hover:bg-amber-600'
+            ]">
+      {{ a.label }}
+    </button>
+  </ng-container>
+</div>
+
+<p *ngIf="unpaid" class="text-[11px] text-amber-600 flex items-center gap-1 mt-1">
+  <i class="bi bi-exclamation-triangle-fill"></i> Awaiting payment — can't prepare yet
+</p>

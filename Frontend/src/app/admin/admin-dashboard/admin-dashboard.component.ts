@@ -104,6 +104,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   // Recent orders (live feed)
   recentOrders: any[] = [];
   recentOrdersLoading = true;
+  /** Orders that arrived live and haven't been acted on — drives the "NEW" emphasis on the feed.
+   *  Clears on a status change, any action, or explicit dismiss — NOT on simply opening the order. */
+  newOrderIds = new Set<string>();
 
   hasAnalytics = false;
   hasCustomBranding = false;
@@ -153,6 +156,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.loadStoreSettings();
     this.loadRecentOrders();
 
+    // Capture every ORDER_CREATED id (un-debounced so none are missed) for the NEW emphasis, then
+    // debounce the actual refetch.
+    this.notificationService.orderEvents
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(ev => { if (ev?.type === 'ORDER_CREATED' && ev.orderId) this.newOrderIds.add(ev.orderId); });
     this.notificationService.orderEvents
       .pipe(debounceTime(200), takeUntil(this.destroy$))
       .subscribe(() => this.silentRefresh());
@@ -316,6 +324,27 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       next: orders => { this.recentOrders = orders; this.recentOrdersLoading = false; },
       error: () => { this.recentOrdersLoading = false; }
     });
+  }
+
+  // ── Live-feed one-click actions ──
+  isNewOrder(id: string): boolean { return this.newOrderIds.has(id); }
+
+  /** A one-click action committed — update the feed optimistically + clear the NEW flag (acted on). */
+  onOrderChanged(e: { id: string; status: string }): void {
+    this.recentOrders = this.recentOrders.map(o => (o.id === e.id ? { ...o, status: e.status } : o));
+    this.newOrderIds.delete(e.id);
+  }
+
+  /** Hard action (Assign driver) — open the order drawer where the picker lives. */
+  goToOrder(id: string): void {
+    this.newOrderIds.delete(id);
+    this.router.navigate(['/admin/orders'], { queryParams: { orderId: id } });
+  }
+
+  /** Explicitly dismiss the NEW emphasis without acting (operator acknowledged it). */
+  dismissNew(id: string, ev: Event): void {
+    ev.stopPropagation();
+    this.newOrderIds.delete(id);
   }
 
   toggleStore(): void {
