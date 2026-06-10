@@ -324,12 +324,20 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
         if (res.suggestedCategory && !this.formData.category) {
           this.formData.category = res.suggestedCategory;
         }
-        const applyPrice = !!res.suggestedPrice && (!this.formData.price || this.formData.price <= 0);
-        if (applyPrice) this.formData.price = res.suggestedPrice!;
-        const msg = applyPrice
-          ? 'Wrote the description; suggested a price from your similar items — adjust to your costs'
-          : 'Wrote the description';
-        this.toastr.success(msg, 'AI');
+        // Never auto-fill a price BELOW the item's cost. The suggested price is the category median
+        // (cost-blind), so a high-cost item would otherwise get a guaranteed-loss price + negative profit.
+        const aiPrice = res.suggestedPrice;
+        const cost = this.formData.cost;
+        const lossy = !!aiPrice && cost != null && cost > 0 && aiPrice < cost;
+        const applyPrice = !!aiPrice && !lossy && (!this.formData.price || this.formData.price <= 0);
+        if (applyPrice) this.formData.price = aiPrice!;
+        if (lossy) {
+          this.toastr.warning(`Wrote the description. Your cost (R${cost}) is higher than similar items sell for (~R${aiPrice}) — I didn't fill a price; R${aiPrice} would sell at a loss.`, 'AI');
+        } else {
+          this.toastr.success(applyPrice
+            ? 'Wrote the description; suggested a price from your similar items — adjust to your costs'
+            : 'Wrote the description', 'AI');
+        }
       },
       error: () => {
         this.aiGenerating = false;
