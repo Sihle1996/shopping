@@ -26,9 +26,6 @@ export class AdminPromotionsComponent implements OnInit {
 
   /** Section tabs — split the page so the AI suggestion + outcome cards get their own clean space. */
   promoTab = 'promotions';
-  promoPage = 1;
-  promoPageSize = 12;
-  get promoTotalPages(): number { return Math.max(1, Math.ceil(this.filteredPromotions.length / this.promoPageSize)); }
   get promoTabs(): TabItem[] {
     return [
       { key: 'promotions', label: 'Promotions' },

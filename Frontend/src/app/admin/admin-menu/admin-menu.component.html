@@ -171,14 +171,14 @@
     <!-- Filters -->
     <!-- Category tabs — pick one to see just those items instead of scrolling the whole menu -->
     <app-tabbed-list class="block mb-3" [tabs]="categoryTabs" [selected]="selectedCategory"
-                     (select)="selectedCategory = $event; menuPage = 1"></app-tabbed-list>
+                     (select)="selectedCategory = $event"></app-tabbed-list>
 
     <div class="flex flex-wrap items-center gap-3 mb-6">
       <div class="relative flex-1 min-w-[200px]">
         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
           <i class="bi bi-search text-textMuted text-sm"></i>
         </div>
-        <input [(ngModel)]="searchQuery" (ngModelChange)="menuPage = 1" placeholder="Search items..."
+        <input [(ngModel)]="searchQuery" placeholder="Search items..."
                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-borderColor bg-white text-sm text-textDark
                       focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent shadow-card" />
       </div>
@@ -193,8 +193,9 @@
 
     <!-- Menu Items Grid -->
     <!-- Item list — everything exposed on desktop; click Extras to expand the editor inline -->
+    <app-paged-list [items]="filteredMenu" #pl>
     <div class="space-y-2.5">
-      <div *ngFor="let item of (filteredMenu | paginate:menuPage:menuPageSize)"
+      <div *ngFor="let item of pl.pageItems"
            class="bg-white rounded-2xl shadow-card overflow-hidden transition-shadow hover:shadow-card-hover animate-fade-in"
            [class.ring-2]="selectedIds.has(item.id)"
            [class.ring-primary]="selectedIds.has(item.id)">
@@ -354,11 +355,7 @@
         </div>
       </div>
     </div>
-
-    <!-- Pagination — keeps a long category from being an endless scroll -->
-    <app-pagination *ngIf="filteredMenu.length > menuPageSize" class="block mt-6"
-                    [currentPage]="menuPage" [totalPages]="menuTotalPages"
-                    (pageChange)="menuPage = $event"></app-pagination>
+    </app-paged-list>
 
     <!-- Empty state -->
     <app-empty-state

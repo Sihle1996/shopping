@@ -123,9 +123,10 @@
                      (select)="ratingFilter = +$event"></app-tabbed-list>
 
     <!-- Reviews grid -->
+    <app-paged-list [items]="filteredReviews" #pl>
     <div *ngIf="!loading && reviews.length > 0"
          class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div *ngFor="let review of filteredReviews"
+      <div *ngFor="let review of pl.pageItems"
            class="bg-white rounded-2xl shadow-card border border-borderColor p-5 animate-fade-in flex flex-col">
 
         <!-- Top row: avatar + name + date + delete -->
@@ -181,6 +182,7 @@
 
       </div>
     </div>
+    </app-paged-list>
 
   </div>
 </div>

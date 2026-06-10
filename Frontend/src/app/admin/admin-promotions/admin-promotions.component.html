@@ -459,7 +459,7 @@
       <!-- Status filter tabs -->
       <div class="px-5 py-3 border-b border-borderColor">
         <app-tabbed-list [tabs]="statusTabItems" [selected]="statusFilter"
-                         (select)="statusFilter = $any($event); promoPage = 1"></app-tabbed-list>
+                         (select)="statusFilter = $any($event)"></app-tabbed-list>
       </div>
 
       <!-- Loading -->
@@ -483,8 +483,9 @@
       </div>
 
       <!-- Cards grid -->
+      <app-paged-list [items]="filteredPromotions" #pl>
       <div *ngIf="!loading && filteredPromotions.length > 0" class="p-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <div *ngFor="let p of (filteredPromotions | paginate:promoPage:promoPageSize)"
+        <div *ngFor="let p of pl.pageItems"
              class="border border-borderColor rounded-2xl overflow-hidden hover:shadow-card transition-shadow">
 
           <!-- Banner image -->
@@ -581,11 +582,7 @@
           </div>
         </div>
       </div>
-
-      <!-- Pagination — keeps a long promo list from being an endless scroll -->
-      <app-pagination *ngIf="filteredPromotions.length > promoPageSize" class="block p-4 border-t border-borderColor"
-                      [currentPage]="promoPage" [totalPages]="promoTotalPages"
-                      (pageChange)="promoPage = $event"></app-pagination>
+      </app-paged-list>
     </div>
 
   </div>

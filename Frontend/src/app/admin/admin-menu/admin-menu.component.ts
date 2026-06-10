@@ -27,10 +27,6 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
   selectedCategory = 'All';
   categories: any[] = [];       // objects: { id, name }
   filterCategories: string[] = ['All']; // names for the filter bar
-  /** Client-side pagination so a big category isn't an endless scroll (reset to 1 on category/search change). */
-  menuPage = 1;
-  menuPageSize = 12;
-  get menuTotalPages(): number { return Math.max(1, Math.ceil(this.filteredMenu.length / this.menuPageSize)); }
   /** Category tabs (replaces the dropdown) — pick a category to see just those items, no long scroll.
    *  Derived from the items' ACTUAL categories (the defined-category list misses free-text ones), with counts. */
   get categoryTabs(): TabItem[] {

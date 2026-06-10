@@ -1,5 +1,9 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
+/** One shared page size for every paginated admin list — keeps the visible list short enough to fit
+ *  the screen without scrolling. Change it here and every list updates. */
+export const LIST_PAGE_SIZE = 6;
+
 /**
  * Client-side pagination: returns just the slice for the current page. Pair with <app-pagination>
  * for the controls and `Math.ceil(list.length / size)` for the page count. Keeps long in-tab lists
