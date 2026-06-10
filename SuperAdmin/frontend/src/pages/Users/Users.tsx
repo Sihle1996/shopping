@@ -69,7 +69,7 @@ export default function Users() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       setDeleteUser(null)
-      showToast('User deleted')
+      showToast('User anonymized & deactivated — orders retained')
     },
     onError: (err: Error) => showToast(err.message || 'Failed to delete user', 'error')
   })
@@ -112,7 +112,7 @@ export default function Users() {
           <button onClick={() => { setRoleUser(row); setNewRole(row.role ?? 'USER') }} className="p-1.5 text-gray-600 hover:text-blue-400 hover:bg-blue-500/10 rounded-md transition-colors" title="Change Role">
             <UserCog size={15} />
           </button>
-          <button onClick={() => setDeleteUser(row)} className="p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors" title="Delete">
+          <button onClick={() => setDeleteUser(row)} className="p-1.5 text-gray-600 hover:text-amber-400 hover:bg-amber-500/10 rounded-md transition-colors" title="Remove (anonymize)">
             <Trash2 size={15} />
           </button>
         </div>
@@ -190,21 +190,25 @@ export default function Users() {
         </div>
       </Modal>
 
-      <Modal isOpen={!!deleteUser} onClose={() => setDeleteUser(null)} title="Delete User" size="sm">
+      <Modal isOpen={!!deleteUser} onClose={() => setDeleteUser(null)} title="Remove user" size="sm">
         <div className="space-y-4">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
-              <AlertTriangle size={20} className="text-red-400" />
+            <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle size={20} className="text-amber-400" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-200">Delete "{deleteUser?.email}"?</p>
-              <p className="text-sm text-gray-500 mt-1">This action cannot be undone.</p>
+              <p className="text-sm font-medium text-gray-200">Remove "{deleteUser?.email}"?</p>
+              <p className="text-sm text-gray-500 mt-1">
+                This anonymizes the user (POPIA/GDPR) and blocks their login — name, email and phone are
+                scrubbed and the email is freed for re-registration. Their orders and reviews are kept
+                (now anonymized). This can't be undone.
+              </p>
             </div>
           </div>
           <div className="flex justify-end gap-3">
             <button onClick={() => setDeleteUser(null)} className="px-4 py-2 text-sm border border-gray-700 rounded-lg text-gray-400 hover:bg-gray-800 transition-colors">Cancel</button>
-            <button onClick={() => deleteUser && deleteMutation.mutate(deleteUser.id)} disabled={deleteMutation.isPending} className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium disabled:opacity-60">
-              {deleteMutation.isPending ? 'Deleting…' : 'Delete User'}
+            <button onClick={() => deleteUser && deleteMutation.mutate(deleteUser.id)} disabled={deleteMutation.isPending} className="px-4 py-2 text-sm bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium disabled:opacity-60">
+              {deleteMutation.isPending ? 'Removing…' : 'Remove user'}
             </button>
           </div>
         </div>

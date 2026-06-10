@@ -66,6 +66,10 @@ public class UsersController(AppDbContext db) : ControllerBase
         return Ok(new UserDto(user.Id, user.Email, user.Role, user.DriverStatus, user.TenantId, null, user.LastPing));
     }
 
+    // Removing a user ANONYMIZES + deactivates them (GDPR-style), never a hard delete. A customer's
+    // orders / reviews / financial history must stay valid, and every user_id table has an FK so a
+    // hard delete is blocked anyway. The row is kept (orders stay linked) but its PII is scrubbed,
+    // the email is freed for re-registration, and login is blocked.
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
@@ -75,21 +79,22 @@ public class UsersController(AppDbContext db) : ControllerBase
         if (user.Role == "SUPERADMIN")
         {
             var count = await db.Users.CountAsync(u => u.Role == "SUPERADMIN");
-            if (count <= 1) return BadRequest(new { message = "Cannot delete the last SUPERADMIN." });
+            if (count <= 1) return BadRequest(new { message = "Cannot remove the last SUPERADMIN." });
         }
 
-        db.Users.Remove(user);
-        try
-        {
-            await db.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            var pg = ex.InnerException as Npgsql.PostgresException;
-            if (pg?.SqlState == "23503")
-                return BadRequest(new { message = "Cannot delete this user — they have associated orders or cart items." });
-            throw;
-        }
-        return NoContent();
+        var anonEmail = $"deleted-{id}@removed.invalid";
+        await db.Database.ExecuteSqlRawAsync(@"
+            UPDATE _user SET
+                email = {0},
+                full_name = 'Deleted user',
+                phone = NULL,
+                password = '',
+                active = false,
+                email_verified = false,
+                email_verification_token = NULL,
+                marketing_email_opt_in = false
+            WHERE id = {1}", anonEmail, id);
+
+        return Ok(new { anonymized = true, message = "User anonymized and deactivated. Their orders are retained; the email is freed for re-registration." });
     }
 }
