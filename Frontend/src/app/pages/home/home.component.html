@@ -248,6 +248,15 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div *ngFor="let r of reviews.slice(0, 6)"
                class="bg-white rounded-2xl border border-borderColor p-4 shadow-sm">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="flex-shrink-0 w-8 h-8 rounded-full bg-primary-100 text-primary text-xs font-bold flex items-center justify-center uppercase">{{ (r.userName || 'G').charAt(0) }}</span>
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-textDark truncate leading-tight">{{ r.userName || 'Guest' }}</p>
+                <p class="text-[10px] text-emerald-600 font-medium flex items-center gap-1 leading-tight">
+                  <i class="bi bi-patch-check-fill"></i> Verified order
+                </p>
+              </div>
+            </div>
             <div class="flex items-center gap-1 mb-2">
               <i *ngFor="let s of [1,2,3,4,5]"
                  class="bi text-sm"

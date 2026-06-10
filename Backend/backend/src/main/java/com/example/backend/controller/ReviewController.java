@@ -35,9 +35,7 @@ public class ReviewController {
 
         List<Review> reviews = reviewRepository.findByTenant_IdOrderByCreatedAtDesc(tenantId);
         List<Map<String, Object>> result = reviews.stream().map(r -> {
-            String name = r.getUser() != null && r.getUser().getFullName() != null
-                    ? r.getUser().getFullName()
-                    : "Guest";
+            String name = publicReviewerName(r.getUser());
             return Map.<String, Object>of(
                     "id", r.getId(),
                     "rating", r.getRating(),
@@ -53,6 +51,15 @@ public class ReviewController {
                 "averageRating", avg.isPresent() ? Math.round(avg.getAsDouble() * 10.0) / 10.0 : 0,
                 "totalReviews", reviews.size()
         ));
+    }
+
+    /** Privacy-safe public display name: "John D." — first name + last initial, never the full
+     *  surname (the public store page must not leak customers' full names). */
+    private String publicReviewerName(User user) {
+        if (user == null || user.getFullName() == null || user.getFullName().isBlank()) return "Guest";
+        String[] parts = user.getFullName().trim().split("\\s+");
+        if (parts.length == 1) return parts[0];
+        return parts[0] + " " + Character.toUpperCase(parts[parts.length - 1].charAt(0)) + ".";
     }
 
     /** Order IDs the signed-in customer has already reviewed — so the UI persists the "reviewed"
