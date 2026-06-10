@@ -26,7 +26,10 @@ export interface AiReviewDigestResponse {
 
 export interface AiProposedPromo {
   title: string;
-  discountPercent: number;
+  discountPercent?: number;       // PERCENT_OFF suggestions
+  type?: string;                  // 'PERCENT_OFF' (default) | 'AMOUNT_OFF'
+  discountAmount?: number;        // AMOUNT_OFF: fixed rand off
+  minSpend?: number;              // AMOUNT_OFF: qualifying order-subtotal threshold
   appliesTo: string;
   targetProductName?: string;
   targetProductId?: string;

@@ -321,6 +321,57 @@ public class AdminAiService {
             s.put("proposedPromo", promo);
             suggestions.add(s);
         }
+
+        // Store-wide basket-size play: an AMOUNT_OFF over a spend threshold, so the slate isn't only
+        // per-item % off (the common criticism). Grounded in the store's OWN order-value distribution
+        // and store-funded (no platform cost). Only emitted when a real cluster of orders sits just
+        // under a reachable threshold — otherwise it's mostly a giveaway to baskets that already qualify.
+        List<Double> orderTotals = recentOrders.stream()
+                .map(o -> o.getTotalAmount() != null ? o.getTotalAmount() : 0.0)
+                .filter(v -> v > 0)
+                .sorted().collect(Collectors.toList());
+        if (orderTotals.size() >= 12) {
+            double aov = orderTotals.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+            double threshold = Math.ceil((aov * 1.2) / 25.0) * 25.0;                  // ~20% above AOV, rounded up to R25
+            double amountOff = Math.max(10, Math.min(50, Math.round(aov * 0.10 / 5.0) * 5.0)); // ~10% of AOV, R10–50, R5 steps
+            long nearMiss = orderTotals.stream().filter(v -> v >= aov && v < threshold).count();
+            double nearMissShare = (double) nearMiss / orderTotals.size();
+            if (threshold > aov && amountOff < threshold && nearMissShare >= 0.12) {
+                Map<String, Object> tPromo = new LinkedHashMap<>();
+                tPromo.put("title", String.format(Locale.UK, "R%.0f off orders over R%.0f", amountOff, threshold));
+                tPromo.put("type", "AMOUNT_OFF");
+                tPromo.put("discountAmount", (int) amountOff);
+                tPromo.put("minSpend", (int) threshold);
+                tPromo.put("appliesTo", "ALL");
+                tPromo.put("startAt", today);
+                tPromo.put("endAt", endAt);
+
+                Map<String, Object> tAnalysis = new LinkedHashMap<>();
+                tAnalysis.put("hypothesis", String.format(Locale.UK,
+                        "Gives baskets near the line a reason to add ~R%.0f more to clear R%.0f — a basket-size play, not an item discount. Test a week and compare AOV.",
+                        threshold - aov, threshold));
+                tAnalysis.put("evidence", List.of(
+                        String.format(Locale.UK, "Average order R%.0f across %d delivered orders", aov, orderTotals.size()),
+                        String.format(Locale.UK, "%d (%.0f%%) landed between R%.0f and R%.0f — within reach of the threshold",
+                                nearMiss, nearMissShare * 100, aov, threshold),
+                        "Store-funded — no platform cost"));
+                tAnalysis.put("insightStrength", nearMissShare >= 0.30 ? "STRONG" : nearMissShare >= 0.22 ? "MODERATE" : "WEAK");
+                tAnalysis.put("recommendationType", "EXPERIMENT");
+                tAnalysis.put("discountBasis", String.format(Locale.UK,
+                        "R%.0f ≈ %.0f%% of the R%.0f threshold — a modest, store-funded nudge to lift basket size, not a margin giveaway.",
+                        amountOff, amountOff / threshold * 100, threshold));
+
+                Map<String, Object> tS = new LinkedHashMap<>();
+                tS.put("facts", List.of(
+                        String.format(Locale.UK, "R%.0f average order (last 30 days)", aov),
+                        String.format(Locale.UK, "%d of %d orders within reach of R%.0f", nearMiss, orderTotals.size(), threshold),
+                        "Applies store-wide on the order subtotal"));
+                tS.put("analysis", tAnalysis);
+                tS.put("proposedPromo", tPromo);
+                suggestions.add(0, tS);   // lead with the variety so it's the first thing the owner sees
+            }
+        }
+
         return Map.of("suggestions", suggestions);
     }
 

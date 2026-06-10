@@ -61,8 +61,8 @@
               <!-- Proposal + tier -->
               <div class="flex items-start justify-between gap-3 mb-1.5">
                 <div class="min-w-0 flex items-center gap-2 flex-wrap">
-                  <span class="text-lg font-bold text-primary leading-none">{{ x.s.proposedPromo.discountPercent }}% off</span>
-                  <span class="text-sm font-semibold text-textDark truncate">{{ x.s.proposedPromo.targetProductName || x.s.proposedPromo.title }}</span>
+                  <span class="text-lg font-bold text-primary leading-none">{{ x.s.proposedPromo.type === 'AMOUNT_OFF' ? 'R' + x.s.proposedPromo.discountAmount + ' off' : x.s.proposedPromo.discountPercent + '% off' }}</span>
+                  <span class="text-sm font-semibold text-textDark truncate">{{ x.s.proposedPromo.targetProductName || (x.s.proposedPromo.type === 'AMOUNT_OFF' ? 'Store-wide · over R' + x.s.proposedPromo.minSpend : x.s.proposedPromo.title) }}</span>
                 </div>
                 <span *ngIf="x.s.analysis?.insightStrength" class="flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" [ngClass]="tierClass(x.s.analysis?.insightStrength || '')">
                   <i class="bi bi-bar-chart-fill text-[9px]"></i>{{ x.s.analysis?.insightStrength }}

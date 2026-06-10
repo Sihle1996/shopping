@@ -462,6 +462,9 @@ export class AdminPromotionsComponent implements OnInit {
     const payload: PromotionRequest = {
       title: p.title,
       discountPercent: p.discountPercent,
+      type: (p.type as any) || 'PERCENT_OFF',
+      discountAmount: p.discountAmount ?? null,
+      minSpend: p.minSpend ?? null,
       appliesTo: (p.appliesTo as any) || 'ALL',
       targetProductId: p.targetProductId || null,
       startAt: p.startAt ? `${p.startAt}T00:00:00+02:00` : new Date().toISOString(),
