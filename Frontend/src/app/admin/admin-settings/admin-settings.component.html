@@ -3,7 +3,7 @@
 
     <!-- Header -->
     <app-page-header title="Settings" subtitle="Configure your restaurant's profile and delivery options">
-      <button actions *ngIf="!settingsEditing && !isLoading" type="button" (click)="editSettings()"
+      <button actions *ngIf="!settingsEditing && !isLoading && isStoreSettingsTab" type="button" (click)="editSettings()"
               class="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-borderColor text-sm font-medium text-textDark hover:bg-gray-50 transition-colors">
         <i class="bi bi-pencil"></i> Edit
       </button>
@@ -16,12 +16,16 @@
 
     <div *ngIf="!isLoading" class="space-y-6">
 
+      <!-- Section tabs -->
+      <app-tabbed-list class="block" [tabs]="settingsTabs" [selected]="settingsTab"
+                       (select)="settingsTab = $event"></app-tabbed-list>
+
       <!-- Store profile / branding / delivery — read-only until Edit -->
       <fieldset [disabled]="!settingsEditing" class="space-y-6 border-0 p-0 m-0 min-w-0"
                 [class.opacity-70]="!settingsEditing">
 
       <!-- Store Info Card -->
-      <div id="store-info-section" class="bg-white rounded-2xl shadow-card p-6">
+      <div *ngIf="settingsTab === 'store'" id="store-info-section" class="bg-white rounded-2xl shadow-card p-6">
         <h3 class="font-heading text-base font-semibold text-textDark mb-4">
           <i class="bi bi-shop text-primary mr-2"></i>Store Information
         </h3>
@@ -108,7 +112,7 @@
       </div>
 
       <!-- Branding Card -->
-      <div id="logo-upload-section" class="bg-white rounded-2xl shadow-card p-6">
+      <div *ngIf="settingsTab === 'branding'" id="logo-upload-section" class="bg-white rounded-2xl shadow-card p-6">
         <h3 class="font-heading text-base font-semibold text-textDark mb-1 flex items-center gap-2">
           <i class="bi bi-palette text-primary"></i>Branding
           <span *ngIf="!hasCustomBranding"
@@ -173,7 +177,7 @@
       </div>
 
       <!-- Delivery Card -->
-      <div id="delivery-section" class="bg-white rounded-2xl shadow-card p-6">
+      <div *ngIf="settingsTab === 'delivery'" id="delivery-section" class="bg-white rounded-2xl shadow-card p-6">
         <h3 class="font-heading text-base font-semibold text-textDark mb-4">
           <i class="bi bi-truck text-primary mr-2"></i>Delivery Settings
         </h3>
@@ -289,7 +293,7 @@
       <!-- /end read-only settings fieldset -->
 
       <!-- Categories Card -->
-      <div id="category-section" class="bg-white rounded-2xl shadow-card p-6">
+      <div *ngIf="settingsTab === 'store'" id="category-section" class="bg-white rounded-2xl shadow-card p-6">
         <h3 class="font-heading text-base font-semibold text-textDark mb-1">
           <i class="bi bi-tags text-primary mr-2"></i>Menu Categories
         </h3>
@@ -336,7 +340,7 @@
       </div>
 
       <!-- Store Hours Card -->
-      <div id="store-hours-section" class="bg-white rounded-2xl shadow-card p-6">
+      <div *ngIf="settingsTab === 'hours'" id="store-hours-section" class="bg-white rounded-2xl shadow-card p-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
           <div>
             <h3 class="font-heading text-base font-semibold text-textDark">
@@ -384,8 +388,8 @@
         </p>
       </div>
 
-      <!-- Save / Cancel — only while editing -->
-      <div *ngIf="settingsEditing" class="flex items-center justify-end gap-3">
+      <!-- Save / Cancel — only while editing the Store/Delivery/Branding (fieldset) tabs -->
+      <div *ngIf="settingsEditing && isStoreSettingsTab" class="flex items-center justify-end gap-3">
         <app-button variant="ghost" size="md" (clicked)="cancelSettings()">
           Cancel
         </app-button>
@@ -399,7 +403,7 @@
       </div>
 
       <!-- Notification Preferences -->
-      <div class="bg-white rounded-2xl shadow-card p-6">
+      <div *ngIf="settingsTab === 'notifications'" class="bg-white rounded-2xl shadow-card p-6">
         <div class="flex items-start justify-between mb-5">
           <div>
             <h3 class="font-heading text-base font-semibold text-textDark">

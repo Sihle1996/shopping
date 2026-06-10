@@ -9,6 +9,7 @@ import { SubscriptionService } from 'src/app/services/subscription.service';
 import { GeocodingService, AddressSuggestion } from 'src/app/services/geocoding.service';
 import { ToastrService } from 'ngx-toastr';
 import { ConfirmService } from 'src/app/shared/services/confirm.service';
+import { TabItem } from 'src/app/shared/components/tabbed-list/tabbed-list.component';
 import { environment } from 'src/environments/environment';
 
 interface TenantSettings {
@@ -63,6 +64,20 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   isLoading = false;
   isSaving = false;
   settingsEditing = false;  // store profile/branding/delivery stay read-only until Edit
+
+  /** Section tabs — break the long settings page into focused groups (no Save logic touched). */
+  settingsTab = 'store';
+  settingsTabs: TabItem[] = [
+    { key: 'store', label: 'Store' },
+    { key: 'delivery', label: 'Delivery' },
+    { key: 'hours', label: 'Hours' },
+    { key: 'branding', label: 'Branding' },
+    { key: 'notifications', label: 'Notifications' },
+  ];
+  /** The Edit/Save-Settings flow only applies to the fieldset tabs (Store/Delivery/Branding). */
+  get isStoreSettingsTab(): boolean {
+    return this.settingsTab === 'store' || this.settingsTab === 'delivery' || this.settingsTab === 'branding';
+  }
   isUploadingLogo = false;
   settingsSubmitted = false;
 
