@@ -183,8 +183,8 @@
     <div class="md:hidden grid grid-cols-1 gap-3">
       <div *ngFor="let item of pl.pageItems; trackBy: trackById"
            class="relative overflow-hidden bg-white rounded-2xl shadow-card p-4 pl-5 animate-fade-in">
-        <span *ngIf="isLowStock(item) || soldOut(item)" class="absolute left-2 top-3 bottom-3 w-1.5 rounded-full"
-              [ngClass]="soldOut(item) ? 'bg-danger' : 'bg-warning'"></span>
+        <span class="absolute left-2 top-3 bottom-3 w-1.5 rounded-full"
+              [ngClass]="soldOut(item) ? 'bg-danger' : isLowStock(item) ? 'bg-warning' : 'bg-success'"></span>
         <div class="flex items-start justify-between mb-2">
           <div>
             <h4 class="font-semibold text-sm text-textDark">{{ item.name }}</h4>
