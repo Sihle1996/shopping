@@ -142,6 +142,7 @@ public class AdminAiService {
         // LEARN: snapshot any newly-ended promos, then rank this run with their history.
         recordEndedPromoOutcomes(tenantId);
         Map<UUID, double[]> history = promoHistory(tenantId);
+        Map<String, double[]> scopeHistory = promoScopeHistory(tenantId);   // ALL / MULTI_PRODUCT self-measurement
 
         Instant thirtyDaysAgo = Instant.now().minus(Duration.ofDays(30));
         List<Order> recentOrders = orderRepository
@@ -373,6 +374,15 @@ public class AdminAiService {
                 tAnalysis.put("discountBasis", String.format(Locale.UK,
                         "R%.0f is ~%.0f%% of the ~R%.0f margin on a R%.0f order (at your median margin) — stays profitable.",
                         amountOff, amountOff / marginAtThreshold * 100, marginAtThreshold, threshold));
+                double[] aovHist = scopeHistory.get("ALL");
+                if (aovHist != null && aovHist[1] > 0) {                      // self-measurement: what past threshold deals did
+                    Map<String, Object> prior = new LinkedHashMap<>();
+                    prior.put("avgNetPercent", Math.round(aovHist[0] / aovHist[1]));
+                    prior.put("samples", (long) aovHist[1]);
+                    prior.put("basis", "OBSERVATIONAL");
+                    prior.put("note", "Past AOV change during your threshold deals vs the pre-promo baseline — correlational, not causal.");
+                    tAnalysis.put("priorObserved", prior);
+                }
 
                 Map<String, Object> tS = new LinkedHashMap<>();
                 tS.put("facts", List.of(
@@ -424,6 +434,15 @@ public class AdminAiService {
             mAnalysis.put("discountBasis", String.format(Locale.UK,
                     "%d%% off uses %d%% of the LOWEST margin in the set (%.0f%%) — even the thinnest item stays profitable.",
                     mpDiscount, Math.round(mpDiscount / minMargin * 100.0), minMargin));
+            double[] mpHist = scopeHistory.get("MULTI_PRODUCT");
+            if (mpHist != null && mpHist[1] > 0) {                            // self-measurement: what past bundle deals did
+                Map<String, Object> prior = new LinkedHashMap<>();
+                prior.put("avgNetPercent", Math.round(mpHist[0] / mpHist[1]));
+                prior.put("samples", (long) mpHist[1]);
+                prior.put("basis", "OBSERVATIONAL");
+                prior.put("note", "Past unit lift across bundled items vs the store trend — correlational, not causal.");
+                mAnalysis.put("priorObserved", prior);
+            }
 
             Map<String, Object> mS = new LinkedHashMap<>();
             mS.put("facts", List.of(
@@ -745,18 +764,49 @@ public class AdminAiService {
     public void recordEndedPromoOutcomes(UUID tenantId) {
         Instant now = Instant.now();
         for (Promotion p : promotionRepository.findByTenant_Id(tenantId)) {
-            if (p.getAppliesTo() != Promotion.AppliesTo.PRODUCT || p.getTargetProductId() == null
-                    || p.getStartAt() == null || p.getEndAt() == null) continue;
+            if (p.getStartAt() == null || p.getEndAt() == null) continue;
             if (p.getEndAt().toInstant().isAfter(now)) continue;          // not ended yet
             if (promoOutcomeRecordRepository.existsByPromoId(p.getId())) continue; // already recorded
-            LiftCalc lift = computeLift(tenantId, p.getTargetProductId(), p.getStartAt().toInstant(), p.getEndAt().toInstant());
-            if (lift.netLift() == null) continue; // not measurable
+            Instant start = p.getStartAt().toInstant(), end = p.getEndAt().toInstant();
+            Promotion.AppliesTo applies = p.getAppliesTo() == null ? Promotion.AppliesTo.PRODUCT : p.getAppliesTo();
+
+            Integer netLift = null; int sampleUnits = 0; UUID productId = null; String scopeTag = null;
+            if (applies == Promotion.AppliesTo.PRODUCT && p.getTargetProductId() != null) {
+                LiftCalc lift = computeLift(tenantId, p.getTargetProductId(), start, end);
+                if (lift.netLift() != null) {
+                    netLift = (int) (long) lift.netLift(); sampleUnits = (int) lift.duringUnits();
+                    productId = p.getTargetProductId(); scopeTag = "PRODUCT";
+                }
+            } else if (applies == Promotion.AppliesTo.ALL) {
+                // A basket-size deal is about AOV — measure average-order-value change vs the 14-day baseline.
+                Instant baseStart = start.minus(Duration.ofDays(14));
+                double[] base = orderRevenue(tenantId, baseStart, start);
+                double[] during = orderRevenue(tenantId, start, end);
+                if (base[0] >= MIN_STORE_BASELINE && base[1] > 0 && during[0] > 0) {
+                    double aovBase = base[1] / base[0], aovDuring = during[1] / during[0];
+                    netLift = (int) Math.round((aovDuring - aovBase) / aovBase * 100.0);
+                    sampleUnits = (int) during[0]; scopeTag = "ALL";
+                }
+            } else if (applies == Promotion.AppliesTo.MULTI_PRODUCT
+                    && p.getTargetProducts() != null && !p.getTargetProducts().isEmpty()) {
+                // Average per-item net lift across the bundled set (reuses the per-product calc).
+                long sumNet = 0; int measured = 0; double units = 0;
+                for (MenuItem t : p.getTargetProducts()) {
+                    if (t == null || t.getId() == null) continue;
+                    LiftCalc lc = computeLift(tenantId, t.getId(), start, end);
+                    if (lc.netLift() != null) { sumNet += lc.netLift(); measured++; units += lc.duringUnits(); }
+                }
+                if (measured >= 1) { netLift = (int) (sumNet / measured); sampleUnits = (int) units; scopeTag = "MULTI_PRODUCT"; }
+            }
+            if (netLift == null) continue; // not measurable for this scope
+
             PromoOutcomeRecord rec = new PromoOutcomeRecord();
             rec.setTenantId(tenantId);
-            rec.setProductId(p.getTargetProductId());
+            rec.setProductId(productId);
             rec.setPromoId(p.getId());
-            rec.setNetLiftPercent((int) (long) lift.netLift());
-            rec.setSampleUnits((int) lift.duringUnits());
+            rec.setNetLiftPercent(netLift);
+            rec.setSampleUnits(sampleUnits);
+            rec.setScope(scopeTag);
             promoOutcomeRecordRepository.save(rec);
         }
     }
@@ -771,6 +821,19 @@ public class AdminAiService {
             cur[1] += 1;
         }
         return hist;
+    }
+
+    /** Tenant-level history for non-product scopes: scope ("ALL" / "MULTI_PRODUCT") → [avgLift, samples].
+     *  Lets the threshold + multi-product suggestions show what their PAST runs actually did. */
+    private Map<String, double[]> promoScopeHistory(UUID tenantId) {
+        Map<String, double[]> h = new HashMap<>();
+        for (PromoOutcomeRecord r : promoOutcomeRecordRepository.findByTenantId(tenantId)) {
+            if (r.getProductId() != null || r.getNetLiftPercent() == null || r.getScope() == null) continue;
+            double[] cur = h.computeIfAbsent(r.getScope(), k -> new double[2]);
+            cur[0] += r.getNetLiftPercent();
+            cur[1] += 1;
+        }
+        return h;
     }
 
     // ── Feature: Alert calibration (predict → act → measure) ────────────────

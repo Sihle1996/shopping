@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -34,6 +35,13 @@ public class PromoOutcomeRecord {
 
     @Column(name = "product_id")
     private UUID productId;
+
+    /** Promo scope this result came from: PRODUCT (per-item unit lift), ALL (AOV lift), or
+     *  MULTI_PRODUCT (avg unit lift across the set). Lets non-product deals self-measure too.
+     *  PRODUCT rows carry productId; ALL/MULTI_PRODUCT rows have productId null + this tag. */
+    @Column(name = "scope", nullable = false)
+    @ColumnDefault("'PRODUCT'")
+    private String scope = "PRODUCT";
 
     /** The promotion this result came from — UNIQUE so each promo is recorded once. */
     @Column(name = "promo_id", unique = true)
