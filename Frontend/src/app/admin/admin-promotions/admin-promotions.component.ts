@@ -65,7 +65,7 @@ export class AdminPromotionsComponent implements OnInit {
       { key: 'all', label: 'All', count: this.outcomes.length },
       { key: 'win', label: 'Winning', count: n('win') },
       { key: 'loss', label: 'Underperforming', count: n('loss') },
-      { key: 'measuring', label: 'Measuring', count: n('measuring') },
+      { key: 'measuring', label: 'Inconclusive', count: n('measuring') },
     ];
   }
   private get filteredOutcomes(): any[] {
