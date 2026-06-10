@@ -29,12 +29,20 @@
       No payouts recorded yet. Contact support or your platform admin to set up payouts.
     </p>
 
+    <!-- Status filter -->
+    <div *ngIf="!loading && payouts.length" class="mb-4">
+      <app-tabbed-list [tabs]="statusTabs" [selected]="statusFilter"
+                       (select)="statusFilter = $any($event)"></app-tabbed-list>
+    </div>
+
     <!-- Payout rows -->
-    <div *ngIf="!loading && payouts.length" class="bg-white rounded-2xl shadow-card overflow-hidden">
+    <app-paged-list *ngIf="!loading && payouts.length" [items]="filteredPayouts" #pl>
+    <div class="bg-white rounded-2xl shadow-card overflow-hidden">
       <div class="px-5 py-3 border-b border-borderColor grid grid-cols-5 gap-2 text-xs font-semibold text-textMuted">
         <span>Period</span><span>Gross</span><span>Platform fee</span><span>Net</span><span>Status</span>
       </div>
-      <div *ngFor="let p of payouts" class="px-5 py-3.5 border-b border-borderColor grid grid-cols-5 gap-2 items-center text-sm">
+      <div *ngFor="let p of pl.pageItems" class="relative overflow-hidden px-5 py-3.5 border-b border-borderColor grid grid-cols-5 gap-2 items-center text-sm">
+        <span class="absolute left-2 top-2.5 bottom-2.5 w-1 rounded-full" [ngClass]="statusAccent(p.status)"></span>
         <span class="text-textMuted text-xs">
           {{ p.periodStart ? (p.periodStart | date:'MMM d') : '—' }}
           {{ p.periodEnd ? '– ' + (p.periodEnd | date:'MMM d, y') : '' }}
@@ -49,6 +57,7 @@
         </div>
       </div>
     </div>
+    </app-paged-list>
 
   </div>
 </section>

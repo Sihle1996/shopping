@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
+import { TabItem } from 'src/app/shared/components/tabbed-list/tabbed-list.component';
 
 interface Payout {
   id: string;
@@ -51,5 +52,24 @@ export class AdminPayoutsComponent implements OnInit {
 
   statusClass(s: string): string {
     return ({ PENDING: 'bg-amber-100 text-amber-800', PAID: 'bg-emerald-100 text-emerald-800', ON_HOLD: 'bg-red-100 text-red-700' } as any)[s] ?? '';
+  }
+  /** Rounded-pill row accent colour per status. */
+  statusAccent(s: string): string {
+    return ({ PENDING: 'bg-amber-400', PAID: 'bg-emerald-400', ON_HOLD: 'bg-red-400' } as any)[s] ?? 'bg-gray-300';
+  }
+
+  // ── Status filter (within the page) ──
+  statusFilter: 'ALL' | 'PENDING' | 'PAID' | 'ON_HOLD' = 'ALL';
+  get statusTabs(): TabItem[] {
+    const c = (s: string) => this.payouts.filter(p => p.status === s).length;
+    return [
+      { key: 'ALL',     label: 'All',     count: this.payouts.length },
+      { key: 'PENDING', label: 'Pending', count: c('PENDING') },
+      { key: 'PAID',    label: 'Paid',    count: c('PAID') },
+      { key: 'ON_HOLD', label: 'On hold', count: c('ON_HOLD'), disabled: c('ON_HOLD') === 0 },
+    ];
+  }
+  get filteredPayouts(): Payout[] {
+    return this.statusFilter === 'ALL' ? this.payouts : this.payouts.filter(p => p.status === this.statusFilter);
   }
 }
