@@ -199,15 +199,17 @@ public class AdminAiService {
                 .filter(Objects::nonNull).sorted().collect(Collectors.toList());
         Double medianMargin = margins.isEmpty() ? null : margins.get(margins.size() / 2);
 
-        List<MenuItem> candidates = menuItems.stream()
+        // Eligible pool (ordered ≥1, in stock, margin at/above the store median, not already promoted),
+        // strongest demand first. Top 3 drive per-item % cards; the slower tail feeds a multi-product deal.
+        List<MenuItem> eligible = menuItems.stream()
                 .filter(i -> itemCounts.getOrDefault(i.getId(), 0L) > 0)
                 .filter(i -> !promotedItems.contains(i.getId()))  // not already promoted (PRODUCT/MULTI)
                 .filter(i -> i.getCategory() == null || !promotedCategories.contains(i.getCategory().toLowerCase())) // nor via a category promo
                 .filter(i -> i.getMarginPercent() != null && (medianMargin == null || i.getMarginPercent() >= medianMargin))
                 .filter(i -> (i.getStock() - i.getReservedStock()) > 0 && i.getPrice() != null && i.getPrice() > 0)
                 .sorted((a, b) -> Long.compare(itemCounts.getOrDefault(b.getId(), 0L), itemCounts.getOrDefault(a.getId(), 0L)))
-                .limit(3)
                 .collect(Collectors.toList());
+        List<MenuItem> candidates = eligible.stream().limit(3).collect(Collectors.toList());
 
         // Self-diagnose the common "no suggestions" cases so the owner isn't left staring at nothing.
         if (candidates.isEmpty()) {
@@ -370,6 +372,53 @@ public class AdminAiService {
                 tS.put("proposedPromo", tPromo);
                 suggestions.add(0, tS);   // lead with the variety so it's the first thing the owner sees
             }
+        }
+
+        // Multi-product "clear the slow tail": the eligible items that DIDN'T make the top-3 per-item
+        // cut — slower movers that still have margin room. One MULTI_PRODUCT deal nudges them together
+        // instead of N separate promos. The % is sized to the LOWEST margin in the set, so even the
+        // thinnest-margin item stays profitable. Fact-grounded; only emitted when ≥2 such items exist.
+        List<MenuItem> slowTail = eligible.stream().skip(3).limit(4).collect(Collectors.toList());
+        if (slowTail.size() >= 2) {
+            double minMargin = slowTail.stream().mapToDouble(MenuItem::getMarginPercent).min().orElse(0);
+            int mpDiscount = (int) Math.max(5, Math.min(20, Math.round(minMargin * 0.30)));
+            long minU = slowTail.stream().mapToLong(i -> itemCounts.getOrDefault(i.getId(), 0L)).min().orElse(0);
+            long maxU = slowTail.stream().mapToLong(i -> itemCounts.getOrDefault(i.getId(), 0L)).max().orElse(0);
+            List<String> ids = slowTail.stream().map(i -> i.getId().toString()).collect(Collectors.toList());
+            String names = slowTail.stream().map(MenuItem::getName).collect(Collectors.joining(", "));
+
+            Map<String, Object> mPromo = new LinkedHashMap<>();
+            mPromo.put("title", String.format(Locale.UK, "%d%% off any of %d slow movers", mpDiscount, slowTail.size()));
+            mPromo.put("type", "PERCENT_OFF");
+            mPromo.put("discountPercent", mpDiscount);
+            mPromo.put("appliesTo", "MULTI_PRODUCT");
+            mPromo.put("targetProductIds", ids);
+            mPromo.put("targetProductName", names);   // card subtitle (display only)
+            mPromo.put("startAt", today);
+            mPromo.put("endAt", endAt);
+
+            Map<String, Object> mAnalysis = new LinkedHashMap<>();
+            mAnalysis.put("hypothesis", String.format(Locale.UK,
+                    "Slower movers with margin to spare — one deal nudges %s together instead of %d separate promos.",
+                    names, slowTail.size()));
+            mAnalysis.put("evidence", List.of(
+                    names,
+                    String.format(Locale.UK, "%d–%d orders each in 30 days — your long tail, not the top sellers", minU, maxU),
+                    "All at/above your median margin and in stock"));
+            mAnalysis.put("insightStrength", "MODERATE");
+            mAnalysis.put("recommendationType", "EXPERIMENT");
+            mAnalysis.put("discountBasis", String.format(Locale.UK,
+                    "%d%% ≈ 30%% of the LOWEST margin in the set (%.0f%%), so even the thinnest-margin item here stays profitable.",
+                    mpDiscount, minMargin));
+
+            Map<String, Object> mS = new LinkedHashMap<>();
+            mS.put("facts", List.of(
+                    slowTail.size() + " slower movers: " + names,
+                    String.format(Locale.UK, "Lowest margin in the set %.0f%% (store median %.0f%%)", minMargin, medM),
+                    "All in stock, none already on a promo"));
+            mS.put("analysis", mAnalysis);
+            mS.put("proposedPromo", mPromo);
+            suggestions.add(mS);
         }
 
         return Map.of("suggestions", suggestions);

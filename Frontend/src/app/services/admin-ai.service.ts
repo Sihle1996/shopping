@@ -33,6 +33,7 @@ export interface AiProposedPromo {
   appliesTo: string;
   targetProductName?: string;
   targetProductId?: string;
+  targetProductIds?: string[];    // MULTI_PRODUCT: the bundled item ids
   startAt: string;
   endAt: string;
 }

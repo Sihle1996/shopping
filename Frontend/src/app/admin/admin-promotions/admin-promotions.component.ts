@@ -467,6 +467,7 @@ export class AdminPromotionsComponent implements OnInit {
       minSpend: p.minSpend ?? null,
       appliesTo: (p.appliesTo as any) || 'ALL',
       targetProductId: p.targetProductId || null,
+      targetProductIds: p.targetProductIds || undefined,
       startAt: p.startAt ? `${p.startAt}T00:00:00+02:00` : new Date().toISOString(),
       endAt:   p.endAt   ? `${p.endAt}T23:59:59+02:00`   : new Date().toISOString(),
       active: true,
