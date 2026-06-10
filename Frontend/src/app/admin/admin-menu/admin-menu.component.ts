@@ -7,6 +7,7 @@ import { driver } from 'driver.js';
 import { AdminService } from 'src/app/services/admin.service';
 import { AdminAiService } from 'src/app/services/admin-ai.service';
 import { ConfirmService } from 'src/app/shared/services/confirm.service';
+import { TabItem } from 'src/app/shared/components/tabbed-list/tabbed-list.component';
 import { AuthService } from 'src/app/services/auth.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ToastrService } from 'ngx-toastr';
@@ -26,6 +27,19 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
   selectedCategory = 'All';
   categories: any[] = [];       // objects: { id, name }
   filterCategories: string[] = ['All']; // names for the filter bar
+  /** Category tabs (replaces the dropdown) — pick a category to see just those items, no long scroll.
+   *  Derived from the items' ACTUAL categories (the defined-category list misses free-text ones), with counts. */
+  get categoryTabs(): TabItem[] {
+    const counts = new Map<string, number>();
+    for (const i of this.menuItems) {
+      const c = (i?.category || i?.categoryName || '').toString().trim();
+      if (c) counts.set(c, (counts.get(c) || 0) + 1);
+    }
+    return [
+      { key: 'All', label: 'All', count: this.menuItems.length },
+      ...Array.from(counts.keys()).sort().map(c => ({ key: c, label: c, count: counts.get(c) })),
+    ];
+  }
 
   // Capability manifest (the SAME source the AI reads) — drives the form's options.
   capabilityCategories: string[] = [];

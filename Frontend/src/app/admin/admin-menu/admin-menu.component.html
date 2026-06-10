@@ -169,6 +169,10 @@
     </div>
 
     <!-- Filters -->
+    <!-- Category tabs — pick one to see just those items instead of scrolling the whole menu -->
+    <app-tabbed-list class="block mb-3" [tabs]="categoryTabs" [selected]="selectedCategory"
+                     (select)="selectedCategory = $event"></app-tabbed-list>
+
     <div class="flex flex-wrap items-center gap-3 mb-6">
       <div class="relative flex-1 min-w-[200px]">
         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -184,11 +188,6 @@
         <option value="default">Sort by</option>
         <option value="priceLowHigh">Price: Low → High</option>
         <option value="priceHighLow">Price: High → Low</option>
-      </select>
-      <select [(ngModel)]="selectedCategory"
-              class="px-3 py-2.5 rounded-xl border border-borderColor bg-white text-sm text-textDark shadow-card
-                     focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent">
-        <option *ngFor="let cat of filterCategories" [value]="cat">{{ cat }}</option>
       </select>
     </div>
 
