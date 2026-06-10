@@ -104,19 +104,23 @@ public class OrderService {
                 throw new ResponseStatusException(HttpStatus.CONFLICT,
                         menuItem.getName() + " is no longer available");
             }
-            int availableStock = menuItem.getStock() - menuItem.getReservedStock();
-            if (menuItem.getStock() >= 0 && availableStock < itemDTO.getQuantity()) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        availableStock <= 0
-                                ? menuItem.getName() + " just sold out"
-                                : "Only " + availableStock + " of " + menuItem.getName() + " left in stock");
-            }
 
-            // Reserve stock (don't deduct yet — deducted when order is confirmed via ITN)
+            // Reserve stock atomically (don't deduct yet — deducted when the order is confirmed via ITN).
+            // A read-check-write here would oversell the last unit under concurrent checkout; the DB
+            // enforces "enough free stock" in one statement. stock < 0 means unlimited (no reservation).
+            // NOTE: tryReserveStock writes reserved_stock directly — do NOT also set it on the managed
+            // entity, or Hibernate's dirty-check would flush it again at commit and double-count.
             if (menuItem.getStock() >= 0) {
-                menuItem.setReservedStock(menuItem.getReservedStock() + itemDTO.getQuantity());
+                int reserved = menuItemRepository.tryReserveStock(menuItem.getId(), itemDTO.getQuantity());
+                if (reserved == 0) {
+                    Integer free = menuItemRepository.freeStock(menuItem.getId()); // fresh from DB
+                    int freeNow = free != null ? free : 0;
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                            freeNow <= 0
+                                    ? menuItem.getName() + " just sold out"
+                                    : "Only " + freeNow + " of " + menuItem.getName() + " left in stock");
+                }
             }
-            menuItemRepository.save(menuItem);
             checkLowStock(menuItem);
 
             InventoryLog log = new InventoryLog();
