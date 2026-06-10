@@ -316,6 +316,10 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: (res) => {
         this.aiGenerating = false;
+        if (res.recognized === false) {        // AI didn't recognise the name — don't invent a description/price
+          this.toastr.warning(res.message || `Couldn't recognise "${this.formData.name}" as a menu item — check the name`, 'AI');
+          return;
+        }
         if (res.description) this.formData.description = res.description;
         if (res.suggestedCategory && !this.formData.category) {
           this.formData.category = res.suggestedCategory;

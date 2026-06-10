@@ -59,12 +59,22 @@ public class AdminAiService {
     // ── Feature 1: Menu Writing Assistant ──────────────────────────────────
 
     public Map<String, Object> describeItem(String name, BigDecimal price, String category) {
+        // Cheap deterministic gate for OBVIOUS gibberish (no API call, and it works without an LLM key):
+        // a real item name isn't ultra-repetitive or vowel-less. The LLM handles subtler non-food below.
+        if (looksLikeGibberish(name)) {
+            return Map.of("recognized", false,
+                    "message", "That doesn't look like a menu item — check the name and try again.");
+        }
         String prompt =
                 "You are a menu copywriter for a South African food delivery app called CraveIt.\n" +
                 String.format("Given: name=\"%s\", price=R%.2f, category=\"%s\"\n",
                         name, price != null ? price : BigDecimal.ZERO, category != null ? category : "") +
+                "FIRST decide if \"name\" is a real, plausible food or drink item (a dish, ingredient, or\n" +
+                "beverage). If it is gibberish, random letters, or clearly not food, set \"recognized\" to false\n" +
+                "and leave description and tags empty — do NOT invent a description for something you don't recognise.\n" +
                 "Return JSON only, no markdown, no explanation:\n" +
                 "{\n" +
+                "  \"recognized\": <true or false>,\n" +
                 "  \"description\": \"<1–2 sentence appetising description, under 120 characters>\",\n" +
                 "  \"tags\": [\"<tag1>\", \"<tag2>\"],\n" +
                 "  \"suggestedCategory\": \"<category>\"\n" +
@@ -76,9 +86,20 @@ public class AdminAiService {
                 ? parseJsonOrFallback(raw, buildDescribeFallback(name, price, category))
                 : buildDescribeFallback(name, price, category);
 
+        // If the model judged the name NOT to be a real menu item, decline — never come back with a
+        // confident description + price + profit for something we don't recognise (the "uututu" leak).
+        Object rec = base.get("recognized");
+        boolean unrecognised = Boolean.FALSE.equals(rec)
+                || (rec instanceof String rs && rs.equalsIgnoreCase("false"));
+        if (unrecognised) {
+            return Map.of("recognized", false,
+                    "message", "That doesn't look like a menu item — check the name and try again.");
+        }
+
         // Price is NOT guessed by the AI — anchor it to the store's own existing
         // items in the same category (median). No comparable items => no suggestion.
         Map<String, Object> out = new LinkedHashMap<>(base);
+        out.put("recognized", true);
         out.remove("suggestedPrice");
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null) {
@@ -88,6 +109,17 @@ public class AdminAiService {
             if (median != null) out.put("suggestedPrice", median);
         }
         return out;
+    }
+
+    /** Cheap, conservative gibberish check — flags ultra-repetitive (e.g. "uututu") or vowel-less
+     *  strings so the menu AI never invents a description/price for a non-item. Tuned NOT to reject
+     *  real (incl. SA) food names; the LLM handles subtler "real word but not food" cases. */
+    private boolean looksLikeGibberish(String name) {
+        if (name == null) return true;
+        String s = name.trim().toLowerCase().replaceAll("[^a-z]", "");
+        if (s.length() < 2) return true;
+        if (!s.matches(".*[aeiou].*")) return true;                                              // no vowels (xkcd, qwrt)
+        return s.length() >= 4 && (double) s.chars().distinct().count() / s.length() < 0.4;      // uututu, ababab, aaaa
     }
 
     /**

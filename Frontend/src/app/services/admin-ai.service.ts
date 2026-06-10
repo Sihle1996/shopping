@@ -10,6 +10,8 @@ export interface AiDescribeItemRequest {
 }
 
 export interface AiDescribeItemResponse {
+  recognized?: boolean;   // false when the name isn't a real menu item — decline, don't fill
+  message?: string;
   description: string;
   tags: string[];
   suggestedCategory: string;
