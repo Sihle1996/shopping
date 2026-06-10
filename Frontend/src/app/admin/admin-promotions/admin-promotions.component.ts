@@ -35,6 +35,7 @@ export class AdminPromotionsComponent implements OnInit {
   aiSuggestions: AiPromoSuggestion[] = [];
   aiSuggestionsLoading = false;
   aiSuggestionsDismissed = new Set<number>();
+  aiSuggestionsReason = '';
 
   /** Colour for the STRONG/MODERATE/WEAK decision-gradient badge. */
   tierClass(s?: string): string {
@@ -357,7 +358,7 @@ export class AdminPromotionsComponent implements OnInit {
     this.aiSuggestionsLoading = true;
     this.aiSuggestionsDismissed.clear();
     this.adminAiService.suggestPromotions().subscribe({
-      next: (res) => { this.aiSuggestions = res.suggestions; this.aiSuggestionsLoading = false; },
+      next: (res) => { this.aiSuggestions = res.suggestions; this.aiSuggestionsReason = (res as any).reason || ''; this.aiSuggestionsLoading = false; },
       error: () => { this.aiSuggestionsLoading = false; this.toastr.error('AI suggestions unavailable'); }
     });
   }

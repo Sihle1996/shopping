@@ -166,7 +166,7 @@ public class AdminAiService {
                 .stream().filter(i -> Boolean.TRUE.equals(i.getIsAvailable())).collect(Collectors.toList());
 
         if (menuItems.isEmpty()) {
-            return Map.of("suggestions", List.of());
+            return Map.of("suggestions", List.of(), "reason", "Add available menu items first.");
         }
 
         // Exclude items that ALREADY have an IN-FLIGHT promo (active OR scheduled = not yet
@@ -188,7 +188,8 @@ public class AdminAiService {
                 case ALL -> storeWidePromo = true;
             }
         }
-        if (storeWidePromo) return Map.of("suggestions", List.of()); // a store-wide deal already covers everything
+        if (storeWidePromo) return Map.of("suggestions", List.of(), // a store-wide deal already covers everything
+                "reason", "A store-wide promo is already running — per-item suggestions resume once it ends.");
 
         // LEVEL-3: the BACKEND decides deterministically (no LLM) — there is no
         // elasticity/promo-history data to "reason" over. Pick the store's most-ordered
@@ -207,6 +208,18 @@ public class AdminAiService {
                 .sorted((a, b) -> Long.compare(itemCounts.getOrDefault(b.getId(), 0L), itemCounts.getOrDefault(a.getId(), 0L)))
                 .limit(3)
                 .collect(Collectors.toList());
+
+        // Self-diagnose the common "no suggestions" cases so the owner isn't left staring at nothing.
+        if (candidates.isEmpty()) {
+            long ordered = menuItems.stream().filter(i -> itemCounts.getOrDefault(i.getId(), 0L) > 0).count();
+            boolean anyMargin = menuItems.stream().anyMatch(i -> i.getMarginPercent() != null);
+            String reason = ordered == 0
+                    ? "No items have been ordered in the last 30 days — suggestions need recent delivered sales to learn from."
+                    : !anyMargin
+                    ? "Your menu items don't have a cost set, so their margins are unknown — add costs on the Menu and we can suggest what you can afford to discount."
+                    : "No items qualify right now — they're below your median margin, out of stock, or already on a promo.";
+            return Map.of("suggestions", List.of(), "reason", reason);
+        }
 
         // Decision gradient — score each candidate by demand (vs the strongest) + margin
         // headroom (over the store median) + historical response, then ORDER the cards by that

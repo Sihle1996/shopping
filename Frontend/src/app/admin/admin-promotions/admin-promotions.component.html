@@ -30,7 +30,11 @@
         </button>
       </div>
 
-      <p *ngIf="!aiSuggestions.length && !aiSuggestionsLoading" class="text-sm text-textMuted italic">
+      <p *ngIf="!aiSuggestions.length && !aiSuggestionsLoading && aiSuggestionsReason"
+         class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-start gap-2">
+        <i class="bi bi-info-circle mt-0.5"></i><span>{{ aiSuggestionsReason }}</span>
+      </p>
+      <p *ngIf="!aiSuggestions.length && !aiSuggestionsLoading && !aiSuggestionsReason" class="text-sm text-textMuted italic">
         Click "Get Suggestions" to let AI analyse your slow-moving items and propose promotions.
       </p>
 
