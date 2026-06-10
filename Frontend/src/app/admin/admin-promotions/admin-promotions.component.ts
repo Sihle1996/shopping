@@ -37,13 +37,33 @@ export class AdminPromotionsComponent implements OnInit {
   get visibleSuggestions(): { s: AiPromoSuggestion; i: number }[] {
     return this.aiSuggestions.map((s, i) => ({ s, i })).filter(x => !this.aiSuggestionsDismissed.has(x.i));
   }
-  /** Performance is two different shapes of data — split + label them so it doesn't read as one mixed list. */
-  get storeWideOutcomes(): any[] { return this.outcomes.filter(o => o.scope === 'ALL'); }
-  get itemOutcomes(): any[] { return this.outcomes.filter(o => o.scope !== 'ALL'); }
-  get totalNetLiftR(): number { return this.storeWideOutcomes.reduce((sum, o) => sum + (o.netRevenueLift || 0), 0); }
-  get positiveOutcomesCount(): number {
-    return this.outcomes.filter(o => (o.scope === 'ALL' ? o.netRevenueLift > 0 : o.netLiftPercent > 0)).length;
+  // ── Performance filtering (within the tab) ──
+  perfFilter = 'all';
+  /** Classify an outcome so we can filter winners / losers / still-measuring. */
+  outcomeBucket(o: any): 'win' | 'loss' | 'measuring' {
+    const v = o?.scope === 'ALL' ? o.netRevenueLift : o?.netLiftPercent;
+    const settled = o?.scope === 'ALL' ? o?.signal !== 'EARLY' : (o?.signal === 'MEASURED' || o?.signal === 'MEASURING');
+    if (!settled || v == null) return 'measuring';
+    return v > 0 ? 'win' : v < 0 ? 'loss' : 'measuring';
   }
+  get perfTabs(): TabItem[] {
+    const n = (k: string) => this.outcomes.filter(o => this.outcomeBucket(o) === k).length;
+    return [
+      { key: 'all', label: 'All', count: this.outcomes.length },
+      { key: 'win', label: 'Winning', count: n('win') },
+      { key: 'loss', label: 'Underperforming', count: n('loss') },
+      { key: 'measuring', label: 'Measuring', count: n('measuring') },
+    ];
+  }
+  private get filteredOutcomes(): any[] {
+    return this.perfFilter === 'all' ? this.outcomes : this.outcomes.filter(o => this.outcomeBucket(o) === this.perfFilter);
+  }
+  /** Two different shapes of data — split + label them; both respect the active filter. */
+  get storeWideOutcomes(): any[] { return this.filteredOutcomes.filter(o => o.scope === 'ALL'); }
+  get itemOutcomes(): any[] { return this.filteredOutcomes.filter(o => o.scope !== 'ALL'); }
+  /** Summary stays on ALL outcomes so the headline is stable regardless of the filter. */
+  get totalNetLiftR(): number { return this.outcomes.filter(o => o.scope === 'ALL').reduce((sum, o) => sum + (o.netRevenueLift || 0), 0); }
+  get positiveOutcomesCount(): number { return this.outcomes.filter(o => this.outcomeBucket(o) === 'win').length; }
   get measuredOutcomesCount(): number {
     return this.outcomes.filter(o => o.scope === 'ALL' || o.signal === 'MEASURED' || o.signal === 'MEASURING').length;
   }

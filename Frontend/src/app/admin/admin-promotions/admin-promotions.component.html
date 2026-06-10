@@ -18,11 +18,11 @@
     <!-- ═══ SUGGESTIONS TAB ═══ -->
     <div *ngIf="promoTab === 'suggestions'">
 
-      <!-- Premium header -->
-      <div class="flex items-center justify-between gap-3 mb-4">
+      <!-- Premium header banner -->
+      <div class="bg-gradient-to-br from-primary-50 to-white rounded-2xl shadow-card border border-borderColor p-4 mb-5 flex items-center justify-between gap-3">
         <div class="flex items-center gap-3 min-w-0">
-          <div class="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center flex-shrink-0">
-            <i class="bi bi-stars text-primary text-lg"></i>
+          <div class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+            <i class="bi bi-stars text-lg"></i>
           </div>
           <div class="min-w-0">
             <h2 class="font-heading text-base font-bold text-textDark">AI Opportunities</h2>
@@ -53,7 +53,7 @@
         <div class="space-y-3">
           <div *ngFor="let x of pl.pageItems"
                class="relative bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-card-hover transition-shadow">
-            <span class="absolute left-0 top-0 bottom-0 w-1" [ngClass]="tierBar(x.s.analysis?.insightStrength)"></span>
+            <span class="absolute left-2 top-3 bottom-3 w-1.5 rounded-full" [ngClass]="tierBar(x.s.analysis?.insightStrength)"></span>
             <div class="p-4 pl-5">
 
               <!-- Proposal + tier -->
@@ -111,13 +111,21 @@
         <p class="text-[11px] text-textMuted mt-2">{{ positiveOutcomesCount }} of {{ outcomes.length }} promos showed a positive change · observed vs the prior window, not a controlled result.</p>
       </div>
 
+      <!-- Filter within Performance -->
+      <app-tabbed-list class="block mb-5" [tabs]="perfTabs" [selected]="perfFilter"
+                       (select)="perfFilter = $event"></app-tabbed-list>
+      <div *ngIf="!storeWideOutcomes.length && !itemOutcomes.length"
+           class="bg-white rounded-2xl shadow-card p-8 text-center text-sm text-textMuted">
+        Nothing in this view.
+      </div>
+
       <!-- Store-wide promos (Rand lift) -->
       <div *ngIf="storeWideOutcomes.length" class="mb-6">
         <h3 class="text-xs font-bold uppercase tracking-wide text-textMuted mb-2.5 flex items-center gap-1.5"><i class="bi bi-shop"></i> Store-wide promotions <span class="text-gray-400 font-medium normal-case">· Rand lift</span></h3>
         <app-paged-list [items]="storeWideOutcomes" #plA>
           <div class="space-y-2.5">
             <div *ngFor="let o of plA.pageItems" class="relative bg-white rounded-2xl shadow-card overflow-hidden">
-              <span class="absolute left-0 top-0 bottom-0 w-1" [ngClass]="o.netRevenueLift > 0 ? 'bg-emerald-400' : o.netRevenueLift < 0 ? 'bg-red-400' : 'bg-gray-300'"></span>
+              <span class="absolute left-2 top-3 bottom-3 w-1.5 rounded-full" [ngClass]="o.netRevenueLift > 0 ? 'bg-emerald-400' : o.netRevenueLift < 0 ? 'bg-red-400' : 'bg-gray-300'"></span>
               <div class="p-4 pl-5">
                 <div class="flex items-center justify-between gap-2 mb-2">
                   <span class="text-sm font-semibold text-textDark truncate">{{ o.title }}<span class="text-textMuted font-normal text-xs"> · {{ typeLabel(o.promoType) }}</span></span>
@@ -143,7 +151,7 @@
         <app-paged-list [items]="itemOutcomes" #plB>
           <div class="space-y-2.5">
             <div *ngFor="let o of plB.pageItems" class="relative bg-white rounded-2xl shadow-card overflow-hidden">
-              <span class="absolute left-0 top-0 bottom-0 w-1" [ngClass]="(o.netLiftPercent || 0) > 0 ? 'bg-emerald-400' : (o.netLiftPercent || 0) < 0 ? 'bg-red-400' : 'bg-gray-300'"></span>
+              <span class="absolute left-2 top-3 bottom-3 w-1.5 rounded-full" [ngClass]="(o.netLiftPercent || 0) > 0 ? 'bg-emerald-400' : (o.netLiftPercent || 0) < 0 ? 'bg-red-400' : 'bg-gray-300'"></span>
               <div class="p-4 pl-5">
                 <div class="flex items-center justify-between gap-2 mb-2">
                   <span class="text-sm font-semibold text-textDark truncate">{{ o.target }}<span class="text-textMuted font-normal text-xs"> · {{ o.discountPercent }}% off</span></span>
@@ -152,10 +160,14 @@
                     <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">{{ o.status }}</span>
                   </span>
                 </div>
-                <p *ngIf="o.signal === 'PENDING'" class="text-xs text-textMuted italic">Outcome pending — no orders for this item in the window yet.</p>
-                <div *ngIf="o.signal === 'EARLY'">
-                  <p class="text-[11px] text-amber-700 italic mb-1.5 flex items-start gap-1"><i class="bi bi-hourglass-split mt-0.5"></i><span>{{ o.note }}</span></p>
-                  <p class="text-[11px] text-textMuted">Ordered {{ o.ordered.before.units }} → {{ o.ordered.during.units }} over {{ o.windowDays }}d · revenue R{{ o.delivered.before.revenue | number:'1.0-0' }} → R{{ o.delivered.during.revenue | number:'1.0-0' }}</p>
+                <!-- In progress (pending / too early) — a muted hero so it reads as 'measuring', not unfinished -->
+                <div *ngIf="o.signal === 'PENDING' || o.signal === 'EARLY'">
+                  <div class="flex items-baseline gap-2">
+                    <span class="text-xl font-bold text-gray-300 leading-none">measuring…</span>
+                    <span class="text-xs text-textMuted">net vs store</span>
+                  </div>
+                  <p class="text-[11px] text-amber-700 italic mt-1.5 flex items-start gap-1"><i class="bi bi-hourglass-split mt-0.5"></i><span>{{ o.note || 'Not enough orders for this item in the window yet.' }}</span></p>
+                  <p *ngIf="o.ordered" class="text-[11px] text-textMuted mt-1.5">ordered {{ o.ordered.before.units }} → {{ o.ordered.during.units }} over {{ o.windowDays }}d · revenue R{{ o.delivered.before.revenue | number:'1.0-0' }} → R{{ o.delivered.during.revenue | number:'1.0-0' }}</p>
                 </div>
                 <div *ngIf="o.signal === 'MEASURED' || o.signal === 'MEASURING'">
                   <div class="flex items-baseline gap-2">
