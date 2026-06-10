@@ -37,6 +37,7 @@ public class BookkeepingService {
 
     private final OrderRepository orderRepository;
     private final ExpenseRepository expenseRepository;
+    private final SubscriptionEnforcementService subscriptionEnforcementService;
 
     /** Days in a month used to prorate recurring (monthly) expenses to the window. */
     private static final double DAYS_PER_MONTH = 30.0;
@@ -132,6 +133,21 @@ public class BookkeepingService {
                 expenseByCat.merge(cat, contribution, Double::sum);
             }
         }
+        // The CraveIt subscription is a real fixed cost to the store (like rent) — include it so operating
+        // profit is the TRUE bottom line. R0 during the free trial; prorated to the window like any recurring cost.
+        double subPerMonth = 0;
+        try {
+            if (!subscriptionEnforcementService.isTrialing(tenantId)) {
+                var plan = subscriptionEnforcementService.getPlan(tenantId);
+                if (plan.getPrice() != null) subPerMonth = plan.getPrice().doubleValue();
+            }
+        } catch (Exception ignored) { /* never break Books over the subscription line */ }
+        double subscriptionCost = subPerMonth * (window / DAYS_PER_MONTH);
+        if (subscriptionCost > 0) {
+            operatingExpenses += subscriptionCost;
+            expenseByCat.merge("CraveIt subscription", subscriptionCost, Double::sum);
+        }
+
         double operatingProfit = netProfit - operatingExpenses;
         List<ExpenseCategoryLine> expenseCategories = new ArrayList<>();
         expenseByCat.forEach((k, v) -> expenseCategories.add(new ExpenseCategoryLine(k, round(v))));
