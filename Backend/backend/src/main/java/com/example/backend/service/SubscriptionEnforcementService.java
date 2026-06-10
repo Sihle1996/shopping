@@ -39,6 +39,15 @@ public class SubscriptionEnforcementService {
                 .orElseThrow(() -> new RuntimeException("Subscription plan not found: " + tenant.getSubscriptionPlan()));
     }
 
+    /** During the free trial the store gets the FULL (PRO-level) experience — feature gates pass, so the
+     *  trial showcases everything and drives conversion. New stores default to the BASIC plan + TRIAL
+     *  status, so without this they'd be blocked from the AI on day one. */
+    public boolean isTrialing(UUID tenantId) {
+        return tenantRepository.findById(tenantId)
+                .map(t -> "TRIAL".equalsIgnoreCase(t.getSubscriptionStatus()))
+                .orElse(false);
+    }
+
     public void assertMenuItemLimit(UUID tenantId) {
         SubscriptionPlan plan = getPlan(tenantId);
         long current = menuItemRepository.countByTenant_Id(tenantId);
@@ -105,18 +114,21 @@ public class SubscriptionEnforcementService {
     // ---- AI intelligence gates (PRO+). null flag = not included (BASIC). ----
 
     public void assertPromoAiAccess(UUID tenantId) {
+        if (isTrialing(tenantId)) return;
         if (!Boolean.TRUE.equals(getPlan(tenantId).getHasPromoAi()))
             throw new PlanFeatureNotAvailableException(
                 "Promo intelligence (AI suggestions + net-lift) requires PRO or higher. Upgrade to unlock it.");
     }
 
     public void assertDriverIntelAccess(UUID tenantId) {
+        if (isTrialing(tenantId)) return;
         if (!Boolean.TRUE.equals(getPlan(tenantId).getHasDriverIntel()))
             throw new PlanFeatureNotAvailableException(
                 "Driver intelligence (scorecards + recommendation feedback) requires PRO or higher. Upgrade to unlock it.");
     }
 
     public void assertReviewAiAccess(UUID tenantId) {
+        if (isTrialing(tenantId)) return;
         if (!Boolean.TRUE.equals(getPlan(tenantId).getHasReviewAi()))
             throw new PlanFeatureNotAvailableException(
                 "Review & support AI (digest, drafted replies, triage) requires PRO or higher. Upgrade to unlock it.");
@@ -131,6 +143,7 @@ public class SubscriptionEnforcementService {
     /** Copilot is available on every plan but METERED — enforce the per-plan monthly prompt quota
      *  (null = unlimited). Counts this month's COPILOT calls from tenant_ai_usage. */
     public void assertCopilotQuota(UUID tenantId) {
+        if (isTrialing(tenantId)) return; // unlimited Copilot during the trial
         SubscriptionPlan plan = getPlan(tenantId);
         Integer quota = plan.getCopilotMonthlyQuota();
         if (quota == null) return; // fair use / unlimited
