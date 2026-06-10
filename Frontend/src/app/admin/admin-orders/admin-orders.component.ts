@@ -346,6 +346,13 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     this.adminSerivce.updateOrderStatus(orderId, newStatus, reason);
   }
 
+  /** A one-click <app-order-actions> change committed — mirror it into the local list optimistically
+   *  (the websocket ORDER_UPDATED reconciles, and the shared service handles the backend + revert). */
+  onOrderChanged(e: { id: string; status: string }): void {
+    this.orders = this.orders.map(o => (o.id === e.id ? { ...o, status: e.status as Status } : o));
+    if (this.selectedOrder?.id === e.id) this.selectedOrder = { ...this.selectedOrder, status: e.status as Status };
+  }
+
   openDrawer(order: Order): void {
     this.selectedOrder = order;
     this.selectedDriverId = null;

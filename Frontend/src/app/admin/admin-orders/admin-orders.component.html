@@ -142,10 +142,15 @@
                 <i class="bi bi-exclamation-triangle-fill text-[9px]"></i> Unpaid
               </span>
             </td>
-            <td class="px-5 py-3.5 text-right">
-              <app-button variant="secondary" size="sm" (clicked)="openDrawer(order)">
-                View
-              </app-button>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center justify-end gap-2 flex-wrap">
+                <app-order-actions [order]="order" [compact]="true"
+                                   (changed)="onOrderChanged($event)"
+                                   (assignDriver)="openDrawer(order)"></app-order-actions>
+                <app-button variant="secondary" size="sm" (clicked)="openDrawer(order)">
+                  View
+                </app-button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -177,6 +182,9 @@
           <span class="text-xs text-textMuted">{{ order.orderDate | date:'MMM d, HH:mm' }}</span>
           <span class="font-numbers font-bold text-primary text-base">R{{ order.totalAmount | number:'1.2-2' }}</span>
         </div>
+        <app-order-actions class="block mb-3" [order]="order"
+                           (changed)="onOrderChanged($event)"
+                           (assignDriver)="openDrawer(order)"></app-order-actions>
         <app-button variant="primary" size="sm" [fullWidth]="true" (clicked)="openDrawer(order)">
           View Details
         </app-button>
