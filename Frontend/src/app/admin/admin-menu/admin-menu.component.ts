@@ -176,11 +176,13 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Categories for the add/edit form — the manifest's (AI-shared) list, falling back to the table. */
+  /** Categories for the add/edit form — the manifest/table list UNIONED with the categories items
+   *  are actually in, so an existing item's category is always selectable and new items can join any
+   *  real category even when the defined list lags behind reality (the bug where only "Burgers" showed). */
   get formCategories(): string[] {
-    return this.capabilityCategories.length
-      ? this.capabilityCategories
-      : this.categories.map(c => c.name);
+    const base = this.capabilityCategories.length ? this.capabilityCategories : this.categories.map(c => c.name);
+    const inUse = this.menuItems.map(i => (i?.category || i?.categoryName || '').toString().trim()).filter(Boolean);
+    return Array.from(new Set<string>([...base, ...inUse])).sort();
   }
 
   fetchMenuItems(): void {
