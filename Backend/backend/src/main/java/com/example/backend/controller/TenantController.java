@@ -45,8 +45,11 @@ public class TenantController {
     // Public - list active tenants (for customer store selection)
     // Must be defined BEFORE {slug} to avoid path conflict
     @GetMapping("/api/tenants/active")
-    public ResponseEntity<List<Tenant>> getActiveTenants() {
-        return ResponseEntity.ok(tenantRepository.findByActiveTrue());
+    public ResponseEntity<List<PublicTenantDto>> getActiveTenants() {
+        // PublicTenantDto excludes financial/internal fields — this is a public, unauthenticated
+        // endpoint, so it must NEVER serialise the raw Tenant (bank details, commission, CIPC).
+        return ResponseEntity.ok(tenantRepository.findByActiveTrue().stream()
+                .map(PublicTenantDto::from).toList());
     }
 
     // Public - nearby active tenants within their delivery radius of the customer
@@ -70,7 +73,7 @@ public class TenantController {
                             t.getIsOpen()
                     );
                 })
-                .filter(dto -> dto.distanceKm() <= dto.deliveryRadiusKm())
+                .filter(dto -> dto.deliveryRadiusKm() != null && dto.distanceKm() <= dto.deliveryRadiusKm())
                 .sorted(Comparator.comparingDouble(NearbyTenantDto::distanceKm))
                 .toList();
         return ResponseEntity.ok(nearby);

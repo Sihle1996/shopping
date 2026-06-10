@@ -84,7 +84,14 @@ public class ReviewController {
             return ResponseEntity.badRequest().body("You can only review delivered orders.");
         }
 
-        int rating = Integer.parseInt(body.get("rating").toString());
+        Object ratingRaw = body.get("rating");
+        if (ratingRaw == null) return ResponseEntity.badRequest().body("Rating is required.");
+        int rating;
+        try {
+            rating = Integer.parseInt(ratingRaw.toString().trim());
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body("Rating must be a whole number between 1 and 5.");
+        }
         if (rating < 1 || rating > 5) return ResponseEntity.badRequest().body("Rating must be 1–5.");
 
         Review review = new Review();

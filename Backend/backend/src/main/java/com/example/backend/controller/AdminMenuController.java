@@ -71,12 +71,20 @@ public class AdminMenuController {
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/bulk-price")
     public ResponseEntity<?> bulkUpdatePrices(@RequestBody Map<String, Object> body) {
-        @SuppressWarnings("unchecked")
-        List<String> rawIds = (List<String>) body.get("ids");
+        Object rawIdsObj = body.get("ids");
+        Object valueObj = body.get("value");
+        if (!(rawIdsObj instanceof List<?> rawIds) || rawIds.isEmpty())
+            return ResponseEntity.badRequest().body(Map.of("error", "ids must be a non-empty list."));
+        if (!(valueObj instanceof Number valueNum))
+            return ResponseEntity.badRequest().body(Map.of("error", "value is required and must be a number."));
         String type = (String) body.getOrDefault("type", "PERCENT");
-        double value = ((Number) body.get("value")).doubleValue();
-        List<UUID> ids = rawIds.stream().map(UUID::fromString).collect(Collectors.toList());
-        int updated = menuService.bulkAdjustPrices(ids, type, value);
+        List<UUID> ids;
+        try {
+            ids = rawIds.stream().map(x -> UUID.fromString(x.toString())).collect(Collectors.toList());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "ids must be valid UUIDs."));
+        }
+        int updated = menuService.bulkAdjustPrices(ids, type, valueNum.doubleValue());
         return ResponseEntity.ok(Map.of("updated", updated));
     }
 

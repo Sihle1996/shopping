@@ -1,6 +1,7 @@
 package com.example.backend.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -21,6 +22,7 @@ public class StoreDocument {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id", nullable = false)
+    @JsonIgnore   // never serialized; the lazy proxy otherwise 500s the enrollment endpoints
     private Tenant tenant;
 
     @Enumerated(EnumType.STRING)
