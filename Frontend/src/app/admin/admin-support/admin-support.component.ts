@@ -136,13 +136,13 @@ export class AdminSupportComponent implements OnInit {
     } as any)[s] ?? '';
   }
 
-  /** Coloured left-border accent per status (gives the list colour at a glance). */
-  statusAccent(s: string): string {
+  /** Rounded-pill accent colour per status (gives the list colour at a glance). */
+  statusBar(s: string): string {
     return ({
-      OPEN: 'border-l-amber-400',
-      IN_PROGRESS: 'border-l-blue-400',
-      RESOLVED: 'border-l-emerald-400',
-      CLOSED: 'border-l-gray-300'
-    } as any)[s] ?? 'border-l-borderColor';
+      OPEN: 'bg-amber-400',
+      IN_PROGRESS: 'bg-blue-400',
+      RESOLVED: 'bg-emerald-400',
+      CLOSED: 'bg-gray-300'
+    } as any)[s] ?? 'bg-gray-300';
   }
 }
