@@ -73,9 +73,9 @@ export class OrderActionsService {
       if (!this.isUnpaid(order)) out.push({ key: 'prepare', label: 'Start preparing', kind: 'primary', targetStatus: 'Preparing' });
     } else if (s === 'Preparing') {
       out.push({ key: 'assign', label: 'Assign driver', kind: 'link' });
-    } else if (s === 'Out for Delivery') {
-      out.push({ key: 'deliver', label: 'Mark delivered', kind: 'confirm', targetStatus: 'Delivered' });
     }
+    // Out for Delivery has NO quick forward action: the DRIVER confirms delivery (OTP). The admin
+    // "Mark delivered" is an override and lives in the drawer, not here.
     out.push({ key: 'cancel', label: 'Cancel', kind: 'danger', targetStatus: 'Cancelled' });
     return out;
   }
