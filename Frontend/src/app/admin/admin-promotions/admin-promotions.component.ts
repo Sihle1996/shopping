@@ -41,6 +41,15 @@ export class AdminPromotionsComponent implements OnInit {
   get hasPromoHistory(): boolean {
     return this.aiSuggestions.some(s => !!s.analysis?.priorObserved);
   }
+  /** Stock-ticker arrow for a signed value — the up/down the lift represents. */
+  trendArrow(v: number | null): string {
+    return (v == null || v === 0) ? 'bi-dash' : v > 0 ? 'bi-caret-up-fill' : 'bi-caret-down-fill';
+  }
+  /** Ticker chip colour (tinted bg + text) for a signed value. */
+  tickerClass(v: number | null): string {
+    if (v == null || v === 0) return 'bg-gray-100 text-textMuted';
+    return v > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700';
+  }
   // ── Performance filtering (within the tab) ──
   perfFilter = 'all';
   /** Classify an outcome so we can filter winners / losers / still-measuring. */

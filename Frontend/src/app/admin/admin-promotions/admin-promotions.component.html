@@ -74,7 +74,7 @@
               <p *ngIf="!x.s.analysis && x.s.reason" class="text-sm text-textDark leading-snug mb-2.5">{{ x.s.reason }}</p>
 
               <!-- Why this % (show the math) -->
-              <p *ngIf="x.s.analysis?.discountBasis" class="text-[11px] text-textMuted mb-2.5 flex items-start gap-1.5"><i class="bi bi-calculator text-primary mt-0.5 flex-shrink-0"></i><span>{{ x.s.analysis?.discountBasis }}</span></p>
+              <p *ngIf="x.s.analysis?.discountBasis" class="text-[11px] text-textMuted mb-2.5">{{ x.s.analysis?.discountBasis }}</p>
 
               <!-- Metric pills -->
               <div *ngIf="x.s.facts?.length" class="flex flex-wrap gap-1.5 mb-3">
@@ -110,7 +110,9 @@
       <div class="bg-gradient-to-br from-primary-50 to-white rounded-2xl shadow-card border border-borderColor p-5 mb-5">
         <p class="text-xs text-textMuted mb-1 flex items-center gap-1.5"><i class="bi bi-graph-up-arrow text-primary"></i> Across {{ measuredOutcomesCount }} measured promotion{{ measuredOutcomesCount === 1 ? '' : 's' }}</p>
         <div class="flex items-baseline gap-2 flex-wrap">
-          <span class="text-3xl font-bold leading-none" [ngClass]="changeClass(totalNetLiftR)">{{ randSigned(totalNetLiftR) }}</span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-3xl font-bold leading-none" [ngClass]="tickerClass(totalNetLiftR)">
+            <i class="bi text-xl" [ngClass]="trendArrow(totalNetLiftR)"></i>{{ randSigned(totalNetLiftR) }}
+          </span>
           <span class="text-sm text-textMuted">net revenue lift from store-wide promos</span>
         </div>
         <p class="text-[11px] text-textMuted mt-2">{{ positiveOutcomesCount }} of {{ outcomes.length }} promos showed a positive change · observed vs the prior window, not a controlled result.</p>
@@ -140,7 +142,9 @@
                   </span>
                 </div>
                 <div class="flex items-baseline gap-2">
-                  <span class="text-2xl font-bold leading-none" [ngClass]="changeClass(o.netRevenueLift)">{{ randSigned(o.netRevenueLift) }}</span>
+                  <span class="inline-flex items-center gap-1 text-2xl font-bold leading-none" [ngClass]="changeClass(o.netRevenueLift)">
+                    <i class="bi text-base" [ngClass]="trendArrow(o.netRevenueLift)"></i>{{ randSigned(o.netRevenueLift) }}
+                  </span>
                   <span class="text-xs text-textMuted">est. net revenue lift</span>
                 </div>
                 <p class="text-[11px] text-textMuted mt-2 leading-relaxed">R{{ o.duringRevenue | number:'1.0-0' }} during · {{ o.expectedRevenue == null ? '—' : 'R' + (o.expectedRevenue | number:'1.0-0') }} baseline · R{{ o.promoCost | number:'1.0-0' }} cost ({{ (o.fundedBy || '') | lowercase }}) · {{ o.redeemedOrders }} redeemed / {{ o.exposedOrders }} orders</p>
@@ -181,7 +185,9 @@
                 </div>
                 <div *ngIf="o.signal === 'MEASURED' || o.signal === 'MEASURING'">
                   <div class="flex items-baseline gap-2">
-                    <span class="text-2xl font-bold leading-none" [ngClass]="changeClass(o.netLiftPercent)" title="Observed vs the store baseline — not a controlled result">{{ signed(o.netLiftPercent) }}</span>
+                    <span class="inline-flex items-center gap-1 text-2xl font-bold leading-none" [ngClass]="changeClass(o.netLiftPercent)" title="Observed vs the store baseline — not a controlled result">
+                      <i class="bi text-base" [ngClass]="trendArrow(o.netLiftPercent)"></i>{{ signed(o.netLiftPercent) }}
+                    </span>
                     <span class="text-xs text-textMuted">net vs store</span>
                   </div>
                   <p *ngIf="o.signal === 'MEASURING' && o.note" class="text-[11px] text-amber-700 italic mt-1.5">{{ o.note }}</p>
