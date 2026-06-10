@@ -3,6 +3,7 @@ package com.example.backend.controller;
 import com.example.backend.entity.Payout;
 import com.example.backend.repository.PayoutRepository;
 import com.example.backend.repository.TenantRepository;
+import com.example.backend.service.PayoutGenerationService;
 import com.example.backend.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ public class PayoutController {
 
     private final PayoutRepository payoutRepository;
     private final TenantRepository tenantRepository;
+    private final PayoutGenerationService payoutGenerationService;
 
     /** Admin: list payouts for their store */
     @GetMapping("/api/admin/payouts")
@@ -35,6 +37,15 @@ public class PayoutController {
     @PreAuthorize("hasRole('SUPERADMIN')")
     public ResponseEntity<List<Payout>> superAdminPayouts() {
         return ResponseEntity.ok(payoutRepository.findAllByOrderByCreatedAtDesc());
+    }
+
+    /** SuperAdmin: run the payout generation now (the weekly job, on demand) — aggregates each
+     *  tenant's un-settled ledger into PENDING payouts. */
+    @PostMapping("/api/superadmin/payouts/generate")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    public ResponseEntity<?> generate() {
+        int created = payoutGenerationService.generateAll(Instant.now());
+        return ResponseEntity.ok(Map.of("created", created));
     }
 
     /** SuperAdmin: create a payout record for a tenant */
