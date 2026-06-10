@@ -248,7 +248,7 @@ public class AdminAgentService {
                 + "those are separate alerts.\n"
                 + "- No preamble, no sign-off, no emoji. Plain markdown bullets, each starting with '- '.";
 
-        String out = anthropicClient.isConfigured() ? anthropicClient.call(prompt, 500) : null;
+        String out = anthropicClient.isConfigured() ? anthropicClient.call(prompt, 500, "BRIEFING") : null;
         String briefing = (out != null && !out.isBlank()) ? sanitiseNarration(out.trim()) : ruleBasedBriefing(snap);
 
         return Map.of("briefing", briefing);

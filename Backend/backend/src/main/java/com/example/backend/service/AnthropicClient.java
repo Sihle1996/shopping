@@ -37,6 +37,7 @@ public class AnthropicClient {
     private int maxTokens;
 
     private final ObjectMapper objectMapper;
+    private final AiUsageService aiUsageService;
     private HttpClient httpClient;
 
     @PostConstruct
@@ -55,10 +56,19 @@ public class AnthropicClient {
 
     /** Returns Claude's text response, or null if unavailable/error. */
     public String call(String userMessage) {
-        return call(userMessage, maxTokens);
+        return call(userMessage, maxTokens, "OTHER");
     }
 
     public String call(String userMessage, int tokens) {
+        return call(userMessage, tokens, "OTHER");
+    }
+
+    /** Labelled variant — attributes the call to a feature for per-tenant AI usage/cost tracking. */
+    public String call(String userMessage, String feature) {
+        return call(userMessage, maxTokens, feature);
+    }
+
+    public String call(String userMessage, int tokens, String feature) {
         if (!isConfigured()) return null;
         try {
             String body = objectMapper.writeValueAsString(Map.of(
@@ -84,11 +94,22 @@ public class AnthropicClient {
             }
 
             JsonNode root = objectMapper.readTree(response.body());
+            recordUsage(root, feature);
             return root.path("content").get(0).path("text").asText();
         } catch (Exception e) {
             log.error("Anthropic API call failed: {}", e.getMessage());
             return null;
         }
+    }
+
+    /** Extract the response's token usage and record it against the current tenant (best-effort). */
+    private void recordUsage(JsonNode root, String feature) {
+        try {
+            JsonNode usage = root.path("usage");
+            aiUsageService.record(feature,
+                    usage.path("input_tokens").asLong(0),
+                    usage.path("output_tokens").asLong(0));
+        } catch (Exception ignored) { /* tracking must never break an AI feature */ }
     }
 
     /** A tool the agent can call: given the tool name + JSON input, return a text result. */
@@ -145,6 +166,7 @@ public class AnthropicClient {
                 }
 
                 JsonNode root = objectMapper.readTree(response.body());
+                recordUsage(root, "COPILOT");
                 JsonNode content = root.path("content");
                 String stopReason = root.path("stop_reason").asText();
 

@@ -71,7 +71,7 @@ public class AdminAiService {
                 "}\n" +
                 "Tags must be chosen only from: filling, comfort, healthy, light, premium, indulgent, quick, grilled, fried, spicy, sweet, vegan, value";
 
-        String raw = anthropicClient.call(prompt);
+        String raw = anthropicClient.call(prompt, "DESCRIBE_ITEM");
         Map<String, Object> base = (raw != null && !raw.isBlank())
                 ? parseJsonOrFallback(raw, buildDescribeFallback(name, price, category))
                 : buildDescribeFallback(name, price, category);
@@ -106,7 +106,7 @@ public class AdminAiService {
                 "only APPEND 0-3 words; keep it short and realistic; no punctuation. " + cat +
                 "Return JSON only: { \"name\": \"<completed name>\" }\n" +
                 "Partial: \"" + seed.replace("\"", "'") + "\"";
-        String raw = anthropicClient.call(prompt, 60);
+        String raw = anthropicClient.call(prompt, 60, "COMPLETE_NAME");
         Map<String, Object> parsed = parseJsonOrFallback(raw, Map.of("name", ""));
         Object n = parsed.get("name");
         String name = n != null ? n.toString().trim() : "";
@@ -820,7 +820,7 @@ public class AdminAiService {
 
         // Give the model enough room for the JSON, and NEVER cache a failure (so a retry
         // can succeed instead of serving the cached fallback for 6 hours).
-        String raw = anthropicClient.call(prompt, 700);
+        String raw = anthropicClient.call(prompt, 700, "REVIEW_DIGEST");
         if (raw == null || raw.isBlank()) return fallback;
 
         Map<String, Object> result = new HashMap<>(parseJsonOrFallback(raw, fallback));
