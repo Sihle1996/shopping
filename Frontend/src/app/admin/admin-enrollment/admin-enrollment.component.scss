@@ -179,3 +179,34 @@
   50%  { opacity: 1; text-shadow: 0 0 12px #ef4444, 0 0 26px #ef4444; }
   100% { opacity: 1; text-shadow: 0 0 12px #ef4444, 0 0 28px #ef4444; }
 }
+
+/* ── Phase C: hours chip, radar ripple, mobile, reduced-motion ──────────── */
+.sf-scene .sf-hours {
+  position: absolute; left: 14%; bottom: 46px; z-index: 3;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; color: #fcd34d;
+  background: rgba(0, 0, 0, .4); padding: 2px 7px; border-radius: 10px;
+  i { font-size: 11px; }
+}
+/* second, delayed ring = a delivery-radius radar pulse */
+.sf-scene .sf-pin.lit .sf-pin-pulse::after {
+  content: ''; position: absolute; inset: 0;
+  border: 2px solid #ef4444; border-radius: 50%;
+  animation: sfPulse 2s ease-out infinite; animation-delay: 1s;
+}
+
+@media (max-width: 480px) {
+  .sf-scene { height: 240px; }
+  .sf-scene .sf-store { width: 184px; bottom: 36px; }
+  .sf-scene .sf-window { height: 98px; }
+  .sf-scene .sf-pin { left: 8%; top: 24px; }
+  .sf-scene .sf-scooter { right: 7%; bottom: 36px; }
+  .sf-scene .sf-hours { left: 8%; bottom: 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-scene *, .sf-scene *::before, .sf-scene *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -264,6 +264,12 @@ export class AdminEnrollmentComponent implements OnInit {
     // The cinematic go-live IS the onboarding — retire the legacy dashboard "Get your store ready" widget.
     const tid = localStorage.getItem('tenantId');
     if (tid) localStorage.setItem('onboardingDone_' + tid, 'true');
+    // Respect reduced-motion: skip the choreography, show the result, ease out.
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      this.launched = true;
+      setTimeout(() => this.router.navigate(['/admin/dashboard']), 1200);
+      return;
+    }
     const root = this.host.nativeElement as HTMLElement;
     const q = (sel: string) => Array.from(root.querySelectorAll(sel)) as HTMLElement[];
     const tl = gsap.timeline({ onComplete: () => this.router.navigate(['/admin/dashboard']) });
