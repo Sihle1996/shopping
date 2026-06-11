@@ -18,15 +18,15 @@ let _bmUid = 0;
       <defs>
         <mask [attr.id]="mid">
           <rect x="0" y="0" width="120" height="120" fill="#fff" />
-          <circle [attr.cx]="bx" [attr.cy]="by" [attr.r]="br" fill="#000" />
+          <path [attr.d]="bitePath" fill="#000" />
         </mask>
       </defs>
       <!-- the bold "v", with the bite cut out -->
       <path class="bm-v" d="M21 30 L60 99 L99 30"
             [attr.stroke]="dark ? '#1F2937' : '#ffffff'" stroke-width="25"
             stroke-linecap="round" stroke-linejoin="round" [attr.mask]="'url(#' + mid + ')'" />
-      <!-- the bite — fills with orange when active -->
-      <circle class="bm-bite" [attr.cx]="bx" [attr.cy]="by" [attr.r]="br - 2.5" fill="#E76F51" />
+      <!-- the bite — sharp angular notch; fills with orange when active -->
+      <path class="bm-bite" [attr.d]="bitePath" fill="#E76F51" />
     </svg>
   `,
   styleUrls: ['./brand-mark.component.scss'],
@@ -36,6 +36,7 @@ export class BrandMarkComponent {
   @Input() mode: 'idle' | 'loading' | 'thinking' | 'success' | 'error' = 'idle';
   @Input() size = 48;
   @Input() dark = true;          // dark "v" on light surfaces; white "v" on dark
-  bx = 84; by = 40; br = 15;     // bite centre / radius (tuned to the glyph)
+  /** the angular "bite" notch in the top of the right arm (approx the glyph) */
+  bitePath = 'M73 28 L95 30 L88 41 L96 49 L80 45 Z';
   mid = 'bm' + (++_bmUid);
 }
