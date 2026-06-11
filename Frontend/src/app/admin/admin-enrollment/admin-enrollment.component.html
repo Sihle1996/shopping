@@ -36,73 +36,92 @@
         </div>
       </div>
 
-      <!-- ── PHASE 2: APPROVED BUT NOT LIVE ─────────────────────────────── -->
-      <div *ngIf="state.approvalStatus === 'APPROVED' && !state.active">
+      <!-- ── PHASE 2: APPROVED BUT NOT LIVE — cinematic launch ───────────── -->
+      <div *ngIf="state.approvalStatus === 'APPROVED' && !state.active" class="animate-fade-in"
+           [style.--brand]="state.primaryColor || '#E76F51'">
 
-        <!-- Success banner -->
-        <div class="bg-white rounded-2xl shadow-card p-8 text-center mb-6">
-          <div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i class="bi bi-check-circle-fill text-green-500 text-2xl"></i>
-          </div>
-          <h2 class="font-heading text-xl font-bold text-textDark mb-2">Store Approved!</h2>
-          <p class="text-textMuted text-sm">
-            Your documents have been verified. Set up your menu below and go live when you're ready.
-          </p>
+        <!-- Header -->
+        <div class="text-center mb-5">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-primary">You're approved</p>
+          <h1 class="font-heading text-2xl sm:text-3xl font-bold text-textDark mt-1">Let's open {{ state.name || 'your store' }}</h1>
+          <p class="text-textMuted text-sm mt-1">Finish the essentials and watch your storefront come alive.</p>
         </div>
 
-        <!-- Menu readiness checklist -->
-        <div class="bg-white rounded-2xl shadow-card p-5 mb-8">
-          <div class="flex items-center gap-2 mb-4">
-            <span class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
-                  [class]="menuReady ? 'bg-green-500 text-white' : 'bg-primary text-white'">
-              <i class="bi" [class]="menuReady ? 'bi-check' : 'bi-list-ul'"></i>
-            </span>
-            <h3 class="font-semibold text-textDark">Set Up Your Menu</h3>
-          </div>
-          <p class="text-xs text-textMuted mb-4">Add at least one category and one item to go live.</p>
-          <div class="space-y-2">
-            <div class="flex items-center gap-3 text-sm"
-                 [class]="state.categoryCount > 0 ? 'text-green-700' : 'text-textMuted'">
-              <i class="bi flex-shrink-0" [class]="state.categoryCount > 0 ? 'bi-check-circle-fill text-green-500' : 'bi-circle text-gray-300'"></i>
-              <span>At least one menu category</span>
-              <span *ngIf="state.categoryCount > 0" class="ml-auto text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">
-                {{ state.categoryCount }} added
-              </span>
+        <!-- CINEMATIC STOREFRONT SCENE -->
+        <div class="sf-scene" [class.sf-ready]="canGoLive" [class.sf-launching]="launching"
+             [style.--scrim]="scrimOpacity">
+          <div class="sf-sky"></div>
+
+          <div class="sf-store">
+            <div class="sf-sign">
+              <img *ngIf="state.logoUrl" [src]="resolveImg(state.logoUrl)" class="sf-logo" [alt]="state.name" />
+              <span class="sf-store-name">{{ state.name || 'Your Store' }}</span>
             </div>
-            <div class="flex items-center gap-3 text-sm"
-                 [class]="state.menuItemCount > 0 ? 'text-green-700' : 'text-textMuted'">
-              <i class="bi flex-shrink-0" [class]="state.menuItemCount > 0 ? 'bi-check-circle-fill text-green-500' : 'bi-circle text-gray-300'"></i>
-              <span>At least one menu item</span>
-              <span *ngIf="state.menuItemCount > 0" class="ml-auto text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">
-                {{ state.menuItemCount }} added
-              </span>
+            <div class="sf-awning"></div>
+            <div class="sf-window" [class.lit]="state.menuItemCount > 0">
+              <ng-container *ngIf="state.sampleMenuItems?.length; else dishSkel">
+                <div class="sf-dish" *ngFor="let d of state.sampleMenuItems">
+                  <img *ngIf="d.image" [src]="resolveImg(d.image)" [alt]="d.name" />
+                  <span *ngIf="!d.image" class="sf-dish-ph">{{ d.name?.charAt(0) || '·' }}</span>
+                </div>
+              </ng-container>
+              <ng-template #dishSkel>
+                <div class="sf-dish sf-dish-skel" *ngFor="let i of [1,2,3]"></div>
+              </ng-template>
+              <div class="sf-open-sign" [class.glow]="canGoLive">OPEN</div>
             </div>
+            <div class="sf-door"></div>
           </div>
-          <div *ngIf="!menuReady" class="mt-4 flex flex-wrap gap-3">
-            <a routerLink="/admin/settings"
-               class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600 transition-colors">
-              <i class="bi bi-plus-circle"></i> Add Categories
-            </a>
-            <a routerLink="/admin/menu"
-               class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 text-textDark text-sm font-semibold hover:bg-gray-200 transition-colors">
-              <i class="bi bi-plus-circle"></i> Add Menu Items
-            </a>
+
+          <div class="sf-pin" [class.lit]="state.hasLocation">
+            <i class="bi bi-geo-alt-fill"></i>
+            <span class="sf-pin-pulse"></span>
+            <span class="sf-pin-label" *ngIf="state.hasLocation">Delivery area ready</span>
+          </div>
+
+          <div class="sf-scooter" [class.lit]="state.hasDriver">
+            <span class="sf-driver-badge" *ngIf="state.hasDriver">Delivery ready</span>
+            <i class="bi bi-scooter"></i>
+          </div>
+
+          <div class="sf-scrim"></div>
+
+          <div class="sf-success" *ngIf="launched">
+            <i class="bi bi-shop-window"></i>
+            <p class="sf-success-title">Your store is now live</p>
+            <p class="sf-success-sub">Customers can discover and order from you.</p>
           </div>
         </div>
 
-        <!-- Go Live button -->
-        <div class="flex flex-col items-center gap-3">
-          <button (click)="goLive()"
-                  [disabled]="!menuReady || goingLive"
-                  class="w-full max-w-sm py-4 bg-green-600 text-white rounded-xl font-bold text-sm hover:bg-green-700 transition-colors disabled:opacity-50">
-            <span *ngIf="!goingLive"><i class="bi bi-rocket-takeoff mr-2"></i>Go Live</span>
-            <span *ngIf="goingLive"><span class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin align-middle mr-2"></span>Going live…</span>
+        <!-- Launch readiness meter -->
+        <div class="mt-4 mb-5">
+          <div class="flex items-center justify-between text-xs mb-1.5">
+            <span class="font-semibold text-textDark">Launch readiness</span>
+            <span class="font-numbers font-bold" [style.color]="canGoLive ? '#16a34a' : 'var(--brand)'">{{ readinessPercent }}%</span>
+          </div>
+          <div class="h-2 rounded-full bg-gray-100 overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-700 ease-out"
+                 [style.width.%]="readinessPercent"
+                 [style.background]="canGoLive ? '#22c55e' : 'var(--brand)'"></div>
+          </div>
+        </div>
+
+        <!-- Go Live -->
+        <div class="flex flex-col items-center gap-2 mb-8">
+          <button (click)="goLive()" [disabled]="!canGoLive || goingLive || launching"
+                  class="w-full max-w-sm py-4 rounded-xl font-bold text-sm text-white transition-all disabled:cursor-not-allowed"
+                  [style.background]="canGoLive ? '#16a34a' : '#9ca3af'">
+            <span *ngIf="!goingLive && !launching"><i class="bi bi-shop mr-2"></i>Go Live</span>
+            <span *ngIf="goingLive || launching"><span class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin align-middle mr-2"></span>Going live…</span>
           </button>
-          <p *ngIf="!menuReady" class="text-xs text-textMuted text-center">
-            Add at least one category and one menu item to go live.
-          </p>
+          <p *ngIf="!canGoLive" class="text-xs text-textMuted text-center">Finish the required steps to light up the OPEN sign.</p>
         </div>
 
+        <!-- Setup progress — the secondary controls -->
+        <div class="bg-white rounded-2xl shadow-card p-5">
+          <app-checklist [items]="goLiveItems" title="Setup progress"
+                         subtitle="Required steps unlock Go Live; recommended ones make you shine."></app-checklist>
+        </div>
       </div>
 
       <!-- ── DRAFT / REJECTED — Phase 1: Document submission ────────────── -->

@@ -1,9 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ElementRef } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
+import { gsap } from 'gsap';
+import { ChecklistItem } from 'src/app/shared/components/checklist/checklist.component';
+import { SubscriptionService } from 'src/app/services/subscription.service';
 
 interface StoreDocument {
   id: string;
@@ -27,6 +30,19 @@ interface EnrollmentState {
   menuItemCount: number;
   categoryCount: number;
   active: boolean;
+  // launch scene
+  name?: string;
+  cuisineType?: string;
+  logoUrl?: string;
+  coverImageUrl?: string;
+  primaryColor?: string;
+  storeDescription?: string;
+  sampleMenuItems?: { name: string; image: string }[];
+  hasLocation?: boolean;
+  hasDriver?: boolean;
+  driverCount?: number;
+  hasHours?: boolean;
+  hasLogo?: boolean;
 }
 
 @Component({
@@ -55,15 +71,22 @@ export class AdminEnrollmentComponent implements OnInit {
     { type: 'STOREFRONT_PHOTO', label: 'Storefront Photo', required: false, hint: 'Optional — a photo of your restaurant or kitchen' },
   ];
 
+  hasCustomBranding = false;
+  launching = false;   // go-live sequence is playing
+  launched = false;    // success state shown
+
   constructor(
     private http: HttpClient,
     private router: Router,
     private authService: AuthService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private host: ElementRef,
+    private subscriptionService: SubscriptionService
   ) {}
 
   ngOnInit(): void {
     this.loadState();
+    this.subscriptionService.load().subscribe(info => this.hasCustomBranding = !!info?.features?.hasCustomBranding);
   }
 
   private headers(): HttpHeaders {
@@ -146,6 +169,39 @@ export class AdminEnrollmentComponent implements OnInit {
     return this.state.categoryCount > 0 && this.state.menuItemCount > 0;
   }
 
+  /** Go-live setup steps — required ones gate launch; recommended ones just nudge. */
+  get goLiveItems(): ChecklistItem[] {
+    const s = this.state;
+    const items: ChecklistItem[] = [
+      { title: 'Add a menu category', description: 'Group your dishes — e.g. Burgers, Sides, Drinks.', done: s.categoryCount > 0, required: true, ctaLabel: 'Add', route: '/admin/settings', queryParams: { tab: 'store' } },
+      { title: 'Add a menu item', description: 'At least one dish customers can order.', done: s.menuItemCount > 0, required: true, ctaLabel: 'Add', route: '/admin/menu' },
+      { title: 'Set your store location', description: 'We price delivery + show you in “nearby” from it.', done: !!s.hasLocation, required: true, ctaLabel: 'Set', route: '/admin/settings', queryParams: { tab: 'store' } },
+      { title: 'Add a delivery driver', description: 'Someone has to deliver the orders.', done: !!s.hasDriver, required: true, ctaLabel: 'Add', route: '/admin/drivers' },
+      { title: 'Set your opening hours', description: 'So your store opens on schedule.', done: !!s.hasHours, required: false, ctaLabel: 'Set', route: '/admin/settings', queryParams: { tab: 'hours' } },
+    ];
+    if (this.hasCustomBranding) {
+      items.push({ title: 'Add your logo', description: 'Make your storefront unmistakably yours.', done: !!s.hasLogo, required: false, ctaLabel: 'Add', route: '/admin/settings', queryParams: { tab: 'branding' } });
+    }
+    return items;
+  }
+
+  get requiredItems(): ChecklistItem[] { return this.goLiveItems.filter(i => i.required); }
+  get canGoLive(): boolean { return this.requiredItems.every(i => i.done); }
+  get readinessPercent(): number {
+    const req = this.requiredItems;
+    return req.length ? Math.round(req.filter(i => i.done).length / req.length * 100) : 0;
+  }
+
+  /** Dusk dimming over the storefront — heavy when nothing's done, near-dusk at 100% (launch clears it). */
+  get scrimOpacity(): number {
+    return Math.max(0.2, 0.72 - this.readinessPercent / 100 * 0.5);
+  }
+
+  resolveImg(url?: string): string {
+    if (!url) return '';
+    return url.startsWith('http') ? url : `${environment.apiUrl}${url}`;
+  }
+
   saveDetails(): void {
     this.savingDetails = true;
     this.http.put<any>(`${environment.apiUrl}/api/admin/enrollment/details`, {
@@ -188,19 +244,29 @@ export class AdminEnrollmentComponent implements OnInit {
   }
 
   goLive(): void {
-    if (!this.menuReady) return;
+    if (!this.canGoLive || this.goingLive || this.launching) return;
     this.goingLive = true;
     this.http.post<any>(`${environment.apiUrl}/api/admin/enrollment/go-live`, {}, { headers: this.headers() })
       .subscribe({
-        next: () => {
-          this.goingLive = false;
-          this.toastr.success('Your store is now live!');
-          this.router.navigate(['/admin/dashboard']);
-        },
+        next: () => this.playLaunchSequence(),
         error: err => {
           this.goingLive = false;
           this.toastr.error(err?.error?.error || 'Failed to go live');
         }
       });
+  }
+
+  /** Cinematic ~3s launch: lights on → scooter drives off → "you're live" → dashboard. */
+  private playLaunchSequence(): void {
+    this.launching = true;
+    const root = this.host.nativeElement as HTMLElement;
+    const q = (sel: string) => Array.from(root.querySelectorAll(sel)) as HTMLElement[];
+    const tl = gsap.timeline({ onComplete: () => this.router.navigate(['/admin/dashboard']) });
+    tl.to(q('.sf-scrim'),     { opacity: 0, duration: 0.6, ease: 'power1.out' })
+      .to(q('.sf-window'),    { opacity: 1, duration: 0.5, stagger: 0.08, ease: 'power1.out' }, '-=0.3')
+      .to(q('.sf-open-sign'), { opacity: 1, duration: 0.4 }, '-=0.2')
+      .to(q('.sf-scooter'),   { x: 180, opacity: 0, duration: 1.1, ease: 'power1.in' }, '+=0.3')
+      .add(() => { this.launched = true; }, '+=0.05')
+      .to({}, { duration: 1.6 });   // hold the success overlay, then onComplete → dashboard
   }
 }
