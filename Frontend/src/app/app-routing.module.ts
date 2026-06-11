@@ -25,6 +25,7 @@ import { GroupCartComponent } from './pages/group-cart/group-cart.component';
 import { TermsComponent } from './pages/legal/terms/terms.component';
 import { PrivacyComponent } from './pages/legal/privacy/privacy.component';
 import { RestaurantTermsComponent } from './pages/legal/restaurant-terms/restaurant-terms.component';
+import { LoaderDemoComponent } from './pages/loader-demo/loader-demo.component';
 
 const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -53,6 +54,7 @@ const routes: Routes = [
   { path: 'orders', component: HistoryordersComponent, canActivate: [UserGuard] },
   { path: 'thank-you', component: ThankYouComponent },
 
+  { path: 'loader-demo', component: LoaderDemoComponent },
   { path: 'login', component: LoginComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'register', component: RegisterComponent },
