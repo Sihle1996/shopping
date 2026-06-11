@@ -26,8 +26,8 @@ import { CommonModule } from '@angular/common';
 export class BrandMarkComponent {
   /** idle = empty bite (matches the logo); the others fill/animate the bite. */
   @Input() mode: 'idle' | 'loading' | 'thinking' | 'success' | 'error' = 'idle';
-  /** none = plain mark; hidden/beast turn it into a creature with eyes. */
-  @Input() face: 'none' | 'hidden' | 'beast' = 'none';
+  /** none = plain mark; hidden/beast/scary turn it into a creature with eyes. */
+  @Input() face: 'none' | 'hidden' | 'beast' | 'scary' = 'none';
   @Input() size = 48;
   @Input() dark = true;   // dark glyph on light surfaces; white glyph on dark
 }

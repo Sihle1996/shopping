@@ -58,7 +58,27 @@
   clip-path: polygon(0 0, 50% 100%, 100% 0);   /* downward chevron = a stern brow */
 }
 
+/* scary — glowing orange predator eyes (no glint) + a heavy brow */
+.bm-face-scary .bm-eye {
+  display: block; width: 14%; height: 10%; top: 43%; border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%, #FFE0B0 0%, #FF6A1A 50%, #D5410A 100%);
+  box-shadow: 0 0 5px 1px rgba(255, 106, 26, .9), 0 0 14px 3px rgba(255, 106, 26, .5);
+  animation: bmScary 2.2s ease-in-out infinite;
+}
+.bm-face-scary .bm-eye::after { display: none; }
+.bm-face-scary .bm-eye-l { left: 30%; transform: rotate(20deg); }
+.bm-face-scary .bm-eye-r { left: 56%; transform: rotate(-20deg); }
+.bm-face-scary .bm-brow {
+  display: block; top: 34%; left: 31%; width: 36%; height: 11%;
+  background: #1F2937; clip-path: polygon(0 0, 50% 100%, 100% 0);
+}
+.bm-on-dark.bm-face-scary .bm-brow { background: #fff; }
+@keyframes bmScary {
+  0%, 100% { box-shadow: 0 0 4px 1px rgba(255, 106, 26, .8), 0 0 9px 2px rgba(255, 106, 26, .4); }
+  50%      { box-shadow: 0 0 7px 2px rgba(255, 106, 26, 1),  0 0 18px 5px rgba(255, 106, 26, .6); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .bm-bite { animation: none !important; }
+  .bm-bite, .bm-eye { animation: none !important; }
   .bm-loading .bm-bite, .bm-thinking .bm-bite, .bm-success .bm-bite { opacity: 1; transform: none; }
 }

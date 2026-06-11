@@ -32,6 +32,12 @@ import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
         </div>
 
         <div class="tile dark">
+          <span class="lbl light">Scary</span>
+          <app-brand-mark [size]="100" mode="idle" face="scary" [dark]="false"></app-brand-mark>
+          <span class="cap light">Glowing orange predator eyes</span>
+        </div>
+
+        <div class="tile dark">
           <span class="lbl light">Creature on dark</span>
           <app-brand-mark [size]="92" mode="idle" face="hidden" [dark]="false"></app-brand-mark>
           <span class="cap light">Eyes invert for contrast</span>
