@@ -1,0 +1,89 @@
+<!-- reusable V-with-eyes -->
+<ng-template #vmark let-size="size" let-pos="pos" let-shape="shape" let-state="state" let-color="color" let-anim="anim" let-dark="dark">
+  <div class="vx-v" [ngClass]="['vx-state-' + (state||'dormant'), color==='orange' ? 'vx-orange':'', anim ? 'vx-anim-'+anim : '', dark ? 'vx-on-dark':'']">
+    <img class="vx-img" src="assets/craveit-v.png" [style.height.px]="size" alt="" />
+    <span class="vx-eye vx-l" [ngClass]="['vx-pos-'+(pos||'inside'), 'vx-shape-'+(shape||'slit')]"></span>
+    <span class="vx-eye vx-r" [ngClass]="['vx-pos-'+(pos||'inside'), 'vx-shape-'+(shape||'slit')]"></span>
+  </div>
+</ng-template>
+
+<div class="wrap">
+  <h1>Vision eyes — exploration lab</h1>
+  <p class="sub">Throwaway. Pick a direction before wiring. Rule under test: <b>clean at rest; eyes only while Vision works.</b></p>
+
+  <!-- 1. Geometry × shape (squint test) -->
+  <section>
+    <h2>1 · Geometry × Shape <span>(Seeing state, 56px, neutral)</span></h2>
+    <div class="grid head"><div></div><div *ngFor="let s of shapes">{{ s }}</div></div>
+    <div class="grid" *ngFor="let p of positions">
+      <div class="rlbl">{{ p }}</div>
+      <div class="cell" *ngFor="let s of shapes">
+        <ng-container *ngTemplateOutlet="vmark; context:{size:56, pos:p, shape:s, state:'seeing', color:'neutral'}"></ng-container>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Bite as source (priority) -->
+  <section>
+    <h2>2 · Bite as the source <span>(inside · slit · 72px · looping)</span></h2>
+    <div class="row">
+      <div class="cell big"><span class="cap">V1 — eyes appear independently</span>
+        <ng-container *ngTemplateOutlet="vmark; context:{size:72, pos:'inside', shape:'slit', anim:'indep'}"></ng-container></div>
+      <div class="cell big"><span class="cap">V2 — eyes emerge FROM the bite</span>
+        <ng-container *ngTemplateOutlet="vmark; context:{size:72, pos:'inside', shape:'slit', anim:'frombite'}"></ng-container></div>
+    </div>
+  </section>
+
+  <!-- 3. Colour -->
+  <section>
+    <h2>3 · Colour <span>(inside · slit · 56px)</span></h2>
+    <div class="row">
+      <div class="cell"><span class="cap">neutral · seeing</span><ng-container *ngTemplateOutlet="vmark; context:{size:56, state:'seeing', color:'neutral'}"></ng-container></div>
+      <div class="cell"><span class="cap">orange · seeing</span><ng-container *ngTemplateOutlet="vmark; context:{size:56, state:'seeing', color:'orange'}"></ng-container></div>
+      <div class="cell"><span class="cap">neutral · insight</span><ng-container *ngTemplateOutlet="vmark; context:{size:56, state:'insight', color:'neutral'}"></ng-container></div>
+      <div class="cell"><span class="cap">orange · insight (flash)</span><ng-container *ngTemplateOutlet="vmark; context:{size:56, state:'insight', color:'orange'}"></ng-container></div>
+    </div>
+  </section>
+
+  <!-- 4. States -->
+  <section>
+    <h2>4 · States <span>(inside · slit · 64px — neutral, orange insight)</span></h2>
+    <div class="row">
+      <div class="cell" *ngFor="let st of states">
+        <span class="cap">{{ st }}</span>
+        <ng-container *ngTemplateOutlet="vmark; context:{size:64, state:st, color: st==='insight'?'orange':'neutral'}"></ng-container>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Size matrix -->
+  <section>
+    <h2>5 · Size cutoff <span>(inside · slit · Seeing) — where do eyes become noise?</span></h2>
+    <div class="row baseline">
+      <div class="cell" *ngFor="let z of sizes">
+        <span class="cap">{{ z }}px</span>
+        <ng-container *ngTemplateOutlet="vmark; context:{size:z, state:'seeing', color:'neutral'}"></ng-container>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Timing -->
+  <section>
+    <h2>6 · Timing — duration is the message <span>(72px, looping)</span></h2>
+    <div class="row">
+      <div class="cell big"><span class="cap">fast ~1.6s → awakening → insight</span><ng-container *ngTemplateOutlet="vmark; context:{size:72, anim:'fast'}"></ng-container></div>
+      <div class="cell big"><span class="cap">medium ~3s → awakening → seeing → insight</span><ng-container *ngTemplateOutlet="vmark; context:{size:72, anim:'medium'}"></ng-container></div>
+      <div class="cell big"><span class="cap">long ~6s → seeing → seeing → insight</span><ng-container *ngTemplateOutlet="vmark; context:{size:72, anim:'long'}"></ng-container></div>
+    </div>
+  </section>
+
+  <!-- 7. Discovery screen -->
+  <section class="discovery">
+    <h2>7 · Discovery test <span>— can you intuit "eyes only when Vision works"?</span></h2>
+    <div class="row">
+      <div class="cell"><span class="cap">idle AI button (rest)</span><div class="fake-btn"><ng-container *ngTemplateOutlet="vmark; context:{size:18, state:'dormant'}"></ng-container> Ask Vision</div></div>
+      <div class="cell"><span class="cap">working Copilot</span><div class="fab"><ng-container *ngTemplateOutlet="vmark; context:{size:30, anim:'medium', dark:true}"></ng-container></div></div>
+      <div class="cell"><span class="cap">empty-state beast (presence)</span><ng-container *ngTemplateOutlet="vmark; context:{size:56, anim:'blink'}"></ng-container></div>
+    </div>
+  </section>
+</div>
