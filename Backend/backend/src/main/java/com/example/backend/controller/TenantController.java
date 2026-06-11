@@ -120,6 +120,8 @@ public class TenantController {
     /** Customer-facing store config. Excludes internal/financial fields. */
     public record PublicTenantDto(
             UUID id, String name, String slug, String logoUrl, String primaryColor,
+            String coverImageUrl, String storeDescription,
+            String instagramUrl, String facebookUrl, String websiteUrl,
             String phone, String email, String address, Double latitude, Double longitude,
             Integer deliveryRadiusKm, java.math.BigDecimal deliveryFeeBase, Boolean isOpen,
             java.math.BigDecimal minimumOrderAmount, Integer estimatedDeliveryMinutes,
@@ -127,6 +129,8 @@ public class TenantController {
         static PublicTenantDto from(Tenant t) {
             return new PublicTenantDto(
                 t.getId(), t.getName(), t.getSlug(), t.getLogoUrl(), t.getPrimaryColor(),
+                t.getCoverImageUrl(), t.getStoreDescription(),
+                t.getInstagramUrl(), t.getFacebookUrl(), t.getWebsiteUrl(),
                 t.getPhone(), t.getEmail(), t.getAddress(), t.getLatitude(), t.getLongitude(),
                 t.getDeliveryRadiusKm(), t.getDeliveryFeeBase(), t.getIsOpen(),
                 t.getMinimumOrderAmount(), t.getEstimatedDeliveryMinutes(),

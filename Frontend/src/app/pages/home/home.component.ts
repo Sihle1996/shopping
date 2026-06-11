@@ -185,13 +185,43 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.addModifierItemToPersonalCart(selectedChoicesJson);
   }
 
+  // Storefront branding (from the resolved tenant) shown in the cover hero.
+  storeName = '';
+  storeCuisine = '';
+  storeDescription = '';
+  storeLogoUrl = '';
+  storeCoverUrl = '';
+  storeInstagram = '';
+  storeFacebook = '';
+  storeWebsite = '';
+
+  private resolveImg(url?: string): string {
+    if (!url) return '';
+    return url.startsWith('http') ? url : `${environment.apiUrl}${url}`;
+  }
+  /** Ensure a social link carries a protocol so [href] navigates out, not relative to the app. */
+  private normalizeLink(url?: string): string {
+    if (!url || !url.trim()) return '';
+    const u = url.trim();
+    return /^https?:\/\//i.test(u) ? u : `https://${u}`;
+  }
+
   ngOnInit(): void {
     this.isAdmin = this.authService.getUserRole() === 'ROLE_ADMIN';
     this.isLoggedIn = this.authService.isLoggedIn();
     const tenant = this.tenantService.getCurrentTenant();
     if (tenant) {
+      const t: any = tenant;
       this.storeIsOpen = tenant.isOpen !== false;
       this.estimatedDeliveryMinutes = tenant.estimatedDeliveryMinutes || 30;
+      this.storeName = t.name || '';
+      this.storeCuisine = t.cuisineType || '';
+      this.storeDescription = t.storeDescription || '';
+      this.storeLogoUrl = this.resolveImg(t.logoUrl);
+      this.storeCoverUrl = this.resolveImg(t.coverImageUrl);
+      this.storeInstagram = this.normalizeLink(t.instagramUrl);
+      this.storeFacebook = this.normalizeLink(t.facebookUrl);
+      this.storeWebsite = this.normalizeLink(t.websiteUrl);
     }
     if (this.isLoggedIn) {
       this.favouriteService.load().subscribe();

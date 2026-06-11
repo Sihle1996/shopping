@@ -34,6 +34,18 @@ export class NotificationService implements OnDestroy {
   private orderEventSubject = new Subject<OrderEvent>();
   private nextId = 1;
 
+  // --- New-order sound alert (per-device; localStorage 'newOrderSound', default on) ---
+  private audioCtx?: AudioContext;
+  private pendingOrders = 0;
+  private repeatTimer: any = null;
+  private readonly REPEAT_MS = 15000;
+
+  get soundEnabled(): boolean { return localStorage.getItem('newOrderSound') !== 'off'; }
+  set soundEnabled(on: boolean) {
+    localStorage.setItem('newOrderSound', on ? 'on' : 'off');
+    if (!on) this.acknowledgeOrders();
+  }
+
   /** Persistent history — survives component navigation */
   readonly history: AdminNotification[] = [];
 
@@ -43,10 +55,53 @@ export class NotificationService implements OnDestroy {
 
   markAllRead(): void {
     this.history.forEach(n => n.read = true);
+    this.acknowledgeOrders();   // seeing the notifications stops the repeating chime
   }
 
   markRead(n: AdminNotification): void {
     n.read = true;
+  }
+
+  /** A new order arrived — chime now and keep chiming every 15s until acknowledged (best practice). */
+  private onNewOrder(): void {
+    if (!this.soundEnabled) return;
+    this.pendingOrders++;
+    this.playChime();
+    if (!this.repeatTimer) {
+      this.repeatTimer = setInterval(() => {
+        if (this.pendingOrders > 0 && this.soundEnabled) this.playChime();
+        else this.acknowledgeOrders();
+      }, this.REPEAT_MS);
+    }
+  }
+
+  /** Admin has seen the new orders — stop the repeating chime. */
+  acknowledgeOrders(): void {
+    this.pendingOrders = 0;
+    if (this.repeatTimer) { clearInterval(this.repeatTimer); this.repeatTimer = null; }
+  }
+
+  /** A short two-note chime via Web Audio (no asset). Silently no-ops if audio is blocked. */
+  private playChime(): void {
+    try {
+      this.audioCtx = this.audioCtx || new ((window as any).AudioContext || (window as any).webkitAudioContext)();
+      const ctx = this.audioCtx!;
+      if (ctx.state === 'suspended') ctx.resume();
+      const now = ctx.currentTime;
+      [880, 1175].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const t = now + i * 0.18;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.25, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.36);
+      });
+    } catch { /* audio blocked until user interaction; ignore */ }
   }
 
   constructor(private auth: AuthService, private toastr: ToastrService) {
@@ -118,6 +173,7 @@ export class NotificationService implements OnDestroy {
           : 'New notification';
 
       this.addToHistory(text);
+      if (data.type === 'ORDER_CREATED') this.onNewOrder();
       this.notificationSubject.next(text);
       this.orderEventSubject.next(data);
       this.toastr.success(text, 'Order update', { timeOut: 6000 });

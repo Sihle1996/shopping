@@ -114,6 +114,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.fetchOrders(1);
+    this.notificationService.acknowledgeOrders();   // viewing Orders stops the repeating new-order chime
 
     this.searchSub = this.searchSubject
       .pipe(debounceTime(300))

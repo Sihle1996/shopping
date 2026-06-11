@@ -18,6 +18,11 @@ interface TenantSettings {
   slug: string;
   logoUrl: string;
   primaryColor: string;
+  coverImageUrl: string;
+  storeDescription: string;
+  instagramUrl: string;
+  facebookUrl: string;
+  websiteUrl: string;
   phone: string;
   email: string;
   address: string;
@@ -46,6 +51,11 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     slug: '',
     logoUrl: '',
     primaryColor: '#E76F51',
+    coverImageUrl: '',
+    storeDescription: '',
+    instagramUrl: '',
+    facebookUrl: '',
+    websiteUrl: '',
     phone: '',
     email: '',
     address: '',
@@ -223,6 +233,43 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
       ? this.settings.logoUrl
       : `${environment.apiUrl}${this.settings.logoUrl}`;
   }
+
+  isUploadingCover = false;
+  readonly suggestedColors = ['#E76F51', '#264653', '#2A9D8F', '#E9C46A', '#F4A261', '#1F2937'];
+
+  onCoverSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.isUploadingCover = true;
+    const formData = new FormData();
+    formData.append('file', file);
+    this.http.post<{ imageUrl: string }>(`${environment.apiUrl}/api/admin/menu/upload-image`, formData, {
+      headers: new HttpHeaders({ 'Authorization': `Bearer ${this.authService.getToken()}` })
+    }).subscribe({
+      next: (res) => { this.settings.coverImageUrl = res.imageUrl; this.isUploadingCover = false; this.toastr.success('Cover photo uploaded'); },
+      error: () => { this.isUploadingCover = false; this.toastr.error('Failed to upload cover photo'); }
+    });
+  }
+
+  getCoverUrl(): string {
+    if (!this.settings.coverImageUrl) return '';
+    return this.settings.coverImageUrl.startsWith('http')
+      ? this.settings.coverImageUrl
+      : `${environment.apiUrl}${this.settings.coverImageUrl}`;
+  }
+
+  /** True when the brand colour is so light that white text/buttons on it would be hard to read. */
+  brandColorTooLight(): boolean {
+    const hex = (this.settings.primaryColor || '').replace('#', '');
+    if (hex.length !== 6) return false;
+    const r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
+    const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;   // perceived luminance 0..1
+    return lum > 0.7;
+  }
+
+  /** Per-device new-order sound toggle (localStorage; NotificationService reads the same key). */
+  get newOrderSound(): boolean { return localStorage.getItem('newOrderSound') !== 'off'; }
+  set newOrderSound(on: boolean) { localStorage.setItem('newOrderSound', on ? 'on' : 'off'); }
 
   private activeDriver: any = null;
 

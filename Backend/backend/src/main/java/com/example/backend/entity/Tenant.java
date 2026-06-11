@@ -34,6 +34,18 @@ public class Tenant {
     @Column(length = 7)
     private String primaryColor;
 
+    /** Storefront hero/cover image (Cloudinary URL) — the store page's banner. */
+    private String coverImageUrl;
+
+    /** Short storefront description / tagline shown under the store name. */
+    @Column(columnDefinition = "TEXT")
+    private String storeDescription;
+
+    /** Social links (full URLs); blank/null = hidden on the storefront. */
+    private String instagramUrl;
+    private String facebookUrl;
+    private String websiteUrl;
+
     private String phone;
     private String email;
 
