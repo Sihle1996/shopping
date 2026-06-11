@@ -19,7 +19,7 @@
   <!-- Recommendation feedback — is the AI suggestion actually helping? -->
   <div *ngIf="recStats?.decisions" class="bg-white rounded-2xl shadow-card border border-borderColor mb-6 overflow-hidden">
     <div class="px-5 py-3.5 border-b border-borderColor flex items-center gap-2">
-      <i class="bi bi-stars text-primary"></i>
+      <app-brand-mark [size]="16"></app-brand-mark>
       <h3 class="text-sm font-semibold text-textDark">Recommendation feedback</h3>
     </div>
     <div class="px-5 py-4 grid grid-cols-2 sm:grid-cols-3 gap-4">

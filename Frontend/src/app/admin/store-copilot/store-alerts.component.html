@@ -9,7 +9,7 @@
     <div class="flex items-center justify-between px-4 py-3 text-white"
          style="background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));">
       <div class="flex items-center gap-2 min-w-0">
-        <i class="bi bi-stars text-base ai-twinkle text-white"></i>
+        <app-brand-mark [size]="20" [dark]="false" [mode]="briefingLoading ? 'thinking' : 'idle'"></app-brand-mark>
         <div class="min-w-0">
           <p class="text-sm font-semibold leading-tight truncate">Your daily briefing</p>
           <p class="text-[11px] text-white/80 truncate">Briefing & alerts · Store Copilot</p>

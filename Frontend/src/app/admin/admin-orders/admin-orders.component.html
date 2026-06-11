@@ -387,7 +387,7 @@
           </div>
           <div *ngIf="recommendations.length && !recsFailed" class="mb-4">
             <p class="text-[11px] uppercase tracking-wide text-textMuted mb-2 flex items-center gap-1">
-              <i class="bi bi-stars text-primary"></i> Suggested drivers
+              <app-brand-mark [size]="13"></app-brand-mark> Suggested drivers
             </p>
             <div class="space-y-2">
               <button type="button" *ngFor="let d of recommendations"
