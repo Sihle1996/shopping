@@ -31,6 +31,12 @@ import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
           <span class="cap">Eyes + brow — the horns own it</span>
         </div>
 
+        <div class="tile">
+          <span class="lbl">Scary on white</span>
+          <app-brand-mark [size]="100" mode="idle" face="scary"></app-brand-mark>
+          <span class="cap">Glowing orange predator eyes</span>
+        </div>
+
         <div class="tile dark">
           <span class="lbl light">Scary</span>
           <app-brand-mark [size]="100" mode="idle" face="scary" [dark]="false"></app-brand-mark>
