@@ -176,10 +176,11 @@
                   <i class="bi bi-card-image text-primary text-2xl mb-1"></i>
                   <p class="text-xs text-textMuted">A wide food/banner photo — shown big on your store page.</p>
                 </div>
-                <label class="absolute bottom-2 right-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-white bg-black/55 backdrop-blur px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-black/70">
+                <button type="button" (click)="coverInput.click()" [disabled]="isUploadingCover"
+                        class="absolute bottom-2 right-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-white bg-black/55 backdrop-blur px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-black/70 disabled:opacity-60">
                   <i class="bi bi-upload"></i> {{ settings.coverImageUrl ? 'Replace' : 'Upload' }}
-                  <input type="file" (change)="onCoverSelected($event)" accept="image/*" class="hidden" [disabled]="isUploadingCover" />
-                </label>
+                </button>
+                <input #coverInput type="file" (change)="onCoverSelected($event)" accept="image/*" class="hidden" />
                 <div *ngIf="isUploadingCover" class="absolute inset-0 bg-white/60 flex items-center justify-center">
                   <span class="inline-block w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
                 </div>
