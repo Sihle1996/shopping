@@ -112,7 +112,7 @@
       </div>
 
       <!-- Branding Card -->
-      <div *ngIf="settingsTab === 'branding'" id="logo-upload-section" class="space-y-4">
+      <div *ngIf="settingsTab === 'branding'" id="logo-upload-section" class="space-y-4 animate-fade-in">
 
         <!-- Premium header -->
         <div class="bg-gradient-to-br from-primary-50 to-white rounded-2xl shadow-card border border-borderColor p-4 flex items-center justify-between gap-3">
@@ -233,7 +233,7 @@
           </div>
 
           <!-- RIGHT: live storefront preview -->
-          <div class="lg:sticky lg:top-4 self-start">
+          <div class="lg:sticky lg:top-4 self-start animate-slide-up">
             <div class="bg-white rounded-2xl shadow-card overflow-hidden border border-borderColor">
               <div class="relative h-28 bg-gradient-to-br from-primary-100 to-primary-50">
                 <img *ngIf="settings.coverImageUrl" [src]="getCoverUrl()" class="w-full h-full object-cover" />
