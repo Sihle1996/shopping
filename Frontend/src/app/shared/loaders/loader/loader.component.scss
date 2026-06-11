@@ -13,20 +13,22 @@
 
 .ldr-inner { display: flex; flex-direction: column; align-items: center; gap: 11px; }
 
-/* Wordmark — tuned to the production logo: heavy Montserrat, tight kerning, whole + static */
-.ldr-wordmark {
-  font-family: 'Montserrat', sans-serif; font-weight: 800;
-  letter-spacing: -0.045em; line-height: 1; white-space: nowrap;
-}
-.ldr-crave { color: #1F2937; }
-.ldr-it {
-  color: #E76F51; /* fallback if background-clip unsupported */
-  background: linear-gradient(110deg, #E76F51 0%, #E76F51 42%, #FFE8DC 50%, #E76F51 58%, #E76F51 100%);
-  background-size: 220% 100%;
-  background-position: 120% 0;
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-  will-change: background-position, filter;
+/* The real production logo — perfect brand fidelity, whole + static */
+.ldr-logo { position: relative; display: inline-block; line-height: 0; }
+.ldr-img { display: block; width: auto; }
+/* A warm light "signal" sweeps across the logo, masked to the logo shape and clipped to the
+   "-it" region so "crave" stays perfectly still — light travelling through the real mark. */
+.ldr-shine {
+  position: absolute; inset: 0; pointer-events: none;
+  clip-path: inset(0 0 0 72%);
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 236, 222, .9) 50%, transparent 70%);
+  background-size: 230% 100%; background-position: 120% 0;
+  -webkit-mask-image: url('/assets/craveit-logo-transparent.png');
+          mask-image: url('/assets/craveit-logo-transparent.png');
+  -webkit-mask-size: contain;   mask-size: contain;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center; mask-position: center;
+  mix-blend-mode: screen; will-change: background-position;
 }
 
 /* Progress track — the HERO: a wide streak with a long soft trail sweeps through it */
@@ -51,9 +53,9 @@
 }
 
 /* Sizes */
-.ldr-sm .ldr-wordmark { font-size: 20px; } .ldr-sm .ldr-track { max-width: 110px; }
-.ldr-md .ldr-wordmark { font-size: 30px; } .ldr-md .ldr-track { max-width: 150px; }
-.ldr-lg .ldr-wordmark { font-size: 44px; } .ldr-lg .ldr-track { max-width: 200px; }
+.ldr-sm .ldr-img { height: 22px; } .ldr-sm .ldr-track { max-width: 110px; }
+.ldr-md .ldr-img { height: 32px; } .ldr-md .ldr-track { max-width: 158px; }
+.ldr-lg .ldr-img { height: 44px; } .ldr-lg .ldr-track { max-width: 210px; }
 
 /* Error — signal stops, subtle red underline */
 .ldr[data-state="error"] .ldr-track { background: #ef4444; }
@@ -65,10 +67,8 @@
 
 /* Reduced motion — wordmark whole, "-it" solid orange, gentle breath, static track */
 @media (prefers-reduced-motion: reduce) {
-  .ldr-it {
-    background: none; color: #E76F51; -webkit-text-fill-color: #E76F51;
-    filter: none !important; animation: ldrBreath 4.5s ease-in-out infinite;
-  }
+  .ldr-shine { display: none; }
   .ldr-streak { display: none; }
+  .ldr-logo { animation: ldrBreath 4.5s ease-in-out infinite; }
 }
 @keyframes ldrBreath { 0%, 100% { opacity: .9; } 50% { opacity: 1; } }

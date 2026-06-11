@@ -55,7 +55,7 @@ export class LoaderComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   /** Staggered entrance: wordmark → track → signal starts. */
   private playEntrance(): void {
-    const wm = this.q('.ldr-wordmark'); const track = this.q('.ldr-track');
+    const wm = this.q('.ldr-logo'); const track = this.q('.ldr-track');
     gsap.set([wm, track], { opacity: 0 });
     gsap.timeline()
       .to(wm, { opacity: 1, duration: 0.4, ease: 'power1.out' }, 0.08)
@@ -66,18 +66,15 @@ export class LoaderComponent implements AfterViewInit, OnChanges, OnDestroy {
   /** One synced sweep drives the streak, the "-it" highlight, and the glow from a single progress value. */
   private startLoading(): void {
     this.loadTl?.kill();
-    const streak = this.q('.ldr-streak'); const it = this.q('.ldr-it');
+    const streak = this.q('.ldr-streak'); const shine = this.q('.ldr-shine');
     const o = { p: 0 };
     this.loadTl = gsap.timeline({ repeat: -1, repeatDelay: 0.6 });
     this.loadTl.fromTo(o, { p: 0 }, {
       p: 1, duration: 1.0, ease: 'power1.inOut',
       onUpdate: () => {
-        const p = o.p, g = Math.sin(p * Math.PI);           // glow: 0 at ends, peak mid
-        if (streak) gsap.set(streak, { left: (-30 + p * 160) + '%' });   // off-left → off-right
-        if (it) gsap.set(it, {
-          backgroundPositionX: (120 - p * 200) + '%',   // light band travels L→R through "-it"
-          filter: `drop-shadow(0 0 ${(12 * g).toFixed(1)}px rgba(231,111,81,${(0.35 * g).toFixed(2)}))`,
-        });
+        const p = o.p;
+        if (streak) gsap.set(streak, { left: (-30 + p * 160) + '%' });          // off-left → off-right
+        if (shine) gsap.set(shine, { backgroundPositionX: (120 - p * 200) + '%' }); // light sweeps the "-it"
       },
     });
   }
@@ -100,18 +97,18 @@ export class LoaderComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   private applySuccess(): void {
     this.loadTl?.kill();
-    const root = this.q('.ldr-inner'); const it = this.q('.ldr-it'); const fill = this.q('.ldr-fill');
+    const root = this.q('.ldr-inner'); const logo = this.q('.ldr-img'); const fill = this.q('.ldr-fill');
     if (this.successMode === 'minimal' || this.reduce) {
       gsap.to(root, { opacity: 0, duration: 0.35, onComplete: () => this.finished.emit() });
       return;
     }
-    // celebrate: complete the pass → fill the line → glow once → emit
+    // celebrate: complete the pass → fill the line → logo glows once → emit
     const streak = this.q('.ldr-streak');
     gsap.timeline({ onComplete: () => this.finished.emit() })
       .to(streak, { left: '100%', duration: 0.45, ease: 'power2.out' })
       .fromTo(fill, { scaleX: 0 }, { scaleX: 1, duration: 0.45, ease: 'power2.out' }, '<')
-      .to(it, { filter: 'drop-shadow(0 0 16px rgba(231,111,81,.5))', duration: 0.35 }, '-=0.2')
-      .to(it, { filter: 'drop-shadow(0 0 0 rgba(231,111,81,0))', duration: 0.6 })
+      .to(logo, { filter: 'drop-shadow(0 0 14px rgba(231,111,81,.5))', duration: 0.35 }, '-=0.2')
+      .to(logo, { filter: 'drop-shadow(0 0 0 rgba(231,111,81,0))', duration: 0.6 })
       .to(root, { opacity: 0, duration: 0.4 }, '-=0.1');
   }
 
