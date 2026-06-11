@@ -228,6 +228,10 @@ public class StoreDocumentController {
         }
 
         tenant.setActive(true);
+        // Going live means open for orders — flip it on (override so the hours scheduler doesn't
+        // immediately re-close a store that hasn't set hours yet). The owner can close it anytime.
+        tenant.setIsOpen(true);
+        tenant.setManualOpenOverride(true);
         tenantRepository.save(tenant);
         return ResponseEntity.ok(Map.of("message", "Your store is now live!"));
     }

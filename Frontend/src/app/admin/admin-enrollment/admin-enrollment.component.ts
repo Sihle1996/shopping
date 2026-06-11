@@ -259,6 +259,9 @@ export class AdminEnrollmentComponent implements OnInit {
   /** Cinematic ~3s launch: lights on → scooter drives off → "you're live" → dashboard. */
   private playLaunchSequence(): void {
     this.launching = true;
+    // The cinematic go-live IS the onboarding — retire the legacy dashboard "Get your store ready" widget.
+    const tid = localStorage.getItem('tenantId');
+    if (tid) localStorage.setItem('onboardingDone_' + tid, 'true');
     const root = this.host.nativeElement as HTMLElement;
     const q = (sel: string) => Array.from(root.querySelectorAll(sel)) as HTMLElement[];
     const tl = gsap.timeline({ onComplete: () => this.router.navigate(['/admin/dashboard']) });
