@@ -1,15 +1,21 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LoadersModule } from '../../shared/loaders/loaders.module';
+import { BiteLoaderComponent } from '../../shared/brand/bite-loader.component';
 
 /** Dev preview so the brand loader can be seen steadily (it normally only flashes during API calls). */
 @Component({
   selector: 'app-loader-demo',
   standalone: true,
-  imports: [CommonModule, LoadersModule],
+  imports: [CommonModule, LoadersModule, BiteLoaderComponent],
   template: `
     <div class="demo">
       <h2>crave-it loader — only the “-it” animates</h2>
+
+      <div class="card">
+        <span class="lbl">Bite travels through the V</span>
+        <app-bite-loader [size]="120"></app-bite-loader>
+      </div>
 
       <div class="card">
         <span class="lbl">Loading (default)</span>
