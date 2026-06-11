@@ -18,4 +18,12 @@ export class VisionExplorationComponent {
   shapes = ['slit', 'sharp', 'oval'] as const;
   states = ['dormant', 'awakening', 'seeing', 'insight'] as const;
   sizes = [16, 20, 24, 26, 32, 40, 64];
+  preds = [
+    { label: 'Round', shape: 'pred-round' },
+    { label: 'Cat-eye', shape: 'pred-cat' },
+    { label: 'Slit', shape: 'pred-slit' },
+    { label: 'Pinpoint', shape: 'pred-pin' },
+    { label: 'Hot core', shape: 'pred-hot' },
+    { label: 'Deep ember', shape: 'pred-deep' },
+  ];
 }
