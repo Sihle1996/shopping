@@ -1,14 +1,18 @@
 :host { display: inline-flex; line-height: 0; }
 .bm { position: relative; display: inline-block; line-height: 0; }
 
-/* the real glyph, on top */
-.bm-v { display: block; width: auto; position: relative; z-index: 1; }
+/* the real glyph, on top. clip-path cuts the "e" off along the right arm's outer edge
+   (the letters touch in the logo) so both arms read complete, with the real bite kept. */
+.bm-v {
+  display: block; width: auto; position: relative; z-index: 1;
+  clip-path: polygon(0% 0%, 94% 0%, 94% 27%, 47% 100%, 0% 100%);
+}
 .bm-on-dark .bm-v { filter: brightness(0) invert(1); }   /* white v on dark surfaces */
 
 /* a small orange signal pulsing IN the bite (on top of the glyph, sat in the open notch) */
 .bm-bite {
   position: absolute; z-index: 2;
-  left: 62%; top: 38%; width: 14%; height: 14%;
+  left: 56%; top: 37%; width: 13%; height: 13%;
   background: #E76F51; border-radius: 50%;
   box-shadow: 0 0 4px rgba(231, 111, 81, .6);
   opacity: 0; transform-origin: center;
