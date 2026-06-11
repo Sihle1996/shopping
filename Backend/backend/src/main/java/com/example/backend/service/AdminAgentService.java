@@ -306,7 +306,10 @@ public class AdminAgentService {
             (only valid workflow transitions), create a promotion (choose its scope — one PRODUCT, a CATEGORY,
             or ALL — deliberately from the data; don't default to store-wide),
             or change a store setting (delivery fee, minimum order, driver earning %%, loyalty on/off,
-            estimated delivery minutes, delivery radius). These are NOT applied automatically — they
+            estimated delivery minutes, delivery radius). Note: the delivery_fee setting is only the store's
+            BASE fee — customers are charged base + a platform per-km distance premium (so a far address
+            costs more), and the per-km rate is platform-set, not store-changeable. These are NOT applied
+            automatically — they
             become confirmation cards the owner taps "Apply" on. So: propose clearly, state the expected
             impact, and NEVER say a change is done — say you've proposed it for their approval. Only
             propose when the owner is clearly asking to change something. If a tool returns no data, say
@@ -436,7 +439,8 @@ public class AdminAgentService {
                 Map.of(), List.of()));
 
         tools.add(tool("get_settings",
-                "The store's configuration: contact phone/email, delivery fee, minimum order, delivery "
+                "The store's configuration: contact phone/email, delivery fee (the store's BASE fee — "
+                        + "customers also pay a platform per-km distance premium), minimum order, delivery "
                         + "radius, estimated delivery minutes, driver earning %, loyalty on/off, and platform commission %.",
                 Map.of(), List.of()));
 
@@ -478,8 +482,9 @@ public class AdminAgentService {
                         + "store-wide. appliesTo=PRODUCT discounts one item (best for promoting a popular, "
                         + "healthy-margin favourite, or clearing an overstocked item), CATEGORY discounts a "
                         + "whole category, ALL is everything (use only when the owner asks for store-wide). "
-                        + "For PRODUCT or CATEGORY set 'target' to the exact item/category name. Never pick a "
-                        + "discount that takes the target item below its cost — check its margin first via get_menu.",
+                        + "For PRODUCT or CATEGORY set 'target' to the exact item/category name. Keep the "
+                        + "discount comfortably UNDER the item's margin (a fraction of it, not near it) so it "
+                        + "stays clearly profitable — check the margin first via get_menu; never go below cost.",
                 Map.of("title", strProp("Short promo title, e.g. 'Weekend Special'"),
                        "discountPercent", numProp("Discount percent, 1-100"),
                        "days", intProp("How many days it runs (default 3)"),
@@ -488,7 +493,8 @@ public class AdminAgentService {
                 List.of("title", "discountPercent")));
 
         tools.add(tool("propose_update_setting",
-                "Propose changing one store setting.",
+                "Propose changing one store setting. Note: delivery_fee sets the store's BASE fee only — "
+                        + "the per-km distance premium customers also pay is platform-set and not changeable here.",
                 Map.of("setting", enumProp("Which setting to change",
                             List.of("delivery_fee", "minimum_order", "driver_earning_percent",
                                     "loyalty_enabled", "estimated_delivery_minutes", "delivery_radius_km")),
@@ -1064,7 +1070,7 @@ public class AdminAgentService {
 
     private String settingLabel(String s, double v) {
         switch (s) {
-            case "delivery_fee": return "Set delivery fee to R" + String.format(Locale.UK, "%.2f", v);
+            case "delivery_fee": return "Set base delivery fee to R" + String.format(Locale.UK, "%.2f", v);
             case "minimum_order": return "Set minimum order to R" + String.format(Locale.UK, "%.2f", v);
             case "driver_earning_percent": return "Set driver earnings to " + (int) v + "%";
             case "loyalty_enabled": return v != 0 ? "Turn loyalty ON" : "Turn loyalty OFF";
