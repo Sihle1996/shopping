@@ -71,9 +71,16 @@ public class BookkeepingService {
                 int qty = oi.getQuantity() != null ? oi.getQuantity() : 0;
                 MenuItem mi = oi.getMenuItem();
                 boolean costKnown = mi != null && mi.getCost() != null;
-                double lineCogs = costKnown
-                        ? mi.getCost() * qty
-                        : lineRevenue * BENCHMARK_COST_RATIO;
+                double lineCogs;
+                if (costKnown && mi.getPrice() != null && mi.getPrice() > 0) {
+                    // Cost the WHOLE line (base + paid extras) at the item's own cost ratio, so add-ons
+                    // aren't booked as free profit. With no extras this equals cost*qty exactly.
+                    lineCogs = lineRevenue * (mi.getCost() / mi.getPrice());
+                } else if (costKnown) {
+                    lineCogs = mi.getCost() * qty;          // price unknown -> fall back to base cost * qty
+                } else {
+                    lineCogs = lineRevenue * BENCHMARK_COST_RATIO;
+                }
 
                 revenue += lineRevenue;
                 cogs += lineCogs;
