@@ -11,6 +11,23 @@
   <h1>Vision eyes — exploration lab</h1>
   <p class="sub">Throwaway. Pick a direction before wiring. Rule under test: <b>clean at rest; eyes only while Vision works.</b></p>
 
+  <!-- ★★ Eyes BELOW the V (horns + eyes under) -->
+  <section style="border:2px solid #E76F51">
+    <h2>★★ Eyes BELOW the V <span>(V = horns/brow · eyes under the vertex · glowing orange)</span></h2>
+    <div class="row">
+      <div class="cell big underv-cell" *ngFor="let pr of preds">
+        <span class="cap">{{ pr.label }}</span>
+        <ng-container *ngTemplateOutlet="vmark; context:{size:78, pos:'underv', shape:pr.shape, state:'seeing'}"></ng-container>
+      </div>
+    </div>
+    <div class="row" style="background:#0f172a; border-radius:12px; padding:18px; margin-top:12px">
+      <div class="cell big underv-cell" *ngFor="let pr of preds">
+        <span class="cap" style="color:#cbd5e1">{{ pr.label }} · dark</span>
+        <ng-container *ngTemplateOutlet="vmark; context:{size:72, pos:'underv', shape:pr.shape, state:'seeing', dark:true}"></ng-container>
+      </div>
+    </div>
+  </section>
+
   <!-- ★ Predator options (glowing orange eyes, NO brow) -->
   <section style="border:2px solid #E76F51">
     <h2>★ Predator options <span>(glowing orange · eyes only — no brow · inside the V)</span></h2>
