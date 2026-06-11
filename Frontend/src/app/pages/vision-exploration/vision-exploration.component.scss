@@ -43,6 +43,8 @@ h2 span { font-weight:500; color:#94a3b8; font-size:12px; }
 /* eyes BELOW the V (the V = horns/brow, eyes underneath the vertex) */
 .vx-pos-underv.vx-l { left:31%; top:112%; } .vx-pos-underv.vx-r { left:62%; top:112%; }
 .underv-cell { padding-bottom:34px !important; }
+/* eyes UP inside the opening — the V's lower tip reads as a NOSE below them */
+.vx-pos-nose.vx-l { left:34%; top:38%; } .vx-pos-nose.vx-r { left:54%; top:38%; }
 [class*="vx-shape-pred"] {
   opacity:1 !important;
   background:radial-gradient(circle at 50% 45%, #FFE0B0 0%, #FF6A1A 55%, #D5410A 100%);
