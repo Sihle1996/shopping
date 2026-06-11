@@ -28,7 +28,6 @@ export class LoaderComponent implements AfterViewInit, OnChanges, OnDestroy {
   private msgIndex = 0;
   private msgTimer?: any;
   private loadTl?: gsap.core.Timeline;
-  private breathTween?: gsap.core.Tween;
   private reduce = false;
 
   constructor(private host: ElementRef) {}
@@ -36,7 +35,7 @@ export class LoaderComponent implements AfterViewInit, OnChanges, OnDestroy {
   ngAfterViewInit(): void {
     this.reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     this.startMessages();
-    if (this.reduce) { this.startBreath(); return; }
+    if (this.reduce) return;   // "-it" breathes via CSS (it-amb); nothing else moves
     this.playEntrance();
   }
 
@@ -47,7 +46,6 @@ export class LoaderComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     this.loadTl?.kill();
-    this.breathTween?.kill();
     if (this.msgTimer) clearInterval(this.msgTimer);
   }
 
@@ -60,7 +58,7 @@ export class LoaderComponent implements AfterViewInit, OnChanges, OnDestroy {
     gsap.timeline()
       .to(wm, { opacity: 1, duration: 0.4, ease: 'power1.out' }, 0.08)
       .to(track, { opacity: 1, duration: 0.4, ease: 'power1.out' }, 0.15)
-      .add(() => { this.startBreath(); if (this.state === 'loading') this.startLoading(); }, 0.25);
+      .add(() => { if (this.state === 'loading') this.startLoading(); }, 0.25);
   }
 
   /** One synced sweep drives the streak, the "-it" highlight, and the glow from a single progress value. */
@@ -76,16 +74,6 @@ export class LoaderComponent implements AfterViewInit, OnChanges, OnDestroy {
         if (streak) gsap.set(streak, { left: (-30 + p * 160) + '%' });          // off-left → off-right
         if (shine) gsap.set(shine, { backgroundPositionX: (120 - p * 200) + '%' }); // light sweeps the "-it"
       },
-    });
-  }
-
-  /** Almost-imperceptible "alive" breath so the platform feels active between passes. */
-  private startBreath(): void {
-    const root = this.q('.ldr-inner');
-    if (!root) return;
-    this.breathTween?.kill();
-    this.breathTween = gsap.to(root, {
-      opacity: 1, duration: 2.4, ease: 'sine.inOut', repeat: -1, yoyo: true, startAt: { opacity: 0.98 },
     });
   }
 

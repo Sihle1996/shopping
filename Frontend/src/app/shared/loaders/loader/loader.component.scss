@@ -18,17 +18,26 @@
 .ldr-img { display: block; width: auto; }
 /* A warm light "signal" sweeps across the logo, masked to the logo shape and clipped to the
    "-it" region so "crave" stays perfectly still — light travelling through the real mark. */
-.ldr-shine {
+.ldr-shine, .ldr-it-amb {
   position: absolute; inset: 0; pointer-events: none;
-  clip-path: inset(0 0 0 72%);
-  background: linear-gradient(110deg, transparent 30%, rgba(255, 236, 222, .9) 50%, transparent 70%);
-  background-size: 230% 100%; background-position: 120% 0;
+  clip-path: inset(0 0 0 75%);   /* "crave" ends at 73.6%, orange "-it" starts at 75.8% → clip stays off "crave" */
   -webkit-mask-image: url('/assets/craveit-logo-transparent.png');
           mask-image: url('/assets/craveit-logo-transparent.png');
   -webkit-mask-size: contain;   mask-size: contain;
   -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
   -webkit-mask-position: center; mask-position: center;
-  mix-blend-mode: screen; will-change: background-position;
+  mix-blend-mode: screen;
+}
+/* the travelling highlight that sweeps through "-it" */
+.ldr-shine {
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 236, 222, .9) 50%, transparent 70%);
+  background-size: 230% 100%; background-position: 120% 0;
+  will-change: background-position;
+}
+/* the "alive" breath — ONLY on "-it" (same mask + clip), so "crave" is perfectly static */
+.ldr-it-amb {
+  background: rgba(255, 226, 205, .9);
+  animation: ldrBreath 4.2s ease-in-out infinite;
 }
 
 /* Progress track — the HERO: a wide streak with a long soft trail sweeps through it */
@@ -69,6 +78,6 @@
 @media (prefers-reduced-motion: reduce) {
   .ldr-shine { display: none; }
   .ldr-streak { display: none; }
-  .ldr-logo { animation: ldrBreath 4.5s ease-in-out infinite; }
+  /* "-it" still breathes (it-amb, CSS) — "crave" stays static; no sweep */
 }
-@keyframes ldrBreath { 0%, 100% { opacity: .9; } 50% { opacity: 1; } }
+@keyframes ldrBreath { 0%, 100% { opacity: .12; } 50% { opacity: .4; } }
