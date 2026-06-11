@@ -78,25 +78,8 @@ public class OrderService {
         List<OrderItem> orderItems = new ArrayList<>();
 
         for (OrderItemDTO itemDTO : request.getItems()) {
-            OrderItem item = new OrderItem();
-            item.setName(itemDTO.getName());
-            item.setQuantity(itemDTO.getQuantity());
-            item.setTotalPrice(itemDTO.getPrice() * itemDTO.getQuantity());
-            item.setSize(itemDTO.getSize());
-            item.setSpecialInstructions(itemDTO.getSpecialInstructions());
-
-            // Snapshot selected modifier choices
-            if (itemDTO.getSelectedChoices() != null) {
-                for (OrderItemDTO.SelectedChoiceDTO sc : itemDTO.getSelectedChoices()) {
-                    OrderItemChoice choice = new OrderItemChoice();
-                    choice.setOrderItem(item);
-                    choice.setGroupName(sc.getGroupName());
-                    choice.setChoiceLabel(sc.getChoiceLabel());
-                    choice.setPriceModifier(sc.getPriceModifier() != null ? sc.getPriceModifier() : 0.0);
-                    item.getChoices().add(choice);
-                }
-            }
-
+            // The REAL menu item is server-side truth for price, name and availability. The client's
+            // "price" is IGNORED — it could send R5 for an R89 item and be charged R5.
             MenuItem menuItem = menuItemRepository.findById(itemDTO.getProductId())
                     .orElseThrow(() -> new RuntimeException("Menu item not found: " + itemDTO.getProductId()));
 
@@ -104,6 +87,35 @@ public class OrderService {
                 throw new ResponseStatusException(HttpStatus.CONFLICT,
                         menuItem.getName() + " is no longer available");
             }
+            UUID ctxTenant = TenantContext.getCurrentTenantId();
+            if (ctxTenant != null && (menuItem.getTenant() == null || !menuItem.getTenant().getId().equals(ctxTenant)))
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        menuItem.getName() + " isn't on this store's menu");
+            if (itemDTO.getQuantity() < 1 || itemDTO.getQuantity() > 99)
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid quantity");
+
+            OrderItem item = new OrderItem();
+            item.setName(menuItem.getName());
+            item.setQuantity(itemDTO.getQuantity());
+            item.setSize(itemDTO.getSize());
+            item.setSpecialInstructions(itemDTO.getSpecialInstructions());
+
+            // Snapshot selected modifier choices — modifiers can only ADD to the price (clamp >= 0).
+            double modSum = 0;
+            if (itemDTO.getSelectedChoices() != null) {
+                for (OrderItemDTO.SelectedChoiceDTO sc : itemDTO.getSelectedChoices()) {
+                    double mod = Math.max(0, sc.getPriceModifier() != null ? sc.getPriceModifier() : 0.0);
+                    modSum += mod;
+                    OrderItemChoice choice = new OrderItemChoice();
+                    choice.setOrderItem(item);
+                    choice.setGroupName(sc.getGroupName());
+                    choice.setChoiceLabel(sc.getChoiceLabel());
+                    choice.setPriceModifier(mod);
+                    item.getChoices().add(choice);
+                }
+            }
+            // SERVER-authoritative line total: real menu price + additive modifiers, never the client's price.
+            item.setTotalPrice((menuItem.getPrice() + modSum) * itemDTO.getQuantity());
 
             // Reserve stock atomically (don't deduct yet — deducted when the order is confirmed via ITN).
             // A read-check-write here would oversell the last unit under concurrent checkout; the DB
