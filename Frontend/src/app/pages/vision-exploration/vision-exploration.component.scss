@@ -45,6 +45,19 @@ h2 span { font-weight:500; color:#94a3b8; font-size:12px; }
 .underv-cell { padding-bottom:34px !important; }
 /* eyes UP inside the opening — the V's lower tip reads as a NOSE below them */
 .vx-pos-nose.vx-l { left:34%; top:38%; } .vx-pos-nose.vx-r { left:54%; top:38%; }
+
+/* ── cinematic essence (CSS approx of the 3D render) ────────────────────── */
+.vx-cine .vx-img { filter:brightness(0) invert(.17) drop-shadow(0 4px 14px rgba(0,0,0,.7)); }
+.vx-bite-glow { position:absolute; left:50%; top:30%; width:18%; height:22%; z-index:1;
+  background:radial-gradient(circle, rgba(255,95,22,.95) 0%, rgba(255,75,12,.45) 55%, transparent 75%);
+  filter:blur(3px); }
+.vx-pos-bite.vx-l { left:47%; top:29%; } .vx-pos-bite.vx-r { left:57.5%; top:29%; }
+.vx-shape-cineye { width:10.5%; height:15%; opacity:1 !important;
+  border-radius:50% 50% 50% 50% / 62% 62% 38% 38%;
+  background:radial-gradient(circle at 50% 38%, #fff 0%, #FFC472 26%, #FF5A1A 58%, #C0330A 100%);
+  box-shadow:0 0 5px 2px rgba(255,90,20,1), 0 0 16px 5px rgba(255,90,20,.75), 0 0 34px 12px rgba(255,80,10,.4); }
+.vx-shape-cineye.vx-l { transform:rotate(-20deg); }
+.vx-shape-cineye.vx-r { transform:rotate(20deg); }
 [class*="vx-shape-pred"] {
   opacity:1 !important;
   background:radial-gradient(circle at 50% 45%, #FFE0B0 0%, #FF6A1A 55%, #D5410A 100%);
