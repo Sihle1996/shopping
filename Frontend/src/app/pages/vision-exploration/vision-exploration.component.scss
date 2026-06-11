@@ -58,6 +58,19 @@ h2 span { font-weight:500; color:#94a3b8; font-size:12px; }
   box-shadow:0 0 5px 2px rgba(255,90,20,1), 0 0 16px 5px rgba(255,90,20,.75), 0 0 34px 12px rgba(255,80,10,.4); }
 .vx-shape-cineye.vx-l { transform:rotate(-20deg); }
 .vx-shape-cineye.vx-r { transform:rotate(20deg); }
+
+/* ── Eye of Sauron: a single flaming slit-eye fused into the V ──────────── */
+.vx-sauron { position:absolute; left:50%; top:34%; transform:translate(-50%,-50%); z-index:2;
+  width:46%; height:26%; }
+.vx-sauron-flame { position:absolute; inset:-45% -10%; border-radius:50%;
+  background:radial-gradient(ellipse 55% 42% at 50% 50%, rgba(255,190,60,.95) 0%, rgba(255,110,25,.7) 32%, rgba(255,70,10,.32) 58%, transparent 78%);
+  filter:blur(3px); animation:sauronFlicker 2.8s ease-in-out infinite; }
+.vx-sauron-iris { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:100%; height:62%;
+  background:radial-gradient(ellipse at 50% 50%, #FFF6CC 0%, #FFC844 24%, #FF6E1E 56%, #C8350A 86%, #6e1d00 100%);
+  clip-path:polygon(0% 50%, 9% 27%, 28% 11%, 50% 5%, 72% 11%, 91% 27%, 100% 50%, 91% 73%, 72% 89%, 50% 95%, 28% 89%, 9% 73%); }
+.vx-sauron-pupil { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:8%; height:56%;
+  background:#160800; border-radius:50% / 46%; z-index:1; box-shadow:0 0 2px 1px rgba(40,12,0,.7); }
+@keyframes sauronFlicker { 0%,100%{opacity:.85; transform:scale(1)} 45%{opacity:1; transform:scale(1.05)} 70%{opacity:.92; transform:scale(.99)} }
 [class*="vx-shape-pred"] {
   opacity:1 !important;
   background:radial-gradient(circle at 50% 45%, #FFE0B0 0%, #FF6A1A 55%, #D5410A 100%);
