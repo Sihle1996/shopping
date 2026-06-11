@@ -49,7 +49,9 @@
 
         <!-- CINEMATIC STOREFRONT SCENE -->
         <div class="sf-scene" [class.sf-ready]="canGoLive" [class.sf-launching]="launching"
-             [style.--scrim]="scrimOpacity">
+             [style.--scrim]="scrimOpacity" [style.--glow]="readinessPercent / 100">
+          <div class="sf-backdrop" *ngIf="state.coverImageUrl"
+               [style.background-image]="'url(' + resolveImg(state.coverImageUrl) + ')'"></div>
           <div class="sf-sky"></div>
 
           <div class="sf-store">
@@ -60,9 +62,9 @@
             <div class="sf-awning"></div>
             <div class="sf-window" [class.lit]="state.menuItemCount > 0">
               <ng-container *ngIf="state.sampleMenuItems?.length; else dishSkel">
-                <div class="sf-dish" *ngFor="let d of state.sampleMenuItems">
+                <div class="sf-dish" *ngFor="let d of state.sampleMenuItems" [title]="d.name">
                   <img *ngIf="d.image" [src]="resolveImg(d.image)" [alt]="d.name" />
-                  <span *ngIf="!d.image" class="sf-dish-ph">{{ d.name?.charAt(0) || '·' }}</span>
+                  <span *ngIf="!d.image" class="sf-dish-plate"></span>
                 </div>
               </ng-container>
               <ng-template #dishSkel>
@@ -85,6 +87,7 @@
           </div>
 
           <div class="sf-scrim"></div>
+          <div class="sf-glow"></div>
 
           <div class="sf-success" *ngIf="launched">
             <i class="bi bi-shop-window"></i>
@@ -104,6 +107,10 @@
                  [style.width.%]="readinessPercent"
                  [style.background]="canGoLive ? '#22c55e' : 'var(--brand)'"></div>
           </div>
+          <p class="text-[11px] mt-1.5" [ngClass]="canGoLive ? 'text-green-600 font-semibold' : 'text-textMuted'">
+            <ng-container *ngIf="canGoLive">Ready to open — hit Go Live.</ng-container>
+            <ng-container *ngIf="!canGoLive">{{ stepsRemaining }} step{{ stepsRemaining === 1 ? '' : 's' }} remaining before opening.</ng-container>
+          </p>
         </div>
 
         <!-- Go Live -->

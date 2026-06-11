@@ -197,6 +197,8 @@ export class AdminEnrollmentComponent implements OnInit {
     return Math.max(0.2, 0.72 - this.readinessPercent / 100 * 0.5);
   }
 
+  get stepsRemaining(): number { return this.requiredItems.filter(i => !i.done).length; }
+
   resolveImg(url?: string): string {
     if (!url) return '';
     return url.startsWith('http') ? url : `${environment.apiUrl}${url}`;

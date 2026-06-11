@@ -138,3 +138,29 @@
 @keyframes sfIdle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
 @keyframes sfFlicker { 0%, 16%, 20%, 100% { opacity: 1; } 17%, 19% { opacity: .45; } 18% { opacity: .75; } }
 @keyframes sfFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── Phase A: real food, cover backdrop, warm interior glow ─────────────── */
+.sf-scene .sf-backdrop {
+  position: absolute; inset: 0; z-index: 0;
+  background-size: cover; background-position: center;
+  filter: blur(7px) brightness(.42) saturate(1.15);
+  transform: scale(1.12); opacity: .75;
+}
+.sf-scene .sf-sign .sf-logo {
+  width: 26px; height: 26px; border-radius: 6px; box-shadow: 0 0 0 2px rgba(255, 255, 255, .18);
+}
+/* Elegant plated placeholder for items without a photo (no letter tiles) */
+.sf-scene .sf-dish-plate {
+  width: 100%; height: 100%;
+  background:
+    radial-gradient(circle at 50% 47%, rgba(255, 255, 255, .9) 0 26%, transparent 27%),
+    radial-gradient(circle at 50% 50%, #f6d9a8 0 54%, #e7af6b 55% 100%);
+}
+/* Warm interior light that grows with readiness (cool dusk → warm) */
+.sf-scene .sf-glow {
+  position: absolute; inset: 0; z-index: 4; pointer-events: none;
+  background: radial-gradient(55% 46% at 50% 56%, rgba(255, 198, 112, .6), transparent 70%);
+  opacity: calc(var(--glow, 0) * .85);
+  mix-blend-mode: screen; transition: opacity .7s ease;
+}
+.sf-scene.sf-launching .sf-glow { opacity: 1; }
