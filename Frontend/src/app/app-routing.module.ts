@@ -26,6 +26,7 @@ import { TermsComponent } from './pages/legal/terms/terms.component';
 import { PrivacyComponent } from './pages/legal/privacy/privacy.component';
 import { RestaurantTermsComponent } from './pages/legal/restaurant-terms/restaurant-terms.component';
 import { LoaderDemoComponent } from './pages/loader-demo/loader-demo.component';
+import { BrandDemoComponent } from './pages/brand-demo/brand-demo.component';
 
 const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -55,6 +56,7 @@ const routes: Routes = [
   { path: 'thank-you', component: ThankYouComponent },
 
   { path: 'loader-demo', component: LoaderDemoComponent },
+  { path: 'brand-demo', component: BrandDemoComponent },
   { path: 'login', component: LoginComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'register', component: RegisterComponent },

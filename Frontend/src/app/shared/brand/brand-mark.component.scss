@@ -1,0 +1,36 @@
+:host { display: inline-flex; line-height: 0; }
+.bm { display: block; }
+
+/* The bite is empty by default (matches the logo); each mode animates it. */
+.bm-bite { opacity: 0; transform-box: fill-box; transform-origin: center; }
+
+/* loading — the bite fills and empties rhythmically (the "signal" pulsing at the origin) */
+.bm-loading .bm-bite { animation: bmPulse 1.3s ease-in-out infinite; }
+@keyframes bmPulse {
+  0%, 100% { opacity: 0; transform: scale(.25); }
+  50%      { opacity: 1; transform: scale(1); }
+}
+
+/* thinking (AI) — a continuous fill + soft glow, like an aperture working */
+.bm-thinking .bm-bite { animation: bmThink 1.5s ease-in-out infinite; }
+@keyframes bmThink {
+  0%   { opacity: .25; transform: scale(.5); filter: drop-shadow(0 0 0 rgba(231,111,81,0)); }
+  50%  { opacity: 1;   transform: scale(1);  filter: drop-shadow(0 0 5px rgba(231,111,81,.7)); }
+  100% { opacity: .25; transform: scale(.5); filter: drop-shadow(0 0 0 rgba(231,111,81,0)); }
+}
+
+/* success — bite pops in and holds with a glow */
+.bm-success .bm-bite { opacity: 1; animation: bmPop .5s ease-out; filter: drop-shadow(0 0 4px rgba(231,111,81,.5)); }
+@keyframes bmPop {
+  0%   { transform: scale(.25); }
+  60%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+/* error — steady red bite */
+.bm-error .bm-bite { opacity: 1; fill: #ef4444; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bm-bite { animation: none !important; }
+  .bm-loading .bm-bite, .bm-thinking .bm-bite, .bm-success .bm-bite { opacity: 1; transform: none; filter: none; }
+}
