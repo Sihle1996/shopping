@@ -1,3 +1,6 @@
-<div *ngIf="loading$ | async" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-  <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-</div>
+<app-loader *ngIf="visible"
+            [overlay]="true"
+            size="lg"
+            messagesMode="none"
+            successMode="minimal"
+            [class.gs-leaving]="leaving"></app-loader>

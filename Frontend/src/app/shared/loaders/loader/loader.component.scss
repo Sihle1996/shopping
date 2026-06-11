@@ -1,0 +1,74 @@
+:host { display: block; }
+
+.ldr { display: inline-flex; align-items: center; justify-content: center; }
+
+/* Overlay = frosted glass, centered (standalone + global use) */
+.ldr-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(255, 255, 255, .72);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  transition: opacity .28s ease;
+}
+
+.ldr-inner { display: flex; flex-direction: column; align-items: center; gap: 11px; }
+
+/* Wordmark — tuned to the production logo: heavy Montserrat, tight kerning, whole + static */
+.ldr-wordmark {
+  font-family: 'Montserrat', sans-serif; font-weight: 800;
+  letter-spacing: -0.045em; line-height: 1; white-space: nowrap;
+}
+.ldr-crave { color: #1F2937; }
+.ldr-it {
+  color: #E76F51; /* fallback if background-clip unsupported */
+  background: linear-gradient(110deg, #E76F51 0%, #E76F51 42%, #FFE8DC 50%, #E76F51 58%, #E76F51 100%);
+  background-size: 220% 100%;
+  background-position: 120% 0;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  will-change: background-position, filter;
+}
+
+/* Progress track — the HERO: a wide streak with a long soft trail sweeps through it */
+.ldr-track {
+  position: relative; height: 3px; width: 100%; max-width: 150px;
+  border-radius: 3px; background: rgba(231, 111, 81, .12); overflow: visible;
+}
+.ldr-streak {
+  position: absolute; top: 0; bottom: 0; width: 72px; left: -40%;
+  transform: translateX(-50%); border-radius: 3px;
+  background: linear-gradient(90deg, transparent 0%, rgba(231, 111, 81, .28) 45%, rgba(231, 111, 81, .85) 82%, #E76F51 100%);
+  box-shadow: 0 0 10px rgba(231, 111, 81, .55);
+}
+.ldr-fill {
+  position: absolute; inset: 0; transform-origin: left center; transform: scaleX(0);
+  background: #E76F51; border-radius: 2px;
+}
+
+.ldr-msg {
+  font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 500;
+  color: #6b7280; letter-spacing: .01em;
+}
+
+/* Sizes */
+.ldr-sm .ldr-wordmark { font-size: 20px; } .ldr-sm .ldr-track { max-width: 110px; }
+.ldr-md .ldr-wordmark { font-size: 30px; } .ldr-md .ldr-track { max-width: 150px; }
+.ldr-lg .ldr-wordmark { font-size: 44px; } .ldr-lg .ldr-track { max-width: 200px; }
+
+/* Error — signal stops, subtle red underline */
+.ldr[data-state="error"] .ldr-track { background: #ef4444; }
+.ldr[data-state="error"] .ldr-streak { display: none; }
+.ldr[data-state="error"] .ldr-msg { color: #ef4444; }
+
+/* Quick fade when the global overlay dismisses */
+:host(.gs-leaving) .ldr-overlay { opacity: 0; }
+
+/* Reduced motion — wordmark whole, "-it" solid orange, gentle breath, static track */
+@media (prefers-reduced-motion: reduce) {
+  .ldr-it {
+    background: none; color: #E76F51; -webkit-text-fill-color: #E76F51;
+    filter: none !important; animation: ldrBreath 4.5s ease-in-out infinite;
+  }
+  .ldr-streak { display: none; }
+}
+@keyframes ldrBreath { 0%, 100% { opacity: .9; } 50% { opacity: 1; } }

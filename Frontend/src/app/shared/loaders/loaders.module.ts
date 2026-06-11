@@ -7,6 +7,7 @@ import { GlobalSpinnerComponent } from './global-spinner/global-spinner.componen
 import { TableSkeletonComponent } from './table-skeleton/table-skeleton.component';
 import { ChartSkeletonComponent } from './chart-skeleton/chart-skeleton.component';
 import { ButtonSpinnerComponent } from './button-spinner/button-spinner.component';
+import { LoaderComponent } from './loader/loader.component';
 
 @NgModule({
   declarations: [
@@ -14,6 +15,7 @@ import { ButtonSpinnerComponent } from './button-spinner/button-spinner.componen
     TableSkeletonComponent,
     ChartSkeletonComponent,
     ButtonSpinnerComponent,
+    LoaderComponent,
   ],
   imports: [
     CommonModule,
@@ -23,6 +25,7 @@ import { ButtonSpinnerComponent } from './button-spinner/button-spinner.componen
     TableSkeletonComponent,
     ChartSkeletonComponent,
     ButtonSpinnerComponent,
+    LoaderComponent,
   ],
 })
 export class LoadersModule {}
