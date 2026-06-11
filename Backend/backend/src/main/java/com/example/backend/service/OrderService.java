@@ -50,6 +50,7 @@ public class OrderService {
     private final LoyaltyService loyaltyService;
     private final PayFastService payFastService;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
+    private final DeliveryFeeService deliveryFeeService;
     private final WebPushService webPushService;
     private final PayoutLedgerService payoutLedgerService;
     private final AuditService auditService;
@@ -336,14 +337,12 @@ public class OrderService {
                     }
                 }
                 order.setTenant(tenant);
-                // Use frontend-calculated distance-based fee if provided, with server-side bounds check
-                double baseFee = tenant.getDeliveryFeeBase() != null ? tenant.getDeliveryFeeBase().doubleValue() : 0.0;
-                if (request.getDeliveryFee() != null && request.getDeliveryFee() >= baseFee) {
-                    double maxAllowed = baseFee * 5 + 100;
-                    order.setDeliveryFee(Math.min(request.getDeliveryFee(), maxAllowed));
-                } else {
-                    order.setDeliveryFee(baseFee);
-                }
+                // SERVER-authoritative delivery fee — recomputed from the store/delivery coordinates via
+                // the same service the quote endpoint uses, so displayed == charged. The client's submitted
+                // deliveryFee is IGNORED (a distant customer could otherwise submit baseFee and skip the
+                // distance premium — the fee is platform revenue funding the drivers).
+                order.setDeliveryFee(deliveryFeeService
+                        .compute(tenant, request.getDeliveryLat(), request.getDeliveryLon()).fee());
                 if (tenant.getPlatformCommissionPercent() != null) {
                     double fee = BigDecimal.valueOf(totalAmount)
                             .multiply(tenant.getPlatformCommissionPercent())
