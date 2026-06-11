@@ -64,16 +64,12 @@ export class LoaderComponent implements AfterViewInit, OnChanges, OnDestroy {
   /** One synced sweep drives the streak, the "-it" highlight, and the glow from a single progress value. */
   private startLoading(): void {
     this.loadTl?.kill();
-    const streak = this.q('.ldr-streak'); const shine = this.q('.ldr-shine');
+    const streak = this.q('.ldr-streak');
     const o = { p: 0 };
     this.loadTl = gsap.timeline({ repeat: -1, repeatDelay: 0.6 });
     this.loadTl.fromTo(o, { p: 0 }, {
       p: 1, duration: 1.0, ease: 'power1.inOut',
-      onUpdate: () => {
-        const p = o.p;
-        if (streak) gsap.set(streak, { left: (-30 + p * 160) + '%' });          // off-left → off-right
-        if (shine) gsap.set(shine, { backgroundPositionX: (120 - p * 200) + '%' }); // light sweeps the "-it"
-      },
+      onUpdate: () => { if (streak) gsap.set(streak, { left: (-30 + o.p * 160) + '%' }); },  // streak sweeps the track
     });
   }
 
