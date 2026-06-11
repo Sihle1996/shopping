@@ -1,36 +1,35 @@
 :host { display: inline-flex; line-height: 0; }
-.bm { display: block; }
+.bm { position: relative; display: inline-block; line-height: 0; }
 
-/* The bite is empty by default (matches the logo); each mode animates it. */
-.bm-bite { opacity: 0; transform-box: fill-box; transform-origin: center; }
+/* the real glyph, on top */
+.bm-v { display: block; width: auto; position: relative; z-index: 1; }
+.bm-on-dark .bm-v { filter: brightness(0) invert(1); }   /* white v on dark surfaces */
 
-/* loading — the bite fills and empties rhythmically (the "signal" pulsing at the origin) */
+/* a small orange signal pulsing IN the bite (on top of the glyph, sat in the open notch) */
+.bm-bite {
+  position: absolute; z-index: 2;
+  left: 62%; top: 38%; width: 14%; height: 14%;
+  background: #E76F51; border-radius: 50%;
+  box-shadow: 0 0 4px rgba(231, 111, 81, .6);
+  opacity: 0; transform-origin: center;
+}
+
+/* loading — the bite fills + empties */
 .bm-loading .bm-bite { animation: bmPulse 1.3s ease-in-out infinite; }
-@keyframes bmPulse {
-  0%, 100% { opacity: 0; transform: scale(.25); }
-  50%      { opacity: 1; transform: scale(1); }
-}
+@keyframes bmPulse { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
 
-/* thinking (AI) — a continuous fill + soft glow, like an aperture working */
-.bm-thinking .bm-bite { animation: bmThink 1.5s ease-in-out infinite; }
-@keyframes bmThink {
-  0%   { opacity: .25; transform: scale(.5); filter: drop-shadow(0 0 0 rgba(231,111,81,0)); }
-  50%  { opacity: 1;   transform: scale(1);  filter: drop-shadow(0 0 5px rgba(231,111,81,.7)); }
-  100% { opacity: .25; transform: scale(.5); filter: drop-shadow(0 0 0 rgba(231,111,81,0)); }
-}
+/* thinking (AI) — a slower continuous fill */
+.bm-thinking .bm-bite { animation: bmThink 1.6s ease-in-out infinite; }
+@keyframes bmThink { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
 
-/* success — bite pops in and holds with a glow */
-.bm-success .bm-bite { opacity: 1; animation: bmPop .5s ease-out; filter: drop-shadow(0 0 4px rgba(231,111,81,.5)); }
-@keyframes bmPop {
-  0%   { transform: scale(.25); }
-  60%  { transform: scale(1.18); }
-  100% { transform: scale(1); }
-}
+/* success — fills + holds with a little pop */
+.bm-success .bm-bite { opacity: 1; animation: bmPop .5s ease-out; }
+@keyframes bmPop { 0% { transform: scale(.4); } 60% { transform: scale(1.18); } 100% { transform: scale(1); } }
 
 /* error — steady red bite */
-.bm-error .bm-bite { opacity: 1; fill: #ef4444; }
+.bm-error .bm-bite { opacity: 1; background: #ef4444; }
 
 @media (prefers-reduced-motion: reduce) {
   .bm-bite { animation: none !important; }
-  .bm-loading .bm-bite, .bm-thinking .bm-bite, .bm-success .bm-bite { opacity: 1; transform: none; filter: none; }
+  .bm-loading .bm-bite, .bm-thinking .bm-bite, .bm-success .bm-bite { opacity: 1; transform: none; }
 }

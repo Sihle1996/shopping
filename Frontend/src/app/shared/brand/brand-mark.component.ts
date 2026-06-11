@@ -1,42 +1,27 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-let _bmUid = 0;
-
 /**
- * The CraveIt "bitten V" — the brand motif as a reusable vector symbol. The bite can fill / glow / pulse,
- * so one mark powers the loader, the AI "thinking" state, notification badges, the assistant button,
- * empty states, etc. (Approximation of the production glyph until the official vector is available.)
+ * The CraveIt "bitten V" — the REAL glyph (extracted from the production logo, craveit-v.png) as a reusable
+ * symbol. The bite-fill sits *behind* the v, so the black mark masks it and orange shows only through the
+ * real notch. mode drives the bite (idle = empty, matching the logo; the rest animate it). One mark powers
+ * the loader, AI "thinking" state, badges, the assistant button, empty states, etc.
  */
 @Component({
   selector: 'app-brand-mark',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <svg class="bm" [ngClass]="'bm-' + mode" [style.width.px]="size" [style.height.px]="size"
-         viewBox="0 0 120 120" fill="none" aria-hidden="true">
-      <defs>
-        <mask [attr.id]="mid">
-          <rect x="0" y="0" width="120" height="120" fill="#fff" />
-          <path [attr.d]="bitePath" fill="#000" />
-        </mask>
-      </defs>
-      <!-- the bold "v", with the bite cut out -->
-      <path class="bm-v" d="M21 30 L60 99 L99 30"
-            [attr.stroke]="dark ? '#1F2937' : '#ffffff'" stroke-width="25"
-            stroke-linecap="round" stroke-linejoin="round" [attr.mask]="'url(#' + mid + ')'" />
-      <!-- the bite — sharp angular notch; fills with orange when active -->
-      <path class="bm-bite" [attr.d]="bitePath" fill="#E76F51" />
-    </svg>
+    <span class="bm" [ngClass]="'bm-' + mode" [class.bm-on-dark]="!dark">
+      <span class="bm-bite"></span>
+      <img class="bm-v" src="assets/craveit-v.png" [style.height.px]="size" alt="" aria-hidden="true" />
+    </span>
   `,
   styleUrls: ['./brand-mark.component.scss'],
 })
 export class BrandMarkComponent {
-  /** idle = empty bite (matches the logo); the others animate the bite. */
+  /** idle = empty bite (matches the logo); the others fill/animate the bite. */
   @Input() mode: 'idle' | 'loading' | 'thinking' | 'success' | 'error' = 'idle';
   @Input() size = 48;
-  @Input() dark = true;          // dark "v" on light surfaces; white "v" on dark
-  /** the angular "bite" notch in the top of the right arm (approx the glyph) */
-  bitePath = 'M73 28 L95 30 L88 41 L96 49 L80 45 Z';
-  mid = 'bm' + (++_bmUid);
+  @Input() dark = true;   // dark glyph on light surfaces; white glyph on dark
 }
