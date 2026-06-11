@@ -86,4 +86,21 @@
       <div class="cell"><span class="cap">empty-state beast (presence)</span><ng-container *ngTemplateOutlet="vmark; context:{size:56, anim:'blink'}"></ng-container></div>
     </div>
   </section>
+
+  <!-- 8. Focused (improved) -->
+  <section style="border:2px solid #E76F51">
+    <h2>8 · Focused — improved <span>(inside · narrowed angled slit · 64px — intelligent, NOT friendly)</span></h2>
+    <div class="row">
+      <div class="cell" *ngFor="let st of states">
+        <span class="cap">{{ st }}</span>
+        <ng-container *ngTemplateOutlet="vmark; context:{size:64, pos:'inside', shape:'focused', state:st, color: st==='insight'?'orange':'neutral'}"></ng-container>
+      </div>
+      <div class="cell"><span class="cap">working FAB</span><div class="fab"><ng-container *ngTemplateOutlet="vmark; context:{size:36, pos:'inside', shape:'focused', anim:'medium', dark:true}"></ng-container></div></div>
+      <div class="cell"><span class="cap">empty-state · blink</span><ng-container *ngTemplateOutlet="vmark; context:{size:56, pos:'inside', shape:'focused', anim:'blink'}"></ng-container></div>
+    </div>
+    <div class="row baseline" style="margin-top:8px">
+      <div class="cell" *ngFor="let z of [26,32,40,56]"><span class="cap">{{z}}px · seeing</span>
+        <ng-container *ngTemplateOutlet="vmark; context:{size:z, pos:'inside', shape:'focused', state:'seeing'}"></ng-container></div>
+    </div>
+  </section>
 </div>

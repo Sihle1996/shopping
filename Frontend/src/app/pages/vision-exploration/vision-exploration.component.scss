@@ -33,6 +33,10 @@ h2 span { font-weight:500; color:#94a3b8; font-size:12px; }
 .vx-shape-sharp { width:10%; height:12%; }
 .vx-shape-sharp.vx-l { clip-path:polygon(0 0, 100% 50%, 0 100%); transform:rotate(-6deg); }   /* "›" */
 .vx-shape-sharp.vx-r { clip-path:polygon(100% 0, 0 50%, 100% 100%); transform:rotate(6deg); }  /* "‹" */
+/* focused — a narrowed, angled slit: intelligent + intense, NOT friendly (no glint) */
+.vx-shape-focused { width:12.5%; height:5.5%; border-radius:2px; }
+.vx-shape-focused.vx-l { transform:rotate(9deg); }
+.vx-shape-focused.vx-r { transform:rotate(-9deg); }
 
 /* static states (opacity) */
 .vx-state-dormant   .vx-eye { opacity:0; }
