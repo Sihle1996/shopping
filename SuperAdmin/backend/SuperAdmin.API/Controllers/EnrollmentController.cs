@@ -11,6 +11,8 @@ namespace SuperAdmin.API.Controllers;
 [Authorize(Roles = "SUPERADMIN")]
 public class EnrollmentController(AppDbContext db, ResendEmailService email) : ControllerBase
 {
+    private static readonly string[] RequiredDocTypes = { "CIPC", "COA", "BANK_DETAILS" };
+
     [HttpGet("ping")]
     [AllowAnonymous]
     public IActionResult Ping() => Ok(new { status = "enrollment-controller-active", ts = DateTime.UtcNow });
@@ -46,7 +48,8 @@ public class EnrollmentController(AppDbContext db, ResendEmailService email) : C
                 d.FileName,
                 d.Status,
                 d.ReviewNotes,
-                d.UploadedAt
+                d.UploadedAt,
+                d.ReviewedAt
             })
         });
 
@@ -58,6 +61,14 @@ public class EnrollmentController(AppDbContext db, ResendEmailService email) : C
     {
         var tenant = await db.Tenants.FindAsync(tenantId);
         if (tenant == null) return NotFound();
+
+        // Gate: every REQUIRED document must be ACCEPTED before a store can be approved.
+        var docs = await db.StoreDocuments.Where(d => d.TenantId == tenantId).ToListAsync();
+        var outstanding = RequiredDocTypes
+            .Where(rt => !docs.Any(d => d.DocumentType == rt && d.Status == "ACCEPTED"))
+            .ToList();
+        if (outstanding.Count > 0)
+            return BadRequest(new { message = "Accept every required document first. Outstanding: " + string.Join(", ", outstanding) });
 
         tenant.ApprovalStatus = "APPROVED";
         tenant.Active = false;
@@ -117,7 +128,8 @@ public class EnrollmentController(AppDbContext db, ResendEmailService email) : C
                 d.FileName,
                 d.Status,
                 d.ReviewNotes,
-                d.UploadedAt
+                d.UploadedAt,
+                d.ReviewedAt
             })
         });
 
@@ -142,5 +154,33 @@ public class EnrollmentController(AppDbContext db, ResendEmailService email) : C
         return Ok(new { message = "Store archived" });
     }
 
+    // Per-document review — the super-admin accepts or rejects each uploaded document with optional
+    // notes. Writes store_documents.status / review_notes / reviewed_at (previously never set). A store
+    // can only be APPROVED once every required document is ACCEPTED (see Approve above).
+    [HttpPost("document/{documentId}/review")]
+    public async Task<IActionResult> ReviewDocument(Guid documentId, [FromBody] DocumentReviewRequest request)
+    {
+        var status = (request.Status ?? "").ToUpperInvariant();
+        if (status != "ACCEPTED" && status != "REJECTED")
+            return BadRequest(new { message = "Status must be ACCEPTED or REJECTED." });
+
+        var doc = await db.StoreDocuments.FindAsync(documentId);
+        if (doc == null) return NotFound(new { message = "Document not found" });
+
+        var tenant = await db.Tenants.FindAsync(doc.TenantId);
+        if (tenant == null) return NotFound();
+        if (tenant.ApprovalStatus != "PENDING_REVIEW")
+            return BadRequest(new { message = "This store is not pending review." });
+
+        doc.Status = status;
+        doc.ReviewNotes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
+        doc.ReviewedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Ok(new { message = "Document reviewed", doc.Id, doc.Status, doc.ReviewedAt });
+    }
+
     public record RejectRequest(string Reason);
+
+    public record DocumentReviewRequest(string Status, string? Notes);
 }

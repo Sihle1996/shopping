@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { enrollmentService } from '../../services/enrollment.service'
 import { useToast } from '../../context/ToastContext'
-import type { PendingEnrollmentDto, StoreDocumentDto } from '../../types'
+import type { PendingEnrollmentDto, StoreDocumentDto, DocumentStatus } from '../../types'
 import { CheckCircle, XCircle, FileText, ChevronDown, ChevronUp, ExternalLink, Clock, AlertTriangle, Archive } from 'lucide-react'
 
 const DOC_LABELS: Record<string, string> = {
@@ -34,25 +34,55 @@ function SlaChip({ submittedAt }: { submittedAt?: string | null }) {
   return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 flex items-center gap-1"><AlertTriangle size={10} />Overdue — {Math.round(hours / 24)}d</span>
 }
 
-function DocumentRow({ doc }: { doc: StoreDocumentDto }) {
+const REQUIRED_DOCS = ['CIPC', 'COA', 'BANK_DETAILS']
+
+function StatusPill({ status }: { status: DocumentStatus }) {
+  if (status === 'ACCEPTED')
+    return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 flex-shrink-0">Accepted</span>
+  if (status === 'REJECTED')
+    return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 flex-shrink-0">Rejected</span>
+  return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-500/15 text-gray-400 flex-shrink-0">Pending</span>
+}
+
+function DocumentRow({ doc, onReview, reviewing }:
+  { doc: StoreDocumentDto; onReview?: (id: string, status: 'ACCEPTED' | 'REJECTED', notes: string) => void; reviewing?: boolean }) {
+  const [notes, setNotes] = useState(doc.reviewNotes ?? '')
   return (
-    <div className="flex items-center gap-3 py-2 px-3 rounded-xl bg-gray-800/60 text-sm">
-      <FileText size={15} className="text-gray-400 flex-shrink-0" />
-      <span className="flex-1 text-gray-200">{DOC_LABELS[doc.documentType] ?? doc.documentType}</span>
-      <span className="text-gray-500 text-xs">{doc.fileName}</span>
-      <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer"
-         className="text-orange-400 hover:text-orange-300 flex items-center gap-1 text-xs flex-shrink-0">
-        View <ExternalLink size={11} />
-      </a>
+    <div className="rounded-xl bg-gray-800/60 text-sm">
+      <div className="flex items-center gap-3 py-2 px-3">
+        <FileText size={15} className="text-gray-400 flex-shrink-0" />
+        <span className="flex-1 text-gray-200 truncate">{DOC_LABELS[doc.documentType] ?? doc.documentType}</span>
+        <span className="text-gray-500 text-xs truncate max-w-[110px] hidden sm:inline">{doc.fileName}</span>
+        <StatusPill status={doc.status} />
+        <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer"
+           className="text-orange-400 hover:text-orange-300 flex items-center gap-1 text-xs flex-shrink-0">
+          View <ExternalLink size={11} />
+        </a>
+      </div>
+      {onReview ? (
+        <div className="flex items-center gap-2 px-3 pb-2">
+          <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Note (optional — shown to the owner if rejected)"
+                 className="flex-1 min-w-0 bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-gray-500" />
+          <button onClick={() => onReview(doc.id, 'ACCEPTED', notes)} disabled={reviewing}
+                  className="px-2.5 py-1.5 rounded-lg bg-green-600/20 hover:bg-green-600/30 text-green-400 text-xs font-semibold border border-green-600/30 disabled:opacity-50 flex-shrink-0">Accept</button>
+          <button onClick={() => onReview(doc.id, 'REJECTED', notes)} disabled={reviewing}
+                  className="px-2.5 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs font-semibold border border-red-600/30 disabled:opacity-50 flex-shrink-0">Reject</button>
+        </div>
+      ) : doc.reviewNotes ? (
+        <p className="px-3 pb-2 text-xs text-gray-500">Note: {doc.reviewNotes}</p>
+      ) : null}
     </div>
   )
 }
 
-function EnrollmentRow({ store, onApprove, onReject, approving, rejecting }:
-  { store: PendingEnrollmentDto; onApprove: () => void; onReject: (reason: string) => void; approving: boolean; rejecting: boolean }) {
+function EnrollmentRow({ store, onApprove, onReject, onReview, approving, rejecting, reviewing }:
+  { store: PendingEnrollmentDto; onApprove: () => void; onReject: (reason: string) => void;
+    onReview: (id: string, status: 'ACCEPTED' | 'REJECTED', notes: string) => void;
+    approving: boolean; rejecting: boolean; reviewing: boolean }) {
   const [expanded, setExpanded] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
   const [showRejectForm, setShowRejectForm] = useState(false)
+  const allRequiredAccepted = REQUIRED_DOCS.every(rt => store.documents.some(d => d.documentType === rt && d.status === 'ACCEPTED'))
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden mb-4">
@@ -124,23 +154,31 @@ function EnrollmentRow({ store, onApprove, onReject, approving, rejecting }:
             {store.documents.length === 0 ? (
               <p className="text-sm text-gray-600">No documents uploaded</p>
             ) : (
-              store.documents.map(doc => <DocumentRow key={doc.id} doc={doc} />)
+              store.documents.map(doc => <DocumentRow key={doc.id} doc={doc} onReview={onReview} reviewing={reviewing} />)
             )}
           </div>
 
           {/* Actions */}
           {!showRejectForm ? (
-            <div className="flex items-center gap-3 pt-2">
-              <button onClick={onApprove} disabled={approving}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-500 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors">
-                <CheckCircle size={15} />
-                {approving ? 'Approving…' : 'Approve'}
-              </button>
-              <button onClick={() => setShowRejectForm(true)}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-red-600/20 hover:bg-red-600/30 text-red-400 text-sm font-semibold rounded-xl border border-red-600/30 transition-colors">
-                <XCircle size={15} />
-                Reject
-              </button>
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center gap-3">
+                <button onClick={onApprove} disabled={approving || !allRequiredAccepted}
+                        title={!allRequiredAccepted ? 'Accept every required document first' : ''}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors">
+                  <CheckCircle size={15} />
+                  {approving ? 'Approving…' : 'Approve'}
+                </button>
+                <button onClick={() => setShowRejectForm(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-red-600/20 hover:bg-red-600/30 text-red-400 text-sm font-semibold rounded-xl border border-red-600/30 transition-colors">
+                  <XCircle size={15} />
+                  Reject
+                </button>
+              </div>
+              {!allRequiredAccepted && (
+                <p className="text-xs text-amber-400/80 flex items-center gap-1">
+                  <AlertTriangle size={11} /> Accept all required documents (CIPC, COA, Bank) to enable approval.
+                </p>
+              )}
             </div>
           ) : (
             <div className="space-y-3 pt-2">
@@ -313,6 +351,16 @@ export default function Enrollment() {
     onError: () => { showToast('Failed to archive store', 'error'); setActionId(null); setActionType(null) }
   })
 
+  const reviewMutation = useMutation({
+    mutationFn: ({ docId, status, notes }: { docId: string; status: 'ACCEPTED' | 'REJECTED'; notes: string }) =>
+      enrollmentService.reviewDocument(docId, status, notes),
+    onSuccess: (_, { status }) => {
+      showToast(`Document ${status === 'ACCEPTED' ? 'accepted' : 'rejected'}`, 'success')
+      queryClient.invalidateQueries({ queryKey: ['enrollment-pending'] })
+    },
+    onError: () => showToast('Failed to review document', 'error')
+  })
+
   const isLoading = tab === 'pending' ? pendingLoading : rejectedLoading
   const error = tab === 'pending' ? pendingError : rejectedError
   const items = tab === 'pending' ? pending : rejected
@@ -408,6 +456,8 @@ export default function Enrollment() {
                 setActionId(store.id); setActionType('reject')
                 rejectMutation.mutate({ id: store.id, reason })
               }}
+              reviewing={reviewMutation.isPending}
+              onReview={(docId, status, notes) => reviewMutation.mutate({ docId, status, notes })}
             />
           ))}
         </div>

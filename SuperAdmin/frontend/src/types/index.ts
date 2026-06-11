@@ -181,6 +181,7 @@ export interface StoreDocumentDto {
   status: DocumentStatus
   reviewNotes?: string
   uploadedAt: string
+  reviewedAt?: string
 }
 
 export interface PendingEnrollmentDto {

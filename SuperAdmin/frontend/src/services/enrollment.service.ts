@@ -22,5 +22,9 @@ export const enrollmentService = {
 
   async archive(tenantId: string): Promise<void> {
     await api.post(`/enrollment/${tenantId}/archive`)
+  },
+
+  async reviewDocument(documentId: string, status: 'ACCEPTED' | 'REJECTED', notes?: string): Promise<void> {
+    await api.post(`/enrollment/document/${documentId}/review`, { status, notes: notes ?? null })
   }
 }

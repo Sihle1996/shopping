@@ -93,6 +93,15 @@ export class AdminEnrollmentComponent implements OnInit {
     return this.state.documents.find(d => d.documentType === type);
   }
 
+  /** Documents the reviewer rejected — the owner must replace these and resubmit. */
+  get rejectedDocs(): StoreDocument[] {
+    return this.state.documents.filter(d => d.status === 'REJECTED');
+  }
+
+  docTypeLabel(type: StoreDocument['documentType']): string {
+    return this.DOC_TYPES.find(t => t.type === type)?.label ?? type;
+  }
+
   canEdit(): boolean {
     return this.state.approvalStatus === 'DRAFT' || this.state.approvalStatus === 'REJECTED';
   }
