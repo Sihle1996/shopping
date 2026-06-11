@@ -76,14 +76,21 @@
           </div>
 
           <div class="sf-pin" [class.lit]="state.hasLocation">
-            <i class="bi bi-geo-alt-fill"></i>
+            <svg class="sf-ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
             <span class="sf-pin-pulse"></span>
             <span class="sf-pin-label" *ngIf="state.hasLocation">Delivery area ready</span>
           </div>
 
           <div class="sf-scooter" [class.lit]="state.hasDriver">
             <span class="sf-driver-badge" *ngIf="state.hasDriver">Delivery ready</span>
-            <i class="bi bi-scooter"></i>
+            <svg class="sf-veh" viewBox="0 0 64 44" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="15" cy="34" r="7"/>
+              <circle cx="50" cy="34" r="7"/>
+              <path d="M15 34h11l7-16h-7"/>
+              <path d="M33 18h6l5 16h6"/>
+              <path d="M39 18l3-6h5"/>
+              <rect x="7" y="13" width="13" height="13" rx="2" fill="currentColor" stroke="none"/>
+            </svg>
           </div>
 
           <div class="sf-scrim"></div>
