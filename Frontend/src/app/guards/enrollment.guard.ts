@@ -16,10 +16,12 @@ export class EnrollmentGuard implements CanActivate {
   ) {}
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
-    // Let enrollment and pages needed during enrollment setup through
+    // Let enrollment + the pages a store needs to reach DURING go-live setup through
+    // (menu, settings, and drivers — you must be able to add a driver before going live).
     if (state.url.startsWith('/admin/enrollment')
         || state.url.startsWith('/admin/menu')
-        || state.url.startsWith('/admin/settings')) return of(true);
+        || state.url.startsWith('/admin/settings')
+        || state.url.startsWith('/admin/drivers')) return of(true);
     // SUPERADMIN bypasses enrollment check
     if (this.authService.getUserRole() === 'ROLE_SUPERADMIN') return of(true);
 
