@@ -5,9 +5,9 @@ import {
 import { gsap } from 'gsap';
 
 /**
- * Brand loader — the crave-it wordmark stays whole while a warm orange "signal" travels through it,
- * anchored to a progress streak (the hero motion). Premium SaaS feel (Stripe/Linear/Arc/Framer), never a
- * spinner. The wordmark never wipes or disappears: only light moves through "-it".
+ * Brand loader — the crave-it logo with ONLY the orange "-it" animating: it slides back and forth while
+ * "crave" stays perfectly static. Premium, restrained, never a spinner. The "-it" motion is pure CSS;
+ * GSAP only handles the entrance fade, the optional message cross-fade, and the success beat.
  */
 @Component({
   selector: 'app-loader',
@@ -27,7 +27,6 @@ export class LoaderComponent implements AfterViewInit, OnChanges, OnDestroy {
   currentMessage = '';
   private msgIndex = 0;
   private msgTimer?: any;
-  private loadTl?: gsap.core.Timeline;
   private reduce = false;
 
   constructor(private host: ElementRef) {}
@@ -35,64 +34,32 @@ export class LoaderComponent implements AfterViewInit, OnChanges, OnDestroy {
   ngAfterViewInit(): void {
     this.reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     this.startMessages();
-    if (this.reduce) return;   // "-it" breathes via CSS (it-amb); nothing else moves
-    this.playEntrance();
+    if (!this.reduce) {
+      gsap.from(this.q('.ldr-logo'), { opacity: 0, duration: 0.4, ease: 'power1.out', delay: 0.08 });
+    }
   }
 
   ngOnChanges(ch: SimpleChanges): void {
-    if (ch['state'] && !ch['state'].firstChange) this.applyState();
+    if (ch['state'] && !ch['state'].firstChange && this.state === 'success') this.applySuccess();
     if ((ch['messages'] || ch['messagesMode']) && !ch['messages']?.firstChange) this.startMessages();
   }
 
   ngOnDestroy(): void {
-    this.loadTl?.kill();
     if (this.msgTimer) clearInterval(this.msgTimer);
   }
 
   private q(sel: string): HTMLElement | null { return this.host.nativeElement.querySelector(sel); }
 
-  /** Staggered entrance: wordmark → track → signal starts. */
-  private playEntrance(): void {
-    const wm = this.q('.ldr-logo'); const track = this.q('.ldr-track');
-    gsap.set([wm, track], { opacity: 0 });
-    gsap.timeline()
-      .to(wm, { opacity: 1, duration: 0.4, ease: 'power1.out' }, 0.08)
-      .to(track, { opacity: 1, duration: 0.4, ease: 'power1.out' }, 0.15)
-      .add(() => { if (this.state === 'loading') this.startLoading(); }, 0.25);
-  }
-
-  /** One synced sweep drives the streak, the "-it" highlight, and the glow from a single progress value. */
-  private startLoading(): void {
-    this.loadTl?.kill();
-    const streak = this.q('.ldr-streak');
-    const o = { p: 0 };
-    this.loadTl = gsap.timeline({ repeat: -1, repeatDelay: 0.6 });
-    this.loadTl.fromTo(o, { p: 0 }, {
-      p: 1, duration: 1.0, ease: 'power1.inOut',
-      onUpdate: () => { if (streak) gsap.set(streak, { left: (-30 + o.p * 160) + '%' }); },  // streak sweeps the track
-    });
-  }
-
-  private applyState(): void {
-    if (this.state === 'success') this.applySuccess();
-    else if (this.state === 'error') this.loadTl?.pause();
-    else if (this.state === 'loading' && !this.reduce) this.startLoading();
-  }
-
+  /** Completion: minimal = quick fade; celebrate = glow the "-it" once, then fade. */
   private applySuccess(): void {
-    this.loadTl?.kill();
-    const root = this.q('.ldr-inner'); const logo = this.q('.ldr-it'); const fill = this.q('.ldr-fill');
+    const root = this.q('.ldr-inner'); const it = this.q('.ldr-it');
     if (this.successMode === 'minimal' || this.reduce) {
       gsap.to(root, { opacity: 0, duration: 0.35, onComplete: () => this.finished.emit() });
       return;
     }
-    // celebrate: complete the pass → fill the line → logo glows once → emit
-    const streak = this.q('.ldr-streak');
     gsap.timeline({ onComplete: () => this.finished.emit() })
-      .to(streak, { left: '100%', duration: 0.45, ease: 'power2.out' })
-      .fromTo(fill, { scaleX: 0 }, { scaleX: 1, duration: 0.45, ease: 'power2.out' }, '<')
-      .to(logo, { filter: 'drop-shadow(0 0 14px rgba(231,111,81,.5))', duration: 0.35 }, '-=0.2')
-      .to(logo, { filter: 'drop-shadow(0 0 0 rgba(231,111,81,0))', duration: 0.6 })
+      .to(it, { filter: 'drop-shadow(0 0 14px rgba(231,111,81,.5))', duration: 0.35 })
+      .to(it, { filter: 'drop-shadow(0 0 0 rgba(231,111,81,0))', duration: 0.6 })
       .to(root, { opacity: 0, duration: 0.4 }, '-=0.1');
   }
 

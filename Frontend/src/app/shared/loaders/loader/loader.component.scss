@@ -29,44 +29,24 @@
   50%      { transform: translateX(10px); }
 }
 
-/* Progress track — the HERO: a wide streak with a long soft trail sweeps through it */
-.ldr-track {
-  position: relative; height: 3px; width: 100%; max-width: 150px;
-  border-radius: 3px; background: rgba(231, 111, 81, .12); overflow: visible;
-}
-.ldr-streak {
-  position: absolute; top: 0; bottom: 0; width: 72px; left: -40%;
-  transform: translateX(-50%); border-radius: 3px;
-  background: linear-gradient(90deg, transparent 0%, rgba(231, 111, 81, .28) 45%, rgba(231, 111, 81, .85) 82%, #E76F51 100%);
-  box-shadow: 0 0 10px rgba(231, 111, 81, .55);
-}
-.ldr-fill {
-  position: absolute; inset: 0; transform-origin: left center; transform: scaleX(0);
-  background: #E76F51; border-radius: 2px;
-}
-
 .ldr-msg {
   font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 500;
   color: #6b7280; letter-spacing: .01em;
 }
 
 /* Sizes */
-.ldr-sm .ldr-crave, .ldr-sm .ldr-it { height: 22px; } .ldr-sm .ldr-track { max-width: 110px; }
-.ldr-md .ldr-crave, .ldr-md .ldr-it { height: 32px; } .ldr-md .ldr-track { max-width: 158px; }
-.ldr-lg .ldr-crave, .ldr-lg .ldr-it { height: 44px; } .ldr-lg .ldr-track { max-width: 210px; }
+.ldr-sm .ldr-crave, .ldr-sm .ldr-it { height: 22px; }
+.ldr-md .ldr-crave, .ldr-md .ldr-it { height: 32px; }
+.ldr-lg .ldr-crave, .ldr-lg .ldr-it { height: 44px; }
 
-/* Error — signal stops, subtle red underline */
-.ldr[data-state="error"] .ldr-track { background: #ef4444; }
-.ldr[data-state="error"] .ldr-streak { display: none; }
+/* Error — message turns red (the "-it" keeps its position) */
 .ldr[data-state="error"] .ldr-msg { color: #ef4444; }
 
 /* Quick fade when the global overlay dismisses */
 :host(.gs-leaving) .ldr-overlay { opacity: 0; }
 
-/* Reduced motion — no sweep/glow pulse; only a faint opacity breath on "-it", crave static */
+/* Reduced motion — no slide; only a faint opacity breath on "-it", crave static */
 @media (prefers-reduced-motion: reduce) {
-  .ldr-shine { display: none; }
-  .ldr-streak { display: none; }
   .ldr-it { animation: itDim 4.6s ease-in-out infinite; }
 }
 @keyframes itDim { 0%, 100% { opacity: .82; } 50% { opacity: 1; } }
