@@ -13,31 +13,33 @@
 
 .ldr-inner { display: flex; flex-direction: column; align-items: center; gap: 11px; }
 
-/* The real production logo — perfect brand fidelity, whole + static */
+/* The logo is two slices of the SAME asset that overlap to form the whole mark:
+   "crave" (static) + "-it" (the only animated part) — so "crave" can never be touched. */
 .ldr-logo { position: relative; display: inline-block; line-height: 0; }
-.ldr-img { display: block; width: auto; }
-/* A warm light "signal" sweeps across the logo, masked to the logo shape and clipped to the
-   "-it" region so "crave" stays perfectly still — light travelling through the real mark. */
-.ldr-shine, .ldr-it-amb {
+.ldr-crave, .ldr-it { display: block; width: auto; }
+.ldr-crave { clip-path: inset(0 25.5% 0 0); }            /* left slice → "crave", never animates */
+.ldr-it {                                                 /* right slice → orange "-it", the animated part */
+  position: absolute; inset: 0;
+  clip-path: inset(0 0 0 74.5%);
+  animation: itGlow 3.4s ease-in-out infinite;            /* gentle glow breath, ONLY on "-it" */
+  will-change: filter;
+}
+@keyframes itGlow {
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(231, 111, 81, 0)); }
+  50%      { filter: drop-shadow(0 0 6px rgba(231, 111, 81, .45)); }
+}
+/* light sweeping through "-it" (masked to the mark, clipped to the orange) */
+.ldr-shine {
   position: absolute; inset: 0; pointer-events: none;
-  clip-path: inset(0 0 0 75%);   /* "crave" ends at 73.6%, orange "-it" starts at 75.8% → clip stays off "crave" */
+  clip-path: inset(0 0 0 75%);
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 236, 222, .9) 50%, transparent 70%);
+  background-size: 230% 100%; background-position: 120% 0;
   -webkit-mask-image: url('/assets/craveit-logo-transparent.png');
           mask-image: url('/assets/craveit-logo-transparent.png');
   -webkit-mask-size: contain;   mask-size: contain;
   -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
   -webkit-mask-position: center; mask-position: center;
-  mix-blend-mode: screen;
-}
-/* the travelling highlight that sweeps through "-it" */
-.ldr-shine {
-  background: linear-gradient(110deg, transparent 30%, rgba(255, 236, 222, .9) 50%, transparent 70%);
-  background-size: 230% 100%; background-position: 120% 0;
-  will-change: background-position;
-}
-/* the "alive" breath — ONLY on "-it" (same mask + clip), so "crave" is perfectly static */
-.ldr-it-amb {
-  background: rgba(255, 226, 205, .9);
-  animation: ldrBreath 4.2s ease-in-out infinite;
+  mix-blend-mode: screen; will-change: background-position;
 }
 
 /* Progress track — the HERO: a wide streak with a long soft trail sweeps through it */
@@ -62,9 +64,9 @@
 }
 
 /* Sizes */
-.ldr-sm .ldr-img { height: 22px; } .ldr-sm .ldr-track { max-width: 110px; }
-.ldr-md .ldr-img { height: 32px; } .ldr-md .ldr-track { max-width: 158px; }
-.ldr-lg .ldr-img { height: 44px; } .ldr-lg .ldr-track { max-width: 210px; }
+.ldr-sm .ldr-crave, .ldr-sm .ldr-it { height: 22px; } .ldr-sm .ldr-track { max-width: 110px; }
+.ldr-md .ldr-crave, .ldr-md .ldr-it { height: 32px; } .ldr-md .ldr-track { max-width: 158px; }
+.ldr-lg .ldr-crave, .ldr-lg .ldr-it { height: 44px; } .ldr-lg .ldr-track { max-width: 210px; }
 
 /* Error — signal stops, subtle red underline */
 .ldr[data-state="error"] .ldr-track { background: #ef4444; }
@@ -74,10 +76,10 @@
 /* Quick fade when the global overlay dismisses */
 :host(.gs-leaving) .ldr-overlay { opacity: 0; }
 
-/* Reduced motion — wordmark whole, "-it" solid orange, gentle breath, static track */
+/* Reduced motion — no sweep/glow pulse; only a faint opacity breath on "-it", crave static */
 @media (prefers-reduced-motion: reduce) {
   .ldr-shine { display: none; }
   .ldr-streak { display: none; }
-  /* "-it" still breathes (it-amb, CSS) — "crave" stays static; no sweep */
+  .ldr-it { animation: itDim 4.6s ease-in-out infinite; }
 }
-@keyframes ldrBreath { 0%, 100% { opacity: .12; } 50% { opacity: .4; } }
+@keyframes itDim { 0%, 100% { opacity: .82; } 50% { opacity: 1; } }

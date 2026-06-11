@@ -85,7 +85,7 @@ export class LoaderComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   private applySuccess(): void {
     this.loadTl?.kill();
-    const root = this.q('.ldr-inner'); const logo = this.q('.ldr-img'); const fill = this.q('.ldr-fill');
+    const root = this.q('.ldr-inner'); const logo = this.q('.ldr-it'); const fill = this.q('.ldr-fill');
     if (this.successMode === 'minimal' || this.reduce) {
       gsap.to(root, { opacity: 0, duration: 0.35, onComplete: () => this.finished.emit() });
       return;
