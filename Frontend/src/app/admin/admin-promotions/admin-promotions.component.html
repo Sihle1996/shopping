@@ -540,7 +540,7 @@
       <!-- Empty -->
       <div *ngIf="!loading && filteredPromotions.length === 0"
            class="p-12 flex flex-col items-center gap-3 text-textMuted">
-        <i class="bi bi-tag text-4xl"></i>
+        <app-brand-mark face="hidden" [size]="46"></app-brand-mark>
         <p class="text-sm font-medium">
           {{ promotions.length === 0 ? 'No promotions yet' : 'No ' + statusFilter.toLowerCase() + ' promotions' }}
         </p>

@@ -13,8 +13,10 @@
       <div *ngFor="let i of [1,2,3]" class="h-16 bg-white rounded-2xl animate-pulse shadow-card"></div>
     </div>
 
-    <p *ngIf="!loading && !tickets.length"
-       class="text-textMuted text-sm text-center py-12">No support tickets yet.</p>
+    <div *ngIf="!loading && !tickets.length" class="text-textMuted text-sm text-center py-12">
+      <app-brand-mark face="hidden" [size]="44" class="mb-3"></app-brand-mark>
+      <p>No support tickets yet.</p>
+    </div>
     <p *ngIf="!loading && tickets.length && !filteredTickets.length"
        class="text-textMuted text-sm text-center py-12">No {{ statusLabel(statusFilter) | lowercase }} tickets.</p>
 

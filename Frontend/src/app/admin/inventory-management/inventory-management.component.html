@@ -175,7 +175,8 @@
         </tbody>
       </table>
       <div *ngIf="filteredInventory.length === 0" class="py-12 text-center text-textMuted text-sm">
-        No items found
+        <app-brand-mark face="hidden" [size]="44" class="mb-3"></app-brand-mark>
+        <p>No items found</p>
       </div>
     </div>
 

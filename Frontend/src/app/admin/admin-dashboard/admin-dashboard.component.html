@@ -235,7 +235,7 @@
       <!-- Orders list -->
       <div *ngIf="!recentOrdersLoading">
         <div *ngIf="recentOrders.length === 0" class="px-5 py-10 text-center text-textMuted text-sm">
-          <i class="bi bi-check2-circle text-3xl text-emerald-300 block mb-2"></i>
+          <app-brand-mark face="hidden" [size]="40" class="mb-2"></app-brand-mark>
           All caught up — no live orders right now
         </div>
 

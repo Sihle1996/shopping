@@ -27,6 +27,7 @@ import { TabbedListComponent } from './components/tabbed-list/tabbed-list.compon
 import { ChecklistComponent } from './components/checklist/checklist.component';
 import { PagedListComponent } from './components/paged-list/paged-list.component';
 import { PaginatePipe } from './pipes/paginate.pipe';
+import { BrandMarkComponent } from './brand/brand-mark.component';
 
 @NgModule({
   declarations: [
@@ -59,12 +60,14 @@ import { PaginatePipe } from './pipes/paginate.pipe';
     ReactiveFormsModule,
     RouterModule,
     LoadersModule,
+    BrandMarkComponent,
   ],
   exports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
     LoadersModule,
+    BrandMarkComponent,
     PaginationComponent,
     PromotionBannerComponent,
     PromotionGridComponent,

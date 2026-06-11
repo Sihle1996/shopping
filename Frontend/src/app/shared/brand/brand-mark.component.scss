@@ -44,8 +44,12 @@
 
 .bm-face-hidden .bm-eye, .bm-face-beast .bm-eye { display: block; }
 
-/* hidden — small eyes tucked INSIDE the inner space (subtle, serious) */
-.bm-face-hidden .bm-eye { width: 8%; height: 9.5%; top: 35%; border-radius: 50%; }
+/* hidden — small eyes tucked INSIDE the inner space (subtle, serious), with an occasional blink */
+.bm-face-hidden .bm-eye {
+  width: 8%; height: 9.5%; top: 35%; border-radius: 50%;
+  transform-origin: center; animation: bmBlink 4.6s ease-in-out infinite;
+}
+@keyframes bmBlink { 0%, 91%, 100% { transform: scaleY(1); } 95.5% { transform: scaleY(.08); } }
 .bm-face-hidden .bm-eye-l { left: 36%; }
 .bm-face-hidden .bm-eye-r { left: 51%; }
 
