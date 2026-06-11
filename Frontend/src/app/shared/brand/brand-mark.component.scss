@@ -5,7 +5,7 @@
    (the letters touch in the logo) so both arms read complete, with the real bite kept. */
 .bm-v {
   display: block; width: auto; position: relative; z-index: 1;
-  clip-path: polygon(0% 0%, 94% 0%, 94% 27%, 47% 100%, 0% 100%);
+  clip-path: polygon(0% 0%, 95% 0%, 95% 26%, 74% 60%, 49% 100%, 0% 100%);
 }
 .bm-on-dark .bm-v { filter: brightness(0) invert(1); }   /* white v on dark surfaces */
 
