@@ -364,6 +364,14 @@ public class AdminAgentService {
                 Map.of("range", enumProp("Time window", List.of("today", "7d", "30d", "month"))),
                 List.of()));
 
+        tools.add(tool("get_extras_performance",
+                "How the item add-ons/extras (paid options like 'Large +R20', 'Extra cheese') perform over the "
+                        + "last N days (default 30): total extras revenue + its share of revenue, and the top "
+                        + "add-ons by revenue with their ATTACH RATE (what share of that item's orders take them). "
+                        + "Use this for upsell questions — which extras sell, which to feature, how much extras earn.",
+                Map.of("days", numProp("Look-back window in days (default 30)")),
+                List.of()));
+
         tools.add(tool("get_books_summary",
                 "CraveIt Books income statement for the last N days (default 30): revenue, food cost (COGS) "
                         + "with a by-category breakdown, gross profit & margin, platform commission, net profit, "
@@ -538,6 +546,7 @@ public class AdminAgentService {
             case "get_store_overview": return toolStoreOverview(tenantId);
             case "get_analytics":      return toolAnalytics(input.path("range").asText("30d"));
             case "get_books_summary":  return toolBooksSummary(tenantId, input.path("days").asInt(30));
+            case "get_extras_performance": return toolExtrasPerformance(tenantId, input.path("days").asInt(30));
             case "get_customer_context": return toolCustomerContext(tenantId, input.path("order_id").asText(null));
             case "list_support_tickets": return toolSupportTickets(tenantId, input.path("limit").asInt(15));
             case "list_orders":        return toolListOrders(tenantId,
@@ -693,6 +702,67 @@ public class AdminAgentService {
         }
         m.put("expensesByCategory", exp);
         return json(m);
+    }
+
+    /** Add-on / extras performance: total extras revenue + share, and the top PAID options by revenue with
+     *  their attach rate (what share of that item's orders take them). The basis for upsell advice. */
+    private String toolExtrasPerformance(UUID tenantId, int days) {
+        int window = Math.max(1, days);
+        Instant from = Instant.now().minus(java.time.Duration.ofDays(window));
+        Map<UUID, long[]> itemLines = new HashMap<>();          // menuItemId -> [order-line count]
+        Map<UUID, String> itemName = new HashMap<>();
+        Map<String, double[]> extra = new LinkedHashMap<>();    // "itemId|group|label" -> [attach, revenue, unitMod]
+        Map<String, String[]> extraLbl = new HashMap<>();       // key -> [itemName, group, label]
+        double extrasRevenue = 0, totalRevenue = 0;
+
+        for (Order o : orderRepository.findByOrderDateBetweenAndTenant_Id(from, Instant.now(), tenantId)) {
+            if (!"Delivered".equalsIgnoreCase(o.getStatus())) continue;     // realised revenue only
+            totalRevenue += o.getTotalAmount() != null ? o.getTotalAmount() : 0;
+            if (o.getOrderItems() == null) continue;
+            for (var oi : o.getOrderItems()) {
+                if (oi.getMenuItem() == null) continue;
+                UUID id = oi.getMenuItem().getId();
+                itemName.putIfAbsent(id, oi.getMenuItem().getName());
+                itemLines.computeIfAbsent(id, k -> new long[1])[0]++;
+                int qty = oi.getQuantity() != null ? oi.getQuantity() : 1;
+                if (oi.getChoices() == null) continue;
+                for (var c : oi.getChoices()) {
+                    double mod = c.getPriceModifier() != null ? c.getPriceModifier() : 0;
+                    if (mod <= 0) continue;                                // only PAID add-ons
+                    String key = id + "|" + c.getGroupName() + "|" + c.getChoiceLabel();
+                    double[] a = extra.computeIfAbsent(key, k -> new double[3]);
+                    a[0] += 1; a[1] += mod * qty; a[2] = mod;
+                    extraLbl.putIfAbsent(key, new String[]{itemName.get(id), c.getGroupName(), c.getChoiceLabel()});
+                    extrasRevenue += mod * qty;
+                }
+            }
+        }
+
+        List<Map<String, Object>> top = extra.entrySet().stream()
+                .sorted((x, y) -> Double.compare(y.getValue()[1], x.getValue()[1]))
+                .limit(8)
+                .map(e -> {
+                    String[] l = extraLbl.get(e.getKey());
+                    UUID id = UUID.fromString(e.getKey().substring(0, e.getKey().indexOf('|')));
+                    long lines = itemLines.getOrDefault(id, new long[]{0})[0];
+                    Map<String, Object> mm = new LinkedHashMap<>();
+                    mm.put("item", l[0]);
+                    mm.put("extra", l[1] + " / " + l[2]);
+                    mm.put("unitPrice", Math.round(e.getValue()[2] * 100.0) / 100.0);
+                    mm.put("ordersWithIt", (long) e.getValue()[0]);
+                    mm.put("attachRatePercent", lines > 0 ? Math.round(e.getValue()[0] / lines * 100.0) : 0);
+                    mm.put("revenue", Math.round(e.getValue()[1] * 100.0) / 100.0);
+                    return mm;
+                })
+                .toList();
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("periodDays", window);
+        result.put("extrasRevenue", Math.round(extrasRevenue * 100.0) / 100.0);
+        result.put("extrasSharePercent", totalRevenue > 0 ? Math.round(extrasRevenue / totalRevenue * 100.0) : 0);
+        result.put("topExtras", top);
+        if (top.isEmpty()) result.put("note", "No paid add-ons sold in this window (or no items have priced options).");
+        return json(result);
     }
 
     /** Rich context bundle for a support/service decision about one order. */
