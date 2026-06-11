@@ -3,16 +3,20 @@ import { CommonModule } from '@angular/common';
 
 /**
  * The CraveIt "bitten V" — the REAL glyph (extracted from the production logo, craveit-v.png) as a reusable
- * symbol. The bite-fill sits *behind* the v, so the black mark masks it and orange shows only through the
- * real notch. mode drives the bite (idle = empty, matching the logo; the rest animate it). One mark powers
- * the loader, AI "thinking" state, badges, the assistant button, empty states, etc.
+ * symbol. The bite-fill sits behind the v so orange shows through the real notch; `mode` drives it.
+ * `face` optionally turns the V's arms into "horns" with eyes in the negative space:
+ *   - hidden : small eyes tucked in the inner space (subtle, premium — a living symbol, still serious)
+ *   - beast  : bolder eyes + a brow ridge (charging-animal energy)
  */
 @Component({
   selector: 'app-brand-mark',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <span class="bm" [ngClass]="'bm-' + mode" [class.bm-on-dark]="!dark">
+    <span class="bm" [ngClass]="['bm-' + mode, 'bm-face-' + face]" [class.bm-on-dark]="!dark">
+      <span class="bm-eye bm-eye-l"></span>
+      <span class="bm-eye bm-eye-r"></span>
+      <span class="bm-brow"></span>
       <span class="bm-bite"></span>
       <img class="bm-v" src="assets/craveit-v.png" [style.height.px]="size" alt="" aria-hidden="true" />
     </span>
@@ -22,6 +26,8 @@ import { CommonModule } from '@angular/common';
 export class BrandMarkComponent {
   /** idle = empty bite (matches the logo); the others fill/animate the bite. */
   @Input() mode: 'idle' | 'loading' | 'thinking' | 'success' | 'error' = 'idle';
+  /** none = plain mark; hidden/beast turn it into a creature with eyes. */
+  @Input() face: 'none' | 'hidden' | 'beast' = 'none';
   @Input() size = 48;
   @Input() dark = true;   // dark glyph on light surfaces; white glyph on dark
 }

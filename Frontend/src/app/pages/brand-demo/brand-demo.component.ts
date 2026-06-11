@@ -20,6 +20,24 @@ import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
         </div>
 
         <div class="tile">
+          <span class="lbl">Hidden creature</span>
+          <app-brand-mark [size]="92" mode="idle" face="hidden"></app-brand-mark>
+          <span class="cap">Eyes emerge from the negative space</span>
+        </div>
+
+        <div class="tile">
+          <span class="lbl">Beast mode</span>
+          <app-brand-mark [size]="92" mode="idle" face="beast"></app-brand-mark>
+          <span class="cap">Eyes + brow — the horns own it</span>
+        </div>
+
+        <div class="tile dark">
+          <span class="lbl light">Creature on dark</span>
+          <app-brand-mark [size]="92" mode="idle" face="hidden" [dark]="false"></app-brand-mark>
+          <span class="cap light">Eyes invert for contrast</span>
+        </div>
+
+        <div class="tile">
           <span class="lbl">Loader</span>
           <app-brand-mark [size]="92" mode="loading"></app-brand-mark>
           <span class="cap">Bite pulses as the signal</span>
