@@ -93,6 +93,23 @@ public class MenuItem {
         return stock < 0 ? stock : Math.max(0, stock - reservedStock);
     }
 
+    /** Server-side price modifier (ZAR) for a selected option, matched by group name + choice label.
+     *  Returns the store's REAL value (may be negative — e.g. a "no cheese" removal); 0 when the option
+     *  isn't found, so a client can't fabricate an extra. Lets order/group-cart pricing re-derive the
+     *  true extra price instead of trusting the client's submitted number. */
+    public double modifierFor(String groupName, String choiceLabel) {
+        if (optionGroups == null || groupName == null || choiceLabel == null) return 0.0;
+        for (MenuItemOptionGroup g : optionGroups) {
+            if (!groupName.equalsIgnoreCase(g.getName()) || g.getChoices() == null) continue;
+            for (MenuItemOptionChoice c : g.getChoices()) {
+                if (choiceLabel.equalsIgnoreCase(c.getLabel())) {
+                    return c.getPriceModifier() != null ? c.getPriceModifier() : 0.0;
+                }
+            }
+        }
+        return 0.0;
+    }
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id")
     @JsonIgnore

@@ -101,11 +101,13 @@ public class OrderService {
             item.setSize(itemDTO.getSize());
             item.setSpecialInstructions(itemDTO.getSpecialInstructions());
 
-            // Snapshot selected modifier choices — modifiers can only ADD to the price (clamp >= 0).
+            // Snapshot selected modifier choices — price EACH from the server's real option choice
+            // (matched by group + label), never the client's number. An unknown choice prices at 0, so a
+            // client can't fabricate an extra; legitimate negative options (removals) are honoured.
             double modSum = 0;
             if (itemDTO.getSelectedChoices() != null) {
                 for (OrderItemDTO.SelectedChoiceDTO sc : itemDTO.getSelectedChoices()) {
-                    double mod = Math.max(0, sc.getPriceModifier() != null ? sc.getPriceModifier() : 0.0);
+                    double mod = menuItem.modifierFor(sc.getGroupName(), sc.getChoiceLabel());
                     modSum += mod;
                     OrderItemChoice choice = new OrderItemChoice();
                     choice.setOrderItem(item);

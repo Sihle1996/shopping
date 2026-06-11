@@ -68,16 +68,18 @@ public class GroupCartService {
         if (!Boolean.TRUE.equals(menuItem.getIsAvailable()))
             throw new IllegalArgumentException("That item is currently unavailable");
 
+        // Price each selected extra from the SERVER's real option choice (matched by group + label),
+        // never the client's number; an unknown choice prices at 0. The unit price is the server menu
+        // price + the real modifiers, so a crafted priceModifier can't move it.
         double modSum = 0;
         if (selectedChoicesJson != null && !selectedChoicesJson.isBlank()) {
             try {
                 JsonNode arr = objectMapper.readTree(selectedChoicesJson);
-                for (JsonNode n : arr) modSum += n.path("priceModifier").asDouble(0);
+                for (JsonNode n : arr) {
+                    modSum += menuItem.modifierFor(n.path("groupName").asText(null), n.path("choiceLabel").asText(null));
+                }
             } catch (Exception ignored) {}
         }
-        // Option modifiers can only ADD to the base price. The unit price is derived from the SERVER's
-        // menu price; a crafted negative modifier must never drive it below the real price.
-        modSum = Math.max(0, modSum);
 
         GroupCartItem item = new GroupCartItem();
         item.setGroupCart(gc);
