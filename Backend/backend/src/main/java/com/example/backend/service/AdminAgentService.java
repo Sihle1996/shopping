@@ -1232,8 +1232,12 @@ public class AdminAgentService {
                 promo.setTenant(t);
                 promo.setTitle(title);
                 promo.setDiscountPercent(java.math.BigDecimal.valueOf(pct));
+                // Run from now through END OF DAY (SAST) on the last day, so an AI promo "for N days" runs
+                // the full final day — consistent with manually created/edited promos (which end at
+                // 23:59:59), instead of expiring mid-day at the exact creation time and surprising the owner.
+                ZoneId sastZone = ZoneId.of("Africa/Johannesburg");
                 promo.setStartAt(OffsetDateTime.now());
-                promo.setEndAt(OffsetDateTime.now().plusDays(days));
+                promo.setEndAt(LocalDate.now(sastZone).plusDays(days).atTime(23, 59, 59).atZone(sastZone).toOffsetDateTime());
                 promo.setActive(true);
                 promo.setFeatured(false);
 
