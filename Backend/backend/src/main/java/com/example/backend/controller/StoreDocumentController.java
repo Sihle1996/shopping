@@ -1,13 +1,17 @@
 package com.example.backend.controller;
 
+import com.example.backend.entity.MenuItem;
 import com.example.backend.entity.StoreDocument;
 import com.example.backend.entity.Tenant;
 import com.example.backend.repository.CategoryRepository;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.StoreDocumentRepository;
+import com.example.backend.repository.StoreHoursRepository;
 import com.example.backend.repository.TenantRepository;
+import com.example.backend.repository.UserRepository;
 import com.example.backend.service.CloudinaryService;
 import com.example.backend.service.EmailService;
+import com.example.backend.user.Role;
 import com.example.backend.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +40,8 @@ public class StoreDocumentController {
     private final CategoryRepository categoryRepository;
     private final CloudinaryService cloudinaryService;
     private final EmailService emailService;
+    private final UserRepository userRepository;
+    private final StoreHoursRepository storeHoursRepository;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -62,6 +68,31 @@ public class StoreDocumentController {
         resp.put("categoryCount", categoryCount);
         resp.put("active", tenant.isActive());
         resp.put("bankingChangeStatus", tenant.getBankingChangeStatus() != null ? tenant.getBankingChangeStatus() : "");
+
+        // --- Launch-scene fields + go-live readiness ---
+        resp.put("name", tenant.getName());
+        resp.put("cuisineType", tenant.getCuisineType());
+        resp.put("logoUrl", tenant.getLogoUrl());
+        resp.put("coverImageUrl", tenant.getCoverImageUrl());
+        resp.put("primaryColor", tenant.getPrimaryColor());
+        resp.put("storeDescription", tenant.getStoreDescription());
+        long driverCount = userRepository.countByRoleAndTenant_Id(Role.DRIVER, tenantId);
+        boolean hasHours = storeHoursRepository.findByTenant_IdOrderByDayOfWeek(tenantId)
+                .stream().anyMatch(h -> !h.isClosed());
+        resp.put("hasLocation", tenant.getLatitude() != null && tenant.getLongitude() != null);
+        resp.put("hasDriver", driverCount > 0);
+        resp.put("driverCount", driverCount);
+        resp.put("hasHours", hasHours);
+        resp.put("hasLogo", tenant.getLogoUrl() != null && !tenant.getLogoUrl().isBlank());
+        List<Map<String, Object>> sampleMenuItems = new java.util.ArrayList<>();
+        for (MenuItem mi : menuItemRepository.findByTenant_Id(tenantId)) {
+            if (sampleMenuItems.size() >= 4) break;
+            Map<String, Object> m = new HashMap<>();
+            m.put("name", mi.getName());
+            m.put("image", mi.getImage());
+            sampleMenuItems.add(m);
+        }
+        resp.put("sampleMenuItems", sampleMenuItems);
         return ResponseEntity.ok(resp);
     }
 
@@ -220,6 +251,12 @@ public class StoreDocumentController {
         }
         if (menuItemCount == 0) {
             return ResponseEntity.badRequest().body(Map.of("error", "Add at least one menu item before going live"));
+        }
+        if (tenant.getLatitude() == null || tenant.getLongitude() == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Set your store location before going live"));
+        }
+        if (userRepository.countByRoleAndTenant_Id(Role.DRIVER, tenantId) == 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Add at least one delivery driver before going live"));
         }
 
         tenant.setActive(true);

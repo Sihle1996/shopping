@@ -150,6 +150,8 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
       this.hasCustomBranding = info.features.hasCustomBranding;
       this.subscriptionPlan = info.plan;
     });
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab) this.settingsTab = tab;
     const tour = this.route.snapshot.queryParamMap.get('tour');
     if (tour) { setTimeout(() => this.runTour(tour!), 600); }
   }

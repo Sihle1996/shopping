@@ -1,1 +1,212 @@
 :host { display: block; }
+
+/* ── Cinematic storefront launch scene ─────────────────────────────────── */
+.sf-scene {
+  position: relative;
+  height: 300px;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 55%, #334155 100%);
+  --brand: #E76F51;
+  --scrim: .7;
+
+  .sf-sky {
+    position: absolute; inset: 0;
+    background: radial-gradient(120% 70% at 50% -10%, rgba(255, 255, 255, .10), transparent 60%);
+  }
+  &::after { /* street */
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 44px;
+    background: linear-gradient(180deg, #243044, #1a2334);
+  }
+
+  /* Storefront */
+  .sf-store {
+    position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%);
+    width: 222px; z-index: 2;
+  }
+  .sf-sign {
+    height: 30px; border-radius: 9px 9px 0 0; background: #0b1220;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    color: #fff; font-weight: 700; font-size: 13px;
+    .sf-logo { width: 20px; height: 20px; border-radius: 5px; object-fit: cover; }
+    .sf-store-name { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  }
+  .sf-awning {
+    height: 20px; border-radius: 0 0 4px 4px;
+    background: repeating-linear-gradient(90deg, var(--brand) 0 16px, #ffffff 16px 32px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .3);
+  }
+  .sf-window {
+    height: 118px; margin: 10px 14px 0; border-radius: 8px; padding: 12px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(180deg, #0b1220, #131c2e);
+    border: 3px solid #0b1220; position: relative; opacity: .55;
+    transition: opacity .6s ease, box-shadow .6s ease, background .6s ease;
+    &.lit {
+      opacity: 1;
+      background: linear-gradient(180deg, #233045, #38495f);
+      box-shadow: inset 0 0 26px rgba(255, 210, 140, .28);
+    }
+    .sf-dish {
+      width: 44px; height: 44px; border-radius: 9px; overflow: hidden; flex-shrink: 0;
+      background: #f59e0b; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
+      img { width: 100%; height: 100%; object-fit: cover; }
+      .sf-dish-ph { color: #7c2d12; font-weight: 800; font-size: 16px; }
+    }
+    .sf-dish-skel {
+      background: repeating-linear-gradient(45deg, #2b3850 0 6px, #3a4960 6px 12px);
+      box-shadow: none; opacity: .6;
+    }
+    .sf-open-sign {
+      position: absolute; top: 8px; right: 10px;
+      font-family: 'Courier New', monospace; font-weight: 800; font-size: 10px; letter-spacing: 1.5px;
+      color: #fca5a5; padding: 2px 7px; border: 1px solid #7f1d1d; border-radius: 4px;
+      background: rgba(0, 0, 0, .3); opacity: .35; transition: opacity .5s ease;
+      &.glow {
+        color: #fff; border-color: #ef4444; opacity: 1;
+        text-shadow: 0 0 6px #ef4444, 0 0 14px #ef4444;
+        box-shadow: 0 0 12px rgba(239, 68, 68, .55);
+        animation: sfNeonPulse 2.4s ease-in-out infinite;   /* 100%: soft neon breathing */
+      }
+    }
+  }
+  .sf-door {
+    width: 40px; height: 52px; margin: 8px auto 0; border-radius: 6px 6px 0 0;
+    background: #0b1220; border: 2px solid #1e293b; border-bottom: none;
+  }
+
+  /* Location pin */
+  .sf-pin {
+    position: absolute; left: 18%; top: 34px; z-index: 3; text-align: center;
+    color: #64748b; opacity: .4;
+    transition: opacity .5s ease, color .5s ease, filter .5s ease;
+    .sf-ic { width: 26px; height: 28px; display: block; margin: 0 auto; }
+    .sf-pin-pulse { display: none; }
+    .sf-pin-label { display: block; margin-top: 2px; font-size: 10px; font-weight: 700; color: #fca5a5; }
+    &.lit {
+      color: #ef4444; opacity: 1; filter: drop-shadow(0 0 7px rgba(239, 68, 68, .6));
+      .sf-pin-pulse {
+        display: block; position: absolute; top: 4px; left: 50%; width: 26px; height: 26px;
+        margin-left: -13px; border: 2px solid #ef4444; border-radius: 50%;
+        animation: sfPulse 2s ease-out infinite;
+      }
+    }
+  }
+
+  /* Scooter */
+  .sf-scooter {
+    position: absolute; right: 13%; bottom: 40px; z-index: 3; text-align: center;
+    color: var(--brand);
+    opacity: 0; transform: translateX(12px);
+    transition: opacity .6s ease, transform .6s ease;
+    .sf-veh { width: 50px; height: auto; display: block; margin: 0 auto; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .4)); }
+    .sf-driver-badge { display: block; margin-bottom: 1px; font-size: 10px; font-weight: 700; color: #4ade80; }
+    &.lit { opacity: 1; transform: translateX(0); animation: sfIdle 3.2s ease-in-out infinite; }
+  }
+
+  /* Dusk scrim (readiness-driven via --scrim; GSAP clears it on launch) */
+  .sf-scrim {
+    position: absolute; inset: 0; z-index: 4; pointer-events: none;
+    background: #060b16; opacity: var(--scrim, .7); transition: opacity .6s ease;
+  }
+
+  /* Success overlay */
+  .sf-success {
+    position: absolute; inset: 0; z-index: 5;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    background: rgba(8, 13, 24, .86); backdrop-filter: blur(2px); text-align: center; color: #fff;
+    animation: sfFadeIn .5s ease both;
+    i { font-size: 42px; color: #22c55e; }
+    .sf-success-title { font-weight: 800; font-size: 18px; }
+    .sf-success-sub { font-size: 12px; color: #cbd5e1; }
+  }
+
+  /* Launch — full lights on */
+  &.sf-launching {
+    .sf-sky { background: radial-gradient(120% 80% at 50% -10%, rgba(255, 236, 180, .18), transparent 60%); }
+    .sf-window { opacity: 1; box-shadow: inset 0 0 30px rgba(255, 214, 140, .4); }
+    .sf-open-sign {
+      color: #fff; opacity: 1; border-color: #ef4444;
+      animation: sfFlickerOn .9s steps(1, end) forwards;   /* launch: flicker to life, then steady */
+    }
+  }
+}
+
+@keyframes sfPulse { 0% { transform: scale(.5); opacity: .85; } 100% { transform: scale(2.4); opacity: 0; } }
+@keyframes sfIdle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes sfFlicker { 0%, 16%, 20%, 100% { opacity: 1; } 17%, 19% { opacity: .45; } 18% { opacity: .75; } }
+@keyframes sfFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── Phase A: real food, cover backdrop, warm interior glow ─────────────── */
+.sf-scene .sf-backdrop {
+  position: absolute; inset: 0; z-index: 0;
+  background-size: cover; background-position: center;
+  filter: blur(7px) brightness(.42) saturate(1.15);
+  transform: scale(1.12); opacity: .75;
+}
+.sf-scene .sf-sign .sf-logo {
+  width: 26px; height: 26px; border-radius: 6px; box-shadow: 0 0 0 2px rgba(255, 255, 255, .18);
+}
+/* Elegant plated placeholder for items without a photo (no letter tiles) */
+.sf-scene .sf-dish-plate {
+  width: 100%; height: 100%;
+  background:
+    radial-gradient(circle at 50% 47%, rgba(255, 255, 255, .9) 0 26%, transparent 27%),
+    radial-gradient(circle at 50% 50%, #f6d9a8 0 54%, #e7af6b 55% 100%);
+}
+/* Warm interior light that grows with readiness (cool dusk → warm) */
+.sf-scene .sf-glow {
+  position: absolute; inset: 0; z-index: 4; pointer-events: none;
+  background: radial-gradient(55% 46% at 50% 56%, rgba(255, 198, 112, .6), transparent 70%);
+  opacity: calc(var(--glow, 0) * .85);
+  mix-blend-mode: screen; transition: opacity .7s ease;
+}
+.sf-scene.sf-launching .sf-glow { opacity: 1; }
+
+@keyframes sfNeonPulse {
+  0%, 100% { text-shadow: 0 0 5px #ef4444, 0 0 10px #ef4444; opacity: .92; }
+  50%      { text-shadow: 0 0 9px #ef4444, 0 0 20px #ef4444, 0 0 28px #ef4444; opacity: 1; }
+}
+@keyframes sfFlickerOn {
+  0%   { opacity: .3; text-shadow: none; }
+  12%  { opacity: 1; text-shadow: 0 0 10px #ef4444, 0 0 22px #ef4444; }
+  20%  { opacity: .4; text-shadow: none; }
+  30%  { opacity: 1; text-shadow: 0 0 10px #ef4444, 0 0 22px #ef4444; }
+  40%  { opacity: .55; }
+  50%  { opacity: 1; text-shadow: 0 0 12px #ef4444, 0 0 26px #ef4444; }
+  100% { opacity: 1; text-shadow: 0 0 12px #ef4444, 0 0 28px #ef4444; }
+}
+
+/* ── Phase C: hours chip, radar ripple, mobile, reduced-motion ──────────── */
+.sf-scene .sf-hours {
+  position: absolute; left: 14%; bottom: 46px; z-index: 3;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; color: #fcd34d;
+  background: rgba(0, 0, 0, .4); padding: 2px 7px; border-radius: 10px;
+  i { font-size: 11px; }
+}
+/* second, delayed ring = a delivery-radius radar pulse */
+.sf-scene .sf-pin.lit .sf-pin-pulse::after {
+  content: ''; position: absolute; inset: 0;
+  border: 2px solid #ef4444; border-radius: 50%;
+  animation: sfPulse 2s ease-out infinite; animation-delay: 1s;
+}
+
+@media (max-width: 480px) {
+  .sf-scene { height: 240px; }
+  .sf-scene .sf-store { width: 184px; bottom: 36px; }
+  .sf-scene .sf-window { height: 98px; }
+  .sf-scene .sf-pin { left: 8%; top: 24px; }
+  .sf-scene .sf-scooter { right: 7%; bottom: 36px; }
+  .sf-scene .sf-hours { left: 8%; bottom: 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-scene *, .sf-scene *::before, .sf-scene *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}

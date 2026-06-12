@@ -24,6 +24,7 @@ import { PageHeaderComponent } from './components/page-header/page-header.compon
 import { ConfirmHostComponent } from './components/confirm-host/confirm-host.component';
 import { OrderActionsComponent } from './components/order-actions/order-actions.component';
 import { TabbedListComponent } from './components/tabbed-list/tabbed-list.component';
+import { ChecklistComponent } from './components/checklist/checklist.component';
 import { PagedListComponent } from './components/paged-list/paged-list.component';
 import { PaginatePipe } from './pipes/paginate.pipe';
 
@@ -48,6 +49,7 @@ import { PaginatePipe } from './pipes/paginate.pipe';
     ConfirmHostComponent,
     OrderActionsComponent,
     TabbedListComponent,
+    ChecklistComponent,
     PagedListComponent,
     PaginatePipe,
   ],
@@ -82,6 +84,7 @@ import { PaginatePipe } from './pipes/paginate.pipe';
     ConfirmHostComponent,
     OrderActionsComponent,
     TabbedListComponent,
+    ChecklistComponent,
     PagedListComponent,
     PaginatePipe,
   ],
