@@ -1,10 +1,10 @@
 """Offline re-implementation of the FIXED promo engine's PRODUCT net-lift + confidence (mirrors
-AdminAiService.computeLift: F3 weekday-matched + payday-adjusted baseline, 1.2x over-dispersion CI,
-1.5-sigma confident gate). Shared by validation (vs live) and the P3 calibration sweep."""
+AdminAiService.computeLift: F3 weekday-matched baseline, 1.2x over-dispersion CI, 1.3-sigma confident
+gate). Shared by validation (vs live) and the P3 calibration sweep."""
 import math, statistics
 
 CI_WIDEN = 1.2
-SIGMA = 1.5
+SIGMA = 1.3
 
 def compute_lift(item_daily, store_daily, weekday, payday, s, e):
     blo = max(0, s - 28)

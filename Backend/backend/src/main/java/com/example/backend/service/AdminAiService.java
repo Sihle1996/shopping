@@ -509,9 +509,10 @@ public class AdminAiService {
     private static final int    MIN_STORE_BASELINE = 10; // need >= 10 store orders in the baseline
     private static final int    BASELINE_DAYS = 28;      // day-of-week-matched baseline (~4 of each weekday)
     private static final java.time.ZoneId STORE_ZONE = java.time.ZoneId.of("Africa/Johannesburg"); // weekday bucketing
-    // A net lift must clear this many noise-bands (σ) to count as a real signal. The P3 multi-store
-    // calibration sweep showed 1σ lets ~28% of zero-effect promos read as confident; 1.5σ cuts that to ~7%.
-    private static final double CONFIDENT_SIGMA = 1.5;
+    // A net lift must clear this many (widened) noise-bands to count as a real signal. With CI_WIDEN this
+    // is ~1.3 × 1.2 ≈ 1.56σ of the raw Poisson band — the P3-validated point: ~8-9% false positives on
+    // zero-effect promos, confident tiers ~96-98% directionally correct, and real winners still reach MEDIUM.
+    private static final double CONFIDENT_SIGMA = 1.3;
     // Real restaurant demand is OVER-dispersed vs pure Poisson (weekday/payday/behaviour), so the Poisson
     // band under-covers (~55-60% at 1σ in P3). Widen ~20% so the stated ± reflects reality (~68% coverage).
     private static final double CI_WIDEN = 1.2;

@@ -41,8 +41,12 @@ then ran **810 promos across 6 store types** (fast‑food, pizza, coffee, low‑
 
 ## V2 — coverage fix (2026‑06‑13, on ChatGPT's review)
 - **Over‑dispersion CI (kept):** real demand is over‑dispersed vs Poisson, so the 1σ band under‑covered
-  (~54–61%). Widened the noise band **×1.2** (`CI_WIDEN`). P3 coverage now **HIGH ~75% / MEDIUM ~65%** (at the
-  68% target), false positives @1.5σ **9% → 4%**, sign‑correct HIGH 98% / MEDIUM 97%.
+  (~54–61%). Widened the noise band **×1.2** (`CI_WIDEN`) → the displayed ± is now honest. P3 coverage
+  **HIGH ~75% / MEDIUM ~65%** (68% target), sign‑correct HIGH 98% / MEDIUM 96%.
+- **Gate re‑tuned 1.5σ → 1.3σ (`CONFIDENT_SIGMA`):** widening the CI also raised the confident threshold,
+  which dropped real winners to LOW (the store's +35%/+40% promos went all‑LOW). Re‑tuned the gate so the
+  effective threshold (1.3 × 1.2 ≈ 1.56σ raw) keeps the P3‑validated FP (~8–9%) — real winners read MEDIUM
+  again, flat/short/overlap stay LOW.
 - **Payday‑aware baseline (TESTED + REVERTED):** estimated from the sparse payday days in a 28‑day baseline,
   the residual is noisy and **over‑corrects individual promos** — e.g. it pushed the real store's Beef Burger
   (true +35%) from a clean +36% to +52%. The 810‑promo average bias improved only marginally (±4→±3pp) while
