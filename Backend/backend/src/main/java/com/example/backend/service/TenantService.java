@@ -45,6 +45,10 @@ public class TenantService {
         Tenant tenant = tenantRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tenant not found with ID: " + id));
         Boolean oldOpen = tenant.getIsOpen();
+        var oldAddress = tenant.getAddress();
+        var oldLat = tenant.getLatitude();
+        var oldLon = tenant.getLongitude();
+        var oldRadius = tenant.getDeliveryRadiusKm();
 
         if (updates.getName() != null) tenant.setName(updates.getName());
         if (updates.getSlug() != null) tenant.setSlug(updates.getSlug());
@@ -77,8 +81,22 @@ public class TenantService {
 
         Tenant saved = tenantRepository.save(tenant);
         boolean openChanged = oldOpen != null && saved.getIsOpen() != null && !oldOpen.equals(saved.getIsOpen());
-        auditService.log(AuditService.ADMIN, openChanged ? "STORE_OPEN_TOGGLED" : "SETTINGS_UPDATED", "TENANT", id,
-                openChanged ? ("Store " + (saved.getIsOpen() ? "opened" : "closed")) : "Store settings updated");
+        // A store's location is a material attribute (delivery zones, customer matching, jurisdiction) — log
+        // it as a distinct, detailed audit event so the platform can monitor/spot abuse (industry norm).
+        boolean locationChanged = !java.util.Objects.equals(oldAddress, saved.getAddress())
+                || !java.util.Objects.equals(oldLat, saved.getLatitude())
+                || !java.util.Objects.equals(oldLon, saved.getLongitude())
+                || !java.util.Objects.equals(oldRadius, saved.getDeliveryRadiusKm());
+        if (locationChanged) {
+            auditService.log(AuditService.ADMIN, "STORE_LOCATION_CHANGED", "TENANT", id,
+                    "Location changed to \"" + (saved.getAddress() != null ? saved.getAddress() : "(none)")
+                            + "\" [" + saved.getLatitude() + ", " + saved.getLongitude()
+                            + ", radius " + saved.getDeliveryRadiusKm() + "km] — was \""
+                            + (oldAddress != null ? oldAddress : "(none)") + "\"");
+        } else {
+            auditService.log(AuditService.ADMIN, openChanged ? "STORE_OPEN_TOGGLED" : "SETTINGS_UPDATED", "TENANT", id,
+                    openChanged ? ("Store " + (saved.getIsOpen() ? "opened" : "closed")) : "Store settings updated");
+        }
         return saved;
     }
 
