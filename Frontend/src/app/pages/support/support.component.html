@@ -68,7 +68,13 @@
         <div *ngIf="t.adminNotes" class="mt-2 p-2 bg-blue-50 rounded-lg text-xs text-blue-800">
           <span class="font-semibold">Store reply:</span> {{ t.adminNotes }}
         </div>
-        <p class="text-xs text-textLight mt-2">{{ t.createdAt | date:'medium' }}</p>
+        <div class="mt-2 flex items-center justify-between gap-2">
+          <p class="text-xs text-textLight">{{ t.createdAt | date:'medium' }}</p>
+          <button *ngIf="!t.escalated" (click)="escalate(t)"
+                  class="text-xs font-semibold text-primary hover:text-primary-700 whitespace-nowrap">Not resolved? Escalate to CraveIt</button>
+          <span *ngIf="t.escalated"
+                class="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full whitespace-nowrap">Escalated to CraveIt</span>
+        </div>
       </div>
     </div>
 

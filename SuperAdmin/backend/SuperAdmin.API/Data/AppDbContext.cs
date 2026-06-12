@@ -11,6 +11,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
     public DbSet<PlatformSettings> PlatformSettings => Set<PlatformSettings>();
     public DbSet<StoreDocument> StoreDocuments => Set<StoreDocument>();
+    public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -38,5 +39,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasOne(d => d.Tenant)
             .WithMany(t => t.StoreDocuments)
             .HasForeignKey(d => d.TenantId);
+
+        // SupportTickets — read-only here; Tenant/User have no inverse collection.
+        modelBuilder.Entity<SupportTicket>()
+            .HasOne(s => s.Tenant).WithMany().HasForeignKey(s => s.TenantId).IsRequired(false);
+        modelBuilder.Entity<SupportTicket>()
+            .HasOne(s => s.User).WithMany().HasForeignKey(s => s.UserId).IsRequired(false);
     }
 }

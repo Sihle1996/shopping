@@ -61,6 +61,28 @@ public class SupportController {
                 .stream().map(this::toDto).toList());
     }
 
+    /** Customer: escalate their own ticket to the platform (CraveIt) when the store hasn't resolved it.
+     *  Escalated tickets become visible to the superadmin so a store can't quietly mistreat customers. */
+    @PostMapping("/api/support/{id}/escalate")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> escalate(@PathVariable UUID id,
+                                      @RequestBody(required = false) Map<String, String> body,
+                                      @AuthenticationPrincipal User user) {
+        SupportTicket ticket = ticketRepository.findById(id).orElse(null);
+        if (ticket == null) return ResponseEntity.notFound().build();
+        if (ticket.getUser() == null || !ticket.getUser().getId().equals(user.getId())) {
+            return ResponseEntity.status(403).body(Map.of("error", "This isn't your ticket"));
+        }
+        if (ticket.isEscalated()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "This ticket is already with CraveIt"));
+        }
+        ticket.setEscalated(true);
+        ticket.setEscalatedAt(Instant.now());
+        String reason = body != null ? body.get("reason") : null;
+        if (reason != null && !reason.isBlank()) ticket.setEscalationReason(reason.trim());
+        return ResponseEntity.ok(toDto(ticketRepository.save(ticket)));
+    }
+
     /** Admin: list all tickets for their tenant */
     @GetMapping("/api/admin/support")
     @PreAuthorize("hasRole('ADMIN')")
@@ -108,12 +130,14 @@ public class SupportController {
             t.getId(), t.getSubject(), t.getMessage(),
             t.getStatus() != null ? t.getStatus().name() : null,
             t.getAdminNotes(), t.getOrderId(),
-            t.getCreatedAt(), t.getResolvedAt(), userDto);
+            t.getCreatedAt(), t.getResolvedAt(), userDto,
+            t.isEscalated(), t.getEscalatedAt(), t.getEscalationReason());
     }
 
     record TicketUserDTO(String email, String fullName) {}
 
     record TicketDTO(UUID id, String subject, String message, String status,
                      String adminNotes, UUID orderId, Instant createdAt,
-                     Instant resolvedAt, TicketUserDTO user) {}
+                     Instant resolvedAt, TicketUserDTO user,
+                     boolean escalated, Instant escalatedAt, String escalationReason) {}
 }

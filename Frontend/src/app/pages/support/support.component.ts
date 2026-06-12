@@ -13,6 +13,8 @@ interface SupportTicket {
   adminNotes?: string;
   createdAt: string;
   orderId?: string;
+  escalated?: boolean;
+  escalationReason?: string;
 }
 
 @Component({
@@ -72,6 +74,15 @@ export class SupportComponent implements OnInit {
           this.submitting = false;
           this.toastr.error('Failed to submit ticket. Please try again.');
         }
+      });
+  }
+
+  escalate(t: SupportTicket): void {
+    const reason = (prompt('Tell CraveIt what went wrong with this store (optional):') ?? '').trim();
+    this.http.post<SupportTicket>(`${environment.apiUrl}/api/support/${t.id}/escalate`, { reason }, { headers: this.headers })
+      .subscribe({
+        next: updated => { Object.assign(t, updated); this.toastr.success('Escalated to CraveIt — we\'ll review how this store handled you.'); },
+        error: e => this.toastr.error(e?.error?.error || 'Could not escalate. Please try again.')
       });
   }
 

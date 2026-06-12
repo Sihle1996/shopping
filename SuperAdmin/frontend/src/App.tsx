@@ -14,6 +14,7 @@ import Orders from './pages/Orders/Orders'
 import Settings from './pages/Settings/Settings'
 import Enrollment from './pages/Enrollment/Enrollment'
 import Payouts from './pages/Payouts/Payouts'
+import Escalations from './pages/Escalations/Escalations'
 import NotFound from './pages/NotFound/NotFound'
 
 export default function App() {
@@ -46,6 +47,7 @@ export default function App() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/enrollment" element={<Enrollment />} />
               <Route path="/payouts" element={<Payouts />} />
+              <Route path="/escalations" element={<Escalations />} />
             </Route>
 
             {/* 404 */}

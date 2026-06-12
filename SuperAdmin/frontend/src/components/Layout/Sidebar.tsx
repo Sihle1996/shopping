@@ -1,8 +1,9 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { LayoutDashboard, Store, Users, Truck, CreditCard, LogOut, Zap, ShoppingBag, Settings, ClipboardCheck, Wallet } from 'lucide-react'
+import { LayoutDashboard, Store, Users, Truck, CreditCard, LogOut, Zap, ShoppingBag, Settings, ClipboardCheck, Wallet, LifeBuoy } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { enrollmentService } from '../../services/enrollment.service'
+import { supportService } from '../../services/support.service'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -12,6 +13,7 @@ const navItems = [
   { to: '/orders', label: 'Orders', icon: ShoppingBag },
   { to: '/subscriptions', label: 'Subscriptions', icon: CreditCard },
   { to: '/enrollment', label: 'Enrollments', icon: ClipboardCheck },
+  { to: '/escalations', label: 'Escalations', icon: LifeBuoy },
   { to: '/payouts', label: 'Payouts', icon: Wallet },
   { to: '/settings', label: 'Settings', icon: Settings }
 ]
@@ -32,6 +34,14 @@ export default function Sidebar() {
   })
 
   const pendingCount = pending.length
+
+  const { data: escalated = [] } = useQuery({
+    queryKey: ['support-escalated'],
+    queryFn: () => supportService.getEscalated(),
+    staleTime: 60_000,
+    refetchInterval: 120_000
+  })
+  const escalatedCount = escalated.length
 
   return (
     <aside
@@ -71,6 +81,11 @@ export default function Sidebar() {
                 {to === '/enrollment' && pendingCount > 0 && (
                   <span className="flex-shrink-0 min-w-[18px] h-[18px] bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
                     {pendingCount}
+                  </span>
+                )}
+                {to === '/escalations' && escalatedCount > 0 && (
+                  <span className="flex-shrink-0 min-w-[18px] h-[18px] bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                    {escalatedCount}
                   </span>
                 )}
               </>
