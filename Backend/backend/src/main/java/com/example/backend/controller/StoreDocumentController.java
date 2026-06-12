@@ -184,6 +184,13 @@ public class StoreDocumentController {
                     "Please fill in your bank account details before submitting"));
         }
 
+        // A store can't deliver without a precise location — require address + map pin before review/go-live.
+        if (tenant.getAddress() == null || tenant.getAddress().isBlank()
+                || tenant.getLatitude() == null || tenant.getLongitude() == null) {
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "Please set your store location (address + map pin) in Settings before submitting"));
+        }
+
         tenant.setApprovalStatus(Tenant.ApprovalStatus.PENDING_REVIEW);
         tenant.setSubmittedForReviewAt(Instant.now());
         tenant.setRejectionReason(null);

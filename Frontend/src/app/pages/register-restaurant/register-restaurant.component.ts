@@ -44,7 +44,7 @@ export class RegisterRestaurantComponent implements OnInit, OnDestroy {
       slug: ['', [Validators.required, Validators.pattern(/^[a-z0-9-]+$/)]],
       email: ['', [Validators.required, Validators.email]],
       phone: [''],
-      address: ['']
+      address: ['', Validators.required]
     });
 
     // Auto-generate slug from name
@@ -122,6 +122,12 @@ export class RegisterRestaurantComponent implements OnInit, OnDestroy {
 
   onSubmit(): void {
     if (this.form.invalid) return;
+
+    // Require a precise map pin, not just typed text — pick a suggestion or use GPS so we have coordinates.
+    if (this.geocodedLat === null || this.geocodedLon === null) {
+      this.errorMessage = 'Please pick your address from the suggestions (or use "Use my location") so we can place your store on the map.';
+      return;
+    }
 
     this.isLoading = true;
     this.errorMessage = '';
