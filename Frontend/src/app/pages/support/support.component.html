@@ -65,9 +65,26 @@
                 [ngClass]="statusClass(t.status)">{{ statusLabel(t.status) }}</span>
         </div>
         <p class="text-xs text-textMuted mt-1">{{ t.message }}</p>
-        <div *ngIf="t.adminNotes" class="mt-2 p-2 bg-blue-50 rounded-lg text-xs text-blue-800">
+        <div *ngIf="t.adminNotes && !t.messages?.length" class="mt-2 p-2 bg-blue-50 rounded-lg text-xs text-blue-800">
           <span class="font-semibold">Store reply:</span> {{ t.adminNotes }}
         </div>
+
+        <!-- conversation thread -->
+        <div *ngIf="t.messages?.length" class="mt-2 space-y-1.5">
+          <div *ngFor="let m of t.messages" class="rounded-lg px-2.5 py-1.5 text-xs"
+               [ngClass]="m.senderRole === 'PLATFORM' ? 'bg-orange-50 text-orange-800' : m.senderRole === 'STORE' ? 'bg-blue-50 text-blue-800' : 'bg-gray-100 text-gray-700'">
+            <span class="font-semibold">{{ roleLabel(m.senderRole) }}:</span> {{ m.body }}
+          </div>
+        </div>
+
+        <!-- reply -->
+        <div class="mt-2 flex gap-2">
+          <input [(ngModel)]="replyDrafts[t.id]" placeholder="Reply…"
+                 class="flex-1 px-3 py-1.5 rounded-lg border border-borderColor text-xs" />
+          <button (click)="sendReply(t)" [disabled]="sendingReply[t.id]"
+                  class="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold disabled:opacity-50">Send</button>
+        </div>
+
         <div class="mt-2 flex items-center justify-between gap-2">
           <p class="text-xs text-textLight">{{ t.createdAt | date:'medium' }}</p>
           <button *ngIf="!t.escalated" (click)="escalate(t)"

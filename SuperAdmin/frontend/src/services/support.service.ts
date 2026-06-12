@@ -1,5 +1,12 @@
 import api from './api'
 
+export interface SupportMsg {
+  senderRole: string
+  senderEmail: string | null
+  body: string
+  createdAt: string
+}
+
 export interface EscalatedTicket {
   id: string
   storeId: string | null
@@ -15,6 +22,7 @@ export interface EscalatedTicket {
   resolvedAt: string | null
   platformNote: string | null
   platformReviewedAt: string | null
+  messages: SupportMsg[]
 }
 
 export interface PlatformTicket {
@@ -28,6 +36,7 @@ export interface PlatformTicket {
   platformNote: string | null
   platformReviewedAt: string | null
   createdAt: string
+  messages: SupportMsg[]
 }
 
 export interface StoreSignal {
@@ -51,7 +60,7 @@ export const supportService = {
     const { data } = await api.get<StoreSignal[]>('/support/store-signals')
     return data
   },
-  async addNote(id: string, note: string, resolve: boolean): Promise<void> {
-    await api.post(`/support/${id}/platform-note`, { note, resolve })
+  async sendMessage(id: string, body: string, resolve: boolean): Promise<void> {
+    await api.post(`/support/${id}/message`, { body, resolve })
   }
 }

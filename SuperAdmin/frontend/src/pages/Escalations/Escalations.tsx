@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { LifeBuoy, AlertTriangle, Store } from 'lucide-react'
-import { supportService } from '../../services/support.service'
+import { supportService, type SupportMsg } from '../../services/support.service'
 import { useToast } from '../../context/ToastContext'
 
 function Spinner() {
@@ -17,25 +17,40 @@ function Empty({ icon, title, sub }: { icon: ReactNode; title: string; sub: stri
   )
 }
 
-function ReplyBox({ id, existingNote, reviewedAt, onSaved }: { id: string; existingNote: string | null; reviewedAt: string | null; onSaved: () => void }) {
+const roleLabel = (r: string) => (r === 'PLATFORM' ? 'CraveIt' : r === 'STORE' ? 'Store' : 'Customer')
+
+function Thread({ messages }: { messages: SupportMsg[] }) {
+  if (!messages?.length) return null
+  return (
+    <div className="mt-3 space-y-2">
+      {messages.map((m, i) => (
+        <div key={i} className={`rounded-xl px-3 py-2 text-xs ${m.senderRole === 'PLATFORM' ? 'bg-orange-500/5 border border-orange-500/20' : m.senderRole === 'STORE' ? 'bg-gray-800/60' : 'bg-gray-800/30'}`}>
+          <p className="font-semibold text-gray-400 mb-0.5">{roleLabel(m.senderRole)}<span className="font-normal text-gray-600"> · {new Date(m.createdAt).toLocaleString()}</span></p>
+          <p className="text-gray-200 whitespace-pre-wrap">{m.body}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ReplyBox({ id, onSaved }: { id: string; onSaved: () => void }) {
   const { showToast } = useToast()
-  const [note, setNote] = useState(existingNote ?? '')
+  const [body, setBody] = useState('')
   const mutation = useMutation({
-    mutationFn: ({ resolve }: { resolve: boolean }) => supportService.addNote(id, note, resolve),
-    onSuccess: () => { showToast('Reply saved', 'success'); onSaved() },
-    onError: () => showToast('Failed to save', 'error')
+    mutationFn: ({ resolve }: { resolve: boolean }) => supportService.sendMessage(id, body, resolve),
+    onSuccess: () => { showToast('Reply sent', 'success'); setBody(''); onSaved() },
+    onError: () => showToast('Failed to send', 'error')
   })
   return (
     <div className="mt-3 border-t border-gray-800 pt-3">
-      {reviewedAt && <p className="text-[11px] text-gray-500 mb-1">Last actioned {new Date(reviewedAt).toLocaleString()}</p>}
-      <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
-        placeholder="Reply to the store / note for the platform record…"
+      <textarea value={body} onChange={e => setBody(e.target.value)} rows={2}
+        placeholder="Reply to the customer / store…"
         className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-gray-500" />
       <div className="flex gap-2 mt-2">
-        <button onClick={() => mutation.mutate({ resolve: false })} disabled={mutation.isPending || !note.trim()}
-          className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold disabled:opacity-50">Save reply</button>
-        <button onClick={() => mutation.mutate({ resolve: true })} disabled={mutation.isPending}
-          className="px-3 py-1.5 rounded-lg bg-green-600/20 hover:bg-green-600/30 text-green-400 text-xs font-semibold border border-green-600/30 disabled:opacity-50">Save &amp; mark resolved</button>
+        <button onClick={() => mutation.mutate({ resolve: false })} disabled={mutation.isPending || !body.trim()}
+          className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold disabled:opacity-50">Send reply</button>
+        <button onClick={() => mutation.mutate({ resolve: true })} disabled={mutation.isPending || !body.trim()}
+          className="px-3 py-1.5 rounded-lg bg-green-600/20 hover:bg-green-600/30 text-green-400 text-xs font-semibold border border-green-600/30 disabled:opacity-50">Send &amp; resolve</button>
       </div>
     </div>
   )
@@ -59,7 +74,7 @@ export default function Escalations() {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white mb-1">Support oversight</h1>
-        <p className="text-gray-500 text-sm">Customer complaints escalated past stores, and store requests to CraveIt — with a way to reply.</p>
+        <p className="text-gray-500 text-sm">Customer complaints escalated past stores, and store requests to CraveIt — reply in‑thread; the customer is notified.</p>
       </div>
 
       <div className="flex gap-1 mb-6 bg-gray-900 border border-gray-800 rounded-xl p-1 w-fit">
@@ -95,8 +110,8 @@ export default function Escalations() {
               </div>
               <p className="text-sm text-gray-300">{t.message}</p>
               {t.escalationReason && <div className="mt-2 bg-orange-500/5 border border-orange-500/20 rounded-xl px-3 py-2"><p className="text-xs text-orange-300"><span className="font-semibold">Why escalated:</span> {t.escalationReason}</p></div>}
-              {t.adminNotes && <div className="mt-2 bg-gray-800/60 rounded-xl px-3 py-2"><p className="text-xs text-gray-400"><span className="font-semibold">Store's reply:</span> {t.adminNotes}</p></div>}
-              <ReplyBox id={t.id} existingNote={t.platformNote} reviewedAt={t.platformReviewedAt} onSaved={refetchEsc} />
+              <Thread messages={t.messages} />
+              <ReplyBox id={t.id} onSaved={refetchEsc} />
             </div>
           ))}
         </>
@@ -113,7 +128,8 @@ export default function Escalations() {
                 <span className="text-[11px] font-semibold text-gray-400 bg-gray-800 px-2 py-0.5 rounded-full flex-shrink-0">{t.status}</span>
               </div>
               <p className="text-sm text-gray-300">{t.message}</p>
-              <ReplyBox id={t.id} existingNote={t.platformNote} reviewedAt={t.platformReviewedAt} onSaved={refetchReq} />
+              <Thread messages={t.messages} />
+              <ReplyBox id={t.id} onSaved={refetchReq} />
             </div>
           ))}
         </>

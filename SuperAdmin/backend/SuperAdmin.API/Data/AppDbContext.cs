@@ -12,6 +12,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<PlatformSettings> PlatformSettings => Set<PlatformSettings>();
     public DbSet<StoreDocument> StoreDocuments => Set<StoreDocument>();
     public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();
+    public DbSet<SupportMessage> SupportMessages => Set<SupportMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -45,5 +46,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasOne(s => s.Tenant).WithMany().HasForeignKey(s => s.TenantId).IsRequired(false);
         modelBuilder.Entity<SupportTicket>()
             .HasOne(s => s.User).WithMany().HasForeignKey(s => s.UserId).IsRequired(false);
+        modelBuilder.Entity<SupportTicket>()
+            .HasMany(s => s.Messages).WithOne().HasForeignKey(m => m.TicketId);
     }
 }

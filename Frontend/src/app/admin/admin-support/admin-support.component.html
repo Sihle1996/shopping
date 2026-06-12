@@ -30,8 +30,17 @@
           <span class="text-xs px-2 py-0.5 rounded-full font-medium" [ngClass]="statusClass(p.status)">{{ statusLabel(p.status) }}</span>
         </div>
         <p class="text-xs text-textMuted mt-1">{{ p.message }}</p>
-        <div *ngIf="p.platformNote" class="mt-2 p-2 bg-orange-50 rounded-lg text-xs text-orange-800">
-          <span class="font-semibold">CraveIt:</span> {{ p.platformNote }}
+        <div *ngIf="p.messages?.length" class="mt-2 space-y-1.5">
+          <div *ngFor="let m of p.messages" class="rounded-lg px-2.5 py-1.5 text-xs"
+               [ngClass]="m.senderRole === 'PLATFORM' ? 'bg-orange-50 text-orange-800' : 'bg-gray-100 text-gray-700'">
+            <span class="font-semibold">{{ roleLabel(m.senderRole) }}:</span> {{ m.body }}
+          </div>
+        </div>
+        <div class="mt-2 flex gap-2">
+          <input [(ngModel)]="replyDrafts[p.id]" placeholder="Reply to CraveIt…"
+                 class="flex-1 px-3 py-1.5 rounded-lg border border-borderColor text-xs" />
+          <button (click)="sendThreadReply(p.id)" [disabled]="sendingReply[p.id]"
+                  class="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold disabled:opacity-50">Send</button>
         </div>
       </div>
     </div>
@@ -89,6 +98,22 @@
 
           <div class="bg-surface rounded-xl p-3 mb-4">
             <p class="text-sm text-textDark">{{ selected.message }}</p>
+          </div>
+
+          <!-- conversation thread -->
+          <div *ngIf="selected.messages?.length" class="space-y-1.5 mb-3">
+            <div *ngFor="let m of selected.messages" class="rounded-lg px-2.5 py-1.5 text-xs"
+                 [ngClass]="m.senderRole === 'PLATFORM' ? 'bg-orange-50 text-orange-800' : m.senderRole === 'STORE' ? 'bg-blue-50 text-blue-800' : 'bg-gray-100 text-gray-700'">
+              <span class="font-semibold">{{ roleLabel(m.senderRole) }}:</span> {{ m.body }}
+            </div>
+          </div>
+
+          <!-- reply to the customer (threaded; notifies them) -->
+          <div class="flex gap-2 mb-4">
+            <input [(ngModel)]="replyDrafts[selected.id]" placeholder="Reply to the customer…"
+                   class="flex-1 px-3 py-2 rounded-xl border border-borderColor text-sm" />
+            <button (click)="sendThreadReply(selected.id)" [disabled]="sendingReply[selected.id]"
+                    class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold disabled:opacity-50">Send</button>
           </div>
 
           <h4 class="text-sm font-semibold text-textDark pl-3 border-l-2 border-primary mb-2">Update Ticket</h4>

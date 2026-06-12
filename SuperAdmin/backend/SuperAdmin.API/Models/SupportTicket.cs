@@ -61,4 +61,5 @@ public class SupportTicket
 
     public Tenant? Tenant { get; set; }
     public User? User { get; set; }
+    public List<SupportMessage> Messages { get; set; } = new();
 }

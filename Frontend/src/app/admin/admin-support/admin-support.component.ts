@@ -6,6 +6,8 @@ import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 import { TabItem } from 'src/app/shared/components/tabbed-list/tabbed-list.component';
 
+interface SupportMsg { senderRole: string; senderEmail?: string; body: string; createdAt: string; }
+
 interface SupportTicket {
   id: string;
   subject: string;
@@ -15,6 +17,7 @@ interface SupportTicket {
   createdAt: string;
   orderId?: string;
   user?: { email?: string; fullName?: string };
+  messages?: SupportMsg[];
 }
 
 @Component({
@@ -35,6 +38,9 @@ export class AdminSupportComponent implements OnInit {
   showPlatformForm = false;
   submittingPlatform = false;
   platformForm = { subject: '', message: '' };
+
+  replyDrafts: { [id: string]: string } = {};
+  sendingReply: { [id: string]: boolean } = {};
 
   // AI draft
   aiDrafting = false;
@@ -81,6 +87,25 @@ export class AdminSupportComponent implements OnInit {
     this.http.get<any[]>(`${environment.apiUrl}/api/admin/support/platform`, { headers: this.headers })
       .subscribe({ next: t => this.platformTickets = t, error: () => {} });
   }
+
+  sendThreadReply(id: string): void {
+    const body = (this.replyDrafts[id] || '').trim();
+    if (!body) return;
+    this.sendingReply[id] = true;
+    this.http.post<any>(`${environment.apiUrl}/api/admin/support/${id}/message`, { body }, { headers: this.headers })
+      .subscribe({
+        next: updated => {
+          this.replyDrafts[id] = '';
+          this.sendingReply[id] = false;
+          this.tickets = this.tickets.map(t => t.id === id ? updated : t);
+          this.platformTickets = this.platformTickets.map(t => t.id === id ? updated : t);
+          if (this.selected?.id === id) this.selected = updated;
+        },
+        error: () => { this.sendingReply[id] = false; this.toastr.error('Could not send reply'); }
+      });
+  }
+
+  roleLabel(r: string): string { return r === 'PLATFORM' ? 'CraveIt' : r === 'STORE' ? 'You' : 'Customer'; }
 
   submitPlatform(): void {
     if (!this.platformForm.subject.trim() || !this.platformForm.message.trim()) { this.toastr.warning('Add a subject and message'); return; }

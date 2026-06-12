@@ -5,6 +5,13 @@ import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 
+interface SupportMsg {
+  senderRole: string;
+  senderEmail?: string;
+  body: string;
+  createdAt: string;
+}
+
 interface SupportTicket {
   id: string;
   subject: string;
@@ -15,6 +22,7 @@ interface SupportTicket {
   orderId?: string;
   escalated?: boolean;
   escalationReason?: string;
+  messages?: SupportMsg[];
 }
 
 @Component({
@@ -29,6 +37,9 @@ export class SupportComponent implements OnInit {
 
   form = { subject: '', message: '', orderId: '' };
   formSubmitted = false;
+
+  replyDrafts: { [id: string]: string } = {};
+  sendingReply: { [id: string]: boolean } = {};
 
   private get headers(): HttpHeaders {
     return new HttpHeaders({
@@ -85,6 +96,24 @@ export class SupportComponent implements OnInit {
         error: e => this.toastr.error(e?.error?.error || 'Could not escalate. Please try again.')
       });
   }
+
+  sendReply(t: SupportTicket): void {
+    const body = (this.replyDrafts[t.id] || '').trim();
+    if (!body) return;
+    this.sendingReply[t.id] = true;
+    this.http.post<SupportTicket>(`${environment.apiUrl}/api/support/${t.id}/message`, { body }, { headers: this.headers })
+      .subscribe({
+        next: updated => {
+          const i = this.tickets.findIndex(x => x.id === t.id);
+          if (i >= 0) this.tickets[i] = updated;
+          this.replyDrafts[t.id] = '';
+          this.sendingReply[t.id] = false;
+        },
+        error: () => { this.sendingReply[t.id] = false; this.toastr.error('Could not send your reply.'); }
+      });
+  }
+
+  roleLabel(r: string): string { return r === 'PLATFORM' ? 'CraveIt' : r === 'STORE' ? 'Store' : 'You'; }
 
   statusLabel(s: string): string {
     return { OPEN: 'Open', IN_PROGRESS: 'In Progress', RESOLVED: 'Resolved', CLOSED: 'Closed' }[s] ?? s;

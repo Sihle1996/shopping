@@ -23,6 +23,10 @@ public class ResendEmailService(HttpClient http, IConfiguration config, ILogger<
         SendAsync(toEmail, "Your CraveIt store application — action needed",
             RejectedHtml(storeName, reason, $"{_storeAdminUrl}/admin/enrollment"));
 
+    /// <summary>Generic transactional email (e.g. a support-reply notification). Fail-open like the rest.</summary>
+    public Task SendNotificationAsync(string? toEmail, string subject, string html) =>
+        SendAsync(toEmail, subject, html);
+
     private async Task SendAsync(string? to, string subject, string html)
     {
         if (string.IsNullOrWhiteSpace(_apiKey))

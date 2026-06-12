@@ -1,14 +1,17 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SuperAdmin.API.Data;
+using SuperAdmin.API.Models;
+using SuperAdmin.API.Services;
 
 namespace SuperAdmin.API.Controllers;
 
 [ApiController]
 [Route("api/support")]
 [Authorize(Roles = "SUPERADMIN")]
-public class SupportController(AppDbContext db) : ControllerBase
+public class SupportController(AppDbContext db, ResendEmailService email) : ControllerBase
 {
     // Escalated tickets across all stores — the platform's oversight of customer↔store support. A customer
     // escalates when a store mishandles them, so the platform can step in before it becomes public criticism.
@@ -19,6 +22,7 @@ public class SupportController(AppDbContext db) : ControllerBase
             .Where(t => t.Escalated)
             .Include(t => t.Tenant)
             .Include(t => t.User)
+            .Include(t => t.Messages)
             .OrderByDescending(t => t.EscalatedAt)
             .ToListAsync();
         return Ok(tickets.Select(t => new
@@ -29,7 +33,8 @@ public class SupportController(AppDbContext db) : ControllerBase
             customer = t.User != null ? t.User.Email : null,
             t.Subject, t.Message, t.Status, t.AdminNotes,
             t.EscalationReason, t.CreatedAt, t.EscalatedAt, t.ResolvedAt,
-            t.PlatformNote, t.PlatformReviewedAt
+            t.PlatformNote, t.PlatformReviewedAt,
+            messages = t.Messages.OrderBy(m => m.CreatedAt).Select(m => new { m.SenderRole, m.SenderEmail, m.Body, m.CreatedAt })
         }));
     }
 
@@ -42,6 +47,7 @@ public class SupportController(AppDbContext db) : ControllerBase
             .Where(t => t.Audience == "PLATFORM")
             .Include(t => t.Tenant)
             .Include(t => t.User)
+            .Include(t => t.Messages)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
         return Ok(tickets.Select(t => new
@@ -50,7 +56,8 @@ public class SupportController(AppDbContext db) : ControllerBase
             storeId = t.TenantId,
             store = t.Tenant != null ? t.Tenant.Name : null,
             requester = t.User != null ? t.User.Email : null,
-            t.Subject, t.Message, t.Status, t.PlatformNote, t.PlatformReviewedAt, t.CreatedAt
+            t.Subject, t.Message, t.Status, t.PlatformNote, t.PlatformReviewedAt, t.CreatedAt,
+            messages = t.Messages.OrderBy(m => m.CreatedAt).Select(m => new { m.SenderRole, m.SenderEmail, m.Body, m.CreatedAt })
         }));
     }
 
@@ -69,6 +76,36 @@ public class SupportController(AppDbContext db) : ControllerBase
     }
 
     public record PlatformNoteRequest(string? Note, bool Resolve);
+
+    // The platform's reply IN THE THREAD — appends a PLATFORM message and notifies the ticket creator (the
+    // customer, or the store admin for a store request). Best-effort email so it never fails the reply.
+    [HttpPost("{id}/message")]
+    public async Task<IActionResult> AddMessage(Guid id, [FromBody] MessageRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.Body)) return BadRequest(new { message = "Message is required" });
+        var ticket = await db.SupportTickets.Include(t => t.User).FirstOrDefaultAsync(t => t.Id == id);
+        if (ticket == null) return NotFound();
+        var actor = User.FindFirstValue(ClaimTypes.Email) ?? "CraveIt";
+        db.SupportMessages.Add(new SupportMessage
+        {
+            Id = Guid.NewGuid(),
+            TicketId = id,
+            SenderRole = "PLATFORM",
+            SenderEmail = actor,
+            Body = req.Body.Trim(),
+            CreatedAt = DateTime.UtcNow
+        });
+        if (req.Resolve) ticket.Status = "RESOLVED";
+        ticket.PlatformReviewedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        var to = ticket.User?.Email;
+        if (!string.IsNullOrWhiteSpace(to) && !string.Equals(to, actor, StringComparison.OrdinalIgnoreCase))
+            await email.SendNotificationAsync(to, "New reply to your CraveIt support ticket",
+                $"<div style='font-family:sans-serif;padding:24px;max-width:480px;margin:0 auto;'><h2 style='color:#111;'>New reply from CraveIt</h2><p style='color:#555;'>There's a new reply on your support ticket \"{ticket.Subject}\". Log in to CraveIt to read it.</p></div>");
+        return Ok(new { message = "Sent" });
+    }
+
+    public record MessageRequest(string? Body, bool Resolve);
 
     // Per-store complaint signal — surfaces which stores generate the most support load / escalations, so a
     // pattern of mistreatment shows up instead of staying buried in one-off tickets.

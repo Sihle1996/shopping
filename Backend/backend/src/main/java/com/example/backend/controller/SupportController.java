@@ -1,8 +1,11 @@
 package com.example.backend.controller;
 
+import com.example.backend.entity.SupportMessage;
 import com.example.backend.entity.SupportTicket;
+import com.example.backend.repository.SupportMessageRepository;
 import com.example.backend.repository.SupportTicketRepository;
 import com.example.backend.repository.TenantRepository;
+import com.example.backend.service.EmailService;
 import com.example.backend.tenant.TenantContext;
 import com.example.backend.user.User;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,32 @@ public class SupportController {
 
     private final SupportTicketRepository ticketRepository;
     private final TenantRepository tenantRepository;
+    private final SupportMessageRepository messageRepository;
+    private final EmailService emailService;
+
+    /** Append a message to a ticket's thread. */
+    private void addMessage(SupportTicket ticket, String role, String email, String body) {
+        SupportMessage m = new SupportMessage();
+        m.setTicket(ticket);
+        m.setSenderRole(role);
+        m.setSenderEmail(email);
+        m.setBody(body.trim());
+        messageRepository.save(m);
+    }
+
+    /** Email the ticket creator when someone ELSE replies — this is the customer notification. Best-effort. */
+    private void notifyCreatorIfOther(SupportTicket ticket, String senderEmail) {
+        try {
+            String to = ticket.getUser() != null ? ticket.getUser().getEmail() : null;
+            if (to != null && !to.isBlank() && !to.equalsIgnoreCase(senderEmail)) {
+                emailService.sendRaw(to, "New reply to your CraveIt support ticket",
+                    "<div style='font-family:sans-serif;padding:24px;max-width:480px;margin:0 auto;'>"
+                    + "<h2 style='color:#111;'>New reply</h2>"
+                    + "<p style='color:#555;'>There's a new reply on your support ticket \"" + ticket.getSubject()
+                    + "\". Log in to CraveIt to read it.</p></div>");
+            }
+        } catch (Exception ignored) { /* notification is best-effort — never fail the reply */ }
+    }
 
     /** Customer: submit a new support ticket */
     @PostMapping("/api/support")
@@ -83,6 +112,26 @@ public class SupportController {
         return ResponseEntity.ok(toDto(ticketRepository.save(ticket)));
     }
 
+    /** Customer: reply in their ticket's thread. */
+    @PostMapping("/api/support/{id}/message")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> customerMessage(@PathVariable UUID id, @RequestBody Map<String, String> body,
+                                             @AuthenticationPrincipal User user) {
+        SupportTicket ticket = ticketRepository.findById(id).orElse(null);
+        if (ticket == null) return ResponseEntity.notFound().build();
+        if (ticket.getUser() == null || !ticket.getUser().getId().equals(user.getId())) {
+            return ResponseEntity.status(403).body(Map.of("error", "This isn't your ticket"));
+        }
+        String text = body.get("body");
+        if (text == null || text.isBlank()) return ResponseEntity.badRequest().body(Map.of("error", "Message is required"));
+        addMessage(ticket, "CUSTOMER", user.getEmail(), text);
+        if (ticket.getStatus() == SupportTicket.TicketStatus.RESOLVED || ticket.getStatus() == SupportTicket.TicketStatus.CLOSED) {
+            ticket.setStatus(SupportTicket.TicketStatus.OPEN);  // a new customer reply reopens the ticket
+            ticketRepository.save(ticket);
+        }
+        return ResponseEntity.ok(toDto(ticket));
+    }
+
     /** Admin: list CUSTOMER tickets for their tenant (their own platform requests are a separate inbox). */
     @GetMapping("/api/admin/support")
     @PreAuthorize("hasRole('ADMIN')")
@@ -126,6 +175,20 @@ public class SupportController {
                 .stream().map(this::toDto).toList());
     }
 
+    /** Store admin: reply in a ticket's thread (a customer ticket, or their own request to CraveIt). */
+    @PostMapping("/api/admin/support/{id}/message")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> storeMessage(@PathVariable UUID id, @RequestBody Map<String, String> body,
+                                          @AuthenticationPrincipal User user) {
+        SupportTicket ticket = ticketRepository.findById(id).orElse(null);
+        if (ticket == null) return ResponseEntity.notFound().build();
+        String text = body.get("body");
+        if (text == null || text.isBlank()) return ResponseEntity.badRequest().body(Map.of("error", "Message is required"));
+        addMessage(ticket, "STORE", user.getEmail(), text);
+        notifyCreatorIfOther(ticket, user.getEmail());
+        return ResponseEntity.ok(toDto(ticket));
+    }
+
     /** Admin: update ticket status and notes */
     @PatchMapping("/api/admin/support/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -158,20 +221,26 @@ public class SupportController {
         } catch (Exception ignored) {
             // lazy association unavailable — omit user rather than failing the request
         }
+        List<MessageDTO> messages = messageRepository.findByTicket_IdOrderByCreatedAtAsc(t.getId())
+            .stream().map(m -> new MessageDTO(m.getSenderRole(), m.getSenderEmail(), m.getBody(), m.getCreatedAt()))
+            .toList();
         return new TicketDTO(
             t.getId(), t.getSubject(), t.getMessage(),
             t.getStatus() != null ? t.getStatus().name() : null,
             t.getAdminNotes(), t.getOrderId(),
             t.getCreatedAt(), t.getResolvedAt(), userDto,
             t.isEscalated(), t.getEscalatedAt(), t.getEscalationReason(),
-            t.getAudience(), t.getPlatformNote(), t.getPlatformReviewedAt());
+            t.getAudience(), t.getPlatformNote(), t.getPlatformReviewedAt(), messages);
     }
 
     record TicketUserDTO(String email, String fullName) {}
+
+    record MessageDTO(String senderRole, String senderEmail, String body, Instant createdAt) {}
 
     record TicketDTO(UUID id, String subject, String message, String status,
                      String adminNotes, UUID orderId, Instant createdAt,
                      Instant resolvedAt, TicketUserDTO user,
                      boolean escalated, Instant escalatedAt, String escalationReason,
-                     String audience, String platformNote, Instant platformReviewedAt) {}
+                     String audience, String platformNote, Instant platformReviewedAt,
+                     List<MessageDTO> messages) {}
 }
