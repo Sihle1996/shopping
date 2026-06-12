@@ -1,0 +1,20 @@
+:host { display: inline-flex; line-height: 0; }
+.bl-stage { position: relative; display: inline-block; line-height: 0; }
+
+/* the complete glyph (notch pre-filled) — fixed and perfectly still */
+.bl-v { display: block; position: relative; z-index: 1; }
+
+/* soft orange glow trailing the bite (centred on the path point) */
+.bl-glow {
+  position: absolute; z-index: 3; width: 34%; height: 34%; transform: translate(-50%, -50%);
+  border-radius: 50%; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle, rgba(231, 111, 81, .6), transparent 68%);
+}
+
+/* the moving bite — a surface-coloured cutout that erases the V where it sits */
+.bl-bite {
+  position: absolute; z-index: 4; width: 15%; height: 17%; transform: translate(-50%, -50%);
+  background: var(--bg, #fff); border-radius: 30% 30% 38% 38%;
+}
+
+@media (prefers-reduced-motion: reduce) { .bl-glow { display: none; } }

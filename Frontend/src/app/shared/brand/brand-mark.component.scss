@@ -1,0 +1,88 @@
+:host { display: inline-flex; line-height: 0; }
+.bm { position: relative; display: inline-block; line-height: 0; }
+
+/* the real glyph, on top. clip-path cuts the "e" off along the right arm's outer edge
+   (the letters touch in the logo) so both arms read complete, with the real bite kept. */
+.bm-v {
+  display: block; width: auto; position: relative; z-index: 1;
+  clip-path: polygon(0% 0%, 95% 0%, 95% 26%, 74% 60%, 49% 100%, 0% 100%);
+}
+.bm-on-dark .bm-v { filter: brightness(0) invert(1); }   /* white v on dark surfaces */
+
+/* a small orange signal pulsing IN the bite (on top of the glyph, sat in the open notch) */
+.bm-bite {
+  position: absolute; z-index: 2;
+  left: 56%; top: 37%; width: 13%; height: 13%;
+  background: #E76F51; border-radius: 50%;
+  box-shadow: 0 0 4px rgba(231, 111, 81, .6);
+  opacity: 0; transform-origin: center;
+}
+
+/* loading — the bite fills + empties */
+.bm-loading .bm-bite { animation: bmPulse 1.3s ease-in-out infinite; }
+@keyframes bmPulse { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+
+/* thinking (AI) — a slower continuous fill */
+.bm-thinking .bm-bite { animation: bmThink 1.6s ease-in-out infinite; }
+@keyframes bmThink { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+
+/* success — fills + holds with a little pop */
+.bm-success .bm-bite { opacity: 1; animation: bmPop .5s ease-out; }
+@keyframes bmPop { 0% { transform: scale(.4); } 60% { transform: scale(1.18); } 100% { transform: scale(1); } }
+
+/* error — steady red bite */
+.bm-error .bm-bite { opacity: 1; background: #ef4444; }
+
+/* ── creature: eyes in the V's negative space (the arms become horns) ─────── */
+.bm-eye, .bm-brow { display: none; position: absolute; z-index: 0; background: #1F2937; }
+.bm-on-dark .bm-eye, .bm-on-dark .bm-brow { background: #fff; }
+.bm-eye::after {  /* tiny glint = alive */
+  content: ''; position: absolute; top: 16%; left: 20%; width: 34%; height: 34%;
+  background: rgba(255, 255, 255, .9); border-radius: 50%;
+}
+.bm-on-dark .bm-eye::after { background: rgba(15, 23, 42, .9); }
+
+.bm-face-hidden .bm-eye, .bm-face-beast .bm-eye { display: block; }
+
+/* hidden — small eyes tucked INSIDE the inner space (subtle, serious), with an occasional blink */
+.bm-face-hidden .bm-eye {
+  width: 8%; height: 9.5%; top: 35%; border-radius: 50%;
+  transform-origin: center; animation: bmBlink 4.6s ease-in-out infinite;
+}
+@keyframes bmBlink { 0%, 91%, 100% { transform: scaleY(1); } 95.5% { transform: scaleY(.08); } }
+.bm-face-hidden .bm-eye-l { left: 36%; }
+.bm-face-hidden .bm-eye-r { left: 51%; }
+
+/* beast — bigger eyes + an angled brow ridge (charging animal) */
+.bm-face-beast .bm-eye { width: 12%; height: 14%; top: 40%; border-radius: 50% 50% 48% 48%; }
+.bm-face-beast .bm-eye-l { left: 32%; transform: rotate(10deg); }
+.bm-face-beast .bm-eye-r { left: 54%; transform: rotate(-10deg); }
+.bm-face-beast .bm-brow {
+  display: block; top: 33%; left: 33%; width: 32%; height: 9%;
+  clip-path: polygon(0 0, 50% 100%, 100% 0);   /* downward chevron = a stern brow */
+}
+
+/* scary — glowing orange predator eyes (no glint) + a heavy brow */
+.bm-face-scary .bm-eye {
+  display: block; width: 14%; height: 10%; top: 43%; border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%, #FFE0B0 0%, #FF6A1A 50%, #D5410A 100%);
+  box-shadow: 0 0 5px 1px rgba(255, 106, 26, .9), 0 0 14px 3px rgba(255, 106, 26, .5);
+  animation: bmScary 2.2s ease-in-out infinite;
+}
+.bm-face-scary .bm-eye::after { display: none; }
+.bm-face-scary .bm-eye-l { left: 30%; transform: rotate(20deg); }
+.bm-face-scary .bm-eye-r { left: 56%; transform: rotate(-20deg); }
+.bm-face-scary .bm-brow {
+  display: block; top: 34%; left: 31%; width: 36%; height: 11%;
+  background: #1F2937; clip-path: polygon(0 0, 50% 100%, 100% 0);
+}
+.bm-on-dark.bm-face-scary .bm-brow { background: #fff; }
+@keyframes bmScary {
+  0%, 100% { box-shadow: 0 0 4px 1px rgba(255, 106, 26, .8), 0 0 9px 2px rgba(255, 106, 26, .4); }
+  50%      { box-shadow: 0 0 7px 2px rgba(255, 106, 26, 1),  0 0 18px 5px rgba(255, 106, 26, .6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bm-bite, .bm-eye { animation: none !important; }
+  .bm-loading .bm-bite, .bm-thinking .bm-bite, .bm-success .bm-bite { opacity: 1; transform: none; }
+}

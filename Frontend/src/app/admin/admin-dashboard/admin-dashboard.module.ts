@@ -29,6 +29,10 @@ import { AdminEnrollmentComponent } from '../admin-enrollment/admin-enrollment.c
 import { AdminSupportComponent } from '../admin-support/admin-support.component';
 import { AdminPayoutsComponent } from '../admin-payouts/admin-payouts.component';
 import { AdminBooksComponent } from '../admin-books/admin-books.component';
+import { BrandMarkComponent } from '../../shared/brand/brand-mark.component';
+import { BiteLoaderComponent } from '../../shared/brand/bite-loader.component';
+import { ConfidenceMeterComponent } from '../../shared/components/confidence-meter/confidence-meter.component';
+import { DeltaBarComponent } from '../../shared/components/delta-bar/delta-bar.component';
 
 @NgModule({
   declarations: [
@@ -56,7 +60,8 @@ import { AdminBooksComponent } from '../admin-books/admin-books.component';
     AdminPayoutsComponent,
     AdminBooksComponent,
   ],
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, SharedModule, AdminRoutingModule, NgApexchartsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, SharedModule, AdminRoutingModule, NgApexchartsModule,
+    BrandMarkComponent, BiteLoaderComponent, ConfidenceMeterComponent, DeltaBarComponent],
   exports: [AdminDashboardComponent, AdminFooterComponent],
 })
 export class AdminDashboardModule {}
