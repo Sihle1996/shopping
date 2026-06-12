@@ -53,6 +53,15 @@ public class SupportTicket {
     @Column(columnDefinition = "TEXT")
     private String escalationReason;
 
+    // Tier-3 store->platform support: audience STORE = customer->store (default), PLATFORM = store->CraveIt.
+    // platformNote / platformReviewedAt = the superadmin's response + when they acted (on an escalation or a
+    // store request) — gives the platform a way to reply, not just observe.
+    @Column(nullable = false)
+    private String audience = "STORE";
+    @Column(columnDefinition = "TEXT")
+    private String platformNote;
+    private Instant platformReviewedAt;
+
     public enum TicketStatus {
         OPEN, IN_PROGRESS, RESOLVED, CLOSED
     }

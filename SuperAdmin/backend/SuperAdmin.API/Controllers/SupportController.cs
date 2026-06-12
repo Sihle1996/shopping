@@ -28,9 +28,47 @@ public class SupportController(AppDbContext db) : ControllerBase
             store = t.Tenant != null ? t.Tenant.Name : null,
             customer = t.User != null ? t.User.Email : null,
             t.Subject, t.Message, t.Status, t.AdminNotes,
-            t.EscalationReason, t.CreatedAt, t.EscalatedAt, t.ResolvedAt
+            t.EscalationReason, t.CreatedAt, t.EscalatedAt, t.ResolvedAt,
+            t.PlatformNote, t.PlatformReviewedAt
         }));
     }
+
+    // Tier-3: store -> CraveIt support requests (payouts, disputes, policy). The platform replies via the
+    // platform-note endpoint below.
+    [HttpGet("platform")]
+    public async Task<IActionResult> GetPlatformRequests()
+    {
+        var tickets = await db.SupportTickets
+            .Where(t => t.Audience == "PLATFORM")
+            .Include(t => t.Tenant)
+            .Include(t => t.User)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
+        return Ok(tickets.Select(t => new
+        {
+            t.Id,
+            storeId = t.TenantId,
+            store = t.Tenant != null ? t.Tenant.Name : null,
+            requester = t.User != null ? t.User.Email : null,
+            t.Subject, t.Message, t.Status, t.PlatformNote, t.PlatformReviewedAt, t.CreatedAt
+        }));
+    }
+
+    // The platform's reply / note on a ticket — works for both an escalation and a store request. This is
+    // what turns "the superadmin can see it" into "the superadmin can act on it".
+    [HttpPost("{id}/platform-note")]
+    public async Task<IActionResult> AddPlatformNote(Guid id, [FromBody] PlatformNoteRequest req)
+    {
+        var ticket = await db.SupportTickets.FindAsync(id);
+        if (ticket == null) return NotFound();
+        ticket.PlatformNote = string.IsNullOrWhiteSpace(req.Note) ? null : req.Note.Trim();
+        ticket.PlatformReviewedAt = DateTime.UtcNow;
+        if (req.Resolve) ticket.Status = "RESOLVED";
+        await db.SaveChangesAsync();
+        return Ok(new { message = "Saved" });
+    }
+
+    public record PlatformNoteRequest(string? Note, bool Resolve);
 
     // Per-store complaint signal — surfaces which stores generate the most support load / escalations, so a
     // pattern of mistreatment shows up instead of staying buried in one-off tickets.

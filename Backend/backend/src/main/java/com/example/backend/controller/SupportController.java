@@ -83,14 +83,46 @@ public class SupportController {
         return ResponseEntity.ok(toDto(ticketRepository.save(ticket)));
     }
 
-    /** Admin: list all tickets for their tenant */
+    /** Admin: list CUSTOMER tickets for their tenant (their own platform requests are a separate inbox). */
     @GetMapping("/api/admin/support")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<TicketDTO>> adminTickets() {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId == null) return ResponseEntity.badRequest().build();
         return ResponseEntity.ok(
-            ticketRepository.findByTenant_IdOrderByCreatedAtDesc(tenantId)
+            ticketRepository.findByTenant_IdAndAudienceOrderByCreatedAtDesc(tenantId, "STORE")
+                .stream().map(this::toDto).toList());
+    }
+
+    /** Store admin: raise a support request to the platform (CraveIt) — payouts, disputes, policy, etc. */
+    @PostMapping("/api/admin/support/platform")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createPlatformTicket(@RequestBody Map<String, String> body,
+                                                  @AuthenticationPrincipal User user) {
+        String subject = body.get("subject");
+        String message = body.get("message");
+        if (subject == null || subject.isBlank() || message == null || message.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Subject and message are required"));
+        }
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return ResponseEntity.badRequest().build();
+        SupportTicket ticket = new SupportTicket();
+        ticket.setUser(user);
+        ticket.setSubject(subject.trim());
+        ticket.setMessage(message.trim());
+        ticket.setAudience("PLATFORM");
+        tenantRepository.findById(tenantId).ifPresent(ticket::setTenant);
+        return ResponseEntity.ok(toDto(ticketRepository.save(ticket)));
+    }
+
+    /** Store admin: their own requests to the platform, with CraveIt's reply in platformNote. */
+    @GetMapping("/api/admin/support/platform")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<TicketDTO>> myPlatformTickets() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return ResponseEntity.badRequest().build();
+        return ResponseEntity.ok(
+            ticketRepository.findByTenant_IdAndAudienceOrderByCreatedAtDesc(tenantId, "PLATFORM")
                 .stream().map(this::toDto).toList());
     }
 
@@ -131,7 +163,8 @@ public class SupportController {
             t.getStatus() != null ? t.getStatus().name() : null,
             t.getAdminNotes(), t.getOrderId(),
             t.getCreatedAt(), t.getResolvedAt(), userDto,
-            t.isEscalated(), t.getEscalatedAt(), t.getEscalationReason());
+            t.isEscalated(), t.getEscalatedAt(), t.getEscalationReason(),
+            t.getAudience(), t.getPlatformNote(), t.getPlatformReviewedAt());
     }
 
     record TicketUserDTO(String email, String fullName) {}
@@ -139,5 +172,6 @@ public class SupportController {
     record TicketDTO(UUID id, String subject, String message, String status,
                      String adminNotes, UUID orderId, Instant createdAt,
                      Instant resolvedAt, TicketUserDTO user,
-                     boolean escalated, Instant escalatedAt, String escalationReason) {}
+                     boolean escalated, Instant escalatedAt, String escalationReason,
+                     String audience, String platformNote, Instant platformReviewedAt) {}
 }

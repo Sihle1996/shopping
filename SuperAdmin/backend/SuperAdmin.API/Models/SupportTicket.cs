@@ -48,6 +48,17 @@ public class SupportTicket
     [Column("escalation_reason")]
     public string? EscalationReason { get; set; }
 
+    // Tier-3 + superadmin reply: audience STORE (customer->store) | PLATFORM (store->CraveIt); platformNote
+    // is the superadmin's response + when they acted.
+    [Column("audience")]
+    public string Audience { get; set; } = "STORE";
+
+    [Column("platform_note")]
+    public string? PlatformNote { get; set; }
+
+    [Column("platform_reviewed_at")]
+    public DateTime? PlatformReviewedAt { get; set; }
+
     public Tenant? Tenant { get; set; }
     public User? User { get; set; }
 }

@@ -30,6 +30,12 @@ export class AdminSupportComponent implements OnInit {
   draftNotes = '';
   draftStatus = '';
 
+  // Tier-3: this store's own requests to CraveIt (payouts, disputes, policy)
+  platformTickets: any[] = [];
+  showPlatformForm = false;
+  submittingPlatform = false;
+  platformForm = { subject: '', message: '' };
+
   // AI draft
   aiDrafting = false;
   aiCategory = '';
@@ -63,12 +69,32 @@ export class AdminSupportComponent implements OnInit {
   constructor(private http: HttpClient, private auth: AuthService,
               private ai: AdminAiService, private toastr: ToastrService) {}
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void { this.load(); this.loadPlatform(); }
 
   load(): void {
     this.loading = true;
     this.http.get<SupportTicket[]>(`${environment.apiUrl}/api/admin/support`, { headers: this.headers })
       .subscribe({ next: t => { this.tickets = t; this.loading = false; }, error: () => this.loading = false });
+  }
+
+  loadPlatform(): void {
+    this.http.get<any[]>(`${environment.apiUrl}/api/admin/support/platform`, { headers: this.headers })
+      .subscribe({ next: t => this.platformTickets = t, error: () => {} });
+  }
+
+  submitPlatform(): void {
+    if (!this.platformForm.subject.trim() || !this.platformForm.message.trim()) { this.toastr.warning('Add a subject and message'); return; }
+    this.submittingPlatform = true;
+    this.http.post(`${environment.apiUrl}/api/admin/support/platform`, this.platformForm, { headers: this.headers })
+      .subscribe({
+        next: () => {
+          this.submittingPlatform = false; this.showPlatformForm = false;
+          this.platformForm = { subject: '', message: '' };
+          this.toastr.success('Sent to CraveIt — their reply will appear here.');
+          this.loadPlatform();
+        },
+        error: () => { this.submittingPlatform = false; this.toastr.error('Could not send. Please try again.'); }
+      });
   }
 
   open(t: SupportTicket): void {
