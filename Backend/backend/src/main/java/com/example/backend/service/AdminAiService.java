@@ -507,15 +507,13 @@ public class AdminAiService {
     private static final double FULL_CONF_DAYS = 7.0;     // >= 7 days = full confidence (HIGH) possible
     private static final int    MIN_BASELINE_UNITS = 5;  // need >= 5 prior units for a stable item %
     private static final int    MIN_STORE_BASELINE = 10; // need >= 10 store orders in the baseline
-    private static final int    BASELINE_DAYS = 28;      // day-of-week-matched baseline (~4 of each weekday)
+    private static final int    BASELINE_DAYS = 56;      // 8 weeks → ~8 of each weekday, for empirical variance
     private static final java.time.ZoneId STORE_ZONE = java.time.ZoneId.of("Africa/Johannesburg"); // weekday bucketing
-    // A net lift must clear this many (widened) noise-bands to count as a real signal. With CI_WIDEN this
-    // is ~1.3 × 1.2 ≈ 1.56σ of the raw Poisson band — the P3-validated point: ~8-9% false positives on
-    // zero-effect promos, confident tiers ~96-98% directionally correct, and real winners still reach MEDIUM.
-    private static final double CONFIDENT_SIGMA = 1.3;
-    // Real restaurant demand is OVER-dispersed vs pure Poisson (weekday/payday/behaviour), so the Poisson
-    // band under-covers (~55-60% at 1σ in P3). Widen ~20% so the stated ± reflects reality (~68% coverage).
-    private static final double CI_WIDEN = 1.2;
+    // A net lift must clear this many EMPIRICAL noise-bands to count as a real signal. Uncertainty is the
+    // OBSERVED per-weekday variance (captures real dispersion — weekday/payday/slow-day volatility — instead
+    // of a Poisson theory + fudge). P3-validated: ~7-8% false positives on zero-effect promos, confident
+    // tiers ~95-100% directionally correct, real winners reach MEDIUM, coverage ~63-69%.
+    private static final double CONFIDENT_SIGMA = 1.45;
 
     /** Clamp a quality tier so it never exceeds {@code max} (LOW < MEDIUM < HIGH). */
     private static String capQuality(String raw, String max) {
@@ -666,7 +664,7 @@ public class AdminAiService {
      * baseline (F3): the expected during-window volume is the sum of the baseline's average for each weekday
      * the window actually spans — NOT a flat calendar-day average — so a promo that lands on more weekends
      * or paydays isn't wrongly credited (or penalised) for the day mix. Net lift subtracts the same
-     * day-matched store trend; the 1σ Poisson noise band drives confidence (F2). Shared by the outcomes view
+     * day-matched store trend; the 1σ empirical-variance band drives confidence (F2). Shared by the outcomes view
      * and the learning recorder so both agree.
      */
     private LiftCalc computeLift(UUID tenantId, UUID productId, Instant start, Instant duringEnd) {
@@ -685,21 +683,29 @@ public class AdminAiService {
         }
         // Average per weekday, counting only real operating days (≥1 order) so pre-data / closed days
         // don't dilute the profile.
-        double[] itemDow = new double[7], storeDow = new double[7]; int[] n = new int[7];
+        double[] iSum=new double[7], iSq=new double[7], sSum=new double[7], sSq=new double[7]; int[] n=new int[7];
         long itemBaseTot = 0, storeBaseTot = 0;
         for (var e : day.entrySet()) {
             long[] b = e.getValue();
             if (b[1] <= 0) continue;
             int w = e.getKey().getDayOfWeek().getValue() - 1;
-            itemDow[w] += b[0]; storeDow[w] += b[1]; n[w]++;
+            iSum[w] += b[0]; iSq[w] += (double) b[0]*b[0]; sSum[w] += b[1]; sSq[w] += (double) b[1]*b[1]; n[w]++;
             itemBaseTot += b[0]; storeBaseTot += b[1];
         }
-        for (int w = 0; w < 7; w++) if (n[w] > 0) { itemDow[w] /= n[w]; storeDow[w] /= n[w]; }
+        // per-weekday mean AND observed variance (sample variance, floored at the Poisson variance = mean)
+        double[] iMean=new double[7], iVar=new double[7], sMean=new double[7], sVar=new double[7];
+        for (int w = 0; w < 7; w++) {
+            if (n[w] > 0) { iMean[w] = iSum[w]/n[w]; sMean[w] = sSum[w]/n[w]; }
+            if (n[w] > 1) {
+                iVar[w] = Math.max((iSq[w] - iSum[w]*iSum[w]/n[w]) / (n[w]-1), iMean[w]);
+                sVar[w] = Math.max((sSq[w] - sSum[w]*sSum[w]/n[w]) / (n[w]-1), sMean[w]);
+            } else { iVar[w] = iMean[w]; sVar[w] = sMean[w]; }
+        }
 
         // Expected during = Σ the matching weekday average over each (fractional) day the window spans.
         // (A naive payday/day-of-month residual was tested and reverted — estimated from sparse payday days
         //  it over-corrects individual promos; the robust path is empirical per-weekday variance, deferred.)
-        double itemExp = 0, storeExp = 0;
+        double itemExp = 0, storeExp = 0, itemVarSum = 0, storeVarSum = 0;
         java.time.LocalDate endDay = duringEnd.atZone(STORE_ZONE).toLocalDate();
         for (java.time.LocalDate d = start.atZone(STORE_ZONE).toLocalDate(); !d.isAfter(endDay); d = d.plusDays(1)) {
             Instant ds = d.atStartOfDay(STORE_ZONE).toInstant();
@@ -707,7 +713,9 @@ public class AdminAiService {
             double frac = overlapFraction(ds, de, start, duringEnd);
             if (frac <= 0) continue;
             int w = d.getDayOfWeek().getValue() - 1;
-            itemExp += itemDow[w] * frac; storeExp += storeDow[w] * frac;
+            double infl = n[w] > 0 ? (1.0 + 1.0/n[w]) : 2.0;   // mean-estimate uncertainty
+            itemExp += iMean[w] * frac; storeExp += sMean[w] * frac;
+            itemVarSum += iVar[w] * infl * frac; storeVarSum += sVar[w] * infl * frac;
         }
 
         double duringUnits = productSales(tenantId, productId, start, duringEnd)[0];  // exact actual
@@ -719,12 +727,12 @@ public class AdminAiService {
                 ? Math.round((storeDurCount - storeExp) / storeExp * 100.0) : null;
         Long netLift = (itemPercent != null && storePercent != null) ? itemPercent - storePercent : null;
 
-        // F2 — 1σ Poisson noise band on the net lift (gap vs the day-matched expectation).
+        // F2 — 1σ empirical per-weekday variance band on the net lift (gap vs the day-matched expectation).
         Long netCiHalfPct = null;
         if (netLift != null) {
-            double itemCi  = Math.sqrt(duringUnits + itemExp) / itemExp * 100.0;
-            double storeCi = Math.sqrt(storeDurCount + storeExp) / storeExp * 100.0;
-            netCiHalfPct = Math.round(Math.hypot(itemCi, storeCi) * CI_WIDEN);   // over-dispersion correction
+            double itemCi  = Math.sqrt(itemVarSum)  / itemExp  * 100.0;   // from OBSERVED per-weekday variance
+            double storeCi = Math.sqrt(storeVarSum) / storeExp * 100.0;
+            netCiHalfPct = Math.round(Math.hypot(itemCi, storeCi));
         }
         return new LiftCalc(storePercent, itemPercent, netLift, duringUnits, netCiHalfPct);
     }

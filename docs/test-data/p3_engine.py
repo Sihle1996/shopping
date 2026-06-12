@@ -1,13 +1,18 @@
-"""Offline re-implementation of the FIXED promo engine's PRODUCT net-lift + confidence (mirrors
-AdminAiService.computeLift: F3 weekday-matched baseline, 1.2x over-dispersion CI, 1.3-sigma confident
-gate). Shared by validation (vs live) and the P3 calibration sweep."""
+"""Offline re-implementation of the promo engine's PRODUCT net-lift + confidence. EMPIRICAL-VARIANCE
+version: an 8-week baseline gives per-weekday mean AND observed variance, so uncertainty reflects real
+dispersion (weekday/payday/slow-day volatility) instead of a Poisson theory + ×1.2 fudge. Poisson is kept
+only as a floor for tiny samples. Mirrors AdminAiService.computeLift; shared by validation + the P3 sweep."""
 import math, statistics
 
-CI_WIDEN = 1.2
-SIGMA = 1.3
+BASELINE_DAYS = 56     # ~8 of each weekday
+SIGMA = 1.45            # confident gate (tuned on the sweep to hold ~8-9% false positives)
+
+def _mean(x): return statistics.mean(x) if x else 0.0
+def _var(x, m):        # sample variance, floored at the Poisson variance (= mean) for stability
+    return max(statistics.variance(x), m) if len(x) >= 2 else m
 
 def compute_lift(item_daily, store_daily, weekday, payday, s, e):
-    blo = max(0, s - 28)
+    blo = max(0, s - BASELINE_DAYS)
     idow = {w: [] for w in range(7)}; sdow = {w: [] for w in range(7)}
     itot = stot = 0
     for d in range(blo, s):
@@ -15,12 +20,14 @@ def compute_lift(item_daily, store_daily, weekday, payday, s, e):
         w = weekday[d]
         idow[w].append(item_daily[d]); sdow[w].append(store_daily[d])
         itot += item_daily[d]; stot += store_daily[d]
-    iavg = {w: (statistics.mean(idow[w]) if idow[w] else 0.0) for w in range(7)}
-    savg = {w: (statistics.mean(sdow[w]) if sdow[w] else 0.0) for w in range(7)}
+    iM = {w: _mean(idow[w]) for w in range(7)}; sM = {w: _mean(sdow[w]) for w in range(7)}
+    iV = {w: _var(idow[w], iM[w]) for w in range(7)}; sV = {w: _var(sdow[w], sM[w]) for w in range(7)}
 
-    # weekday-matched expectation (payday residual tested + reverted — over-corrects from sparse samples)
-    iexp = sum(iavg[weekday[d]] for d in range(s, e))
-    sexp = sum(savg[weekday[d]] for d in range(s, e))
+    iexp = sum(iM[weekday[d]] for d in range(s, e))
+    sexp = sum(sM[weekday[d]] for d in range(s, e))
+    # window-prediction variance: Σ per-weekday variance, inflated by (1+1/n) for the mean estimate
+    ivar = sum(iV[weekday[d]] * (1 + 1/len(idow[weekday[d]]) if idow[weekday[d]] else 2.0) for d in range(s, e))
+    svar = sum(sV[weekday[d]] * (1 + 1/len(sdow[weekday[d]]) if sdow[weekday[d]] else 2.0) for d in range(s, e))
     iact = sum(item_daily[s:e]); sact = sum(store_daily[s:e])
 
     ipct = round((iact-iexp)/iexp*100) if (itot >= 5 and iexp > 0) else None
@@ -28,8 +35,8 @@ def compute_lift(item_daily, store_daily, weekday, payday, s, e):
     net = (ipct-spct) if (ipct is not None and spct is not None) else None
     netci = None
     if net is not None:
-        ici = math.sqrt(iact+iexp)/iexp*100; sci = math.sqrt(sact+sexp)/sexp*100
-        netci = round(math.hypot(ici, sci)*CI_WIDEN)
+        ici = math.sqrt(ivar)/iexp*100; sci = math.sqrt(svar)/sexp*100
+        netci = round(math.hypot(ici, sci))
 
     days = e-s
     signal = "MEASURED" if days >= 7 else ("MEASURING" if days >= 2 else "EARLY")

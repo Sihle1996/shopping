@@ -6,7 +6,7 @@ import random, math, statistics, datetime as dt
 from collections import defaultdict
 from p3_engine import compute_lift
 
-DAYS = 140
+DAYS = 170
 BASE_DATE = dt.date(2025, 1, 6)  # a Monday
 weekday = [ (BASE_DATE + dt.timedelta(days=i)).weekday() for i in range(DAYS) ]
 payday_flag = [ ((BASE_DATE+dt.timedelta(days=i)).day >= 25 or (BASE_DATE+dt.timedelta(days=i)).day <= 2) for i in range(DAYS) ]
@@ -58,7 +58,7 @@ for stype, prof in PROFILES.items():
             it = rng.choice(items)
             L = 0.0 if prof.get("null") else rng.choice(LIFTS)/100.0
             wlen = rng.randint(7, 10)
-            s = rng.randint(35, DAYS-wlen-1); e = s+wlen
+            s = rng.randint(60, DAYS-wlen-1); e = s+wlen
             st = [x for x in store]; ser = [x for x in it["series"]]
             for d in range(s, e):
                 new = round(ser[d]*(1+L)); st[d] += (new - ser[d]); ser[d] = new

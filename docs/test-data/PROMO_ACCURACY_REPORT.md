@@ -52,10 +52,22 @@ then ran **810 promos across 6 store types** (fast‑food, pizza, coffee, low‑
   (true +35%) from a clean +36% to +52%. The 810‑promo average bias improved only marginally (±4→±3pp) while
   individual reads regressed, so it was reverted. The robust replacement is empirical per‑weekday variance.
 
-**Remaining (future, not a rescue):** ChatGPT's long‑term idea — replace the Poisson SE with **empirical
-per‑weekday variance** (captures real dispersion AND the payday effect directly, without a brittle
-point‑estimate); and a **same‑category synthetic control** for larger menus. Both are optimisations on an
-already production‑grade, well‑calibrated system.
+## V3 — empirical per‑weekday variance (2026‑06‑13, ChatGPT's long‑term path)
+Replaced the Poisson‑theory CI (and the ×1.2 fudge) with the **observed** per‑weekday variance: an **8‑week**
+baseline (`BASELINE_DAYS=56`) gives per‑weekday **mean AND sample variance** (Poisson‑floored for tiny
+samples); the band is `√(Σ weekday‑variance over the window)`. Uncertainty now reflects real dispersion
+(weekday/payday/slow‑day volatility) automatically — no multiplier, no payday point‑estimate. Gate re‑tuned
+to **1.45σ** of the empirical band to hold the false‑positive target.
+
+P3 re‑run (810 promos, 6 store types): **HIGH sign‑correct → 100%** (MEDIUM 95%), coverage **HIGH 63% /
+MEDIUM 69%** (balanced, at target), false positives **~7%**, learning‑noise **8%**, and **low‑volume MAE
+32 → 23** (the longer baseline + observed variance helps thin stores most). Bias stayed small (≤ a couple pp
+on most stores). Live store: the bands are tighter and honest (Beef Burger +36 ±21 **MEDIUM**); short‑window
+promos that genuinely can't be distinguished read LOW with the number still shown.
+
+**Remaining (future, not a rescue):** a **same‑category synthetic control** for larger menus — a methodology
+upgrade with its own risks (control selection, substitution, menu drift), worth it only once stores have
+enough stable comparison items. The system is production‑grade and well‑calibrated as is.
 
 ---
 
