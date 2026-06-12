@@ -49,6 +49,10 @@ public class SmartAlertService {
     public int scan(UUID tenantId) {
         Tenant tenant = tenantRepository.findById(tenantId).orElse(null);
         if (tenant == null) return 0;
+        // Only raise operational alerts for a LIVE store (approved + active). A store still in enrollment
+        // (DRAFT/PENDING_REVIEW, active=false) or a suspended one shouldn't be nagged about being "closed
+        // during trading hours" before it has even gone live.
+        if (tenant.getApprovalStatus() != Tenant.ApprovalStatus.APPROVED || !tenant.isActive()) return 0;
 
         List<MenuItem> items = menuItemRepository.findByTenant_Id(tenantId);
         Instant now = Instant.now();
@@ -250,6 +254,29 @@ public class SmartAlertService {
                                 + " min. Accept it to keep the sale.",
                         null,
                         riskImpact(acceptRevAtRisk, marginFrac, commissionFrac, "if it auto-cancels"));
+            }
+        }
+
+        // 6c) PAID but not yet accepted — the customer has already paid and is waiting. These are NEVER
+        //     auto-cancelled (we don't auto-refund), so without this alert they can sit silently forever.
+        {
+            long oldestPaid = 0; int paidUnaccepted = 0; double paidRev = 0;
+            for (Order o : last30) {
+                if (!OrderStatus.PENDING.matches(o.getStatus()) || o.getOrderDate() == null || !o.isPaid()) continue;
+                long mins = Duration.between(o.getOrderDate(), now).toMinutes();
+                if (mins >= 5) {
+                    paidUnaccepted++;
+                    oldestPaid = Math.max(oldestPaid, mins);
+                    paidRev += o.getTotalAmount() != null ? o.getTotalAmount() : 0;
+                }
+            }
+            if (paidUnaccepted > 0) {
+                created += raise(activeKeys, tenant, "paid-unaccepted", "high",
+                        paidUnaccepted + " paid order" + (paidUnaccepted > 1 ? "s" : "") + " awaiting acceptance",
+                        "A customer has paid and is waiting (oldest " + oldestPaid + " min). Accept it to start "
+                                + "preparing — paid orders are never auto-cancelled.",
+                        null,
+                        riskImpact(paidRev, marginFrac, commissionFrac, "paid, awaiting acceptance"));
             }
         }
 
