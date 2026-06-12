@@ -1,20 +1,45 @@
 :host { display: inline-flex; line-height: 0; }
 .bl-stage { position: relative; display: inline-block; line-height: 0; }
 
-/* the complete glyph (notch pre-filled) — fixed and perfectly still */
+/* the whole glyph, behind everything — perfectly still; the bite does the moving */
 .bl-v { display: block; position: relative; z-index: 1; }
 
-/* soft orange glow trailing the bite (centred on the path point) */
-.bl-glow {
-  position: absolute; z-index: 3; width: 34%; height: 34%; transform: translate(-50%, -50%);
-  border-radius: 50%; pointer-events: none; opacity: 0;
-  background: radial-gradient(circle, rgba(231, 111, 81, .6), transparent 68%);
-}
-
-/* the moving bite — a surface-coloured cutout that erases the V where it sits */
+/* The bite — a surface-coloured circle straddling the V's upper-left edge. Because it sits ON the
+   silhouette edge, growing it CARVES a chunk out of the shape (a real bite), rather than punching a
+   hole in the middle. Painted in the surface colour so the carved area reads as background. */
 .bl-bite {
-  position: absolute; z-index: 4; width: 15%; height: 17%; transform: translate(-50%, -50%);
-  background: var(--bg, #fff); border-radius: 30% 30% 38% 38%;
+  position: absolute; z-index: 2;
+  left: 78%; top: 45%; width: 30%; aspect-ratio: 1;   /* aspect-ratio: a true circle on the non-square art */
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 50%;
+  background: var(--bg, #fff);
+  animation: blChomp 1.5s cubic-bezier(.55, 0, .2, 1) infinite;
 }
 
-@media (prefers-reduced-motion: reduce) { .bl-glow { display: none; } }
+/* orange energy ring that snaps outward at the moment of the bite */
+.bl-ring {
+  position: absolute; z-index: 3;
+  left: 78%; top: 45%; width: 30%; aspect-ratio: 1;
+  transform: translate(-50%, -50%) scale(.4);
+  border-radius: 50%;
+  border: 2px solid rgba(231, 111, 81, .7);
+  opacity: 0;
+  animation: blRing 1.5s ease-out infinite;
+}
+
+@keyframes blChomp {
+  0%, 10%   { transform: translate(-50%, -50%) scale(0); }   /* V whole */
+  30%, 50%  { transform: translate(-50%, -50%) scale(1); }   /* CHOMP — chunk bitten out */
+  74%, 100% { transform: translate(-50%, -50%) scale(0); }   /* heals, then repeats */
+}
+@keyframes blRing {
+  0%, 16%   { transform: translate(-50%, -50%) scale(.4); opacity: 0; }
+  30%       { transform: translate(-50%, -50%) scale(1);  opacity: .85; }  /* flash on bite */
+  58%, 100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
+/* reduced motion: no chomp — just show the bitten state, held still */
+@media (prefers-reduced-motion: reduce) {
+  .bl-bite { transform: translate(-50%, -50%) scale(1); animation: none; }
+  .bl-ring { display: none; }
+}
