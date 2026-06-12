@@ -37,9 +37,13 @@
         </button>
       </div>
 
-      <!-- Analysing — a twinkling sparkle while Vision works through your sales & margins -->
+      <!-- Analysing — the V with a generating spark (like an LLM thinking) -->
       <div *ngIf="aiSuggestionsLoading" class="bg-white rounded-2xl shadow-card p-10 flex flex-col items-center text-center">
-        <i class="bi bi-stars text-5xl text-primary ai-twinkle"></i>
+        <div class="relative inline-flex">
+          <app-brand-mark [size]="72" mode="thinking"></app-brand-mark>
+          <i class="bi bi-stars text-primary text-xl ai-twinkle absolute -top-2 -right-3"></i>
+          <i class="bi bi-stars text-primary text-xs ai-twinkle absolute -bottom-1 -left-2" style="animation-delay:.6s"></i>
+        </div>
         <p class="text-sm text-textDark font-medium mt-5 ai-generating-text">Analysing your sales &amp; margins…</p>
         <p class="text-xs text-textMuted mt-1">Scanning slow movers, margins and demand to find experiments worth testing.</p>
       </div>
