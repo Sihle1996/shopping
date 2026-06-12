@@ -7,6 +7,7 @@ import { RouterModule } from '@angular/router';
 import { ToastrModule } from 'ngx-toastr';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AppComponent } from './app.component';
+import { BrandMarkComponent } from './shared/brand/brand-mark.component';
 import { HomeComponent } from './pages/home/home.component';
 import { CartComponent } from './pages/cart/cart.component';
 import { LoginComponent } from './pages/login/login.component';
@@ -76,6 +77,7 @@ import { RestaurantTermsComponent } from './pages/legal/restaurant-terms/restaur
     ReactiveFormsModule,
     SharedModule,
     AppRoutingModule,
+    BrandMarkComponent,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',
       timeOut: 6000,
