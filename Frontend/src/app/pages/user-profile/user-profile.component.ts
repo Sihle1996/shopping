@@ -25,6 +25,9 @@ export class UserProfileComponent implements OnInit {
   deletingAccount = false;
   showDeleteConfirm = false;
   email = '';
+  newEmail = '';
+  showEmailChange = false;
+  changingEmail = false;
   role = '';
   joinedAt = '';
   activeSection: Section = 'personal';
@@ -188,6 +191,24 @@ export class UserProfileComponent implements OnInit {
       error: (err) => {
         this.changingPassword = false;
         this.toastr.error(err?.error || 'Failed to change password');
+      }
+    });
+  }
+
+  changeEmail() {
+    const email = this.newEmail.trim();
+    if (!email) { this.toastr.warning('Enter your new email address'); return; }
+    this.changingEmail = true;
+    this.http.post<any>(`${environment.apiUrl}/api/me/change-email`, { email }).subscribe({
+      next: (res) => {
+        this.changingEmail = false;
+        this.showEmailChange = false;
+        this.newEmail = '';
+        this.toastr.success(res?.message || 'Check your new email to confirm the change.');
+      },
+      error: (err) => {
+        this.changingEmail = false;
+        this.toastr.error(err?.error?.error || 'Could not change email');
       }
     });
   }

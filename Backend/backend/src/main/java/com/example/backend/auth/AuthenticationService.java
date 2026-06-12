@@ -122,6 +122,11 @@ public class AuthenticationService {
                 Instant.now().isAfter(user.getEmailVerificationTokenExpiresAt())) {
             throw new IllegalArgumentException("This link has expired. Please request a new verification email.");
         }
+        // If a pending email change is being confirmed, swap the login email to the (now verified) new address.
+        if (user.getPendingEmail() != null && !user.getPendingEmail().isBlank()) {
+            user.setEmail(user.getPendingEmail());
+            user.setPendingEmail(null);
+        }
         user.setEmailVerified(true);
         user.setEmailVerificationToken(null);
         user.setEmailVerificationTokenExpiresAt(null);
@@ -129,6 +134,27 @@ public class AuthenticationService {
         UUID tenantId = user.getTenant() != null ? user.getTenant().getId() : null;
         String jwtToken = jwtService.generateTokenWithId(user, user.getId(), tenantId);
         return AuthenticationResponse.builder().token(jwtToken).build();
+    }
+
+    /** Start an email change: store the new email as pending and email a confirmation link to it. The live
+     *  login email is untouched until the user clicks the link (handled in verifyEmail above). */
+    public void requestEmailChange(User user, String rawNewEmail) {
+        if (rawNewEmail == null || rawNewEmail.isBlank())
+            throw new IllegalArgumentException("A new email is required");
+        String newEmail = rawNewEmail.trim().toLowerCase();
+        if (newEmail.equalsIgnoreCase(user.getEmail()))
+            throw new IllegalArgumentException("That is already your email");
+        boolean taken = user.getTenant() != null
+                ? repository.findByEmailAndTenant_Id(newEmail, user.getTenant().getId()).isPresent()
+                : repository.findByEmailAndTenantIsNull(newEmail).isPresent();
+        if (taken) throw new IllegalArgumentException("That email is already in use");
+        String token = UUID.randomUUID().toString();
+        user.setPendingEmail(newEmail);
+        user.setEmailVerificationToken(token);
+        user.setEmailVerificationTokenExpiresAt(Instant.now().plusSeconds(86400));
+        repository.save(user);
+        String verifyUrl = frontendUrl + "/verify-email?token=" + token;
+        emailService.sendVerificationEmail(newEmail, newEmail, verifyUrl);
     }
 
     public void resendVerificationEmail(String email) {

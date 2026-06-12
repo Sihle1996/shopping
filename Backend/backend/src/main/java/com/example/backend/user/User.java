@@ -52,6 +52,11 @@ public class User implements UserDetails {
     @Column(name = "email_verification_token_expires_at")
     private java.time.Instant emailVerificationTokenExpiresAt;
 
+    // The new email a user is changing TO — NOT applied to `email` (their login) until they confirm it via
+    // the verification link sent to the new address. Reuses emailVerificationToken for the confirmation.
+    @Column(name = "pending_email")
+    private String pendingEmail;
+
     private String fullName;
     private String phone;
 
