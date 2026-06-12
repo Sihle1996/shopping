@@ -15,7 +15,7 @@ public class AuthService(AppDbContext db, JwtService jwt)
 
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.Password)) return null;
 
-        var (token, expiresAt) = jwt.GenerateToken(user.Id.ToString(), user.Email, user.Role!);
-        return new LoginResponse(token, user.Email, user.Role!, expiresAt);
+        var (token, expiresAt) = jwt.GenerateToken(user.Id.ToString(), user.Email, user.Role!, user.ComplianceOfficer);
+        return new LoginResponse(token, user.Email, user.Role!, expiresAt, user.ComplianceOfficer);
     }
 }

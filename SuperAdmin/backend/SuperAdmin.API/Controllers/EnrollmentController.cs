@@ -14,6 +14,12 @@ public class EnrollmentController(AppDbContext db, ResendEmailService email, IHt
 {
     private static readonly string[] RequiredDocTypes = { "CIPC", "COA", "BANK_DETAILS" };
 
+    // Only a Compliance super-admin (compliance JWT claim) may open KYB documents and see full bank
+    // account numbers. Operations super-admins (no claim) still approve/manage, but get masked numbers.
+    private bool IsCompliance() => User.FindFirstValue("compliance") == "true";
+    private static string? Mask(string? s) =>
+        string.IsNullOrEmpty(s) ? s : (s.Length <= 4 ? "••••" : "••••" + s[^4..]);
+
     [HttpGet("ping")]
     [AllowAnonymous]
     public IActionResult Ping() => Ok(new { status = "enrollment-controller-active", ts = DateTime.UtcNow });
@@ -27,6 +33,7 @@ public class EnrollmentController(AppDbContext db, ResendEmailService email, IHt
             .OrderBy(t => t.SubmittedForReviewAt)
             .ToListAsync();
 
+        var compliance = IsCompliance();
         var result = pending.Select(t => new
         {
             t.Id,
@@ -38,7 +45,7 @@ public class EnrollmentController(AppDbContext db, ResendEmailService email, IHt
             submittedAt = t.SubmittedForReviewAt,
             t.CipcNumber,
             t.BankName,
-            t.BankAccountNumber,
+            BankAccountNumber = compliance ? t.BankAccountNumber : Mask(t.BankAccountNumber),
             t.BankAccountType,
             t.BankBranchCode,
             documents = t.StoreDocuments.Select(d => new
@@ -105,6 +112,7 @@ public class EnrollmentController(AppDbContext db, ResendEmailService email, IHt
             .OrderByDescending(t => t.SubmittedForReviewAt)
             .ToListAsync();
 
+        var compliance = IsCompliance();
         var result = rejected.Select(t => new
         {
             t.Id,
@@ -116,7 +124,7 @@ public class EnrollmentController(AppDbContext db, ResendEmailService email, IHt
             submittedAt = t.SubmittedForReviewAt,
             t.CipcNumber,
             t.BankName,
-            t.BankAccountNumber,
+            BankAccountNumber = compliance ? t.BankAccountNumber : Mask(t.BankAccountNumber),
             t.BankAccountType,
             t.BankBranchCode,
             rejectionReason = t.RejectionReason,
@@ -186,6 +194,9 @@ public class EnrollmentController(AppDbContext db, ResendEmailService email, IHt
     [HttpGet("document/{documentId}/download")]
     public async Task<IActionResult> DownloadDocument(Guid documentId)
     {
+        if (!IsCompliance())
+            return StatusCode(403, new { message = "Compliance role required to open KYB documents." });
+
         var doc = await db.StoreDocuments.FindAsync(documentId);
         if (doc == null) return NotFound(new { message = "Document not found" });
         if (string.IsNullOrWhiteSpace(doc.FileUrl)) return NotFound(new { message = "Document has no file" });
@@ -205,6 +216,68 @@ public class EnrollmentController(AppDbContext db, ResendEmailService email, IHt
         var bytes = await resp.Content.ReadAsByteArrayAsync();
         var contentType = resp.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
         return File(bytes, contentType, doc.FileName ?? "document");
+    }
+
+    // ── Banking-change re-review (Compliance only) ──────────────────────────────────────────────
+    // An approved store can propose new bank details (Spring /request-bank-change). Those land in the
+    // tenant's pending_* fields with banking_change_status=PENDING and DON'T touch the live fields until
+    // a Compliance super-admin approves here. Every decision is audited.
+
+    [HttpGet("banking-changes")]
+    public async Task<IActionResult> GetBankingChanges()
+    {
+        if (!IsCompliance()) return StatusCode(403, new { message = "Compliance role required." });
+        var pending = await db.Tenants.Where(t => t.BankingChangeStatus == "PENDING").ToListAsync();
+        return Ok(pending.Select(t => new
+        {
+            t.Id, t.Name, t.Slug,
+            current = new { t.BankName, t.BankAccountNumber, t.BankAccountType, t.BankBranchCode },
+            proposed = new { bankName = t.PendingBankName, bankAccountNumber = t.PendingBankAccountNumber, bankAccountType = t.PendingBankAccountType, bankBranchCode = t.PendingBankBranchCode }
+        }));
+    }
+
+    [HttpPost("{tenantId}/banking-change/approve")]
+    public async Task<IActionResult> ApproveBankingChange(Guid tenantId)
+    {
+        if (!IsCompliance()) return StatusCode(403, new { message = "Compliance role required." });
+        var tenant = await db.Tenants.FindAsync(tenantId);
+        if (tenant == null) return NotFound();
+        if (tenant.BankingChangeStatus != "PENDING") return BadRequest(new { message = "No banking change pending." });
+
+        tenant.BankName = tenant.PendingBankName;
+        tenant.BankAccountNumber = tenant.PendingBankAccountNumber;
+        tenant.BankAccountType = tenant.PendingBankAccountType;
+        tenant.BankBranchCode = tenant.PendingBankBranchCode;
+        tenant.PendingBankName = tenant.PendingBankAccountNumber = tenant.PendingBankAccountType = tenant.PendingBankBranchCode = null;
+        tenant.BankingChangeStatus = null;
+        await db.SaveChangesAsync();
+        await AuditTenantAsync("BANKING_CHANGE_APPROVED", tenant.Id, $"Approved banking change for {tenant.Name}");
+        return Ok(new { message = "Banking change approved" });
+    }
+
+    [HttpPost("{tenantId}/banking-change/reject")]
+    public async Task<IActionResult> RejectBankingChange(Guid tenantId)
+    {
+        if (!IsCompliance()) return StatusCode(403, new { message = "Compliance role required." });
+        var tenant = await db.Tenants.FindAsync(tenantId);
+        if (tenant == null) return NotFound();
+        if (tenant.BankingChangeStatus != "PENDING") return BadRequest(new { message = "No banking change pending." });
+
+        tenant.PendingBankName = tenant.PendingBankAccountNumber = tenant.PendingBankAccountType = tenant.PendingBankBranchCode = null;
+        tenant.BankingChangeStatus = null;
+        await db.SaveChangesAsync();
+        await AuditTenantAsync("BANKING_CHANGE_REJECTED", tenant.Id, $"Rejected banking change for {tenant.Name}");
+        return Ok(new { message = "Banking change rejected" });
+    }
+
+    private async Task AuditTenantAsync(string action, Guid tenantId, string summary)
+    {
+        var actorEmail = User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue("email") ?? "unknown";
+        var actorRole = User.FindFirstValue(ClaimTypes.Role) ?? "SUPERADMIN";
+        await db.Database.ExecuteSqlRawAsync(
+            "INSERT INTO audit_event (id, action, actor_email, actor_role, created_at, entity_id, entity_type, source, summary, tenant_id) " +
+            "VALUES (gen_random_uuid(), {0}, {1}, {2}, now(), {3}, 'TENANT', 'SUPERADMIN', {4}, {3})",
+            action, actorEmail, actorRole, tenantId, summary);
     }
 
     public record RejectRequest(string Reason);

@@ -61,7 +61,32 @@ public class StoreDocumentController {
         resp.put("menuItemCount", menuItemCount);
         resp.put("categoryCount", categoryCount);
         resp.put("active", tenant.isActive());
+        resp.put("bankingChangeStatus", tenant.getBankingChangeStatus() != null ? tenant.getBankingChangeStatus() : "");
         return ResponseEntity.ok(resp);
+    }
+
+    // An APPROVED store proposes a banking change. The new details are stored as PENDING and do NOT
+    // replace the live bank fields until a Compliance super-admin approves the change — a banking change
+    // is a high-risk event that must be re-reviewed, not freely editable and not permanently locked.
+    @PostMapping("/request-bank-change")
+    public ResponseEntity<?> requestBankChange(@RequestBody Map<String, String> body) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return ResponseEntity.badRequest().build();
+        Tenant tenant = tenantRepository.findById(tenantId).orElse(null);
+        if (tenant == null) return ResponseEntity.notFound().build();
+        if (tenant.getApprovalStatus() != Tenant.ApprovalStatus.APPROVED) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Only an approved store can request a banking change"));
+        }
+        if (body.get("bankAccountNumber") == null || body.get("bankAccountNumber").isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "New bank account number is required"));
+        }
+        tenant.setPendingBankName(body.get("bankName"));
+        tenant.setPendingBankAccountNumber(body.get("bankAccountNumber"));
+        tenant.setPendingBankAccountType(body.get("bankAccountType"));
+        tenant.setPendingBankBranchCode(body.get("bankBranchCode"));
+        tenant.setBankingChangeStatus("PENDING");
+        tenantRepository.save(tenant);
+        return ResponseEntity.ok(Map.of("message", "Banking change submitted for review"));
     }
 
     @PutMapping("/details")

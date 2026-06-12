@@ -28,5 +28,9 @@ public class User
     [Column("last_ping")]
     public DateTime? LastPing { get; set; }
 
+    // Compliance officer — only these SUPERADMINs may open KYB docs + see full bank numbers.
+    [Column("compliance_officer")]
+    public bool ComplianceOfficer { get; set; }
+
     public Tenant? Tenant { get; set; }
 }

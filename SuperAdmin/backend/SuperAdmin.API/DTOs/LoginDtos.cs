@@ -11,4 +11,4 @@ public class LoginRequest
     public string Password { get; set; } = "";
 }
 
-public record LoginResponse(string Token, string Email, string Role, DateTime ExpiresAt);
+public record LoginResponse(string Token, string Email, string Role, DateTime ExpiresAt, bool Compliance);

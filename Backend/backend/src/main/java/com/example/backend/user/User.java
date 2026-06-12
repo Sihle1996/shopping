@@ -58,6 +58,13 @@ public class User implements UserDetails {
     @Column(name = "marketing_email_opt_in", nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
     private boolean marketingEmailOptIn = false;
+
+    // A SUPERADMIN with this flag is a Compliance officer — only they may open KYB documents and see
+    // full bank account numbers. SUPERADMINs without it are Operations (approvals, plans, payouts) only.
+    @Column(name = "compliance_officer", nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean complianceOfficer = false;
+
     private String vehicleType;
     private String vehiclePlate;
     private String profilePhotoUrl;

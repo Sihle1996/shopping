@@ -103,6 +103,18 @@ public class Tenant
     [Column("bank_branch_code")]
     public string? BankBranchCode { get; set; }
 
+    // Proposed banking change awaiting Compliance re-review (not yet applied to the live fields above).
+    [Column("banking_change_status")]
+    public string? BankingChangeStatus { get; set; }
+    [Column("pending_bank_name")]
+    public string? PendingBankName { get; set; }
+    [Column("pending_bank_account_number")]
+    public string? PendingBankAccountNumber { get; set; }
+    [Column("pending_bank_account_type")]
+    public string? PendingBankAccountType { get; set; }
+    [Column("pending_bank_branch_code")]
+    public string? PendingBankBranchCode { get; set; }
+
     [Column("approval_status")]
     public string ApprovalStatus { get; set; } = "APPROVED";
 

@@ -7,7 +7,7 @@ namespace SuperAdmin.API.Services;
 
 public class JwtService(IConfiguration config)
 {
-    public (string token, DateTime expiresAt) GenerateToken(string userId, string email, string role)
+    public (string token, DateTime expiresAt) GenerateToken(string userId, string email, string role, bool compliance = false)
     {
         var rawKey = config["Jwt:Key"]
             ?? throw new InvalidOperationException("Jwt:Key is not configured.");
@@ -27,6 +27,7 @@ public class JwtService(IConfiguration config)
             new Claim(JwtRegisteredClaimNames.Sub, userId),
             new Claim(JwtRegisteredClaimNames.Email, email),
             new Claim(ClaimTypes.Role, role),
+            new Claim("compliance", compliance ? "true" : "false"),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

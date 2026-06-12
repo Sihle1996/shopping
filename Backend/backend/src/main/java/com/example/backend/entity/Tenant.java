@@ -153,6 +153,15 @@ public class Tenant {
     @Column(length = 10)
     private String bankBranchCode;
 
+    // Banking-change re-review: an APPROVED store proposes new bank details here; the live bank fields
+    // above are NOT changed until a Compliance super-admin approves. bankingChangeStatus: null | PENDING.
+    private String bankingChangeStatus;
+    private String pendingBankName;
+    private String pendingBankAccountNumber;
+    private String pendingBankAccountType;
+    @Column(name = "pending_bank_branch_code", length = 10)
+    private String pendingBankBranchCode;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "approval_status", nullable = false)
     @Builder.Default
