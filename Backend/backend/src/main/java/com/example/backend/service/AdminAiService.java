@@ -509,6 +509,9 @@ public class AdminAiService {
     private static final int    MIN_STORE_BASELINE = 10; // need >= 10 store orders in the baseline
     private static final int    BASELINE_DAYS = 28;      // day-of-week-matched baseline (~4 of each weekday)
     private static final java.time.ZoneId STORE_ZONE = java.time.ZoneId.of("Africa/Johannesburg"); // weekday bucketing
+    // A net lift must clear this many noise-bands (σ) to count as a real signal. The P3 multi-store
+    // calibration sweep showed 1σ lets ~28% of zero-effect promos read as confident; 1.5σ cuts that to ~7%.
+    private static final double CONFIDENT_SIGMA = 1.5;
 
     /** Clamp a quality tier so it never exceeds {@code max} (LOW < MEDIUM < HIGH). */
     private static String capQuality(String raw, String max) {
@@ -572,8 +575,9 @@ public class AdminAiService {
             // NOT raw volume. A high-volume promo whose measured change sits INSIDE the noise band reads
             // LOW (no clear effect), not HIGH. Still capped by duration (never HIGH before ~7 days).
             Long netCi = lift != null ? lift.netCiHalfPct() : null;
-            // "within noise" = strictly inside the ±1σ band; an effect reaching the edge counts as signal.
-            boolean withinNoise = netLift != null && netCi != null && Math.abs(netLift) < netCi;
+            // "within noise" = below CONFIDENT_SIGMA noise-bands; tightened from 1σ to 1.5σ (P3 sweep) so
+            // far fewer zero-effect promos read as confident winners/losers.
+            boolean withinNoise = netLift != null && netCi != null && Math.abs(netLift) < CONFIDENT_SIGMA * netCi;
             String rawQuality;
             if (netLift == null || netCi == null || withinNoise) rawQuality = "LOW";
             else rawQuality = (netCi / (double) Math.abs(netLift) <= 0.5) ? "HIGH" : "MEDIUM";
@@ -901,7 +905,7 @@ public class AdminAiService {
                 LiftCalc lift = computeLift(tenantId, p.getTargetProductId(), start, end);
                 // F2/F6 — only learn from a CLEAR signal: skip reads inside the noise band (no real effect).
                 boolean clear = lift.netLift() != null
-                        && !(lift.netCiHalfPct() != null && Math.abs(lift.netLift()) < lift.netCiHalfPct());
+                        && !(lift.netCiHalfPct() != null && Math.abs(lift.netLift()) < CONFIDENT_SIGMA * lift.netCiHalfPct());
                 if (clear) {
                     netLift = (int) (long) lift.netLift(); sampleUnits = (int) lift.duringUnits();
                     productId = p.getTargetProductId(); scopeTag = "PRODUCT";

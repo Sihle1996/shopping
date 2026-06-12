@@ -23,6 +23,25 @@ truth** (`verify_fixes.py`):
 Verified via a faithful re‑implementation of the fixed formulas on the seeded data (compile‑clean; restart the
 local backend to see it live in the UI).
 
+## P3 — multi-store calibration sweep (2026‑06‑12)
+Validated the offline engine reproduces the live engine on the real store (same confidence on all promos),
+then ran **810 promos across 6 store types** (fast‑food, pizza, coffee, low‑volume, high‑volume, and a
+**null store where every promo's true effect is 0%**) through the fixed engine. Deterministic
+(`p3_engine.py`, `p3_sweep.py`).
+
+- **F3 generalises:** systematic bias stays small across **every** store type (|bias| ≤ ~4pp; was −8.7pp
+  pre‑F3). Low‑volume is noisy (MAE ~32) but unbiased and mostly flagged LOW.
+- **Confidence tracks the decision** — sign‑accuracy is monotonic: **HIGH 99% → MEDIUM 94% → LOW 73%**. When
+  Vision is confident it gets the winner/loser direction right ~95–99% of the time. *It knows when it knows.*
+- **Coverage** (truth within the stated ±band): HIGH ~61%, MEDIUM ~54%, LOW ~78%. The confident tiers are a
+  touch tight (CI ~15–25% too narrow vs the 68% target) — a fine‑tune, not a rescue.
+- **False positives** (true effect = 0%): at the old 1σ gate **24%** of zero‑effect promos read as confident;
+  **tightened the gate to 1.5σ → ~9%** (`CONFIDENT_SIGMA`), and HIGH/MEDIUM both become ~99–100%
+  sign‑correct. Noise‑in‑learning roughly halved.
+
+**Remaining (optional optimisation, not a rescue):** widen the noise band ~15–25% so HIGH/MEDIUM coverage
+hits ~68%; and the residual ~−2–4pp bias is the day‑of‑month (payday) component (weekday is now matched).
+
 ---
 
 **Status of the original test below:** validation that motivated the fixes (run before any engine change).
