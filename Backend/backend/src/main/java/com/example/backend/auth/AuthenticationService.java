@@ -62,31 +62,16 @@ public class AuthenticationService {
         // Create and save the user — ADMIN if registering with a tenant, USER otherwise
         Role assignedRole = (tenant != null) ? Role.ADMIN : Role.USER;
 
-        User user;
-        if (tenant != null) {
-            // Admin registration — skip email verification, auto-login immediately
-            user = User.builder()
-                    .email(request.getEmail())
-                    .password(hashedPassword)
-                    .role(assignedRole)
-                    .tenant(tenant)
-                    .emailVerified(true)
-                    .build();
-            user = repository.save(user);
-            UUID userTenantId = tenant.getId();
-            String jwtToken = jwtService.generateTokenWithId(user, user.getId(), userTenantId);
-            return AuthenticationResponse.builder()
-                    .token(jwtToken)
-                    .approvalStatus(tenant.getApprovalStatus().name())
-                    .build();
-        }
-
-        // Customer registration — require email verification
+        // Every account — admin (store owner) or customer — must verify its email before it can
+        // log in. Admins were previously auto-verified and auto-logged-in, which meant someone could
+        // register a store with a fake/typo'd login email and be in immediately, with the real owner
+        // never notified. The login email must now be proven before the account is usable.
         String verificationToken = UUID.randomUUID().toString();
-        user = User.builder()
+        User user = User.builder()
                 .email(request.getEmail())
                 .password(hashedPassword)
                 .role(assignedRole)
+                .tenant(tenant)
                 .emailVerified(false)
                 .emailVerificationToken(verificationToken)
                 .emailVerificationTokenExpiresAt(Instant.now().plusSeconds(86400))

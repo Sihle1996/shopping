@@ -870,10 +870,13 @@ public class OrderService {
             dto.setDriverLon(driver.getLongitude());
         }
 
-        // Include OTP for authenticated customers when it's active and not yet expired
+        // Include the OTP ONLY for the customer (who has no tenant context) when it's active and
+        // unexpired — never for the store admin or driver. If the driver could read the OTP they
+        // could confirm delivery without the customer ever receiving it, defeating the whole point.
         if (order.getDeliveryOtp() != null
                 && order.getOtpExpiresAt() != null
-                && java.time.Instant.now().isBefore(order.getOtpExpiresAt())) {
+                && java.time.Instant.now().isBefore(order.getOtpExpiresAt())
+                && TenantContext.getCurrentTenantId() == null) {
             dto.setDeliveryOtp(order.getDeliveryOtp());
         }
 
