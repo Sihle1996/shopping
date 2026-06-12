@@ -5,6 +5,7 @@ nothing. Deterministic (fixed seeds)."""
 import random, math, statistics, datetime as dt
 from collections import defaultdict
 from p3_engine import compute_lift
+from p3_engine import SIGMA as SIGMA_GATE
 
 DAYS = 170
 BASE_DATE = dt.date(2025, 1, 6)  # a Monday
@@ -105,3 +106,25 @@ print("\n### Learning hygiene")
 rec=[r for r in usable if r["recorded"]]; recz=[r for r in rec if r["true"]==0]
 print(f"  recorded (clear signal, 1σ): {len(rec)}/{len(usable)} ({100*len(rec)/len(usable):.0f}%); "
       f"of those zero-effect (noise learned): {100*len(recz)/max(1,len(rec)):.0f}%")
+
+# ── REGRESSION GATE — codifies the calibration baseline; any future Vision change must pass these ──
+print("\n### REGRESSION GATE (run after any change to the promo engine)")
+def chk(name, ok, val, thr):
+    print(f"  [{'PASS' if ok else 'FAIL'}] {name:30}{val:>8}   target {thr}"); return ok
+high=[r for r in usable if r['quality']=='HIGH']; med=[r for r in usable if r['quality']=='MEDIUM']
+hnz=[r for r in high if r['true']!=0]
+hsign=100*sum(1 for r in hnz if (r['net']>0)==(r['true']>0))/max(1,len(hnz))
+zero=[r for r in usable if r['true']==0]
+fp=100*sum(1 for r in zero if r['netci'] and abs(r['net'])>=SIGMA_GATE*r['netci'])/max(1,len(zero))
+obias=sum(r['net']-r['true'] for r in usable)/len(usable)
+worst=max(abs(sum(r['net']-r['true'] for r in usable if r['store']==s)/max(1,sum(1 for r in usable if r['store']==s))) for s in PROFILES)
+covH=100*sum(1 for r in high if abs(r['net']-r['true'])<=r['netci'])/max(1,len(high))
+covM=100*sum(1 for r in med  if abs(r['net']-r['true'])<=r['netci'])/max(1,len(med))
+ok=True
+ok&=chk('HIGH sign-correct >= 95%', hsign>=95, f'{hsign:.0f}%','>=95%')
+ok&=chk('false positives <= 10%', fp<=10, f'{fp:.0f}%','<=10%')
+ok&=chk('overall |bias| <= 3pp', abs(obias)<=3, f'{obias:+.1f}','<=3pp')
+ok&=chk('worst-store |bias| <= 7pp', worst<=7, f'{worst:.1f}','<=7pp')
+ok&=chk('HIGH coverage in [60,80]%', 60<=covH<=80, f'{covH:.0f}%','60-80%')
+ok&=chk('MEDIUM coverage in [60,80]%', 60<=covM<=80, f'{covM:.0f}%','60-80%')
+print(f"\n  ===> {'PASS - calibration baseline held' if ok else 'FAIL - regression vs baseline'} <===")

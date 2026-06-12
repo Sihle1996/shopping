@@ -5,7 +5,7 @@ only as a floor for tiny samples. Mirrors AdminAiService.computeLift; shared by 
 import math, statistics
 
 BASELINE_DAYS = 56     # ~8 of each weekday
-SIGMA = 1.45            # confident gate (tuned on the sweep to hold ~8-9% false positives)
+SIGMA = 1.45            # confident gate (tuned on the sweep to hold ~7-8% false positives)
 
 def _mean(x): return statistics.mean(x) if x else 0.0
 def _var(x, m):        # sample variance, floored at the Poisson variance (= mean) for stability

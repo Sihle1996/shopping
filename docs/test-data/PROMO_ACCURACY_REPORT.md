@@ -69,6 +69,28 @@ promos that genuinely can't be distinguished read LOW with the number still show
 upgrade with its own risks (control selection, substitution, menu drift), worth it only once stores have
 enough stable comparison items. The system is production‑grade and well‑calibrated as is.
 
+## Regression baseline — the harness is now a benchmark
+`p3_sweep.py` ends with a **REGRESSION GATE** that any future change to the promo engine must pass (run it +
+`verify_fixes.py` after edits). Today's baseline (all PASS):
+
+| Check | Target | Now |
+|---|---|---|
+| HIGH sign‑correct | ≥ 95% | **100%** |
+| False positives (zero‑effect → confident) | ≤ 10% | **7%** |
+| Overall \|bias\| | ≤ 3pp | **0.6** |
+| Worst‑store \|bias\| | ≤ 7pp | **5.7** (pizza) |
+| HIGH coverage | 60–80% | **63%** |
+| MEDIUM coverage | 60–80% | **69%** |
+
+This is the real asset: a repeatable, ground‑truth way to tell whether Vision got better or worse — not
+intuition. **Standard achieved: production‑grade *observational* promo intelligence** (not causal RCT) —
+"did this promo likely help / hurt, how confident are we, should we learn from it, did the store make money."
+
+## Three phases (where Vision went)
+1. **Arithmetic correctness** — discount double‑count, free‑delivery attribution, overlap learning → economics trustworthy.
+2. **Inference correctness** — flat baseline, volume‑as‑confidence, false HIGH conclusions → lift estimates directionally trustworthy.
+3. **Calibration** — Poisson overconfidence, under‑coverage, low‑volume instability → confidence reflects observed reality.
+
 ---
 
 **Status of the original test below:** validation that motivated the fixes (run before any engine change).
