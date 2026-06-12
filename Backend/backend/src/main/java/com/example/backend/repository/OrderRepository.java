@@ -20,6 +20,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     List<Order> findByUserIdOrderByOrderDateDesc(UUID userId);
     List<Order> findByStatusOrderByOrderDateDesc(String status);
     List<Order> findByStatusAndTenant_IdOrderByOrderDateDesc(String status, UUID tenantId);
+    long countByStatusAndTenant_Id(String status, UUID tenantId);
     List<Order> findByDriver(User driver);
     List<Order> findByOrderDateBetween(Instant start, Instant end);
     Page<Order> findByUserEmailContainingIgnoreCase(String email, Pageable pageable);

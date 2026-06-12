@@ -403,6 +403,12 @@ public class OrderService {
         return orders.stream().map(this::convertToOrderDTO).toList();
     }
 
+    /** Count of unaccepted (Pending) orders for the current tenant — drives the new-order chime resume. */
+    public long countPendingForCurrentTenant() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        return tenantId == null ? 0 : orderRepository.countByStatusAndTenant_Id("Pending", tenantId);
+    }
+
     public List<OrderDTO> getAllOrders() {
         UUID tenantId = TenantContext.getCurrentTenantId();
         List<Order> orders;

@@ -55,8 +55,8 @@
     <p class="text-xs text-textMuted mt-1">Try a different filter</p>
   </div>
 
-  <!-- Orders list -->
-  <div class="px-4 lg:px-8 space-y-4">
+  <!-- Orders list: single column on mobile, two columns on desktop so cards aren't stretched full-width -->
+  <div class="px-4 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
     <div *ngFor="let order of paginatedOrders; trackBy: trackById"
          class="bg-white rounded-2xl brand-trim shadow-card p-5 animate-fade-in">
 

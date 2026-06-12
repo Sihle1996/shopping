@@ -6,6 +6,7 @@ import { Observable, Subject } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { ToastrService } from 'ngx-toastr';
+import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 
 export interface OrderEvent {
@@ -38,13 +39,18 @@ export class NotificationService implements OnDestroy {
   private audioCtx?: AudioContext;
   private pendingOrders = 0;
   private repeatTimer: any = null;
-  private readonly REPEAT_MS = 15000;
+  private readonly REPEAT_MS = 8000;   // re-chime cadence (was 15s — felt too slow)
+
+  readonly soundOptions = ['chime', 'bell', 'beep', 'alarm', 'ping'];
 
   get soundEnabled(): boolean { return localStorage.getItem('newOrderSound') !== 'off'; }
   set soundEnabled(on: boolean) {
     localStorage.setItem('newOrderSound', on ? 'on' : 'off');
     if (!on) this.acknowledgeOrders();
   }
+
+  get soundType(): string { return localStorage.getItem('orderSoundType') || 'chime'; }
+  set soundType(t: string) { localStorage.setItem('orderSoundType', t); }
 
   /** Persistent history — survives component navigation */
   readonly history: AdminNotification[] = [];
@@ -62,17 +68,35 @@ export class NotificationService implements OnDestroy {
     n.read = true;
   }
 
-  /** A new order arrived — chime now and keep chiming every 15s until acknowledged (best practice). */
+  /** A new order arrived — chime now and keep chiming until acknowledged (best practice). */
   private onNewOrder(): void {
     if (!this.soundEnabled) return;
     this.pendingOrders++;
-    this.playChime();
-    if (!this.repeatTimer) {
-      this.repeatTimer = setInterval(() => {
-        if (this.pendingOrders > 0 && this.soundEnabled) this.playChime();
-        else this.acknowledgeOrders();
-      }, this.REPEAT_MS);
-    }
+    this.playSound();
+    this.ensureRepeatLoop();
+  }
+
+  private ensureRepeatLoop(): void {
+    if (this.repeatTimer) return;
+    this.repeatTimer = setInterval(() => {
+      if (this.pendingOrders > 0 && this.soundEnabled) this.playSound();
+      else this.acknowledgeOrders();
+    }, this.REPEAT_MS);
+  }
+
+  /** After a page refresh the chime state is lost — re-check the server for unaccepted orders and resume
+   *  ringing so the admin doesn't silently miss pending orders. Admin-only. */
+  private resumePendingChime(): void {
+    if (this.auth.getUserRole() !== 'ROLE_ADMIN' || !this.soundEnabled) return;
+    const headers: any = { Authorization: `Bearer ${this.auth.getToken()}` };
+    const tid = localStorage.getItem('tenantId');
+    if (tid) headers['X-Tenant-Id'] = tid;
+    this.http.get<{ count: number }>(`${environment.apiUrl}/api/admin/orders/pending-count`, { headers }).subscribe({
+      next: res => {
+        if (res?.count > 0) { this.pendingOrders = res.count; this.playSound(); this.ensureRepeatLoop(); }
+      },
+      error: () => {}
+    });
   }
 
   /** Admin has seen the new orders — stop the repeating chime. */
@@ -81,31 +105,44 @@ export class NotificationService implements OnDestroy {
     if (this.repeatTimer) { clearInterval(this.repeatTimer); this.repeatTimer = null; }
   }
 
-  /** A short two-note chime via Web Audio (no asset). Silently no-ops if audio is blocked. */
-  private playChime(): void {
+  /** Play the selected new-order sound via Web Audio (no asset). Public so the settings screen can preview.
+   *  Silently no-ops if audio is blocked (needs a prior user gesture). */
+  playSound(type?: string): void {
+    const t = type || this.soundType;
     try {
       this.audioCtx = this.audioCtx || new ((window as any).AudioContext || (window as any).webkitAudioContext)();
       const ctx = this.audioCtx!;
       if (ctx.state === 'suspended') ctx.resume();
-      const now = ctx.currentTime;
-      [880, 1175].forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-        const t = now + i * 0.18;
-        gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(0.25, t + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-        osc.connect(gain).connect(ctx.destination);
-        osc.start(t);
-        osc.stop(t + 0.36);
-      });
+      switch (t) {
+        case 'bell':  this.tones(ctx, [1318, 1760], 'sine', 0.45, 0.13); break;
+        case 'beep':  this.tones(ctx, [1000, 1000, 1000], 'square', 0.10, 0.13); break;
+        case 'alarm': this.tones(ctx, [988, 740, 988, 740], 'sawtooth', 0.16, 0.16); break;
+        case 'ping':  this.tones(ctx, [1568], 'sine', 0.5, 0); break;
+        default:      this.tones(ctx, [880, 1175], 'sine', 0.32, 0.16); break;  // chime
+      }
     } catch { /* audio blocked until user interaction; ignore */ }
   }
 
-  constructor(private auth: AuthService, private toastr: ToastrService) {
+  private tones(ctx: AudioContext, freqs: number[], type: OscillatorType, dur: number, gap: number): void {
+    const now = ctx.currentTime;
+    freqs.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      const start = now + i * (gap || dur * 0.5);
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.25, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + dur + 0.02);
+    });
+  }
+
+  constructor(private auth: AuthService, private toastr: ToastrService, private http: HttpClient) {
     this.connect();
+    this.resumePendingChime();
   }
 
   /** Throttled text stream — used for toasts and history */

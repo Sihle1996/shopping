@@ -34,6 +34,13 @@ public class AdminOrderController {
         }
     }
 
+    // Count of unaccepted (Pending) orders — used by the new-order chime to resume after a page refresh.
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/pending-count")
+    public Map<String, Long> pendingCount() {
+        return Map.of("count", orderService.countPendingForCurrentTenant());
+    }
+
     // ✅ Fetch Order by ID (Admin)
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")

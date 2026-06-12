@@ -5,6 +5,7 @@ import { driver } from 'driver.js';
 import { AuthService } from 'src/app/services/auth.service';
 import { TenantService } from 'src/app/services/tenant.service';
 import { AdminService } from 'src/app/services/admin.service';
+import { NotificationService } from 'src/app/services/notification.service';
 import { SubscriptionService } from 'src/app/services/subscription.service';
 import { GeocodingService, AddressSuggestion } from 'src/app/services/geocoding.service';
 import { ToastrService } from 'ngx-toastr';
@@ -136,7 +137,8 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     private geocodingService: GeocodingService,
     private toastr: ToastrService,
     private route: ActivatedRoute,
-    private confirm: ConfirmService
+    private confirm: ConfirmService,
+    private notif: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -270,6 +272,12 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   /** Per-device new-order sound toggle (localStorage; NotificationService reads the same key). */
   get newOrderSound(): boolean { return localStorage.getItem('newOrderSound') !== 'off'; }
   set newOrderSound(on: boolean) { localStorage.setItem('newOrderSound', on ? 'on' : 'off'); }
+
+  /** Per-device new-order sound choice (5 options) + preview. */
+  get soundOptions(): string[] { return this.notif.soundOptions; }
+  get soundType(): string { return this.notif.soundType; }
+  set soundType(t: string) { this.notif.soundType = t; this.notif.playSound(t); }   // preview as they pick
+  previewSound(): void { this.notif.playSound(this.soundType); }
 
   private activeDriver: any = null;
 

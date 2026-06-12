@@ -524,6 +524,23 @@
           </button>
         </div>
 
+        <!-- Sound choice (per-device) — 5 options + preview, shown when the sound is on -->
+        <div *ngIf="newOrderSound" class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-borderColor bg-surface mb-5">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <i class="bi bi-music-note-beamed text-primary"></i>
+            <p class="text-sm text-textDark font-medium">Sound <span class="text-xs font-normal text-textMuted">· choose &amp; preview</span></p>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <select [(ngModel)]="soundType" class="px-3 py-1.5 rounded-lg border border-borderColor text-sm capitalize bg-white">
+              <option *ngFor="let s of soundOptions" [value]="s">{{ s }}</option>
+            </select>
+            <button type="button" (click)="previewSound()" title="Preview"
+                    class="px-3 py-1.5 rounded-lg border border-borderColor text-sm text-textDark hover:bg-gray-50 flex items-center gap-1">
+              <i class="bi bi-play-fill"></i> Preview
+            </button>
+          </div>
+        </div>
+
         <div *ngIf="notifPrefsLoading" class="animate-pulse space-y-2">
           <div *ngFor="let _ of [1,2,3,4,5]" class="h-10 bg-gray-100 rounded-xl"></div>
         </div>

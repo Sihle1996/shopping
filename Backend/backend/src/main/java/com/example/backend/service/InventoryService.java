@@ -148,6 +148,22 @@ public class InventoryService {
         return count;
     }
 
+    /** SAFE background availability sync: only HIDE items that have genuinely run out (stock == 0). Never
+     *  auto-enables — that would override an admin who manually marked an in-stock item unavailable. Used by
+     *  the intraday maintenance scheduler so sold-out items disappear without the admin clicking anything. */
+    @Transactional
+    public int autoHideSoldOut(UUID tenantId) {
+        int count = 0;
+        for (MenuItem item : menuItemRepository.findByTenant_Id(tenantId)) {
+            if (item.getStock() == 0 && Boolean.TRUE.equals(item.getIsAvailable())) {
+                item.setIsAvailable(false);
+                menuItemRepository.save(item);
+                count++;
+            }
+        }
+        return count;
+    }
+
     /**
      * Recompute each item's reservedStock from the orders genuinely held right now
      * (Pending + Scheduled). Clears orphaned reservations left by orders that were
