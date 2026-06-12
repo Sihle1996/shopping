@@ -39,18 +39,19 @@ then ran **810 promos across 6 store types** (fast‑food, pizza, coffee, low‑
   **tightened the gate to 1.5σ → ~9%** (`CONFIDENT_SIGMA`), and HIGH/MEDIUM both become ~99–100%
   sign‑correct. Noise‑in‑learning roughly halved.
 
-## V2 — coverage + payday (2026‑06‑13, on ChatGPT's review)
-Applied the two refinements ChatGPT prioritised and re‑ran P3:
-- **Over‑dispersion CI** — real demand is over‑dispersed vs Poisson, so the band under‑covered (~54–61%).
-  Widened the noise band ×1.2 (`CI_WIDEN`). Coverage now HIGH ~59% / MEDIUM ~66% (MEDIUM at the 68% target).
-- **Payday‑aware baseline** — on top of the weekday match, weekday‑detrend each baseline day then average
-  the residual separately for payday vs non‑payday days. Bias tightened to **±3pp across all 6 store types**
-  (pizza −0.7, coffee −0.0). False positives @1.5σ dropped **9% → 5%**; sign‑correct held at HIGH 95% /
-  MEDIUM 97%.
+## V2 — coverage fix (2026‑06‑13, on ChatGPT's review)
+- **Over‑dispersion CI (kept):** real demand is over‑dispersed vs Poisson, so the 1σ band under‑covered
+  (~54–61%). Widened the noise band **×1.2** (`CI_WIDEN`). P3 coverage now **HIGH ~75% / MEDIUM ~65%** (at the
+  68% target), false positives @1.5σ **9% → 4%**, sign‑correct HIGH 98% / MEDIUM 97%.
+- **Payday‑aware baseline (TESTED + REVERTED):** estimated from the sparse payday days in a 28‑day baseline,
+  the residual is noisy and **over‑corrects individual promos** — e.g. it pushed the real store's Beef Burger
+  (true +35%) from a clean +36% to +52%. The 810‑promo average bias improved only marginally (±4→±3pp) while
+  individual reads regressed, so it was reverted. The robust replacement is empirical per‑weekday variance.
 
 **Remaining (future, not a rescue):** ChatGPT's long‑term idea — replace the Poisson SE with **empirical
-per‑weekday variance** (uses observed dispersion directly); and a **same‑category synthetic control** for
-larger menus. Both are optimisations on an already production‑grade, well‑calibrated system.
+per‑weekday variance** (captures real dispersion AND the payday effect directly, without a brittle
+point‑estimate); and a **same‑category synthetic control** for larger menus. Both are optimisations on an
+already production‑grade, well‑calibrated system.
 
 ---
 

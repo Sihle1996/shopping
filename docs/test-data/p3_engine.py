@@ -18,24 +18,9 @@ def compute_lift(item_daily, store_daily, weekday, payday, s, e):
     iavg = {w: (statistics.mean(idow[w]) if idow[w] else 0.0) for w in range(7)}
     savg = {w: (statistics.mean(sdow[w]) if sdow[w] else 0.0) for w in range(7)}
 
-    # payday residual on top of the weekday profile (weekday-detrend, then split payday vs non-payday)
-    iP=iN=sP=sN=0.0; iPn=iNn=sPn=sNn=0
-    for d in range(blo, s):
-        if store_daily[d] <= 0: continue
-        w = weekday[d]; pay = payday[d]
-        if savg[w] > 0:
-            r = store_daily[d]/savg[w]
-            if pay: sP+=r; sPn+=1
-            else:   sN+=r; sNn+=1
-        if iavg[w] > 0:
-            r = item_daily[d]/iavg[w]
-            if pay: iP+=r; iPn+=1
-            else:   iN+=r; iNn+=1
-    sPF = sP/sPn if sPn else 1.0; sNF = sN/sNn if sNn else 1.0
-    iPF = iP/iPn if iPn else 1.0; iNF = iN/iNn if iNn else 1.0
-
-    iexp = sum(iavg[weekday[d]]*(iPF if payday[d] else iNF) for d in range(s, e))
-    sexp = sum(savg[weekday[d]]*(sPF if payday[d] else sNF) for d in range(s, e))
+    # weekday-matched expectation (payday residual tested + reverted — over-corrects from sparse samples)
+    iexp = sum(iavg[weekday[d]] for d in range(s, e))
+    sexp = sum(savg[weekday[d]] for d in range(s, e))
     iact = sum(item_daily[s:e]); sact = sum(store_daily[s:e])
 
     ipct = round((iact-iexp)/iexp*100) if (itot >= 5 and iexp > 0) else None

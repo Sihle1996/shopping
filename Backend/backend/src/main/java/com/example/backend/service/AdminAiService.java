@@ -516,12 +516,6 @@ public class AdminAiService {
     // band under-covers (~55-60% at 1σ in P3). Widen ~20% so the stated ± reflects reality (~68% coverage).
     private static final double CI_WIDEN = 1.2;
 
-    /** SA-style payday window — month-end + the first couple of days (used to adjust the baseline). */
-    private static boolean isPayday(java.time.LocalDate d) {
-        int dom = d.getDayOfMonth();
-        return dom >= 25 || dom <= 2;
-    }
-
     /** Clamp a quality tier so it never exceeds {@code max} (LOW < MEDIUM < HIGH). */
     private static String capQuality(String raw, String max) {
         List<String> order = List.of("LOW", "MEDIUM", "HIGH");
@@ -701,20 +695,9 @@ public class AdminAiService {
         }
         for (int w = 0; w < 7; w++) if (n[w] > 0) { itemDow[w] /= n[w]; storeDow[w] /= n[w]; }
 
-        // Payday (day-of-month) adjustment ON TOP of the weekday profile: weekday-detrend each baseline day
-        // (actual / its weekday average), then average that residual separately for payday vs non-payday
-        // days. This removes the residual payday bias the weekday match leaves behind.
-        double iPay=0,iNon=0,sPay=0,sNon=0; int iPayN=0,iNonN=0,sPayN=0,sNonN=0;
-        for (var e : day.entrySet()) {
-            long[] b = e.getValue(); if (b[1] <= 0) continue;
-            int w = e.getKey().getDayOfWeek().getValue() - 1; boolean pay = isPayday(e.getKey());
-            if (storeDow[w] > 0) { double r = b[1] / storeDow[w]; if (pay) { sPay += r; sPayN++; } else { sNon += r; sNonN++; } }
-            if (itemDow[w]  > 0) { double r = b[0] / itemDow[w];  if (pay) { iPay += r; iPayN++; } else { iNon += r; iNonN++; } }
-        }
-        double sPayF = sPayN>0 ? sPay/sPayN : 1.0, sNonF = sNonN>0 ? sNon/sNonN : 1.0;
-        double iPayF = iPayN>0 ? iPay/iPayN : 1.0, iNonF = iNonN>0 ? iNon/iNonN : 1.0;
-
-        // Expected during = Σ (weekday average × payday adjustment) over each (fractional) day the window spans.
+        // Expected during = Σ the matching weekday average over each (fractional) day the window spans.
+        // (A naive payday/day-of-month residual was tested and reverted — estimated from sparse payday days
+        //  it over-corrects individual promos; the robust path is empirical per-weekday variance, deferred.)
         double itemExp = 0, storeExp = 0;
         java.time.LocalDate endDay = duringEnd.atZone(STORE_ZONE).toLocalDate();
         for (java.time.LocalDate d = start.atZone(STORE_ZONE).toLocalDate(); !d.isAfter(endDay); d = d.plusDays(1)) {
@@ -722,9 +705,8 @@ public class AdminAiService {
             Instant de = d.plusDays(1).atStartOfDay(STORE_ZONE).toInstant();
             double frac = overlapFraction(ds, de, start, duringEnd);
             if (frac <= 0) continue;
-            int w = d.getDayOfWeek().getValue() - 1; boolean pay = isPayday(d);
-            itemExp  += itemDow[w]  * (pay ? iPayF : iNonF) * frac;
-            storeExp += storeDow[w] * (pay ? sPayF : sNonF) * frac;
+            int w = d.getDayOfWeek().getValue() - 1;
+            itemExp += itemDow[w] * frac; storeExp += storeDow[w] * frac;
         }
 
         double duringUnits = productSales(tenantId, productId, start, duringEnd)[0];  // exact actual
