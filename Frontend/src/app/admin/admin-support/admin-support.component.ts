@@ -135,7 +135,7 @@ export class AdminSupportComponent implements OnInit {
   draftWithAi(): void {
     if (!this.selected || this.aiDrafting) return;
     if (this.ai.isAiOff()) {
-      this.toastr.info('AI is off — drafting a basic template. Add an Anthropic API key (ANTHROPIC_API_KEY) for AI-written replies.');
+      this.toastr.info('Vision is off — drafting a basic template. Add an Anthropic API key (ANTHROPIC_API_KEY) for Vision-written replies.');
     }
     this.aiDrafting = true;
     this.ai.draftSupport(this.selected.subject, this.selected.message, this.selected.orderId).subscribe({
@@ -150,9 +150,9 @@ export class AdminSupportComponent implements OnInit {
         if (d.suggestedStatus && this.statuses.includes(d.suggestedStatus)) {
           this.draftStatus = d.suggestedStatus;
         }
-        this.toastr.success('Drafted a reply — review and edit before saving', 'AI');
+        this.toastr.success('Drafted a reply — review and edit before saving', 'Vision');
       },
-      error: () => { this.aiDrafting = false; this.toastr.error('AI draft unavailable right now'); }
+      error: () => { this.aiDrafting = false; this.toastr.error('Vision draft unavailable right now'); }
     });
   }
 

@@ -317,7 +317,7 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.aiGenerating = false;
         if (res.recognized === false) {        // AI didn't recognise the name — don't invent a description/price
-          this.toastr.warning(res.message || `Couldn't recognise "${this.formData.name}" as a menu item — check the name`, 'AI');
+          this.toastr.warning(res.message || `Couldn't recognise "${this.formData.name}" as a menu item — check the name`, 'Vision');
           return;
         }
         if (res.description) this.formData.description = res.description;
@@ -332,16 +332,16 @@ export class AdminMenuComponent implements OnInit, OnDestroy {
         const applyPrice = !!aiPrice && !lossy && (!this.formData.price || this.formData.price <= 0);
         if (applyPrice) this.formData.price = aiPrice!;
         if (lossy) {
-          this.toastr.warning(`Wrote the description. Your cost (R${cost}) is higher than similar items sell for (~R${aiPrice}) — I didn't fill a price; R${aiPrice} would sell at a loss.`, 'AI');
+          this.toastr.warning(`Wrote the description. Your cost (R${cost}) is higher than similar items sell for (~R${aiPrice}) — I didn't fill a price; R${aiPrice} would sell at a loss.`, 'Vision');
         } else {
           this.toastr.success(applyPrice
             ? 'Wrote the description; suggested a price from your similar items — adjust to your costs'
-            : 'Wrote the description', 'AI');
+            : 'Wrote the description', 'Vision');
         }
       },
       error: () => {
         this.aiGenerating = false;
-        this.toastr.error('AI generation is unavailable right now', 'AI Generate');
+        this.toastr.error('Vision is unavailable right now', 'Vision');
       }
     });
   }

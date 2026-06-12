@@ -496,7 +496,7 @@ export class AdminPromotionsComponent implements OnInit {
     this.aiSuggestionsDismissed.clear();
     this.adminAiService.suggestPromotions().subscribe({
       next: (res) => { this.aiSuggestions = res.suggestions; this.aiSuggestionsReason = (res as any).reason || ''; this.aiSuggestionsLoading = false; },
-      error: () => { this.aiSuggestionsLoading = false; this.toastr.error('AI suggestions unavailable'); }
+      error: () => { this.aiSuggestionsLoading = false; this.toastr.error('Vision suggestions unavailable'); }
     });
   }
 

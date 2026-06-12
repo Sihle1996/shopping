@@ -36,7 +36,7 @@ export class AdminReviewsComponent implements OnInit {
       next: (res) => { this.digest = res; this.digestLoading = false; },
       error: () => {
         this.digestLoading = false;
-        this.digestError = 'AI digest is unavailable right now.';
+        this.digestError = 'Vision digest is unavailable right now.';
       }
     });
   }
@@ -121,7 +121,7 @@ export class AdminReviewsComponent implements OnInit {
     this.replyingId = r.id;
     this.adminAiService.draftReviewReply(r.rating, r.comment || '').subscribe({
       next: (res) => { this.replies[r.id] = res.reply; this.replyingId = null; },
-      error: () => { this.replyingId = null; this.toastr.error('AI reply is unavailable right now'); }
+      error: () => { this.replyingId = null; this.toastr.error('Vision reply is unavailable right now'); }
     });
   }
 

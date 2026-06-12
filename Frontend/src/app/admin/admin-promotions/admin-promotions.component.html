@@ -25,7 +25,7 @@
             <app-brand-mark [size]="22" [dark]="false" [mode]="aiSuggestionsLoading ? 'thinking' : 'idle'"></app-brand-mark>
           </div>
           <div class="min-w-0">
-            <h2 class="font-heading text-base font-bold text-textDark">AI Opportunities</h2>
+            <h2 class="font-heading text-base font-bold text-textDark">Vision Opportunities</h2>
             <p class="text-xs text-textMuted truncate">{{ visibleSuggestions.length ? visibleSuggestions.length + (visibleSuggestions.length === 1 ? ' promotion' : ' promotions') + ' worth testing — ranked from your sales & margins' : 'Candidates from your sales & margins' }}</p>
           </div>
         </div>
@@ -48,7 +48,7 @@
       <div *ngIf="!visibleSuggestions.length && !aiSuggestionsLoading" class="bg-white rounded-2xl shadow-card p-10 text-center">
         <app-brand-mark [size]="38" class="block mb-2" style="opacity:.3"></app-brand-mark>
         <p *ngIf="aiSuggestionsReason" class="text-sm text-amber-700">{{ aiSuggestionsReason }}</p>
-        <p *ngIf="!aiSuggestionsReason" class="text-sm text-textMuted">Tap <strong>Get Suggestions</strong> — the AI scans your slow movers and margins, then proposes experiments to run.</p>
+        <p *ngIf="!aiSuggestionsReason" class="text-sm text-textMuted">Tap <strong>Get Suggestions</strong> — Vision scans your slow movers and margins, then proposes experiments to run.</p>
       </div>
 
       <!-- Cards -->

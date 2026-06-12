@@ -40,7 +40,7 @@
           <h2 class="font-heading text-sm font-bold text-textDark flex items-center gap-1.5">
             <i class="bi bi-chat-quote text-primary"></i> Customer Voice Digest
           </h2>
-          <p class="text-xs text-textMuted mt-0.5">AI summary of your recent reviews</p>
+          <p class="text-xs text-textMuted mt-0.5">Vision summary of your recent reviews</p>
         </div>
         <button (click)="loadDigest()"
                 [disabled]="digestLoading"
@@ -55,7 +55,7 @@
       <p *ngIf="digestError" class="text-xs text-danger">{{ digestError }}</p>
 
       <p *ngIf="!digest && !digestLoading && !digestError" class="text-sm text-textMuted italic">
-        Click "Generate Digest" for an AI summary of this week's reviews.
+        Click "Generate Digest" for a Vision summary of this week's reviews.
       </p>
 
       <div *ngIf="digest && !digestLoading">
@@ -179,7 +179,7 @@
                   class="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1 disabled:opacity-50">
             <span *ngIf="replyingId === review.id" class="inline-block w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
             <app-brand-mark *ngIf="replyingId !== review.id" [size]="12"></app-brand-mark>
-            {{ replies[review.id] ? 'Redraft reply' : 'Draft reply with AI' }}
+            {{ replies[review.id] ? 'Redraft reply' : 'Draft reply with Vision' }}
           </button>
         </div>
 
