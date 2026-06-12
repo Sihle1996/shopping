@@ -37,6 +37,7 @@ interface OrderDTO {
   deliveryLat?: number;
   deliveryLon?: number;
   deliveryOtp?: string;
+  cancellationReason?: string;
 }
 
 @Component({
