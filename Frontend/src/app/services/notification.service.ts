@@ -76,6 +76,13 @@ export class NotificationService implements OnDestroy {
     this.ensureRepeatLoop();
   }
 
+  /** Payment confirmed — the order is settled, so stop alarming for it. When the last pending order is
+   *  paid, silence the repeating chime (the admin works paid orders from the queue, not the alarm). */
+  private onOrderPaid(): void {
+    if (this.pendingOrders > 0) this.pendingOrders--;
+    if (this.pendingOrders <= 0) this.acknowledgeOrders();
+  }
+
   private ensureRepeatLoop(): void {
     if (this.repeatTimer) return;
     this.repeatTimer = setInterval(() => {
@@ -211,6 +218,7 @@ export class NotificationService implements OnDestroy {
 
       this.addToHistory(text);
       if (data.type === 'ORDER_CREATED') this.onNewOrder();
+      else if (data.type === 'ORDER_PAID') this.onOrderPaid();
       this.notificationSubject.next(text);
       this.orderEventSubject.next(data);
       this.toastr.success(text, 'Order update', { timeOut: 6000 });

@@ -403,10 +403,13 @@ public class OrderService {
         return orders.stream().map(this::convertToOrderDTO).toList();
     }
 
-    /** Count of unaccepted (Pending) orders for the current tenant — drives the new-order chime resume. */
+    /** Count of Pending orders still AWAITING PAYMENT for the current tenant — drives the new-order chime
+     *  resume after a refresh. Paid orders are settled, so they no longer ring (the chime stops once paid). */
     public long countPendingForCurrentTenant() {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        return tenantId == null ? 0 : orderRepository.countByStatusAndTenant_Id("Pending", tenantId);
+        if (tenantId == null) return 0;
+        return orderRepository.findByStatusAndTenant_IdOrderByOrderDateDesc("Pending", tenantId)
+                .stream().filter(o -> !o.isPaid()).count();
     }
 
     public List<OrderDTO> getAllOrders() {
