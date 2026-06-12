@@ -1,8 +1,10 @@
 package com.example.backend.service;
 
+import com.example.backend.entity.Category;
 import com.example.backend.entity.MenuItem;
 import com.example.backend.entity.Tenant;
 import com.example.backend.repository.CartItemRepository;
+import com.example.backend.repository.CategoryRepository;
 import com.example.backend.repository.InventoryLogRepository;
 import com.example.backend.repository.MenuItemRepository;
 import com.example.backend.repository.TenantRepository;
@@ -24,6 +26,7 @@ public class MenuService {
     private final TenantRepository tenantRepository;
     private final CartItemRepository cartItemRepository;
     private final InventoryLogRepository inventoryLogRepository;
+    private final CategoryRepository categoryRepository;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final AuditService auditService;
 
@@ -33,6 +36,7 @@ public class MenuService {
             subscriptionEnforcementService.assertMenuItemLimit(tenantId);
         }
         setTenantOnEntity(menuItem);
+        ensureCategory(menuItem.getCategory());
         MenuItem saved = menuItemRepository.save(menuItem);
         auditService.log(AuditService.ADMIN, "MENU_ITEM_CREATED", "MENU_ITEM", saved.getId(),
                 saved.getName() + " — R" + saved.getPrice());
@@ -82,6 +86,7 @@ public class MenuService {
     public boolean importMenuItem(String name, Double price, String category,
                                   String description, Integer stock, Double cost) {
         UUID tenantId = TenantContext.getCurrentTenantId();
+        ensureCategory(category);
         MenuItem existing = (tenantId != null && name != null)
                 ? menuItemRepository.findByTenant_Id(tenantId).stream()
                         .filter(m -> name.equalsIgnoreCase(m.getName()))
@@ -163,6 +168,21 @@ public class MenuService {
         }
         menuItemRepository.saveAll(items);
         return items.size();
+    }
+
+    /** Make sure a category record exists for this tenant+name so the categories
+     *  table stays in sync with item.category strings — esp. via the CSV import
+     *  path, which otherwise left categoryCount=0 and blocked go-live (B2). */
+    private void ensureCategory(String name) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null || name == null || name.isBlank()) return;
+        if (categoryRepository.existsByNameAndTenant_Id(name, tenantId)) return;
+        tenantRepository.findById(tenantId).ifPresent(tenant -> {
+            Category cat = new Category();
+            cat.setName(name);
+            cat.setTenant(tenant);
+            categoryRepository.save(cat);
+        });
     }
 
     private void setTenantOnEntity(MenuItem item) {

@@ -514,7 +514,11 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     const pending = list.filter(o => o.status === 'Pending').length;
     const preparing = list.filter(o => o.status === 'Preparing').length;
     const outForDelivery = list.filter(o => o.status === 'Out for Delivery').length;
-    const revenue = list.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+    // Revenue = money actually taken: exclude Pending (awaiting payment), Cancelled and
+    // Rejected so an unpaid order can't inflate the figure (B5).
+    const revenue = list
+      .filter(o => !['Pending', 'Cancelled', 'Rejected'].includes(o.status))
+      .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
     return { pending, preparing, outForDelivery, revenue };
   }
 }

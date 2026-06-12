@@ -191,6 +191,11 @@ public class StoreDocumentController {
         }
 
         tenant.setActive(true);
+        // Going live should also OPEN the store for orders, otherwise the owner sees
+        // "Your store is now live!" yet customers get "currently closed" (B3). Manual
+        // override is set so the hours scheduler doesn't immediately re-close it.
+        tenant.setIsOpen(true);
+        tenant.setManualOpenOverride(true);
         tenantRepository.save(tenant);
         return ResponseEntity.ok(Map.of("message", "Your store is now live!"));
     }
