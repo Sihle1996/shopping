@@ -129,6 +129,12 @@ html, body {
 }
 .ai-generating-text { animation: aiTextPulse 1.3s ease-in-out infinite; }
 
+/* gentle float for the landing-page illustration accents (scooter, coins, chips) */
+@keyframes landingFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.landing-float { animation: landingFloat 3.5s ease-in-out infinite; }
+.landing-float-slow { animation: landingFloat 5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .landing-float, .landing-float-slow { animation: none; } }
+
 @keyframes aiPopIn {
   0%   { opacity: 0; transform: translateY(12px) scale(.96); }
   100% { opacity: 1; transform: translateY(0) scale(1); }

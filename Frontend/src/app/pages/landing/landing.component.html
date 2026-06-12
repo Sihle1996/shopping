@@ -1,373 +1,386 @@
-<div class="min-h-screen bg-white font-primary">
+<div class="min-h-screen bg-white font-primary text-textDark overflow-x-hidden">
 
-  <!-- Nav -->
-  <header class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-borderColor">
+  <!-- ───────────── Nav ───────────── -->
+  <header class="sticky top-0 z-50 bg-white/85 backdrop-blur border-b border-borderColor">
     <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-2.5">
-        <img src="assets/craveit-logo-transparent.png" alt="CraveIt" class="h-6 w-auto md:h-10" />
-      </div>
+      <a routerLink="/" class="font-heading font-extrabold text-2xl tracking-tight leading-none">crave<span class="text-primary">-it</span></a>
       <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-textLight">
-        <a href="#how-it-works" class="hover:text-primary transition-colors">How it works</a>
+        <a href="#story" class="hover:text-primary transition-colors">Our story</a>
         <a href="#features" class="hover:text-primary transition-colors">Features</a>
         <a routerLink="/stores" class="hover:text-primary transition-colors">Order food</a>
         <a *ngIf="!isLoggedIn" routerLink="/login" class="hover:text-primary transition-colors">Log in</a>
-        <a *ngIf="isLoggedIn" routerLink="/stores"
+        <a routerLink="/register-restaurant"
            class="px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary-600 transition-colors shadow-sm">
-          Browse restaurants
+          List your restaurant
         </a>
       </nav>
+      <a routerLink="/stores" class="md:hidden px-3.5 py-2 rounded-xl text-sm font-semibold bg-primary text-white">Order</a>
     </div>
   </header>
 
-  <!-- Hero -->
-  <section class="bg-white overflow-hidden">
-    <div class="max-w-6xl mx-auto px-4 pt-16 pb-0 md:pt-20 grid md:grid-cols-2 gap-10 items-center">
-
-      <!-- Left: copy -->
-      <div class="pb-12 md:pb-20">
-        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-50 border border-primary-100 text-primary text-xs font-semibold mb-6">
+  <!-- ───────────── Hero ───────────── -->
+  <section class="relative bg-gradient-to-b from-primary-50/60 to-white">
+    <div class="max-w-6xl mx-auto px-4 pt-14 pb-16 md:pt-20 md:pb-24 grid md:grid-cols-2 gap-10 items-center">
+      <!-- copy -->
+      <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-primary-100 text-primary text-xs font-semibold mb-6 shadow-sm">
           <span class="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
-          South African restaurants &mdash; built for you
+          Built in South Africa · for SA restaurants
         </div>
-        <h1 class="font-heading text-4xl sm:text-5xl font-extrabold text-textDark leading-[1.1] mb-5">
-          Sell food online.<br />
-          <span class="text-primary">Keep every rand.</span>
+        <h1 class="font-heading text-4xl sm:text-5xl font-extrabold leading-[1.08] mb-5">
+          Order from your favourite local spots.
+          <span class="text-primary">Or run your own.</span>
         </h1>
         <p class="text-textLight text-lg leading-relaxed mb-8 max-w-md">
-          CraveIt gives your restaurant its own ordering page, payment processing, and delivery management — without paying 25–30% commission to Uber Eats or Mr D.
+          CraveIt is the home‑grown ordering platform that lets you discover nearby kitchens — and lets
+          restaurants sell directly, keep their margins, and grow with smart insights.
         </p>
-        <div class="flex flex-col sm:flex-row gap-3 mb-10">
-          <a routerLink="/register-restaurant"
+        <div class="flex flex-col sm:flex-row gap-3 mb-7">
+          <a routerLink="/stores"
              class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold bg-primary text-white hover:bg-primary-600 transition-colors shadow-sm">
-            <i class="bi bi-rocket-takeoff"></i>Start for free
+            <i class="bi bi-bag-heart"></i>Order food
           </a>
-          <a routerLink="/login"
-             class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold border-2 border-borderColor text-textDark hover:border-primary hover:text-primary transition-colors">
-            I already have a store
+          <a routerLink="/register-restaurant"
+             class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold border-2 border-borderColor hover:border-primary hover:text-primary transition-colors">
+            <i class="bi bi-shop-window"></i>List your restaurant
           </a>
         </div>
-        <div class="flex flex-wrap gap-5 text-sm text-textMuted mb-6">
-          <span class="flex items-center gap-1.5"><i class="bi bi-check-circle-fill text-success text-xs"></i>No monthly fee to start</span>
-          <span class="flex items-center gap-1.5"><i class="bi bi-check-circle-fill text-success text-xs"></i>No commission on orders</span>
-          <span class="flex items-center gap-1.5"><i class="bi bi-check-circle-fill text-success text-xs"></i>PayFast ZAR payouts</span>
-        </div>
-        <p class="text-sm text-textMuted">
-          Hungry instead?
-          <a routerLink="/stores" class="font-semibold text-primary hover:underline">Browse restaurants &rarr;</a>
-        </p>
-      </div>
-
-      <!-- Right: stacked restaurant photos with overlay card -->
-      <div class="relative hidden md:block h-[480px]">
-        <!-- Background image - large -->
-        <div class="absolute inset-0 rounded-t-3xl overflow-hidden">
-          <img src="assets/photo-1513104890138-7c749659a591.jpg"
-               alt="Restaurant food"
-               class="w-full h-full object-cover" />
-          <div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent"></div>
-        </div>
-
-        <!-- Floating dashboard card -->
-        <div class="absolute bottom-8 left-4 right-4 bg-white rounded-2xl shadow-float p-4 border border-borderColor">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-semibold text-textDark">Today's summary</p>
-            <span class="text-[10px] bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
-              <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>Store open
-            </span>
-          </div>
-          <div class="grid grid-cols-3 gap-3 mb-3">
-            <div class="text-center bg-surface rounded-xl py-2.5">
-              <p class="font-numbers font-extrabold text-primary text-lg">R4,280</p>
-              <p class="text-[10px] text-textMuted">Revenue</p>
-            </div>
-            <div class="text-center bg-surface rounded-xl py-2.5">
-              <p class="font-numbers font-extrabold text-textDark text-lg">18</p>
-              <p class="text-[10px] text-textMuted">Orders</p>
-            </div>
-            <div class="text-center bg-surface rounded-xl py-2.5">
-              <p class="font-numbers font-extrabold text-textDark text-lg">4.9</p>
-              <p class="text-[10px] text-textMuted">Rating</p>
-            </div>
-          </div>
-          <!-- New order alert -->
-          <div class="flex items-center gap-3 bg-primary-50 rounded-xl px-3 py-2.5">
-            <div class="w-7 h-7 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
-              <i class="bi bi-bell-fill text-white text-xs"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-xs font-semibold text-textDark">New order — #1042</p>
-              <p class="text-[10px] text-textMuted truncate">2× Cheese Burger · 1× Chips</p>
-            </div>
-            <span class="text-xs font-bold text-primary">R89</span>
-          </div>
+        <div class="flex flex-wrap gap-x-5 gap-y-2 text-sm text-textMuted">
+          <span class="flex items-center gap-1.5"><i class="bi bi-check-circle-fill text-brand-teal text-xs"></i>0% commission for stores</span>
+          <span class="flex items-center gap-1.5"><i class="bi bi-check-circle-fill text-brand-teal text-xs"></i>PayFast ZAR payouts</span>
+          <span class="flex items-center gap-1.5"><i class="bi bi-check-circle-fill text-brand-teal text-xs"></i>Live delivery tracking</span>
         </div>
       </div>
 
-    </div>
-  </section>
-
-  <!-- Stats strip -->
-  <section class="border-y border-borderColor bg-surface py-8">
-    <div class="max-w-6xl mx-auto px-4">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-        <div>
-          <p class="font-heading text-3xl font-extrabold text-textDark">150+</p>
-          <p class="text-textMuted text-sm mt-1">Restaurants live</p>
-        </div>
-        <div>
-          <p class="font-heading text-3xl font-extrabold text-textDark">10k+</p>
-          <p class="text-textMuted text-sm mt-1">Orders processed</p>
-        </div>
-        <div>
-          <p class="font-heading text-3xl font-extrabold text-primary">0%</p>
-          <p class="text-textMuted text-sm mt-1">Commission on sales</p>
-        </div>
-        <div>
-          <p class="font-heading text-3xl font-extrabold text-textDark">&lt;10 min</p>
-          <p class="text-textMuted text-sm mt-1">To go live</p>
-        </div>
+      <!-- hero illustration: phone ordering scene (flat SVG) -->
+      <div class="relative">
+        <svg viewBox="0 0 400 380" class="w-full max-w-md mx-auto" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ordering food on the CraveIt app">
+          <!-- soft blobs -->
+          <circle cx="300" cy="90" r="80" fill="#FCE9E3"/>
+          <circle cx="80" cy="300" r="64" fill="#E1F2F0"/>
+          <!-- phone -->
+          <rect x="120" y="30" width="170" height="320" rx="28" fill="#ffffff" stroke="#264653" stroke-width="3"/>
+          <rect x="120" y="30" width="170" height="78" rx="28" fill="#E76F51"/>
+          <rect x="120" y="84" width="170" height="24" fill="#E76F51"/>
+          <text x="140" y="64" font-family="Montserrat, sans-serif" font-size="15" font-weight="800" fill="#ffffff">crave‑it</text>
+          <circle cx="270" cy="58" r="9" fill="#ffffff" opacity="0.9"/>
+          <!-- search bar -->
+          <rect x="138" y="92" width="134" height="20" rx="10" fill="#ffffff"/>
+          <circle cx="150" cy="102" r="4" stroke="#9CA3AF" stroke-width="2"/>
+          <!-- menu cards -->
+          <g>
+            <rect x="138" y="128" width="134" height="56" rx="12" fill="#F9FAFB" stroke="#E5E7EB"/>
+            <rect x="148" y="138" width="36" height="36" rx="9" fill="#F4A261"/>
+            <rect x="194" y="142" width="56" height="8" rx="4" fill="#264653"/>
+            <rect x="194" y="156" width="38" height="7" rx="3.5" fill="#9CA3AF"/>
+            <rect x="194" y="167" width="26" height="9" rx="4.5" fill="#2A9D8F"/>
+          </g>
+          <g>
+            <rect x="138" y="194" width="134" height="56" rx="12" fill="#F9FAFB" stroke="#E5E7EB"/>
+            <rect x="148" y="204" width="36" height="36" rx="9" fill="#E9C46A"/>
+            <rect x="194" y="208" width="56" height="8" rx="4" fill="#264653"/>
+            <rect x="194" y="222" width="38" height="7" rx="3.5" fill="#9CA3AF"/>
+            <rect x="194" y="233" width="26" height="9" rx="4.5" fill="#2A9D8F"/>
+          </g>
+          <!-- order button -->
+          <rect x="138" y="266" width="134" height="40" rx="12" fill="#E76F51"/>
+          <text x="205" y="291" text-anchor="middle" font-family="Poppins, sans-serif" font-size="13" font-weight="700" fill="#ffffff">Order now</text>
+          <!-- floating: new order chip -->
+          <g class="landing-float">
+            <rect x="246" y="150" width="132" height="52" rx="14" fill="#ffffff" stroke="#E5E7EB" stroke-width="1.5"/>
+            <circle cx="270" cy="176" r="13" fill="#2A9D8F"/>
+            <path d="M265 176l4 4 7-8" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="290" y="166" width="70" height="7" rx="3.5" fill="#264653"/>
+            <rect x="290" y="180" width="48" height="6" rx="3" fill="#9CA3AF"/>
+          </g>
+          <!-- floating: scooter badge -->
+          <g class="landing-float-slow">
+            <circle cx="70" cy="150" r="34" fill="#E76F51"/>
+            <path d="M54 158h7l4-10h12l4 7h6" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle cx="60" cy="162" r="5.5" fill="none" stroke="#fff" stroke-width="3"/>
+            <circle cx="82" cy="162" r="5.5" fill="none" stroke="#fff" stroke-width="3"/>
+            <rect x="76" y="138" width="12" height="10" rx="2" fill="#fff"/>
+          </g>
+        </svg>
       </div>
     </div>
   </section>
 
-  <!-- Restaurant showcase -->
+  <!-- ───────────── Two paths ───────────── -->
   <section class="py-16 bg-white">
     <div class="max-w-6xl mx-auto px-4">
-      <p class="text-center text-textMuted text-sm mb-6">Restaurants using CraveIt serve everything from</p>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div class="relative rounded-2xl overflow-hidden h-44 group">
-          <img loading="lazy" src="assets/RedDot_Burger.jpg" alt="Burgers" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-          <p class="absolute bottom-3 left-3 text-white text-sm font-semibold">Burgers</p>
-        </div>
-        <div class="relative rounded-2xl overflow-hidden h-44 group">
-          <img loading="lazy" src="assets/domino-s-pizza.jpg" alt="Pizza" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-          <p class="absolute bottom-3 left-3 text-white text-sm font-semibold">Pizza</p>
-        </div>
-        <div class="relative rounded-2xl overflow-hidden h-44 group">
-          <img loading="lazy" src="assets/istockphoto-1419247070-612x612.jpg" alt="Local favourites" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-          <p class="absolute bottom-3 left-3 text-white text-sm font-semibold">Local food</p>
-        </div>
-        <div class="relative rounded-2xl overflow-hidden h-44 group">
-          <img loading="lazy" src="assets/istockphoto-468676382-612x612.jpg" alt="More cuisines" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-          <p class="absolute bottom-3 left-3 text-white text-sm font-semibold">Homemade meals</p>
-        </div>
+      <div class="text-center mb-10">
+        <h2 class="font-heading text-3xl font-extrabold">One app, two ways in</h2>
+        <p class="text-textLight mt-2">Whether you're hungry or you're the one cooking — CraveIt has a path for you.</p>
       </div>
-    </div>
-  </section>
+      <div class="grid md:grid-cols-2 gap-5">
 
-  <!-- How it works -->
-  <section id="how-it-works" class="py-20 bg-surface">
-    <div class="max-w-6xl mx-auto px-4">
-      <div class="text-center mb-14">
-        <p class="text-primary text-sm font-semibold uppercase tracking-widest mb-3">Getting started</p>
-        <h2 class="font-heading text-3xl font-extrabold text-textDark">Your store live in 3 steps</h2>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        <div class="bg-white rounded-2xl p-7 shadow-card flex flex-col items-start gap-4">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-primary rounded-xl flex items-center justify-center text-white font-heading font-bold text-sm flex-shrink-0">1</div>
-            <div class="h-px flex-1 bg-primary-100"></div>
+        <!-- diners -->
+        <div class="relative rounded-3xl border border-borderColor bg-surface p-7 overflow-hidden">
+          <span class="absolute left-2 top-3 bottom-3 w-1.5 rounded-full bg-primary"></span>
+          <div class="flex items-center gap-4 mb-5 pl-3">
+            <svg viewBox="0 0 64 64" class="w-14 h-14 flex-shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="14" y="6" width="36" height="52" rx="8" fill="#fff" stroke="#264653" stroke-width="2.5"/>
+              <rect x="14" y="6" width="36" height="14" rx="8" fill="#E76F51"/><rect x="14" y="14" width="36" height="6" fill="#E76F51"/>
+              <circle cx="32" cy="40" r="10" fill="#FCE9E3"/><path d="M28 40c0-3 8-3 8 0s-8 3-8 0z" fill="#E76F51"/>
+              <rect x="20" y="26" width="24" height="4" rx="2" fill="#E5E7EB"/>
+            </svg>
+            <div><p class="text-xs font-bold uppercase tracking-wide text-primary">For diners</p><h3 class="font-heading text-xl font-bold">I'm hungry</h3></div>
           </div>
-          <div class="w-12 h-12 bg-primary-50 rounded-2xl flex items-center justify-center">
-            <i class="bi bi-person-plus text-primary text-xl"></i>
-          </div>
-          <div>
-            <h3 class="font-heading font-bold text-textDark mb-1">Register your restaurant</h3>
-            <p class="text-textLight text-sm leading-relaxed">Sign up, fill in your store name, address, and delivery settings. Takes under 5 minutes.</p>
-          </div>
+          <ol class="space-y-2.5 mb-6 pl-3 text-sm text-textDark">
+            <li class="flex items-center gap-2.5"><span class="w-5 h-5 rounded-full bg-primary/10 text-primary text-[11px] font-bold flex items-center justify-center">1</span>Browse kitchens near you</li>
+            <li class="flex items-center gap-2.5"><span class="w-5 h-5 rounded-full bg-primary/10 text-primary text-[11px] font-bold flex items-center justify-center">2</span>Order &amp; pay securely with PayFast</li>
+            <li class="flex items-center gap-2.5"><span class="w-5 h-5 rounded-full bg-primary/10 text-primary text-[11px] font-bold flex items-center justify-center">3</span>Track your driver to your door</li>
+          </ol>
+          <a routerLink="/stores" class="inline-flex items-center gap-2 pl-3 font-semibold text-primary hover:underline">Browse restaurants <i class="bi bi-arrow-right"></i></a>
         </div>
 
-        <div class="bg-white rounded-2xl p-7 shadow-card flex flex-col items-start gap-4">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-primary rounded-xl flex items-center justify-center text-white font-heading font-bold text-sm flex-shrink-0">2</div>
-            <div class="h-px flex-1 bg-primary-100"></div>
+        <!-- owners -->
+        <div class="relative rounded-3xl border border-borderColor bg-surface p-7 overflow-hidden">
+          <span class="absolute left-2 top-3 bottom-3 w-1.5 rounded-full bg-brand-teal"></span>
+          <div class="flex items-center gap-4 mb-5 pl-3">
+            <svg viewBox="0 0 64 64" class="w-14 h-14 flex-shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12 26l4-12h32l4 12" fill="#E1F2F0" stroke="#264653" stroke-width="2.5" stroke-linejoin="round"/>
+              <path d="M12 26a6 6 0 0012 0 6 6 0 0012 0 6 6 0 0012 0 6 6 0 0012 0" fill="#2A9D8F" stroke="#264653" stroke-width="2.5"/>
+              <rect x="16" y="30" width="32" height="26" rx="3" fill="#fff" stroke="#264653" stroke-width="2.5"/>
+              <rect x="26" y="40" width="12" height="16" rx="2" fill="#E76F51"/>
+            </svg>
+            <div><p class="text-xs font-bold uppercase tracking-wide text-brand-teal">For restaurants</p><h3 class="font-heading text-xl font-bold">I run a restaurant</h3></div>
           </div>
-          <div class="w-12 h-12 bg-primary-50 rounded-2xl flex items-center justify-center">
-            <i class="bi bi-card-list text-primary text-xl"></i>
-          </div>
-          <div>
-            <h3 class="font-heading font-bold text-textDark mb-1">Build your menu</h3>
-            <p class="text-textLight text-sm leading-relaxed">Add your items with photos, prices, and categories. Import from a CSV if you have a big menu.</p>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-2xl p-7 shadow-card flex flex-col items-start gap-4">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-primary rounded-xl flex items-center justify-center text-white font-heading font-bold text-sm flex-shrink-0">3</div>
-            <div class="h-px flex-1 bg-primary-100"></div>
-          </div>
-          <div class="w-12 h-12 bg-primary-50 rounded-2xl flex items-center justify-center">
-            <i class="bi bi-share text-primary text-xl"></i>
-          </div>
-          <div>
-            <h3 class="font-heading font-bold text-textDark mb-1">Share your link &amp; get orders</h3>
-            <p class="text-textLight text-sm leading-relaxed">Post your store URL on WhatsApp, Instagram, or Facebook. Customers order, pay, and you deliver.</p>
-          </div>
+          <ol class="space-y-2.5 mb-6 pl-3 text-sm text-textDark">
+            <li class="flex items-center gap-2.5"><span class="w-5 h-5 rounded-full bg-brand-teal/10 text-brand-teal text-[11px] font-bold flex items-center justify-center">1</span>Sign up &amp; set your store up in minutes</li>
+            <li class="flex items-center gap-2.5"><span class="w-5 h-5 rounded-full bg-brand-teal/10 text-brand-teal text-[11px] font-bold flex items-center justify-center">2</span>Build your menu, hours &amp; delivery area</li>
+            <li class="flex items-center gap-2.5"><span class="w-5 h-5 rounded-full bg-brand-teal/10 text-brand-teal text-[11px] font-bold flex items-center justify-center">3</span>Share your link &amp; keep every rand</li>
+          </ol>
+          <a routerLink="/register-restaurant" class="inline-flex items-center gap-2 pl-3 font-semibold text-brand-teal hover:underline">Start free <i class="bi bi-arrow-right"></i></a>
         </div>
 
       </div>
     </div>
   </section>
 
-  <!-- Features -->
-  <section id="features" class="py-20 bg-gray-900">
+  <!-- ───────────── Story timeline ───────────── -->
+  <section id="story" class="py-20 bg-surface">
     <div class="max-w-6xl mx-auto px-4">
       <div class="text-center mb-14">
-        <p class="text-primary text-sm font-semibold uppercase tracking-widest mb-3">Platform features</p>
-        <h2 class="font-heading text-3xl font-extrabold text-white">Everything you need to run your business</h2>
-        <p class="text-gray-400 text-base mt-3 max-w-xl mx-auto">No tech knowledge required. No third-party taking a cut. Just you, your menu, and your customers.</p>
+        <p class="text-primary text-sm font-semibold uppercase tracking-widest mb-3">Our story</p>
+        <h2 class="font-heading text-3xl font-extrabold">From a simple order button to a full kitchen brain</h2>
+        <p class="text-textLight text-base mt-3 max-w-xl mx-auto">CraveIt grew chapter by chapter — every release giving stores more control and customers a better meal.</p>
       </div>
 
+      <div class="relative grid md:grid-cols-5 gap-8 md:gap-4">
+        <!-- connecting line (desktop) -->
+        <div class="hidden md:block absolute left-0 right-0 top-9 h-0.5 bg-primary-100"></div>
+
+        <!-- 1 ordering -->
+        <div class="relative text-center">
+          <div class="relative z-10 w-18 h-18 mx-auto mb-4 rounded-2xl bg-white shadow-card flex items-center justify-center" style="width:72px;height:72px">
+            <svg viewBox="0 0 40 40" class="w-10 h-10" fill="none" aria-hidden="true">
+              <rect x="6" y="8" width="28" height="22" rx="3" fill="#FCE9E3" stroke="#E76F51" stroke-width="2"/>
+              <rect x="6" y="8" width="28" height="6" rx="3" fill="#E76F51"/>
+              <rect x="11" y="19" width="12" height="3" rx="1.5" fill="#264653"/><rect x="11" y="24" width="9" height="3" rx="1.5" fill="#9CA3AF"/>
+              <rect x="14" y="30" width="12" height="4" rx="2" fill="#264653"/>
+            </svg>
+          </div>
+          <p class="text-[11px] font-bold text-primary uppercase tracking-wide mb-1">Chapter 1</p>
+          <h3 class="font-heading font-bold text-sm mb-1.5">Your own ordering page</h3>
+          <p class="text-textLight text-xs leading-relaxed">A branded store link — no marketplace, no middleman.</p>
+        </div>
+
+        <!-- 2 payments -->
+        <div class="relative text-center">
+          <div class="relative z-10 mx-auto mb-4 rounded-2xl bg-white shadow-card flex items-center justify-center" style="width:72px;height:72px">
+            <svg viewBox="0 0 40 40" class="w-10 h-10" fill="none" aria-hidden="true">
+              <rect x="5" y="11" width="30" height="20" rx="4" fill="#E1F2F0" stroke="#2A9D8F" stroke-width="2"/>
+              <rect x="5" y="16" width="30" height="5" fill="#2A9D8F"/>
+              <rect x="10" y="25" width="9" height="3" rx="1.5" fill="#264653"/>
+              <text x="26" y="28" font-family="Inter" font-size="7" font-weight="800" fill="#2A9D8F">R</text>
+            </svg>
+          </div>
+          <p class="text-[11px] font-bold text-primary uppercase tracking-wide mb-1">Chapter 2</p>
+          <h3 class="font-heading font-bold text-sm mb-1.5">PayFast payments</h3>
+          <p class="text-textLight text-xs leading-relaxed">Card, EFT &amp; SnapScan — money lands in ZAR, directly.</p>
+        </div>
+
+        <!-- 3 delivery -->
+        <div class="relative text-center">
+          <div class="relative z-10 mx-auto mb-4 rounded-2xl bg-white shadow-card flex items-center justify-center" style="width:72px;height:72px">
+            <svg viewBox="0 0 40 40" class="w-10 h-10" fill="none" aria-hidden="true">
+              <path d="M9 27h5l3-8h9l3 6h2" stroke="#E76F51" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="13" cy="29" r="4" fill="#fff" stroke="#264653" stroke-width="2"/>
+              <circle cx="29" cy="29" r="4" fill="#fff" stroke="#264653" stroke-width="2"/>
+              <path d="M28 16c0-3-6-3-6 0s6 6 6 11" stroke="#2A9D8F" stroke-width="0"/>
+              <path d="M31 7a4 4 0 11-4 4c0 2.5 4 5 4 5s4-2.5 4-5a4 4 0 00-4-4z" fill="#2A9D8F"/>
+            </svg>
+          </div>
+          <p class="text-[11px] font-bold text-primary uppercase tracking-wide mb-1">Chapter 3</p>
+          <h3 class="font-heading font-bold text-sm mb-1.5">Live driver tracking</h3>
+          <p class="text-textLight text-xs leading-relaxed">Assign drivers, watch the map, keep customers updated.</p>
+        </div>
+
+        <!-- 4 promotions -->
+        <div class="relative text-center">
+          <div class="relative z-10 mx-auto mb-4 rounded-2xl bg-white shadow-card flex items-center justify-center" style="width:72px;height:72px">
+            <svg viewBox="0 0 40 40" class="w-10 h-10" fill="none" aria-hidden="true">
+              <path d="M21 7l12 12-12 12-2-2 2-10-10 2 2-2L21 7z" fill="#FDF1DA" stroke="#E9C46A" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M8 20l12-12 4 0 0 4-12 12-4-4z" fill="#E76F51" stroke="#264653" stroke-width="2" stroke-linejoin="round"/>
+              <circle cx="15" cy="13" r="2" fill="#fff"/>
+            </svg>
+          </div>
+          <p class="text-[11px] font-bold text-primary uppercase tracking-wide mb-1">Chapter 4</p>
+          <h3 class="font-heading font-bold text-sm mb-1.5">Promotions</h3>
+          <p class="text-textLight text-xs leading-relaxed">Specials &amp; discount codes that bring diners back.</p>
+        </div>
+
+        <!-- 5 Vision AI (highlight) -->
+        <div class="relative text-center">
+          <div class="relative z-10 mx-auto mb-4 rounded-2xl bg-textDark shadow-float flex items-center justify-center" style="width:72px;height:72px">
+            <svg viewBox="0 0 40 40" class="w-9 h-9" fill="none" aria-hidden="true">
+              <path d="M9 11h6l5 14 5-14h6L22 32h-4L9 11z" fill="#E76F51"/>
+              <path d="M19 18c2 0 3-1 3-3 0 2 1 3 3 3-2 0-3 1-3 3 0-2-1-3-3-3z" fill="#fff"/>
+            </svg>
+            <i class="bi bi-stars absolute -top-1.5 -right-1.5 text-primary text-sm ai-twinkle"></i>
+          </div>
+          <p class="text-[11px] font-bold text-primary uppercase tracking-wide mb-1">Now · Vision</p>
+          <h3 class="font-heading font-bold text-sm mb-1.5">Vision AI</h3>
+          <p class="text-textLight text-xs leading-relaxed">AI that tells you which promos actually made money — with honest confidence.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────── Features ───────────── -->
+  <section id="features" class="py-20 bg-white">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="text-center mb-14">
+        <p class="text-primary text-sm font-semibold uppercase tracking-widest mb-3">Everything in one place</p>
+        <h2 class="font-heading text-3xl font-extrabold">All the tools to run — and grow — your kitchen</h2>
+        <p class="text-textLight text-base mt-3 max-w-xl mx-auto">No tech knowledge required. No third party taking a cut. Just you, your menu, and your customers.</p>
+      </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-primary/50 transition-colors">
-          <div class="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center mb-4">
-            <i class="bi bi-phone text-primary text-lg"></i>
-          </div>
-          <h3 class="font-semibold text-white mb-2">Your own branded page</h3>
-          <p class="text-gray-400 text-sm leading-relaxed">Custom URL, logo, and brand colour. Customers order from your page — not a generic marketplace.</p>
+        <div class="rounded-2xl p-6 border border-borderColor bg-surface hover:shadow-card-hover transition-shadow">
+          <div class="w-11 h-11 rounded-xl bg-primary-50 flex items-center justify-center mb-4"><i class="bi bi-phone text-primary text-lg"></i></div>
+          <h3 class="font-semibold mb-2">Your own branded page</h3>
+          <p class="text-textLight text-sm leading-relaxed">Custom link, logo, and brand colour — customers order from <em>your</em> page, not a generic app.</p>
         </div>
-
-        <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-primary/50 transition-colors">
-          <div class="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center mb-4">
-            <i class="bi bi-receipt text-primary text-lg"></i>
-          </div>
-          <h3 class="font-semibold text-white mb-2">Order management</h3>
-          <p class="text-gray-400 text-sm leading-relaxed">Accept, prepare, dispatch. Real-time order dashboard with status tracking for every order.</p>
+        <div class="rounded-2xl p-6 border border-borderColor bg-surface hover:shadow-card-hover transition-shadow">
+          <div class="w-11 h-11 rounded-xl bg-primary-50 flex items-center justify-center mb-4"><i class="bi bi-receipt text-primary text-lg"></i></div>
+          <h3 class="font-semibold mb-2">Order management</h3>
+          <p class="text-textLight text-sm leading-relaxed">Accept, prepare, dispatch — a real‑time dashboard with status on every order.</p>
         </div>
-
-        <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-primary/50 transition-colors">
-          <div class="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center mb-4">
-            <i class="bi bi-geo-alt-fill text-primary text-lg"></i>
-          </div>
-          <h3 class="font-semibold text-white mb-2">Live driver tracking</h3>
-          <p class="text-gray-400 text-sm leading-relaxed">Assign drivers, monitor GPS locations, and keep customers updated — all in one place.</p>
+        <div class="rounded-2xl p-6 border border-borderColor bg-surface hover:shadow-card-hover transition-shadow">
+          <div class="w-11 h-11 rounded-xl bg-primary-50 flex items-center justify-center mb-4"><i class="bi bi-geo-alt-fill text-primary text-lg"></i></div>
+          <h3 class="font-semibold mb-2">Live driver tracking</h3>
+          <p class="text-textLight text-sm leading-relaxed">Assign drivers, monitor GPS, and keep customers updated — all in one place.</p>
         </div>
-
-        <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-primary/50 transition-colors">
-          <div class="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center mb-4">
-            <i class="bi bi-graph-up-arrow text-primary text-lg"></i>
-          </div>
-          <h3 class="font-semibold text-white mb-2">Sales analytics</h3>
-          <p class="text-gray-400 text-sm leading-relaxed">Revenue charts, top-selling items, and daily summaries. Know your business numbers at a glance.</p>
+        <div class="rounded-2xl p-6 border border-borderColor bg-surface hover:shadow-card-hover transition-shadow">
+          <div class="w-11 h-11 rounded-xl bg-primary-50 flex items-center justify-center mb-4"><i class="bi bi-credit-card text-primary text-lg"></i></div>
+          <h3 class="font-semibold mb-2">PayFast payments</h3>
+          <p class="text-textLight text-sm leading-relaxed">SA's most trusted gateway. Card, EFT, SnapScan — paid out in ZAR with no delays.</p>
         </div>
-
-        <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-primary/50 transition-colors">
-          <div class="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center mb-4">
-            <i class="bi bi-percent text-primary text-lg"></i>
-          </div>
-          <h3 class="font-semibold text-white mb-2">Promotions</h3>
-          <p class="text-gray-400 text-sm leading-relaxed">Run weekend specials, discount codes, and featured deals to bring customers back.</p>
+        <div class="rounded-2xl p-6 border border-borderColor bg-surface hover:shadow-card-hover transition-shadow">
+          <div class="w-11 h-11 rounded-xl bg-primary-50 flex items-center justify-center mb-4"><i class="bi bi-percent text-primary text-lg"></i></div>
+          <h3 class="font-semibold mb-2">Promotions</h3>
+          <p class="text-textLight text-sm leading-relaxed">Weekend specials, discount codes, and featured deals to bring customers back.</p>
         </div>
-
-        <div class="bg-primary/10 border border-primary/40 rounded-2xl p-6">
-          <div class="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center mb-4">
-            <i class="bi bi-credit-card text-primary text-lg"></i>
+        <div class="relative rounded-2xl p-6 border border-primary/40 bg-primary-50/60 hover:shadow-card-hover transition-shadow overflow-hidden">
+          <div class="w-11 h-11 rounded-xl bg-textDark flex items-center justify-center mb-4">
+            <svg viewBox="0 0 40 40" class="w-6 h-6" fill="none" aria-hidden="true"><path d="M9 11h6l5 14 5-14h6L22 32h-4L9 11z" fill="#E76F51"/><path d="M19 18c2 0 3-1 3-3 0 2 1 3 3 3-2 0-3 1-3 3 0-2-1-3-3-3z" fill="#fff"/></svg>
           </div>
-          <h3 class="font-semibold text-white mb-2">PayFast payments</h3>
-          <p class="text-gray-400 text-sm leading-relaxed">SA's most trusted gateway. Card, EFT, SnapScan. Money lands in your account in ZAR — no delays.</p>
-          <p class="text-primary text-xs font-semibold mt-3 flex items-center gap-1">
-            <i class="bi bi-shield-fill-check"></i>PCI-DSS compliant
-          </p>
+          <h3 class="font-semibold mb-2">Vision AI insights</h3>
+          <p class="text-textLight text-sm leading-relaxed">Daily briefings, promo economics, and calibrated confidence — so you act on evidence, not guesses.</p>
+          <p class="text-primary text-xs font-semibold mt-3 flex items-center gap-1"><i class="bi bi-stars"></i>Powered by Vision</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Split section: image + CTA -->
-  <section class="bg-white">
-    <div class="max-w-6xl mx-auto px-4 py-20 grid md:grid-cols-2 gap-12 items-center">
-      <!-- Image collage -->
-      <div class="grid grid-cols-2 gap-3 h-[380px]">
-        <div class="rounded-2xl overflow-hidden h-full">
-          <img src="assets/photo-1513104890138-7c749659a591.jpg" alt="Restaurant food" class="w-full h-full object-cover" />
-        </div>
-        <div class="grid grid-rows-2 gap-3">
-          <div class="rounded-2xl overflow-hidden">
-            <img loading="lazy" src="assets/istockphoto-1485677116-612x612.jpg" alt="Food" class="w-full h-full object-cover" />
-          </div>
-          <div class="rounded-2xl overflow-hidden">
-            <img loading="lazy" src="assets/RedDot_Burger.jpg" alt="Burger" class="w-full h-full object-cover" />
-          </div>
-        </div>
+  <!-- ───────────── Keep every rand ───────────── -->
+  <section class="py-20 bg-surface">
+    <div class="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+      <!-- coin/pie illustration -->
+      <div class="order-2 md:order-1 flex justify-center">
+        <svg viewBox="0 0 320 280" class="w-full max-w-sm" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Restaurants keep nearly all of every order on CraveIt">
+          <circle cx="120" cy="150" r="78" fill="#E1F2F0"/>
+          <!-- the slim slice the big apps take -->
+          <path d="M120 150 L120 72 A78 78 0 0 1 195 140 Z" fill="#FBD7CD"/>
+          <!-- you keep -->
+          <path d="M120 150 L195 140 A78 78 0 1 1 120 72 Z" fill="#2A9D8F"/>
+          <circle cx="120" cy="150" r="40" fill="#fff"/>
+          <text x="120" y="146" text-anchor="middle" font-family="Inter" font-size="22" font-weight="800" fill="#264653">~95%</text>
+          <text x="120" y="164" text-anchor="middle" font-family="Poppins" font-size="10" fill="#9CA3AF">you keep</text>
+          <!-- floating coins -->
+          <g class="landing-float">
+            <circle cx="250" cy="70" r="30" fill="#E9C46A" stroke="#264653" stroke-width="2.5"/>
+            <text x="250" y="78" text-anchor="middle" font-family="Inter" font-size="20" font-weight="800" fill="#264653">R</text>
+          </g>
+          <g class="landing-float-slow">
+            <circle cx="262" cy="200" r="22" fill="#F4A261" stroke="#264653" stroke-width="2.5"/>
+            <text x="262" y="207" text-anchor="middle" font-family="Inter" font-size="15" font-weight="800" fill="#264653">R</text>
+          </g>
+        </svg>
       </div>
-      <!-- Copy -->
-      <div>
-        <p class="text-primary text-sm font-semibold uppercase tracking-widest mb-4">Why CraveIt?</p>
-        <h2 class="font-heading text-3xl font-extrabold text-textDark leading-tight mb-5">
-          Stop losing 30% of every order to the big apps.
-        </h2>
+      <!-- copy -->
+      <div class="order-1 md:order-2">
+        <p class="text-primary text-sm font-semibold uppercase tracking-widest mb-4">Why CraveIt</p>
+        <h2 class="font-heading text-3xl font-extrabold leading-tight mb-5">Stop losing a third of every order to the big apps.</h2>
         <p class="text-textLight text-base leading-relaxed mb-6">
-          Uber Eats and Mr D charge restaurants between 20–35% per order. On a R100 meal, you keep R65–80. With CraveIt, you set your own delivery fees, accept payments directly, and keep everything above the PayFast gateway fee.
+          Uber Eats and Mr D charge restaurants 20–35% per order — on a R100 meal you keep R65–80. With CraveIt
+          you set your own delivery fees, take payment directly, and keep everything above the PayFast gateway fee.
         </p>
         <ul class="space-y-3 mb-8">
-          <li class="flex items-start gap-3 text-sm text-textDark">
-            <i class="bi bi-check-circle-fill text-success mt-0.5 flex-shrink-0"></i>
-            Your customer data — not locked inside someone else's app
-          </li>
-          <li class="flex items-start gap-3 text-sm text-textDark">
-            <i class="bi bi-check-circle-fill text-success mt-0.5 flex-shrink-0"></i>
-            Set your own delivery area, fees, and minimum order
-          </li>
-          <li class="flex items-start gap-3 text-sm text-textDark">
-            <i class="bi bi-check-circle-fill text-success mt-0.5 flex-shrink-0"></i>
-            Send promotions and discount codes directly to customers
-          </li>
-          <li class="flex items-start gap-3 text-sm text-textDark">
-            <i class="bi bi-check-circle-fill text-success mt-0.5 flex-shrink-0"></i>
-            Manage your own drivers or use cash on delivery
-          </li>
+          <li class="flex items-start gap-3 text-sm"><i class="bi bi-check-circle-fill text-brand-teal mt-0.5 flex-shrink-0"></i>Your customer data — not locked inside someone else's app</li>
+          <li class="flex items-start gap-3 text-sm"><i class="bi bi-check-circle-fill text-brand-teal mt-0.5 flex-shrink-0"></i>Set your own delivery area, fees, and minimum order</li>
+          <li class="flex items-start gap-3 text-sm"><i class="bi bi-check-circle-fill text-brand-teal mt-0.5 flex-shrink-0"></i>Send promotions and discount codes straight to customers</li>
+          <li class="flex items-start gap-3 text-sm"><i class="bi bi-check-circle-fill text-brand-teal mt-0.5 flex-shrink-0"></i>Manage your own drivers or use cash on delivery</li>
         </ul>
-        <a routerLink="/register-restaurant"
-           class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold bg-primary text-white hover:bg-primary-600 transition-colors shadow-sm">
+        <a routerLink="/register-restaurant" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold bg-primary text-white hover:bg-primary-600 transition-colors shadow-sm">
           <i class="bi bi-shop-window"></i>List your restaurant
         </a>
       </div>
     </div>
   </section>
 
-  <!-- Final CTA -->
-  <section class="bg-primary py-20">
-    <div class="max-w-3xl mx-auto px-4 text-center">
-      <h2 class="font-heading text-4xl font-extrabold text-white leading-tight mb-4">
-        Ready to take back your margins?
-      </h2>
-      <p class="text-primary-100 text-lg mb-8">
-        Join restaurants across South Africa who are selling directly to their customers.
-      </p>
-      <a routerLink="/register-restaurant"
-         class="inline-flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold bg-white text-primary hover:bg-primary-50 transition-colors shadow-md">
-        <i class="bi bi-rocket-takeoff"></i>Get started — it's free
-      </a>
-      <p class="text-primary-200 text-xs mt-4">No credit card required &nbsp;·&nbsp; No setup fee &nbsp;·&nbsp; Cancel anytime</p>
+  <!-- ───────────── Stats ───────────── -->
+  <section class="border-y border-borderColor bg-white py-10">
+    <div class="max-w-6xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+      <div><p class="font-heading text-3xl font-extrabold">150+</p><p class="text-textMuted text-sm mt-1">Restaurants live</p></div>
+      <div><p class="font-heading text-3xl font-extrabold">10k+</p><p class="text-textMuted text-sm mt-1">Orders processed</p></div>
+      <div><p class="font-heading text-3xl font-extrabold text-primary">0%</p><p class="text-textMuted text-sm mt-1">Commission on sales</p></div>
+      <div><p class="font-heading text-3xl font-extrabold">&lt;10 min</p><p class="text-textMuted text-sm mt-1">To go live</p></div>
     </div>
   </section>
 
-  <!-- Footer -->
-  <footer class="bg-gray-900 text-gray-400 py-12">
+  <!-- ───────────── Final CTA ───────────── -->
+  <section class="bg-primary py-20">
+    <div class="max-w-3xl mx-auto px-4 text-center">
+      <h2 class="font-heading text-4xl font-extrabold text-white leading-tight mb-4">Hungry, or ready to grow?</h2>
+      <p class="text-primary-100 text-lg mb-8">Order from a local kitchen tonight — or open your own store and keep what you earn.</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a routerLink="/stores" class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold bg-white text-primary hover:bg-primary-50 transition-colors shadow-md"><i class="bi bi-bag-heart"></i>Order food</a>
+        <a routerLink="/register-restaurant" class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold bg-primary-600 text-white border border-white/30 hover:bg-primary-700 transition-colors"><i class="bi bi-rocket-takeoff"></i>Start your store — free</a>
+      </div>
+      <p class="text-primary-200 text-xs mt-4">No credit card required · No setup fee · Cancel anytime</p>
+    </div>
+  </section>
+
+  <!-- ───────────── Footer ───────────── -->
+  <footer class="bg-textDark text-gray-400 py-12">
     <div class="max-w-6xl mx-auto px-4">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
         <div class="md:col-span-2">
-          <div class="flex items-center gap-2.5 mb-4">
-            <span class="font-heading font-extrabold text-white text-2xl tracking-tight">crave<span class="text-primary">-it</span></span>
-          </div>
-          <p class="text-sm leading-relaxed max-w-xs">
-            An online ordering platform for South African restaurants. Own your sales. Own your customers. Keep your profits.
-          </p>
+          <span class="font-heading font-extrabold text-white text-2xl tracking-tight">crave<span class="text-primary">-it</span></span>
+          <p class="text-sm leading-relaxed max-w-xs mt-4">A home‑grown ordering platform for South African restaurants. Own your sales. Own your customers. Keep your profits.</p>
         </div>
         <div>
-          <h4 class="text-white font-semibold text-sm mb-4">For Restaurants</h4>
+          <h4 class="text-white font-semibold text-sm mb-4">For restaurants</h4>
           <ul class="space-y-2.5 text-sm">
             <li><a routerLink="/register-restaurant" class="hover:text-white transition-colors">Register your restaurant</a></li>
             <li><a routerLink="/login" class="hover:text-white transition-colors">Restaurant login</a></li>
           </ul>
         </div>
         <div>
-          <h4 class="text-white font-semibold text-sm mb-4">For Customers</h4>
+          <h4 class="text-white font-semibold text-sm mb-4">For customers</h4>
           <ul class="space-y-2.5 text-sm">
             <li><a routerLink="/stores" class="hover:text-white transition-colors">Browse restaurants</a></li>
             <li><a routerLink="/register" class="hover:text-white transition-colors">Create account</a></li>
@@ -381,12 +394,9 @@
           </ul>
         </div>
       </div>
-      <div class="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-        <p>&copy; 2025 CraveIt. Built in South Africa.</p>
-        <div class="flex items-center gap-1.5 text-gray-500">
-          <i class="bi bi-shield-check text-success"></i>
-          Payments secured by PayFast
-        </div>
+      <div class="border-t border-gray-700 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+        <p>&copy; 2026 CraveIt. Built in South Africa.</p>
+        <div class="flex items-center gap-1.5 text-gray-500"><i class="bi bi-shield-check text-brand-teal"></i>Payments secured by PayFast</div>
       </div>
     </div>
   </footer>
