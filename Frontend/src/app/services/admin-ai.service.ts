@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
 export interface AiDescribeItemRequest {
@@ -167,7 +168,20 @@ export interface DriverRecommendationsResponse {
 export class AdminAiService {
   private readonly base = `${environment.apiUrl}/api/admin/ai`;
 
+  /** null = unknown yet, true = LLM features enabled, false = no Anthropic API key (graceful-degrade). */
+  private _aiConfigured: boolean | null = null;
+
   constructor(private http: HttpClient) {}
+
+  /** Whether the LLM features (Copilot, suggestions, AI replies) are enabled. Caches the result. */
+  aiStatus(): Observable<boolean> {
+    return this.http.get<{ configured: boolean }>(`${this.base}/status`).pipe(
+      tap(r => this._aiConfigured = !!r.configured),
+      map(r => !!r.configured)
+    );
+  }
+  /** True only once we KNOW the key is missing — used to guard AI actions without a round-trip. */
+  isAiOff(): boolean { return this._aiConfigured === false; }
 
   describeItem(req: AiDescribeItemRequest): Observable<AiDescribeItemResponse> {
     return this.http.post<AiDescribeItemResponse>(`${this.base}/describe-item`, req);

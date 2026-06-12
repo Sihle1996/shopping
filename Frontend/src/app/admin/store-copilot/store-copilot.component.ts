@@ -16,6 +16,7 @@ export class StoreCopilotComponent implements OnInit, OnDestroy {
   messages: ChatMessage[] = [];
   loading = false;
   applyingAction: AiProposedAction | null = null;
+  aiOff = false;   // true when no Anthropic API key — Copilot runs in basic (rule-based) mode
 
   private destroy$ = new Subject<void>();
 
@@ -26,6 +27,8 @@ export class StoreCopilotComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.adminAiService.aiStatus().pipe(takeUntil(this.destroy$))
+      .subscribe({ next: configured => this.aiOff = !configured, error: () => {} });
     // A page asked the copilot something in-context — open and run it.
     this.copilotService.asks$.pipe(takeUntil(this.destroy$)).subscribe(q => {
       this.open = true;

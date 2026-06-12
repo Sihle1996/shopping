@@ -54,6 +54,13 @@ public class AdminAiController {
         return ResponseEntity.ok(capabilityRegistry.describe(TenantContext.getCurrentTenantId(), module));
     }
 
+    /** GET /api/admin/ai/status — whether the LLM features are enabled (Anthropic API key set). The UI uses
+     *  this to show a graceful "AI unavailable" message instead of failing silently. */
+    @GetMapping("/status")
+    public ResponseEntity<Map<String, Object>> status() {
+        return ResponseEntity.ok(Map.of("configured", adminAiService.isConfigured()));
+    }
+
     /** POST /api/admin/ai/complete-name — append-only name completion for Smart Fill ghost text */
     @PostMapping("/complete-name")
     public ResponseEntity<Map<String, Object>> completeName(@RequestBody Map<String, String> body) {

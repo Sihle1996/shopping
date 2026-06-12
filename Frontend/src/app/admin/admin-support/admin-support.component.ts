@@ -75,7 +75,7 @@ export class AdminSupportComponent implements OnInit {
   constructor(private http: HttpClient, private auth: AuthService,
               private ai: AdminAiService, private toastr: ToastrService) {}
 
-  ngOnInit(): void { this.load(); this.loadPlatform(); }
+  ngOnInit(): void { this.load(); this.loadPlatform(); this.ai.aiStatus().subscribe(); }
 
   load(): void {
     this.loading = true;
@@ -134,6 +134,9 @@ export class AdminSupportComponent implements OnInit {
   /** Ask the AI to triage the ticket and draft a customer reply into the notes box. */
   draftWithAi(): void {
     if (!this.selected || this.aiDrafting) return;
+    if (this.ai.isAiOff()) {
+      this.toastr.info('AI is off — drafting a basic template. Add an Anthropic API key (ANTHROPIC_API_KEY) for AI-written replies.');
+    }
     this.aiDrafting = true;
     this.ai.draftSupport(this.selected.subject, this.selected.message, this.selected.orderId).subscribe({
       next: (d) => {
