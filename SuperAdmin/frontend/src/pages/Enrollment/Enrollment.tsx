@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { enrollmentService } from '../../services/enrollment.service'
 import api from '../../services/api'
+import { authService } from '../../services/auth.service'
 import { useToast } from '../../context/ToastContext'
 import type { PendingEnrollmentDto, StoreDocumentDto, DocumentStatus } from '../../types'
 import { CheckCircle, XCircle, FileText, ChevronDown, ChevronUp, ExternalLink, Clock, AlertTriangle, Archive } from 'lucide-react'
@@ -66,10 +67,14 @@ function DocumentRow({ doc, onReview, reviewing }:
         <span className="flex-1 text-gray-200 truncate">{DOC_LABELS[doc.documentType] ?? doc.documentType}</span>
         <span className="text-gray-500 text-xs truncate max-w-[110px] hidden sm:inline">{doc.fileName}</span>
         <StatusPill status={doc.status} />
-        <button type="button" onClick={viewDoc}
-           className="text-orange-400 hover:text-orange-300 flex items-center gap-1 text-xs flex-shrink-0">
-          View <ExternalLink size={11} />
-        </button>
+        {authService.getCompliance() ? (
+          <button type="button" onClick={viewDoc}
+             className="text-orange-400 hover:text-orange-300 flex items-center gap-1 text-xs flex-shrink-0">
+            View <ExternalLink size={11} />
+          </button>
+        ) : (
+          <span className="text-gray-600 text-xs flex-shrink-0" title="Only a Compliance super-admin can open KYB documents">Compliance only</span>
+        )}
       </div>
       {onReview ? (
         <div className="flex items-center gap-2 px-3 pb-2">
@@ -310,7 +315,8 @@ function RejectedRow({ store, onApprove, onArchive, approving, archiving }:
 export default function Enrollment() {
   const { showToast } = useToast()
   const queryClient = useQueryClient()
-  const [tab, setTab] = useState<'pending' | 'rejected'>('pending')
+  const [tab, setTab] = useState<'pending' | 'rejected' | 'banking'>('pending')
+  const compliance = authService.getCompliance()
   const [actionId, setActionId] = useState<string | null>(null)
   const [actionType, setActionType] = useState<'approve' | 'reject' | 'archive' | null>(null)
 
@@ -325,6 +331,13 @@ export default function Enrollment() {
     queryFn: () => enrollmentService.getRejected(),
     staleTime: 30_000,
     enabled: tab === 'rejected'
+  })
+
+  const { data: bankingChanges = [], isLoading: bankingLoading, error: bankingError } = useQuery({
+    queryKey: ['banking-changes'],
+    queryFn: () => enrollmentService.getBankingChanges(),
+    staleTime: 30_000,
+    enabled: tab === 'banking' && compliance
   })
 
   const approveMutation = useMutation({
@@ -373,8 +386,18 @@ export default function Enrollment() {
     onError: () => showToast('Failed to review document', 'error')
   })
 
-  const isLoading = tab === 'pending' ? pendingLoading : rejectedLoading
-  const error = tab === 'pending' ? pendingError : rejectedError
+  const bankingMutation = useMutation({
+    mutationFn: ({ id, action }: { id: string; action: 'approve' | 'reject' }) =>
+      action === 'approve' ? enrollmentService.approveBankingChange(id) : enrollmentService.rejectBankingChange(id),
+    onSuccess: (_, { action }) => {
+      showToast(`Banking change ${action === 'approve' ? 'approved' : 'rejected'}`, 'success')
+      queryClient.invalidateQueries({ queryKey: ['banking-changes'] })
+    },
+    onError: () => showToast('Failed to update banking change', 'error')
+  })
+
+  const isLoading = tab === 'pending' ? pendingLoading : tab === 'rejected' ? rejectedLoading : bankingLoading
+  const error = tab === 'pending' ? pendingError : tab === 'rejected' ? rejectedError : bankingError
   const items = tab === 'pending' ? pending : rejected
 
   return (
@@ -417,6 +440,21 @@ export default function Enrollment() {
             </span>
           )}
         </button>
+        {compliance && (
+          <button
+            onClick={() => setTab('banking')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              tab === 'banking' ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            Banking Changes
+            {bankingChanges.length > 0 && (
+              <span className="ml-2 bg-white/20 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {bankingChanges.length}
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Loading */}
@@ -434,17 +472,47 @@ export default function Enrollment() {
       )}
 
       {/* Empty state */}
-      {!isLoading && !error && items.length === 0 && (
+      {!isLoading && !error && (tab === 'banking' ? bankingChanges.length === 0 : items.length === 0) && (
         <div className="text-center py-16">
           <div className="w-14 h-14 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle size={24} className="text-green-500" />
           </div>
           <p className="text-white font-semibold mb-1">
-            {tab === 'pending' ? 'All caught up' : 'No rejected stores'}
+            {tab === 'pending' ? 'All caught up' : tab === 'rejected' ? 'No rejected stores' : 'No banking changes'}
           </p>
           <p className="text-gray-500 text-sm">
-            {tab === 'pending' ? 'No stores are waiting for review' : 'No stores have been rejected yet'}
+            {tab === 'pending' ? 'No stores are waiting for review' : tab === 'rejected' ? 'No stores have been rejected yet' : 'No banking changes are awaiting review'}
           </p>
+        </div>
+      )}
+
+      {/* Banking changes list (Compliance) */}
+      {!isLoading && tab === 'banking' && bankingChanges.length > 0 && (
+        <div>
+          <p className="text-sm text-gray-500 mb-4">{bankingChanges.length} banking change{bankingChanges.length !== 1 ? 's' : ''} awaiting review</p>
+          {bankingChanges.map(bc => (
+            <div key={bc.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-5 mb-4">
+              <p className="font-semibold text-white mb-3">{bc.name}</p>
+              <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                <div className="bg-gray-800/60 rounded-xl px-4 py-3">
+                  <p className="text-gray-500 text-xs mb-1">Current</p>
+                  <p className="text-gray-300">{bc.current.bankName ?? '—'} · {bc.current.bankAccountType ?? '—'}</p>
+                  <p className="text-gray-400 font-mono text-xs mt-1">{bc.current.bankAccountNumber ?? '—'} · {bc.current.bankBranchCode ?? '—'}</p>
+                </div>
+                <div className="bg-orange-500/5 border border-orange-500/20 rounded-xl px-4 py-3">
+                  <p className="text-orange-400 text-xs mb-1">Proposed</p>
+                  <p className="text-white">{bc.proposed.bankName ?? '—'} · {bc.proposed.bankAccountType ?? '—'}</p>
+                  <p className="text-gray-200 font-mono text-xs mt-1">{bc.proposed.bankAccountNumber ?? '—'} · {bc.proposed.bankBranchCode ?? '—'}</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => bankingMutation.mutate({ id: bc.id, action: 'approve' })} disabled={bankingMutation.isPending}
+                  className="px-3 py-1.5 rounded-lg bg-green-600/20 hover:bg-green-600/30 text-green-400 text-xs font-semibold border border-green-600/30 disabled:opacity-50">Approve change</button>
+                <button onClick={() => bankingMutation.mutate({ id: bc.id, action: 'reject' })} disabled={bankingMutation.isPending}
+                  className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs font-semibold border border-red-600/30 disabled:opacity-50">Reject</button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

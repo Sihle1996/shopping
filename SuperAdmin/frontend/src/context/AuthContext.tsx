@@ -4,6 +4,7 @@ import { authService } from '../services/auth.service'
 interface AuthUser {
   email: string
   role: string
+  compliance: boolean
 }
 
 interface AuthContextType {
@@ -39,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const email = authService.getEmail()
     const role = authService.getRole()
     if (email && role && authService.isAuthenticated()) {
-      setUser({ email, role })
+      setUser({ email, role, compliance: authService.getCompliance() })
       scheduleAutoLogout()
     }
     setLoading(false)
@@ -48,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const result = await authService.login(email, password)
-    setUser({ email: result.email, role: result.role })
+    setUser({ email: result.email, role: result.role, compliance: result.compliance })
     scheduleAutoLogout()
   }
 

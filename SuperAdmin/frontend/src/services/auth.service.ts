@@ -5,6 +5,7 @@ interface LoginResponse {
   email: string
   role: string
   expiresAt: string
+  compliance: boolean
 }
 
 export const authService = {
@@ -14,6 +15,7 @@ export const authService = {
     localStorage.setItem('email', data.email)
     localStorage.setItem('role', data.role)
     localStorage.setItem('expiresAt', data.expiresAt)
+    localStorage.setItem('compliance', String(data.compliance))
     return data
   },
 
@@ -22,6 +24,11 @@ export const authService = {
     localStorage.removeItem('email')
     localStorage.removeItem('role')
     localStorage.removeItem('expiresAt')
+    localStorage.removeItem('compliance')
+  },
+
+  getCompliance(): boolean {
+    return localStorage.getItem('compliance') === 'true'
   },
 
   isAuthenticated(): boolean {

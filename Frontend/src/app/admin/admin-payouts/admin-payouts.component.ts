@@ -29,6 +29,12 @@ export class AdminPayoutsComponent implements OnInit {
   payouts: Payout[] = [];
   loading = false;
 
+  // Banking-change request (re-reviewed by a compliance super-admin before it takes effect)
+  enrollment: any = null;
+  showBankForm = false;
+  submittingBank = false;
+  bankForm = { bankName: '', bankAccountNumber: '', bankAccountType: 'Cheque', bankBranchCode: '' };
+
   private get headers(): HttpHeaders {
     const h: any = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.auth.getToken()}` };
     const tid = localStorage.getItem('tenantId');
@@ -38,12 +44,27 @@ export class AdminPayoutsComponent implements OnInit {
 
   constructor(private http: HttpClient, private auth: AuthService, private toastr: ToastrService) {}
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void { this.load(); this.loadEnrollment(); }
 
   load(): void {
     this.loading = true;
     this.http.get<Payout[]>(`${environment.apiUrl}/api/admin/payouts`, { headers: this.headers })
       .subscribe({ next: p => { this.payouts = p; this.loading = false; }, error: () => this.loading = false });
+  }
+
+  loadEnrollment(): void {
+    this.http.get<any>(`${environment.apiUrl}/api/admin/enrollment`, { headers: this.headers })
+      .subscribe({ next: e => this.enrollment = e, error: () => {} });
+  }
+
+  requestBankChange(): void {
+    if (!this.bankForm.bankAccountNumber.trim()) { this.toastr.warning('Enter the new account number'); return; }
+    this.submittingBank = true;
+    this.http.post(`${environment.apiUrl}/api/admin/enrollment/request-bank-change`, this.bankForm, { headers: this.headers })
+      .subscribe({
+        next: () => { this.submittingBank = false; this.showBankForm = false; this.toastr.success('Banking change submitted for review'); this.loadEnrollment(); },
+        error: (e) => { this.submittingBank = false; this.toastr.error(e?.error?.error || 'Could not submit banking change'); }
+      });
   }
 
   get totalEarned(): number { return this.payouts.reduce((s, p) => s + p.grossRevenue, 0); }

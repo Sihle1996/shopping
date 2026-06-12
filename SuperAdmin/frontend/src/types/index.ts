@@ -184,6 +184,21 @@ export interface StoreDocumentDto {
   reviewedAt?: string
 }
 
+export interface BankAccount {
+  bankName?: string
+  bankAccountNumber?: string
+  bankAccountType?: string
+  bankBranchCode?: string
+}
+
+export interface BankingChangeDto {
+  id: string
+  name: string
+  slug: string
+  current: BankAccount
+  proposed: BankAccount
+}
+
 export interface PendingEnrollmentDto {
   id: string
   name: string
