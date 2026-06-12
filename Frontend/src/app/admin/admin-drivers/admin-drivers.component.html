@@ -114,7 +114,7 @@
     <!-- Performance has no data yet -->
     <div *ngIf="!recStats?.decisions && !driverInsights?.scorecard?.length"
          class="bg-white rounded-2xl shadow-card border border-borderColor p-10 text-center text-sm text-textMuted">
-      <app-brand-mark face="hidden" [size]="40" class="mb-2"></app-brand-mark>
+      <app-brand-mark [size]="40" class="mb-2"></app-brand-mark>
       Performance insights appear once drivers complete timed deliveries.
     </div>
   </div>
@@ -176,7 +176,7 @@
         </div>
 
         <div *ngIf="!loading && drivers.length === 0" class="px-5 py-10 text-center">
-          <app-brand-mark face="hidden" [size]="40" class="mb-2"></app-brand-mark>
+          <app-brand-mark [size]="40" class="mb-2"></app-brand-mark>
           <p class="text-sm text-textMuted">No drivers yet. Add one above.</p>
         </div>
 
