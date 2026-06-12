@@ -566,11 +566,15 @@ public class AdminAiService {
             Long storePercent = lift != null ? lift.storePercent() : null;
             Long netLift = lift != null ? lift.netLift() : null;
 
-            // CONFIDENCE = strength of the WEAKER side of the comparison (a strong promo volume
-            // on a thin baseline is still a thin comparison), CAPPED by duration: never HIGH
-            // before ~7 days, never above LOW when too early.
-            double minVol = Math.min(before[0], during[0]);
-            String rawQuality = minVol >= 15 ? "HIGH" : minVol >= 6 ? "MEDIUM" : "LOW";
+            // CONFIDENCE (F2) = how distinguishable the net lift is from chance, via its 1σ noise band —
+            // NOT raw volume. A high-volume promo whose measured change sits INSIDE the noise band reads
+            // LOW (no clear effect), not HIGH. Still capped by duration (never HIGH before ~7 days).
+            Long netCi = lift != null ? lift.netCiHalfPct() : null;
+            // "within noise" = strictly inside the ±1σ band; an effect reaching the edge counts as signal.
+            boolean withinNoise = netLift != null && netCi != null && Math.abs(netLift) < netCi;
+            String rawQuality;
+            if (netLift == null || netCi == null || withinNoise) rawQuality = "LOW";
+            else rawQuality = (netCi / (double) Math.abs(netLift) <= 0.5) ? "HIGH" : "MEDIUM";
             String dataQuality = switch (signal) {
                 case "MEASURED"  -> rawQuality;                      // day 7+: HIGH possible
                 case "MEASURING" -> capQuality(rawQuality, "MEDIUM"); // day 2-6: capped at MEDIUM
@@ -595,12 +599,16 @@ public class AdminAiService {
             } else if (signal.equals("MEASURING")) {
                 r.put("note", "Directional only — still measuring; treat as early evidence until ~"
                         + (int) FULL_CONF_DAYS + " days of data.");
+            } else if (withinNoise) {
+                r.put("note", "Within the ±" + netCi + "% noise band — the change isn't distinguishable "
+                        + "from normal day-to-day variation, so treat it as no clear effect.");
             }
             r.put("ordered", signalBlock(before[0], before[1], during[0], during[1], allowPct));   // early
             r.put("delivered", signalBlock(before[2], before[3], during[2], during[3], allowPct)); // final
             r.put("storeChangePercent", storePercent); // background trend (store-wide orders)
             r.put("netLiftPercent", netLift);          // item lift minus store-wide trend
-            r.put("dataQuality", dataQuality);         // baseline + promo volume + duration
+            r.put("netLiftCi", netCi);                 // ± 1σ noise band on the net lift (F2)
+            r.put("dataQuality", dataQuality);         // now significance-based, not raw volume
             r.put("comparisonGroup", "PRODUCT_SCOPE"); // NOT magnitude-comparable to ORDER_SCOPE rows
             out.add(r);
         }
@@ -640,7 +648,8 @@ public class AdminAiService {
                 .count();
     }
 
-    private record LiftCalc(Long storePercent, Long itemPercent, Long netLift, double duringUnits) {}
+    private record LiftCalc(Long storePercent, Long itemPercent, Long netLift, double duringUnits,
+                            Long netCiHalfPct) {}
 
     /**
      * Rate-normalised lift for one product over [start, duringEnd], measured against a
@@ -654,8 +663,9 @@ public class AdminAiService {
         double baseDays = Math.max(1.0, Duration.between(baseStart, start).toHours() / 24.0);
 
         long storeBaseCount = storeOrders(tenantId, baseStart, start);
+        long storeDurCount  = storeOrders(tenantId, start, duringEnd);
         double storeBasePerDay = storeBaseCount / baseDays;
-        double storeDurPerDay = storeOrders(tenantId, start, duringEnd) / durDays;
+        double storeDurPerDay = storeDurCount / durDays;
         // Suppress the store % when the baseline is too thin to normalise against — else a
         // near-zero baseline produces absurd figures (e.g. +5000%).
         Long storePercent = (storeBaseCount >= MIN_STORE_BASELINE && storeBasePerDay > 0)
@@ -669,7 +679,19 @@ public class AdminAiService {
                 ? Math.round((itemDurPerDay - itemBasePerDay) / itemBasePerDay * 100.0) : null;
 
         Long netLift = (itemPercent != null && storePercent != null) ? itemPercent - storePercent : null;
-        return new LiftCalc(storePercent, itemPercent, netLift, duringUnits);
+
+        // F2 — a 1σ Poisson noise band on the net-lift %, so confidence reflects how distinguishable the
+        // effect is from chance, not just raw volume. Daily counts ~ Poisson ⇒ SE(rate)=sqrt(count)/days;
+        // combine the item and store rate-difference variances (netLift = itemPct − storePct).
+        Long netCiHalfPct = null;
+        if (netLift != null) {
+            double itemSe  = Math.hypot(Math.sqrt(itemBaseUnits)/baseDays, Math.sqrt(duringUnits)/durDays);
+            double storeSe = Math.hypot(Math.sqrt(storeBaseCount)/baseDays, Math.sqrt(storeDurCount)/durDays);
+            double itemCi  = itemSe  / itemBasePerDay  * 100.0;
+            double storeCi = storeSe / storeBasePerDay * 100.0;
+            netCiHalfPct = Math.round(Math.hypot(itemCi, storeCi));
+        }
+        return new LiftCalc(storePercent, itemPercent, netLift, duringUnits, netCiHalfPct);
     }
 
     // ── Layer C (V53): order-level Net Revenue Lift for ALL-scoped promos ──────────────────────
@@ -687,16 +709,21 @@ public class AdminAiService {
     }
 
     /** EXACT promo cost (V52) over a window for ONE promo — anchored on the stable promo_id (V53),
-     *  immune to code/title edits. Returns [redeemedOrders, cost = Σ(discountAmount + waivedDeliveryFee)]. */
+     *  immune to code/title edits. Splits the cost by who funds it, which matters for the store's net:
+     *   - discountCost (Σ discountAmount) is STORE-funded and is ALREADY reflected in the order's
+     *     total_amount (stored net of discount, OrderService line ~249), so it must NOT be subtracted
+     *     again from revenue.
+     *   - deliveryCost (Σ waivedDeliveryFee) is PLATFORM-funded (free delivery) — not the store's cost.
+     *  Returns [redeemedOrders, discountCost, deliveryCost]. */
     private double[] promoCost(UUID tenantId, UUID promoId, Instant from, Instant to) {
-        long redeemed = 0; double cost = 0;
+        long redeemed = 0; double discountCost = 0, deliveryCost = 0;
         for (Order o : orderRepository.findByOrderDateBetweenAndTenant_Id(from, to, tenantId)) {
             if (!promoId.equals(o.getPromoId())) continue;
             redeemed++;
-            cost += (o.getDiscountAmount() != null ? o.getDiscountAmount() : 0)
-                  + (o.getWaivedDeliveryFee() != null ? o.getWaivedDeliveryFee() : 0);
+            discountCost += o.getDiscountAmount() != null ? o.getDiscountAmount() : 0;
+            deliveryCost += o.getWaivedDeliveryFee() != null ? o.getWaivedDeliveryFee() : 0;
         }
-        return new double[]{redeemed, cost};
+        return new double[]{redeemed, discountCost, deliveryCost};
     }
 
     private record OrderLiftCalc(Long expectedRevenue, double duringRevenue, Long incrementalRevenue,
@@ -733,8 +760,10 @@ public class AdminAiService {
         double durDays = len.toHours() / 24.0;
 
         OrderLiftCalc lift = computeOrderLift(tenantId, start, duringEnd);
-        double[] cost = promoCost(tenantId, p.getId(), start, duringEnd);
+        double[] cost = promoCost(tenantId, p.getId(), start, duringEnd);  // [redeemed, discountCost, deliveryCost]
         long redeemed = (long) cost[0];
+        double discountCost = cost[1];   // store-funded; ALREADY netted out of during revenue
+        double deliveryCost = cost[2];   // platform-funded; not the store's cost
 
         // Tier driven by BOTH duration AND baseline volume — a long promo on a thin baseline is
         // never MEASURED.
@@ -747,8 +776,12 @@ public class AdminAiService {
         boolean allow = signal.equals("MEASURING") || signal.equals("MEASURED");
 
         Long expected = allow ? lift.expectedRevenue() : null;
-        Long incremental = allow ? lift.incrementalRevenue() : null;
-        Long netLift = (incremental != null) ? incremental - Math.round(cost[1]) : null;
+        // During revenue is NET of the store-funded discount and the baseline (expected) is at full price,
+        // so (during - expected) is ALREADY the store's true net effect — the discount must NOT be
+        // subtracted again (the old `- promoCost` double-counted it), and the platform-funded free
+        // delivery is not the store's cost. Gross uplift adds the store-funded discount back on top.
+        Long netLift = (expected != null) ? Math.round(lift.duringRevenue() - expected) : null;
+        Long incremental = (expected != null) ? Math.round(lift.duringRevenue() + discountCost - expected) : null;
 
         Map<String, Object> r = new LinkedHashMap<>();
         r.put("promoId", p.getId().toString());
@@ -761,11 +794,12 @@ public class AdminAiService {
         r.put("signal", signal);                                  // PENDING | EARLY | MEASURING | MEASURED
         r.put("exposedOrders", lift.exposedOrders());             // TIME-exposed, not behaviorally-exposed
         r.put("redeemedOrders", redeemed);
-        r.put("promoCost", Math.round(cost[1] * 100.0) / 100.0);  // EXACT (V52) — always shown
+        r.put("promoCost", Math.round(discountCost * 100.0) / 100.0);     // STORE-funded discount (bridges gross->net)
+        r.put("platformCost", Math.round(deliveryCost * 100.0) / 100.0);  // PLATFORM-funded free delivery (not store cost)
         r.put("duringRevenue", Math.round(lift.duringRevenue() * 100.0) / 100.0);
         r.put("expectedRevenue", expected);                       // estimated — null below the floor
-        r.put("incrementalRevenue", incremental);                 // estimated
-        r.put("netRevenueLift", netLift);                         // estimated
+        r.put("incrementalRevenue", incremental);                 // gross uplift (= net + store discount)
+        r.put("netRevenueLift", netLift);                         // store's TRUE net (discount not double-counted)
         r.put("basis", "correlational/time-exposed");
         r.put("comparisonGroup", "ORDER_SCOPE");                  // NOT comparable to PRODUCT_SCOPE
         return r;
@@ -794,6 +828,25 @@ public class AdminAiService {
         return Map.of("promos", out);
     }
 
+    /** True if another PRODUCT promo on the SAME item starts no later than {@code p} and overlaps its
+     *  window — so only the EARLIEST promo in an overlapping cluster records an outcome. Overlapping
+     *  promos both attribute the same units (productSales is promo-blind), which would double-count the
+     *  lift into the learning priors (F4). */
+    private boolean hasEarlierOverlappingProductPromo(UUID tenantId, Promotion p) {
+        if (p.getTargetProductId() == null || p.getStartAt() == null || p.getEndAt() == null) return false;
+        Instant s = p.getStartAt().toInstant(), e = p.getEndAt().toInstant();
+        for (Promotion q : promotionRepository.findByTenant_Id(tenantId)) {
+            if (q.getId().equals(p.getId()) || q.getAppliesTo() != Promotion.AppliesTo.PRODUCT) continue;
+            if (q.getTargetProductId() == null || !q.getTargetProductId().equals(p.getTargetProductId())) continue;
+            if (q.getStartAt() == null || q.getEndAt() == null) continue;
+            Instant qs = q.getStartAt().toInstant(), qe = q.getEndAt().toInstant();
+            boolean overlap = qs.isBefore(e) && s.isBefore(qe);
+            boolean earlier = qs.isBefore(s) || (qs.equals(s) && q.getId().compareTo(p.getId()) < 0);
+            if (overlap && earlier) return true;
+        }
+        return false;
+    }
+
     /**
      * The LEARNING step: when a PRODUCT promo has ended, persist its measured net lift once
      * (deduped by promo id) so future suggestions can rank by historical response. Best-effort.
@@ -810,8 +863,13 @@ public class AdminAiService {
 
             Integer netLift = null; int sampleUnits = 0; UUID productId = null; String scopeTag = null;
             if (applies == Promotion.AppliesTo.PRODUCT && p.getTargetProductId() != null) {
+                // F4 — only the earliest promo in an overlapping cluster learns (avoid double-counting).
+                if (hasEarlierOverlappingProductPromo(tenantId, p)) continue;
                 LiftCalc lift = computeLift(tenantId, p.getTargetProductId(), start, end);
-                if (lift.netLift() != null) {
+                // F2/F6 — only learn from a CLEAR signal: skip reads inside the noise band (no real effect).
+                boolean clear = lift.netLift() != null
+                        && !(lift.netCiHalfPct() != null && Math.abs(lift.netLift()) < lift.netCiHalfPct());
+                if (clear) {
                     netLift = (int) (long) lift.netLift(); sampleUnits = (int) lift.duringUnits();
                     productId = p.getTargetProductId(); scopeTag = "PRODUCT";
                 }
