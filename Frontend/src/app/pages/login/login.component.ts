@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
 import { CartService } from 'src/app/services/cart.service';
+import { FavouriteService } from 'src/app/services/favourite.service';
 
 @Component({
   selector: 'app-login',
@@ -23,6 +24,7 @@ export class LoginComponent implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private cartService: CartService,
+    private favouriteService: FavouriteService,
     private router: Router,
     private route: ActivatedRoute
   ) {
@@ -61,20 +63,23 @@ export class LoginComponent implements OnInit {
         const isCustomer = !role || role === 'ROLE_USER';
 
         const navigate = () => {
-          if (this.returnUrl) {
-            this.router.navigateByUrl(this.returnUrl, { replaceUrl: true });
-          } else if (role === 'ROLE_SUPERADMIN') {
+          // Staff roles ALWAYS land on their own dashboard — never a returnUrl, which is a customer-context
+          // page (they hit "Sign In" from a store). Only customers honour returnUrl (continue where they were).
+          if (role === 'ROLE_SUPERADMIN') {
             this.router.navigate(['/superadmin'], { replaceUrl: true });
           } else if (role === 'ROLE_ADMIN') {
             this.router.navigate(['/admin/dashboard'], { replaceUrl: true });
           } else if (role === 'ROLE_DRIVER') {
             this.router.navigate(['/driver/dashboard'], { replaceUrl: true });
+          } else if (this.returnUrl) {
+            this.router.navigateByUrl(this.returnUrl, { replaceUrl: true });
           } else {
             this.router.navigate(['/stores'], { replaceUrl: true });
           }
         };
 
         if (isCustomer) {
+          this.favouriteService.mergePendingFavourites().subscribe();
           this.cartService.mergeGuestCart().subscribe({ next: navigate, error: navigate });
         } else {
           navigate();

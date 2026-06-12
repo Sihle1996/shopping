@@ -67,10 +67,12 @@ public class FavouriteController {
         return ResponseEntity.ok(Map.of("favourited", true));
     }
 
-    record FavouriteItem(UUID id, String name, String description, Double price, String image, String category, boolean available) {
+    record FavouriteItem(UUID id, String name, String description, Double price, String image, String category,
+                         boolean available, boolean soldOut, int availableStock) {
         static FavouriteItem from(MenuItem m) {
             return new FavouriteItem(m.getId(), m.getName(), m.getDescription(), m.getPrice(),
-                    m.getImage(), m.getCategory(), Boolean.TRUE.equals(m.getIsAvailable()));
+                    m.getImage(), m.getCategory(), Boolean.TRUE.equals(m.getIsAvailable()),
+                    m.isSoldOut(), m.getAvailableStock());
         }
     }
 }

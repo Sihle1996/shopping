@@ -499,10 +499,12 @@ export class HomeComponent implements OnInit, OnDestroy {
       image: this.modifierItem.image
     }).subscribe({
       next: () => {
+        const name = this.modifierItem!.name;
         clearTimeout(this.cartAddedTimer);
-        this.cartAddedName = this.modifierItem!.name;
+        this.cartAddedName = name;
         this.cartAddedTimer = setTimeout(() => this.cartAddedName = '', 3000);
         this.closeModifierModal();
+        this.toastr.success(`${name} added to cart`);
       },
       error: (err) => this.toastr.error(err?.error || 'Failed to add item to cart')
     });
@@ -519,6 +521,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         clearTimeout(this.cartAddedTimer);
         this.cartAddedName = item.name;
         this.cartAddedTimer = setTimeout(() => this.cartAddedName = '', 3000);
+        this.toastr.success(`${item.name} added to cart`);
       },
       error: (err) => this.toastr.error(err?.error || 'Failed to add item to cart')
     });

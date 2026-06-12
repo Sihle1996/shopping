@@ -36,7 +36,9 @@ export class FavouritesComponent implements OnInit {
       price: f.price,
       image: f.image,
       category: f.category,
-      isAvailable: f.available
+      isAvailable: f.available,
+      soldOut: f.soldOut,
+      availableStock: f.availableStock
     };
   }
 
