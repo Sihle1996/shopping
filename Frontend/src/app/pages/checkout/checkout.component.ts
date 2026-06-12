@@ -511,9 +511,14 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       .join(', ');
   }
 
+  get phoneFormatValid(): boolean {
+    const p = this.deliveryDetails.phone?.trim();
+    return !!p && /^\+?[0-9\s()-]{9,15}$/.test(p);
+  }
+
   get isCheckoutValid(): boolean {
     const d = this.deliveryDetails;
-    return !!(d.address?.trim() && d.city?.trim() && d.zip?.trim() && d.phone?.trim());
+    return !!(d.address?.trim() && d.city?.trim() && d.zip?.trim() && this.phoneFormatValid);
   }
 
   onSubmit(): void {

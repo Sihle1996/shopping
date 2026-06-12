@@ -215,6 +215,7 @@
                        placeholder="071 234 5678" />
               </div>
               <p *ngIf="formSubmitted && !deliveryDetails.phone?.trim()" class="text-danger text-xs mt-1">Phone number is required</p>
+              <p *ngIf="formSubmitted && deliveryDetails.phone?.trim() && !phoneFormatValid" class="text-danger text-xs mt-1">Enter a valid phone number (e.g. 0712345678)</p>
             </div>
 
             <!-- Delivery Notes -->

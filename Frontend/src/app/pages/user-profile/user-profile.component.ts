@@ -52,7 +52,7 @@ export class UserProfileComponent implements OnInit {
   ) {
     this.form = this.fb.group({
       fullName: [''],
-      phone: [''],
+      phone: ['', Validators.pattern(/^\+?[0-9\s()-]{9,15}$/)],
       marketingEmailOptIn: [false]
     });
     this.passwordForm = this.fb.group({

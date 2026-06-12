@@ -43,7 +43,7 @@ export class RegisterRestaurantComponent implements OnInit, OnDestroy {
       name: ['', [Validators.required, Validators.minLength(2)]],
       slug: ['', [Validators.required, Validators.pattern(/^[a-z0-9-]+$/)]],
       email: ['', [Validators.required, Validators.email]],
-      phone: [''],
+      phone: ['', Validators.pattern(/^\+?[0-9\s()-]{9,15}$/)],
       address: ['', Validators.required]
     });
 
