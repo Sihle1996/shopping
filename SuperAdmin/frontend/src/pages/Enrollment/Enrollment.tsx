@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { enrollmentService } from '../../services/enrollment.service'
+import api from '../../services/api'
 import { useToast } from '../../context/ToastContext'
 import type { PendingEnrollmentDto, StoreDocumentDto, DocumentStatus } from '../../types'
 import { CheckCircle, XCircle, FileText, ChevronDown, ChevronUp, ExternalLink, Clock, AlertTriangle, Archive } from 'lucide-react'
@@ -47,6 +48,17 @@ function StatusPill({ status }: { status: DocumentStatus }) {
 function DocumentRow({ doc, onReview, reviewing }:
   { doc: StoreDocumentDto; onReview?: (id: string, status: 'ACCEPTED' | 'REJECTED', notes: string) => void; reviewing?: boolean }) {
   const [notes, setNotes] = useState(doc.reviewNotes ?? '')
+  // Open the document through the authenticated, audited download endpoint (no public URL).
+  const viewDoc = async () => {
+    try {
+      const res = await api.get(`/enrollment/document/${doc.id}/download`, { responseType: 'blob' })
+      const url = URL.createObjectURL(res.data as Blob)
+      window.open(url, '_blank', 'noopener,noreferrer')
+      setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch {
+      alert('Could not open the document.')
+    }
+  }
   return (
     <div className="rounded-xl bg-gray-800/60 text-sm">
       <div className="flex items-center gap-3 py-2 px-3">
@@ -54,10 +66,10 @@ function DocumentRow({ doc, onReview, reviewing }:
         <span className="flex-1 text-gray-200 truncate">{DOC_LABELS[doc.documentType] ?? doc.documentType}</span>
         <span className="text-gray-500 text-xs truncate max-w-[110px] hidden sm:inline">{doc.fileName}</span>
         <StatusPill status={doc.status} />
-        <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer"
+        <button type="button" onClick={viewDoc}
            className="text-orange-400 hover:text-orange-300 flex items-center gap-1 text-xs flex-shrink-0">
           View <ExternalLink size={11} />
-        </a>
+        </button>
       </div>
       {onReview ? (
         <div className="flex items-center gap-2 px-3 pb-2">

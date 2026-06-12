@@ -176,7 +176,7 @@ export type DocumentStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED'
 export interface StoreDocumentDto {
   id: string
   documentType: DocumentType
-  fileUrl: string
+  fileUrl?: string  // no longer returned by the API — docs open via the audited download endpoint
   fileName: string
   status: DocumentStatus
   reviewNotes?: string
