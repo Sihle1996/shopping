@@ -9,9 +9,9 @@ from p3_engine import compute_lift
 DAYS = 140
 BASE_DATE = dt.date(2025, 1, 6)  # a Monday
 weekday = [ (BASE_DATE + dt.timedelta(days=i)).weekday() for i in range(DAYS) ]
+payday_flag = [ ((BASE_DATE+dt.timedelta(days=i)).day >= 25 or (BASE_DATE+dt.timedelta(days=i)).day <= 2) for i in range(DAYS) ]
 def payday(i):
-    dom = (BASE_DATE + dt.timedelta(days=i)).day
-    return 1.30 if (dom >= 25 or dom <= 2) else 1.0
+    return 1.30 if payday_flag[i] else 1.0
 
 # store TYPES: (orders/day, weekday weights Mon..Sun, n_items, item base-rate range)
 PROFILES = {
@@ -62,7 +62,7 @@ for stype, prof in PROFILES.items():
             st = [x for x in store]; ser = [x for x in it["series"]]
             for d in range(s, e):
                 new = round(ser[d]*(1+L)); st[d] += (new - ser[d]); ser[d] = new
-            r = compute_lift(ser, st, weekday, s, e)
+            r = compute_lift(ser, st, weekday, payday_flag, s, e)
             rows.append(dict(store=stype, true=round(L*100), net=r["net"], netci=r["netci"],
                              quality=r["quality"], recorded=r["recorded"]))
 
