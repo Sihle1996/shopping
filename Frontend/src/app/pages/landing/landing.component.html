@@ -7,6 +7,7 @@
       <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-textLight">
         <a href="#story" class="hover:text-primary transition-colors">Our story</a>
         <a href="#features" class="hover:text-primary transition-colors">Features</a>
+        <a href="#pricing" class="hover:text-primary transition-colors">Pricing</a>
         <a routerLink="/stores" class="hover:text-primary transition-colors">Order food</a>
         <a *ngIf="!isLoggedIn" routerLink="/login" class="hover:text-primary transition-colors">Log in</a>
         <a routerLink="/register-restaurant"
@@ -288,8 +289,73 @@
     </div>
   </section>
 
+  <!-- ───────────── Pricing ───────────── -->
+  <section id="pricing" class="py-20 bg-surface">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="text-center mb-2">
+        <p class="text-primary text-sm font-semibold uppercase tracking-widest mb-3">Pricing</p>
+        <h2 class="font-heading text-3xl font-extrabold">Simple plans — a fraction of the big apps</h2>
+        <p class="text-textLight text-base mt-3 max-w-xl mx-auto">A flat monthly plan plus a low 2–4% commission, versus the 20–35% the marketplaces take. Cancel anytime.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-5 mt-12 items-start">
+        <!-- BASIC -->
+        <div class="rounded-3xl border border-borderColor bg-white p-7 flex flex-col">
+          <p class="text-xs font-bold uppercase tracking-widest text-textMuted mb-1">Basic</p>
+          <p class="text-textLight text-sm mb-5">For getting started</p>
+          <div class="flex items-baseline gap-1"><span class="font-heading text-4xl font-extrabold">R299</span><span class="text-textMuted text-sm">/mo</span></div>
+          <p class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal mt-2 mb-6"><i class="bi bi-percent"></i>4% commission per order</p>
+          <ul class="space-y-2.5 text-sm mb-7 flex-1">
+            <li class="flex gap-2.5"><i class="bi bi-check-lg text-brand-teal flex-shrink-0"></i>Your own ordering page</li>
+            <li class="flex gap-2.5"><i class="bi bi-check-lg text-brand-teal flex-shrink-0"></i>100 menu items · 10 promotions</li>
+            <li class="flex gap-2.5"><i class="bi bi-check-lg text-brand-teal flex-shrink-0"></i>5 drivers · 20 km delivery radius</li>
+            <li class="flex gap-2.5"><i class="bi bi-check-lg text-brand-teal flex-shrink-0"></i>PayFast payments &amp; payouts</li>
+            <li class="flex gap-2.5"><i class="bi bi-check-lg text-brand-teal flex-shrink-0"></i>Copilot — 50 prompts / month</li>
+          </ul>
+          <a routerLink="/register-restaurant" class="block text-center py-3 rounded-xl border-2 border-borderColor font-semibold hover:border-primary hover:text-primary transition-colors">Start free</a>
+        </div>
+
+        <!-- PRO (highlighted) -->
+        <div class="relative rounded-3xl border-2 border-primary bg-white p-7 flex flex-col shadow-float md:-mt-4">
+          <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-sm whitespace-nowrap">Most popular</span>
+          <p class="text-xs font-bold uppercase tracking-widest text-primary mb-1">Pro</p>
+          <p class="text-textLight text-sm mb-5">Grow with Vision AI</p>
+          <div class="flex items-baseline gap-1"><span class="font-heading text-4xl font-extrabold">R699</span><span class="text-textMuted text-sm">/mo</span></div>
+          <p class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal mt-2 mb-6"><i class="bi bi-percent"></i>3% commission per order</p>
+          <ul class="space-y-2.5 text-sm mb-7 flex-1">
+            <li class="flex gap-2.5"><i class="bi bi-check-lg text-brand-teal flex-shrink-0"></i><span class="font-semibold">Everything in Basic, plus:</span></li>
+            <li class="flex gap-2.5"><i class="bi bi-check-lg text-brand-teal flex-shrink-0"></i>500 menu items · 50 promotions</li>
+            <li class="flex gap-2.5"><i class="bi bi-check-lg text-brand-teal flex-shrink-0"></i>20 drivers · 50 km delivery radius</li>
+            <li class="flex gap-2.5"><i class="bi bi-check-lg text-brand-teal flex-shrink-0"></i>Analytics, custom branding &amp; exports</li>
+            <li class="flex gap-2.5 text-primary font-semibold"><i class="bi bi-stars flex-shrink-0"></i>Vision AI — promo, driver &amp; review intelligence</li>
+            <li class="flex gap-2.5"><i class="bi bi-check-lg text-brand-teal flex-shrink-0"></i>Copilot — 500 prompts / month</li>
+          </ul>
+          <a routerLink="/register-restaurant" class="block text-center py-3 rounded-xl bg-primary text-white font-semibold hover:bg-primary-600 transition-colors shadow-sm">Start free</a>
+        </div>
+
+        <!-- ENTERPRISE -->
+        <div class="rounded-3xl border border-borderColor bg-white p-7 flex flex-col">
+          <p class="text-xs font-bold uppercase tracking-widest text-textMuted mb-1">Enterprise</p>
+          <p class="text-textLight text-sm mb-5">For high‑volume kitchens</p>
+          <div class="flex items-baseline gap-1"><span class="font-heading text-4xl font-extrabold">R1499</span><span class="text-textMuted text-sm">/mo</span></div>
+          <p class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal mt-2 mb-6"><i class="bi bi-percent"></i>2% commission — our lowest</p>
+          <ul class="space-y-2.5 text-sm mb-7 flex-1">
+            <li class="flex gap-2.5"><i class="bi bi-check-lg text-brand-teal flex-shrink-0"></i><span class="font-semibold">Everything in Pro, plus:</span></li>
+            <li class="flex gap-2.5"><i class="bi bi-check-lg text-brand-teal flex-shrink-0"></i>Unlimited items, promotions &amp; drivers</li>
+            <li class="flex gap-2.5"><i class="bi bi-check-lg text-brand-teal flex-shrink-0"></i>200 km radius · unlimited Copilot</li>
+            <li class="flex gap-2.5"><i class="bi bi-check-lg text-brand-teal flex-shrink-0"></i>API access</li>
+            <li class="flex gap-2.5"><i class="bi bi-check-lg text-brand-teal flex-shrink-0"></i>Priority support &amp; dedicated manager</li>
+          </ul>
+          <a routerLink="/register-restaurant" class="block text-center py-3 rounded-xl border-2 border-borderColor font-semibold hover:border-primary hover:text-primary transition-colors">Start free</a>
+        </div>
+      </div>
+
+      <p class="text-center text-textMuted text-xs mt-8">Every plan includes PayFast ZAR payouts, order &amp; driver management, and full ownership of your customers &amp; data. Cancel anytime.</p>
+    </div>
+  </section>
+
   <!-- ───────────── Keep every rand ───────────── -->
-  <section class="py-20 bg-surface">
+  <section class="py-20 bg-white">
     <div class="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
       <!-- coin/pie illustration -->
       <div class="order-2 md:order-1 flex justify-center">
