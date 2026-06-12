@@ -506,7 +506,9 @@ public class AdminAiService {
     private static final double MIN_PROMO_DAYS = 2.0;     // < 2 days of data = EARLY (no %)
     private static final double FULL_CONF_DAYS = 7.0;     // >= 7 days = full confidence (HIGH) possible
     private static final int    MIN_BASELINE_UNITS = 5;  // need >= 5 prior units for a stable item %
-    private static final int    MIN_STORE_BASELINE = 10; // need >= 10 store orders in the 14-day baseline
+    private static final int    MIN_STORE_BASELINE = 10; // need >= 10 store orders in the baseline
+    private static final int    BASELINE_DAYS = 28;      // day-of-week-matched baseline (~4 of each weekday)
+    private static final java.time.ZoneId STORE_ZONE = java.time.ZoneId.of("Africa/Johannesburg"); // weekday bucketing
 
     /** Clamp a quality tier so it never exceeds {@code max} (LOW < MEDIUM < HIGH). */
     private static String capQuality(String raw, String max) {
@@ -652,46 +654,77 @@ public class AdminAiService {
                             Long netCiHalfPct) {}
 
     /**
-     * Rate-normalised lift for one product over [start, duringEnd], measured against a
-     * STABLE 14-day pre-promo baseline (orders/day). Shared by the outcomes view and the
-     * learning recorder so both compute net lift identically.
+     * Rate-normalised lift for one product over [start, duringEnd], measured against a DAY-OF-WEEK-MATCHED
+     * baseline (F3): the expected during-window volume is the sum of the baseline's average for each weekday
+     * the window actually spans — NOT a flat calendar-day average — so a promo that lands on more weekends
+     * or paydays isn't wrongly credited (or penalised) for the day mix. Net lift subtracts the same
+     * day-matched store trend; the 1σ Poisson noise band drives confidence (F2). Shared by the outcomes view
+     * and the learning recorder so both agree.
      */
     private LiftCalc computeLift(UUID tenantId, UUID productId, Instant start, Instant duringEnd) {
-        Duration len = Duration.between(start, duringEnd);
-        double durDays = Math.max(0.25, len.toHours() / 24.0);
-        Instant baseStart = start.minus(Duration.ofDays(14));
-        double baseDays = Math.max(1.0, Duration.between(baseStart, start).toHours() / 24.0);
+        Instant baseStart = start.minus(Duration.ofDays(BASELINE_DAYS));
+        // One pass over the baseline window, bucketed by local calendar day → per-weekday averages.
+        java.util.Map<java.time.LocalDate, long[]> day = new java.util.HashMap<>(); // date → [itemUnits, storeOrders]
+        for (Order o : orderRepository.findByOrderDateBetweenAndTenant_Id(baseStart, start, tenantId)) {
+            OrderStatus s = OrderStatus.fromLabel(o.getStatus());
+            if (s != null && s.isVoided()) continue;
+            java.time.LocalDate d = o.getOrderDate().atZone(STORE_ZONE).toLocalDate();
+            long[] b = day.computeIfAbsent(d, k -> new long[2]);
+            b[1]++;
+            if (o.getOrderItems() != null) for (var oi : o.getOrderItems())
+                if (oi.getMenuItem() != null && productId.equals(oi.getMenuItem().getId()))
+                    b[0] += oi.getQuantity() != null ? oi.getQuantity() : 0;
+        }
+        // Average per weekday, counting only real operating days (≥1 order) so pre-data / closed days
+        // don't dilute the profile.
+        double[] itemDow = new double[7], storeDow = new double[7]; int[] n = new int[7];
+        long itemBaseTot = 0, storeBaseTot = 0;
+        for (var e : day.entrySet()) {
+            long[] b = e.getValue();
+            if (b[1] <= 0) continue;
+            int w = e.getKey().getDayOfWeek().getValue() - 1;
+            itemDow[w] += b[0]; storeDow[w] += b[1]; n[w]++;
+            itemBaseTot += b[0]; storeBaseTot += b[1];
+        }
+        for (int w = 0; w < 7; w++) if (n[w] > 0) { itemDow[w] /= n[w]; storeDow[w] /= n[w]; }
 
-        long storeBaseCount = storeOrders(tenantId, baseStart, start);
-        long storeDurCount  = storeOrders(tenantId, start, duringEnd);
-        double storeBasePerDay = storeBaseCount / baseDays;
-        double storeDurPerDay = storeDurCount / durDays;
-        // Suppress the store % when the baseline is too thin to normalise against — else a
-        // near-zero baseline produces absurd figures (e.g. +5000%).
-        Long storePercent = (storeBaseCount >= MIN_STORE_BASELINE && storeBasePerDay > 0)
-                ? Math.round((storeDurPerDay - storeBasePerDay) / storeBasePerDay * 100.0) : null;
+        // Expected during = Σ the matching weekday average over each (fractional) day the window spans.
+        double itemExp = 0, storeExp = 0;
+        java.time.LocalDate endDay = duringEnd.atZone(STORE_ZONE).toLocalDate();
+        for (java.time.LocalDate d = start.atZone(STORE_ZONE).toLocalDate(); !d.isAfter(endDay); d = d.plusDays(1)) {
+            Instant ds = d.atStartOfDay(STORE_ZONE).toInstant();
+            Instant de = d.plusDays(1).atStartOfDay(STORE_ZONE).toInstant();
+            double frac = overlapFraction(ds, de, start, duringEnd);
+            if (frac <= 0) continue;
+            int w = d.getDayOfWeek().getValue() - 1;
+            itemExp += itemDow[w] * frac; storeExp += storeDow[w] * frac;
+        }
 
-        double itemBaseUnits = productSales(tenantId, productId, baseStart, start)[0];
-        double duringUnits = productSales(tenantId, productId, start, duringEnd)[0];
-        double itemBasePerDay = itemBaseUnits / baseDays;
-        double itemDurPerDay = duringUnits / durDays;
-        Long itemPercent = (itemBaseUnits >= MIN_BASELINE_UNITS && itemBasePerDay > 0)
-                ? Math.round((itemDurPerDay - itemBasePerDay) / itemBasePerDay * 100.0) : null;
+        double duringUnits = productSales(tenantId, productId, start, duringEnd)[0];  // exact actual
+        long storeDurCount = storeOrders(tenantId, start, duringEnd);
 
+        Long itemPercent = (itemBaseTot >= MIN_BASELINE_UNITS && itemExp > 0)
+                ? Math.round((duringUnits - itemExp) / itemExp * 100.0) : null;
+        Long storePercent = (storeBaseTot >= MIN_STORE_BASELINE && storeExp > 0)
+                ? Math.round((storeDurCount - storeExp) / storeExp * 100.0) : null;
         Long netLift = (itemPercent != null && storePercent != null) ? itemPercent - storePercent : null;
 
-        // F2 — a 1σ Poisson noise band on the net-lift %, so confidence reflects how distinguishable the
-        // effect is from chance, not just raw volume. Daily counts ~ Poisson ⇒ SE(rate)=sqrt(count)/days;
-        // combine the item and store rate-difference variances (netLift = itemPct − storePct).
+        // F2 — 1σ Poisson noise band on the net lift (gap vs the day-matched expectation).
         Long netCiHalfPct = null;
         if (netLift != null) {
-            double itemSe  = Math.hypot(Math.sqrt(itemBaseUnits)/baseDays, Math.sqrt(duringUnits)/durDays);
-            double storeSe = Math.hypot(Math.sqrt(storeBaseCount)/baseDays, Math.sqrt(storeDurCount)/durDays);
-            double itemCi  = itemSe  / itemBasePerDay  * 100.0;
-            double storeCi = storeSe / storeBasePerDay * 100.0;
+            double itemCi  = Math.sqrt(duringUnits + itemExp) / itemExp * 100.0;
+            double storeCi = Math.sqrt(storeDurCount + storeExp) / storeExp * 100.0;
             netCiHalfPct = Math.round(Math.hypot(itemCi, storeCi));
         }
         return new LiftCalc(storePercent, itemPercent, netLift, duringUnits, netCiHalfPct);
+    }
+
+    /** Fraction of the day [dayStart, dayEnd) that lies within [from, to). */
+    private static double overlapFraction(Instant dayStart, Instant dayEnd, Instant from, Instant to) {
+        long s = Math.max(dayStart.getEpochSecond(), from.getEpochSecond());
+        long e = Math.min(dayEnd.getEpochSecond(), to.getEpochSecond());
+        double dayLen = dayEnd.getEpochSecond() - dayStart.getEpochSecond();
+        return e > s ? (e - s) / dayLen : 0.0;
     }
 
     // ── Layer C (V53): order-level Net Revenue Lift for ALL-scoped promos ──────────────────────

@@ -14,7 +14,11 @@ truth** (`verify_fixes.py`):
 - **F4** — only the **earliest** promo in an overlapping same‑item cluster records an outcome (no double‑count).
 - **F6/F2** — learning only records **clear signals** (outside the noise band), so flat/slow/short reads no
   longer pollute the priors. Result: the 3 real effects are learned; the 4 noise/overlap reads are dropped.
-- **F3** (seasonality‑matched baseline) is **deferred** — bigger methodology change; left as the next step.
+- **F3** — **DONE.** Replaced the flat 14‑day baseline with a **day‑of‑week‑matched** baseline (the expected
+  during‑window volume is the sum of the baseline's per‑weekday average over the days the window actually
+  spans). Systematic **bias dropped −8.7pp → −4.1pp**; the confident (MEDIUM/HIGH) reads are now accurate
+  (Beef Burger +35→+36, Quarter Kota +40→+34, Veggie Wrap +30→+24), while flat/short/overlap reads stay
+  correctly LOW. Remaining error is mostly the day‑of‑month (payday) component, not weekday mix.
 
 Verified via a faithful re‑implementation of the fixed formulas on the seeded data (compile‑clean; restart the
 local backend to see it live in the UI).
