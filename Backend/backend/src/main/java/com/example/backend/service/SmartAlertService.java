@@ -42,7 +42,7 @@ public class SmartAlertService {
     private static final ZoneId SAST = ZoneId.of("Africa/Johannesburg");
     /** Ignore week-to-week sales noise below this drop before suggesting a deal. */
     private static final double MIN_SALES_DIP_PCT = 20.0;
-    /** An order is "stuck in prep" once it's older than this and not started. */
+    /** An accepted order is "overdue in the kitchen" once it's been in prep longer than this. */
     private static final int PREP_SLA_MINUTES = 15;
 
     @Transactional
@@ -297,10 +297,11 @@ public class SmartAlertService {
         }
         if (awaiting > 0 && oldestPending >= PREP_SLA_MINUTES) {
             created += raise(activeKeys, tenant, "pending-aging", "high",
-                    awaiting + " order" + (awaiting > 1 ? "s" : "") + " awaiting prep",
-                    "Oldest is " + oldestPending + " min old and not started. Check the kitchen.",
+                    awaiting + " order" + (awaiting > 1 ? "s" : "") + " overdue in the kitchen",
+                    "Oldest is " + oldestPending + " min old, past your ~" + PREP_SLA_MINUTES
+                            + " min prep window. Check the kitchen.",
                     null,
-                    riskImpact(agingRevAtRisk, marginFrac, commissionFrac, "if not started soon"));
+                    riskImpact(agingRevAtRisk, marginFrac, commissionFrac, "if not out soon"));
         }
 
         // 6c) Scheduled orders due soon — nothing auto-starts them, so remind the kitchen to
