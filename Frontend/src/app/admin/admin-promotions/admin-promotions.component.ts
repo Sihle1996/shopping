@@ -412,7 +412,17 @@ export class AdminPromotionsComponent implements OnInit {
     this.deleteTarget = null;
   }
 
+  isExpired(p: Promotion): boolean {
+    return !!p.endAt && new Date(p.endAt).getTime() < Date.now();
+  }
+
   toggleActive(p: Promotion): void {
+    // Activating an expired promo is futile — the scheduler deactivates it again within a minute because its
+    // end date is in the past. Guide the owner to extend it instead of showing a false "activated" toast.
+    if (!p.active && this.isExpired(p)) {
+      this.toastr.info('This promo has ended — extend its end date in Edit to run it again.');
+      return;
+    }
     this.api.setActive(p.id, !p.active).subscribe({
       next: () => { this.toastr.success(p.active ? 'Promotion paused' : 'Promotion activated'); this.refresh(); },
       error: () => this.toastr.error('Failed to update promotion')
@@ -433,7 +443,9 @@ export class AdminPromotionsComponent implements OnInit {
     this.api.notify(p.id).subscribe({
       next: (res) => {
         this.notifyingId = null;
-        this.toastr.success(`Sent to ${res.sent} subscriber${res.sent !== 1 ? 's' : ''}`);
+        this.toastr.success(res.sent > 0
+          ? `Sent to ${res.sent} subscriber${res.sent !== 1 ? 's' : ''}`
+          : 'Sent to 0 subscribers — only customers who opted into marketing emails receive these.');
       },
       error: () => { this.notifyingId = null; this.toastr.error('Failed to send notifications'); }
     });

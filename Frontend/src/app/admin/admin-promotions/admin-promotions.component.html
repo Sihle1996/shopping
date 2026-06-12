@@ -624,9 +624,12 @@
                 <i class="bi bi-pencil mr-1"></i>Edit
               </button>
               <button (click)="toggleActive(p)"
+                      [title]="(!p.active && isExpired(p)) ? 'This promo has ended — extend its end date in Edit to run it again' : ''"
                       class="flex-1 text-xs font-medium transition-colors py-1.5 rounded-lg"
-                      [class.text-textMuted]="p.active" [class.hover:bg-surface]="p.active"
-                      [class.text-success]="!p.active" [class.hover:bg-green-50]="!p.active">
+                      [class.text-textMuted]="p.active || (!p.active && isExpired(p))"
+                      [class.hover:bg-surface]="p.active || (!p.active && isExpired(p))"
+                      [class.text-success]="!p.active && !isExpired(p)"
+                      [class.hover:bg-green-50]="!p.active && !isExpired(p)">
                 <i class="bi mr-1" [class.bi-pause-circle]="p.active" [class.bi-play-circle]="!p.active"></i>
                 {{ p.active ? 'Pause' : 'Activate' }}
               </button>
