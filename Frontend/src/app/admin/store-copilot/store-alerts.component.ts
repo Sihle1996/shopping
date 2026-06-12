@@ -109,6 +109,28 @@ export class StoreAlertsComponent implements OnInit, OnDestroy {
     return (v > 0 ? '+R' : v < 0 ? '-R' : 'R') + Math.abs(v).toLocaleString('en-ZA');
   }
 
+  // ── Compact 7-day summary for the bell (the full breakdown lives on Promotions → Performance) ──
+  /** Total net revenue lift across the last-7-days store-wide promos. */
+  get totalNetLift7d(): number {
+    return this.promoEconomics.reduce((sum, o) => sum + (o.netRevenueLift || 0), 0);
+  }
+  /** Weakest measurement stage across the 7-day promos — drives the mini confidence meter. */
+  get econSignal(): string {
+    if (!this.promoEconomics.length) return 'PENDING';
+    if (this.promoEconomics.every(o => o.signal === 'MEASURED')) return 'MEASURED';
+    if (this.promoEconomics.some(o => o.signal === 'MEASURED' || o.signal === 'MEASURING')) return 'MEASURING';
+    if (this.promoEconomics.some(o => o.signal === 'EARLY')) return 'EARLY';
+    return 'PENDING';
+  }
+  /** Stock-ticker chip colour for a signed value. */
+  tickerClass(v: number | null): string {
+    if (v == null || v === 0) return 'bg-gray-100 text-textMuted';
+    return v > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700';
+  }
+  trendArrow(v: number | null): string {
+    return (v == null || v === 0) ? 'bi-dash' : v > 0 ? 'bi-caret-up-fill' : 'bi-caret-down-fill';
+  }
+
   refresh(): void {
     this.load();
     this.loadBriefing();

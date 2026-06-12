@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AdminPromotionService, PromotionRequest } from 'src/app/services/admin-promotion.service';
 import { AdminService } from 'src/app/services/admin.service';
@@ -80,6 +81,39 @@ export class AdminPromotionsComponent implements OnInit {
   get measuredOutcomesCount(): number {
     return this.outcomes.filter(o => o.scope === 'ALL' || o.signal === 'MEASURED' || o.signal === 'MEASURING').length;
   }
+  /** One representative signal for the store hero meter — the weakest stage any ALL-scope promo is still at. */
+  get overallSignal(): string {
+    const all = this.outcomes.filter(o => o.scope === 'ALL');
+    if (!all.length) return 'PENDING';
+    if (all.every(o => o.signal === 'MEASURED')) return 'MEASURED';
+    if (all.some(o => o.signal === 'MEASURED' || o.signal === 'MEASURING')) return 'MEASURING';
+    if (all.some(o => o.signal === 'EARLY')) return 'EARLY';
+    return 'PENDING';
+  }
+
+  /** Cost→lift breakdown for a store-wide promo: how the incremental gain splits into cost vs net.
+   *  Returns null when there's no baseline to compute incremental against. */
+  costLift(o: any): { incremental: number; cost: number; net: number; costPct: number; netPct: number; positive: boolean } | null {
+    if (o?.duringRevenue == null || o?.expectedRevenue == null) return null;
+    const incremental = o.duringRevenue - o.expectedRevenue;
+    const cost = o.promoCost || 0;
+    const net = o.netRevenueLift != null ? o.netRevenueLift : incremental - cost;
+    // Bar is scaled to the gross gain (cost + positive net) so the cost segment reads as "what the lift paid for".
+    const base = Math.max(cost + Math.max(net, 0), 1);
+    return {
+      incremental, cost, net,
+      costPct: Math.round((cost / base) * 100),
+      netPct: Math.round((Math.max(net, 0) / base) * 100),
+      positive: net >= 0,
+    };
+  }
+
+  /** Redemption rate (0–100) for a store-wide promo — how many exposed orders actually used it. */
+  redemptionPct(o: any): number | null {
+    if (!o?.exposedOrders) return null;
+    return Math.round(((o.redeemedOrders || 0) / o.exposedOrders) * 100);
+  }
+
   /** Left-accent colour for a suggestion's confidence tier. */
   tierBar(s?: string): string {
     return ({ STRONG: 'bg-emerald-400', MODERATE: 'bg-amber-400', WEAK: 'bg-gray-300' } as any)[s || ''] || 'bg-gray-300';
@@ -196,10 +230,14 @@ export class AdminPromotionsComponent implements OnInit {
     private api: AdminPromotionService,
     private adminService: AdminService,
     private adminAiService: AdminAiService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
+    // Deep-link from the bell's "View full economics →" lands straight on the Performance tab.
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab && this.promoTabs.some(t => t.key === tab)) this.promoTab = tab;
     this.form = this.fb.group({
       title: ['', Validators.required],
       description: [''],
