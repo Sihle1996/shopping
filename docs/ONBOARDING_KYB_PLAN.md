@@ -71,6 +71,12 @@ Drivers are the volume driver (≈3× stores) — keep their bundle lean.
 - **#5 payment gate** — the PayFast checkout can still take a customer payment for an unapproved store
   before `/place` rejects it (charged-but-no-order). Low exposure (needs the slug) but real.
 - **#14 state guards** — approve/reject/submit currently fire from any state.
+- **#16 compliance-doc URL security** — KYB documents (CIPC, COA, BANK_DETAILS) are uploaded to
+  Cloudinary as PUBLIC `upload`-type assets (`CloudinaryService.upload` → public `secure_url`), so the
+  file is reachable by anyone with the link even though the listing endpoint is ADMIN-gated. Fix:
+  upload compliance docs as Cloudinary **authenticated** type + serve via an auth-checked proxy / signed
+  URL on the Spring backend (mirror the SuperAdmin `EnrollmentController.DownloadDocument` proxy
+  pattern); backfill/migrate existing public docs. Standalone security task — verified 2026-06-13.
 
 ## Deferred / non-blocking
 - **#15 POPIA at rest** — encrypt or tokenize `bank_account_number` + `cipc_number`; mask in the
