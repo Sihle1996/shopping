@@ -216,15 +216,15 @@ function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
         <div className="grid grid-cols-3 gap-2 mb-4">
           <div className="bg-gray-800/60 rounded-lg p-2 text-center border border-gray-800">
             <p className="text-xs text-gray-600">Items</p>
-            <p className="text-base font-bold text-gray-200">{plan.maxMenuItems === 999 ? '∞' : plan.maxMenuItems}</p>
+            <p className="text-base font-bold text-gray-200">{plan.maxMenuItems >= 9999 ? '∞' : plan.maxMenuItems}</p>
           </div>
           <div className="bg-gray-800/60 rounded-lg p-2 text-center border border-gray-800">
             <p className="text-xs text-gray-600">Drivers</p>
-            <p className="text-base font-bold text-gray-200">{plan.maxDrivers === 999 ? '∞' : plan.maxDrivers}</p>
+            <p className="text-base font-bold text-gray-200">{plan.maxDrivers >= 9999 ? '∞' : plan.maxDrivers}</p>
           </div>
           <div className="bg-gray-800/60 rounded-lg p-2 text-center border border-gray-800">
             <p className="text-xs text-gray-600">Promos</p>
-            <p className="text-base font-bold text-gray-200">{plan.maxPromotions === 999 ? '∞' : plan.maxPromotions}</p>
+            <p className="text-base font-bold text-gray-200">{plan.maxPromotions >= 9999 ? '∞' : plan.maxPromotions}</p>
           </div>
         </div>
 
