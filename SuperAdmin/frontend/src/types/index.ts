@@ -56,6 +56,12 @@ export interface SubscriptionPlanDto {
   hasInventoryExport: boolean
   commissionPercent: number
   features?: string
+  // AI gates (read-only — owned/seeded by the Spring backend). copilotMonthlyQuota null = unlimited.
+  hasPromoAi?: boolean | null
+  hasDriverIntel?: boolean | null
+  hasReviewAi?: boolean | null
+  hasApiAccess?: boolean | null
+  copilotMonthlyQuota?: number | null
   createdAt: string
 }
 

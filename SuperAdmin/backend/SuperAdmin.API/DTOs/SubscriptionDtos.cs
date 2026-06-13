@@ -13,6 +13,11 @@ public record SubscriptionPlanDto(
     bool HasInventoryExport,
     decimal CommissionPercent,
     string? Features,
+    bool? HasPromoAi,
+    bool? HasDriverIntel,
+    bool? HasReviewAi,
+    bool? HasApiAccess,
+    int? CopilotMonthlyQuota,
     DateTime CreatedAt
 );
 

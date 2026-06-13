@@ -233,6 +233,10 @@ function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
             { label: 'Analytics', value: plan.hasAnalytics },
             { label: 'Custom Branding', value: plan.hasCustomBranding },
             { label: 'Inventory Export', value: plan.hasInventoryExport },
+            { label: 'Promo intelligence', value: !!plan.hasPromoAi },
+            { label: 'Driver intelligence', value: !!plan.hasDriverIntel },
+            { label: 'Review & support Vision', value: !!plan.hasReviewAi },
+            { label: 'API access', value: !!plan.hasApiAccess },
           ].map(({ label, value }) => (
             <div key={label} className="flex items-center gap-2 text-sm">
               {value
@@ -244,6 +248,10 @@ function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
           <div className="flex items-center gap-2 text-sm text-gray-400">
             <Check size={13} className="text-green-400 flex-shrink-0" />
             {plan.maxDeliveryRadiusKm} km delivery radius
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <Check size={13} className="text-green-400 flex-shrink-0" />
+            Copilot — {plan.copilotMonthlyQuota == null ? 'unlimited' : `${plan.copilotMonthlyQuota} prompts/mo`}
           </div>
         </div>
 

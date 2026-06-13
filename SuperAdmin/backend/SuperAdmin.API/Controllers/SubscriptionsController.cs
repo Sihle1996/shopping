@@ -77,6 +77,8 @@ public class SubscriptionsController(AppDbContext db) : ControllerBase
         p.Id, p.Name, p.Price, p.MaxMenuItems, p.MaxDrivers,
         p.MaxPromotions, p.MaxDeliveryRadiusKm,
         p.HasAnalytics, p.HasCustomBranding, p.HasInventoryExport,
-        p.CommissionPercent, p.Features, p.CreatedAt
+        p.CommissionPercent, p.Features,
+        p.HasPromoAi, p.HasDriverIntel, p.HasReviewAi, p.HasApiAccess, p.CopilotMonthlyQuota,
+        p.CreatedAt
     );
 }

@@ -43,6 +43,23 @@ public class SubscriptionPlan
     [Column("features")]
     public string? Features { get; set; }
 
+    // AI-gate columns (owned + seeded by the Spring backend via Flyway V55). Nullable because the
+    // columns are nullable; copilot_monthly_quota = NULL means UNLIMITED (ENTERPRISE).
+    [Column("has_promo_ai")]
+    public bool? HasPromoAi { get; set; }
+
+    [Column("has_driver_intel")]
+    public bool? HasDriverIntel { get; set; }
+
+    [Column("has_review_ai")]
+    public bool? HasReviewAi { get; set; }
+
+    [Column("has_api_access")]
+    public bool? HasApiAccess { get; set; }
+
+    [Column("copilot_monthly_quota")]
+    public int? CopilotMonthlyQuota { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
 }
