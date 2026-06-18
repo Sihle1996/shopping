@@ -41,6 +41,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     ];
   }
 
+  /** Number of menu items in a category ('All' = the whole menu). */
+  categoryCount(name: string): number {
+    return name === 'All'
+      ? this.menuItems.length
+      : this.menuItems.filter(i => (i as any).category === name).length;
+  }
+
   /** Stable field updated by applyFilters() — avoids new references every CD cycle. */
   filteredCategories: { name: string; items: MenuItem[] }[] = [];
 
