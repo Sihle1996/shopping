@@ -38,7 +38,7 @@ export class AppComponent implements OnDestroy {
       this.isDriverRoute = url.startsWith('/driver');
       this.isAuthRoute = url.startsWith('/login') || url.startsWith('/register');
       this.isStoreRoute = url.startsWith('/store/');
-      this.isLandingRoute = url.split('#')[0] === '/';
+      this.isLandingRoute = url.split(/[?#]/)[0] === '/';
     });
 
     // Idle timeout runs outside Angular zone to avoid triggering change detection on every mouse move
