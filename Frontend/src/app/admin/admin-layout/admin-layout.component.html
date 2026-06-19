@@ -16,7 +16,7 @@
              class="relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-colors">
             <span *ngIf="rla.isActive"
                   class="absolute left-1 top-1/2 -translate-y-1/2 h-5 w-1 rounded-full bg-primary"></span>
-            <i [class]="item.icon + ' text-base w-5 text-center'"></i>
+            <i [class]="(rla.isActive ? 'ph-fill' : 'ph') + ' ' + item.icon + ' text-lg w-5 text-center'"></i>
             <span>{{ item.label }}</span>
           </a>
         </div>
@@ -27,7 +27,7 @@
     <div class="p-3 border-t border-borderColor">
       <button type="button" (click)="theme.toggle()"
               class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-textMuted hover:bg-gray-50 hover:text-textDark transition-colors">
-        <i class="text-base w-5 text-center" [ngClass]="theme.isDark ? 'bi bi-sun' : 'bi bi-moon-stars'"></i>
+        <i class="ph text-lg w-5 text-center" [ngClass]="theme.isDark ? 'ph-sun' : 'ph-moon-stars'"></i>
         <span>{{ theme.isDark ? 'Light mode' : 'Dark mode' }}</span>
       </button>
     </div>

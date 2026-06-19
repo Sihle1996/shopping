@@ -22,7 +22,7 @@
           <a [routerLink]="cartRoute" routerLinkActive="text-primary bg-primary-50"
              class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors flex items-center gap-1">
             <span class="relative">
-              <i class="bi bi-cart3 text-lg"></i>
+              <i class="ph ph-shopping-cart text-lg"></i>
               <span *ngIf="cartCount > 0"
                     class="absolute -top-2 -right-2 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
                 {{ cartCount > 9 ? '9+' : cartCount }}
@@ -35,28 +35,28 @@
         <li *ngIf="isLoggedIn && hasStoreContext">
           <a [routerLink]="ordersRoute" routerLinkActive="text-primary bg-primary-50"
              class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
-            <i class="bi bi-receipt mr-1"></i> Orders
+            <i class="ph ph-receipt mr-1"></i> Orders
           </a>
         </li>
 
         <li *ngIf="isLoggedIn && hasStoreContext">
           <a [routerLink]="favouritesRoute" routerLinkActive="text-primary bg-primary-50"
              class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
-            <i class="bi bi-heart mr-1"></i> Favourites
+            <i class="ph ph-heart mr-1"></i> Favourites
           </a>
         </li>
 
         <li *ngIf="isLoggedIn">
           <a routerLink="/support" routerLinkActive="text-primary bg-primary-50"
              class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
-            <i class="bi bi-headset mr-1"></i> Support
+            <i class="ph ph-headset mr-1"></i> Support
           </a>
         </li>
 
         <li *ngIf="isLoggedIn">
           <a routerLink="/profile" routerLinkActive="text-primary bg-primary-50"
              class="px-3 py-2 rounded-lg text-sm font-medium text-textLight hover:text-primary hover:bg-primary-50 transition-colors">
-            <i class="bi bi-person-circle mr-1"></i> Profile
+            <i class="ph ph-user-circle mr-1"></i> Profile
           </a>
         </li>
       </ng-container>
@@ -78,14 +78,14 @@
     <!-- Mobile right side: cart badge + hamburger -->
     <div class="md:hidden flex items-center gap-2">
       <a *ngIf="isCustomer && isLoggedIn && hasStoreContext" [routerLink]="cartRoute" class="relative p-2">
-        <i class="bi bi-cart3 text-textDark text-xl"></i>
+        <i class="ph ph-shopping-cart text-textDark text-xl"></i>
         <span *ngIf="cartCount > 0"
               class="absolute top-0 right-0 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
           {{ cartCount > 9 ? '9+' : cartCount }}
         </span>
       </a>
       <button (click)="toggleMenu()" class="w-9 h-9 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
-        <i [class]="menuOpen ? 'bi bi-x-lg text-textDark' : 'bi bi-list text-textDark text-xl'"></i>
+        <i [class]="menuOpen ? 'ph ph-x text-textDark' : 'ph ph-list text-textDark text-xl'"></i>
       </button>
     </div>
   </div>
@@ -102,7 +102,7 @@
         <span *ngIf="storeLogo" class="font-heading font-bold text-textDark">{{ storeName }}</span>
       </div>
       <button (click)="toggleMenu()" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
-        <i class="bi bi-x-lg text-textDark text-sm"></i>
+        <i class="ph ph-x text-textDark text-sm"></i>
       </button>
     </div>
 
@@ -111,30 +111,30 @@
       <ng-container *ngIf="isCustomer">
         <a *ngIf="isLoggedIn && hasStoreContext" [routerLink]="cartRoute" (click)="toggleMenu()"
            class="flex items-center justify-between px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
-          <span class="flex items-center gap-3"><i class="bi bi-cart3 text-base"></i> Cart</span>
+          <span class="flex items-center gap-3"><i class="ph ph-shopping-cart text-base"></i> Cart</span>
           <span *ngIf="cartCount > 0" class="w-5 h-5 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center">
             {{ cartCount }}
           </span>
         </a>
         <a *ngIf="isLoggedIn && hasStoreContext" [routerLink]="ordersRoute" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
-          <i class="bi bi-receipt text-base"></i> Orders
+          <i class="ph ph-receipt text-base"></i> Orders
         </a>
         <a *ngIf="isLoggedIn" routerLink="/profile" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
-          <i class="bi bi-person-circle text-base"></i> My Profile
+          <i class="ph ph-user-circle text-base"></i> My Profile
         </a>
         <a *ngIf="isLoggedIn" routerLink="/profile/addresses" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
-          <i class="bi bi-geo-alt text-base"></i> Saved Addresses
+          <i class="ph ph-map-pin text-base"></i> Saved Addresses
         </a>
         <a *ngIf="isLoggedIn && hasStoreContext" [routerLink]="favouritesRoute" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
-          <i class="bi bi-heart text-base"></i> Favourites
+          <i class="ph ph-heart text-base"></i> Favourites
         </a>
         <a *ngIf="isLoggedIn" routerLink="/support" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
-          <i class="bi bi-headset text-base"></i> Support
+          <i class="ph ph-headset text-base"></i> Support
         </a>
       </ng-container>
 
@@ -143,36 +143,36 @@
         <p class="px-5 pt-2 pb-1 text-[10px] font-semibold text-textMuted uppercase tracking-wide">More</p>
         <a routerLink="/admin/inventory" routerLinkActive="text-primary bg-primary-50" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
-          <i class="bi bi-box-seam text-base"></i> Inventory
+          <i class="ph ph-package text-base"></i> Inventory
         </a>
         <a routerLink="/admin/promotions" routerLinkActive="text-primary bg-primary-50" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
-          <i class="bi bi-tag text-base"></i> Promos
+          <i class="ph ph-tag text-base"></i> Promos
         </a>
         <a routerLink="/admin/settings" routerLinkActive="text-primary bg-primary-50" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
-          <i class="bi bi-gear text-base"></i> Settings
+          <i class="ph ph-gear-six text-base"></i> Settings
         </a>
         <a routerLink="/admin/subscription" routerLinkActive="text-primary bg-primary-50" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
-          <i class="bi bi-credit-card-2-front text-base"></i> Plan
+          <i class="ph ph-credit-card text-base"></i> Plan
         </a>
         <a routerLink="/admin/users" routerLinkActive="text-primary bg-primary-50" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
-          <i class="bi bi-people text-base"></i> Users
+          <i class="ph ph-users text-base"></i> Users
         </a>
         <a routerLink="/admin/reviews" routerLinkActive="text-primary bg-primary-50" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
-          <i class="bi bi-star text-base"></i> Reviews
+          <i class="ph ph-star text-base"></i> Reviews
         </a>
         <a routerLink="/admin/books" routerLinkActive="text-primary bg-primary-50" (click)="toggleMenu()"
            class="flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors">
-          <i class="bi bi-journal-bookmark text-base"></i> Books
+          <i class="ph ph-notebook text-base"></i> Books
         </a>
         <!-- Dark mode (admin) — mirrors the desktop sidebar toggle -->
         <button type="button" (click)="theme.toggle()"
                 class="w-full flex items-center gap-3 px-5 py-3 text-sm text-textDark hover:bg-primary-50 hover:text-primary transition-colors text-left">
-          <i class="text-base" [ngClass]="theme.isDark ? 'bi bi-sun' : 'bi bi-moon-stars'"></i>
+          <i class="text-base" [ngClass]="theme.isDark ? 'ph ph-sun' : 'ph ph-moon-stars'"></i>
           {{ theme.isDark ? 'Light mode' : 'Dark mode' }}
         </button>
       </ng-container>
@@ -181,11 +181,11 @@
 
       <a *ngIf="!isLoggedIn && hasStoreContext" routerLink="/login" [queryParams]="{ returnUrl: router.url }" (click)="toggleMenu()"
          class="flex items-center gap-3 px-5 py-3 text-sm font-semibold text-primary hover:bg-primary-50 transition-colors">
-        <i class="bi bi-box-arrow-in-right text-base"></i> Sign In
+        <i class="ph ph-sign-in text-base"></i> Sign In
       </a>
       <button *ngIf="isLoggedIn" (click)="logout()"
               class="w-full flex items-center gap-3 px-5 py-3 text-sm text-danger hover:bg-red-50 transition-colors text-left">
-        <i class="bi bi-box-arrow-left text-base"></i> Logout
+        <i class="ph ph-sign-out text-base"></i> Logout
       </button>
     </nav>
   </div>

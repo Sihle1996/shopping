@@ -1,27 +1,27 @@
 <footer class="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-borderColor z-50 shadow-float">
   <nav class="flex justify-around items-center py-2 max-w-lg mx-auto">
 
-    <a routerLink="/admin/dashboard" routerLinkActive="text-primary" [routerLinkActiveOptions]="{ exact: true }"
+    <a routerLink="/admin/dashboard" routerLinkActive="text-primary" #rlaDash="routerLinkActive" [routerLinkActiveOptions]="{ exact: true }"
        class="flex flex-col items-center gap-0.5 px-3 py-1 text-textMuted hover:text-primary transition-colors">
-      <i class="bi bi-grid text-xl"></i>
+      <i [class]="(rlaDash.isActive ? 'ph-fill' : 'ph') + ' ph-squares-four text-2xl'"></i>
       <span class="text-[10px] font-medium">Dashboard</span>
     </a>
 
-    <a routerLink="/admin/orders" routerLinkActive="text-primary"
+    <a routerLink="/admin/orders" routerLinkActive="text-primary" #rlaOrders="routerLinkActive"
        class="flex flex-col items-center gap-0.5 px-3 py-1 text-textMuted hover:text-primary transition-colors">
-      <i class="bi bi-receipt text-xl"></i>
+      <i [class]="(rlaOrders.isActive ? 'ph-fill' : 'ph') + ' ph-receipt text-2xl'"></i>
       <span class="text-[10px] font-medium">Orders</span>
     </a>
 
-    <a routerLink="/admin/menu" routerLinkActive="text-primary"
+    <a routerLink="/admin/menu" routerLinkActive="text-primary" #rlaMenu="routerLinkActive"
        class="flex flex-col items-center gap-0.5 px-3 py-1 text-textMuted hover:text-primary transition-colors">
-      <i class="bi bi-journal-text text-xl"></i>
+      <i [class]="(rlaMenu.isActive ? 'ph-fill' : 'ph') + ' ph-fork-knife text-2xl'"></i>
       <span class="text-[10px] font-medium">Menu</span>
     </a>
 
-    <a routerLink="/admin/drivers" routerLinkActive="text-primary"
+    <a routerLink="/admin/drivers" routerLinkActive="text-primary" #rlaDrv="routerLinkActive"
        class="flex flex-col items-center gap-0.5 px-3 py-1 text-textMuted hover:text-primary transition-colors">
-      <i class="bi bi-truck text-xl"></i>
+      <i [class]="(rlaDrv.isActive ? 'ph-fill' : 'ph') + ' ph-moped text-2xl'"></i>
       <span class="text-[10px] font-medium">Drivers</span>
     </a>
 
