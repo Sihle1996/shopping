@@ -201,15 +201,28 @@ public class EnrollmentController(AppDbContext db, ResendEmailService email, IHt
         if (doc == null) return NotFound(new { message = "Document not found" });
         if (string.IsNullOrWhiteSpace(doc.FileUrl)) return NotFound(new { message = "Document has no file" });
 
+        // SSRF guard: only ever fetch over HTTPS from Cloudinary (the only legitimate storage origin).
+        // Reject anything else outright — no internal hosts, no http, no other domains.
+        if (!Uri.TryCreate(doc.FileUrl, UriKind.Absolute, out var fileUri)
+            || fileUri.Scheme != Uri.UriSchemeHttps
+            || !fileUri.Host.EndsWith("cloudinary.com", StringComparison.OrdinalIgnoreCase))
+            return NotFound(new { message = "Document storage location is invalid." });
+
         var actorEmail = User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue("email") ?? "unknown";
         var actorRole = User.FindFirstValue(ClaimTypes.Role) ?? "SUPERADMIN";
+        // Truncate the summary to fit the VARCHAR(500) audit column — FileName is attacker-influenced.
+        var summary = $"Viewed {doc.DocumentType} ({doc.FileName})";
+        if (summary.Length > 500) summary = summary.Substring(0, 500);
         await db.Database.ExecuteSqlRawAsync(
             "INSERT INTO audit_event (id, action, actor_email, actor_role, created_at, entity_id, entity_type, source, summary, tenant_id) " +
             "VALUES (gen_random_uuid(), 'DOCUMENT_VIEWED', {0}, {1}, now(), {2}, 'STORE_DOCUMENT', 'SUPERADMIN', {3}, {4})",
-            actorEmail, actorRole, doc.Id, $"Viewed {doc.DocumentType} ({doc.FileName})", doc.TenantId);
+            actorEmail, actorRole, doc.Id, summary, doc.TenantId);
 
+        // Redirects disabled (a 30x could bounce us to an internal host) + short timeout to bound the request.
+        using var handler = new HttpClientHandler { AllowAutoRedirect = false };
+        using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(10) };
         HttpResponseMessage resp;
-        try { resp = await httpFactory.CreateClient().GetAsync(doc.FileUrl); }
+        try { resp = await client.GetAsync(fileUri); }
         catch { return StatusCode(502, new { message = "Could not retrieve the document from storage." }); }
         if (!resp.IsSuccessStatusCode) return StatusCode(502, new { message = "Could not retrieve the document from storage." });
 

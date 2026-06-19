@@ -135,16 +135,20 @@ public class MenuService {
     }
 
     public MenuItem getMenuItemById(UUID id) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId != null) {
+            // Scope to the store in context so a menu item can't be read across tenants by raw UUID.
+            return menuItemRepository.findByIdAndTenant_Id(id, tenantId)
+                    .orElseThrow(() -> new RuntimeException("Menu item not found"));
+        }
         return menuItemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Menu item not found"));
     }
 
     public List<MenuItem> getAllMenuItems() {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        if (tenantId != null) {
-            return menuItemRepository.findByTenant_Id(tenantId);
-        }
-        return menuItemRepository.findAll();
+        if (tenantId == null) return java.util.List.of(); // no store context → don't leak every store's menu
+        return menuItemRepository.findByTenant_Id(tenantId);
     }
 
     public List<MenuItem> saveAllMenuItems(List<MenuItem> menuItems) {

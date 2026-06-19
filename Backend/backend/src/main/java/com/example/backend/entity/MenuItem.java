@@ -45,6 +45,7 @@ public class MenuItem {
      */
     @DecimalMin(value = "0.0", message = "Cost cannot be negative")
     @Column(name = "cost")
+    @com.fasterxml.jackson.annotation.JsonView(Views.Internal.class)
     private Double cost;
 
     @Column(name = "is_available", nullable = false)
@@ -58,14 +59,17 @@ public class MenuItem {
 
     @Min(0)
     @Column(name = "stock", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonView(Views.Internal.class)
     private int stock = 0;
 
     @Min(0)
     @Column(name = "reserved_stock", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonView(Views.Internal.class)
     private int reservedStock = 0;
 
     @Min(0)
     @Column(name = "low_stock_threshold", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonView(Views.Internal.class)
     private int lowStockThreshold = 5;
 
     @Transient

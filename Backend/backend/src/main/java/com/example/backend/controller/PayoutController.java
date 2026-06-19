@@ -54,15 +54,23 @@ public class PayoutController {
     public ResponseEntity<?> create(@RequestBody Map<String, Object> body) {
         String tenantIdStr = (String) body.get("tenantId");
         if (tenantIdStr == null) return ResponseEntity.badRequest().body(Map.of("error", "tenantId required"));
+        double gross = toDouble(body.get("grossRevenue"));
+        double fee = toDouble(body.get("platformFee"));
+        double net = toDouble(body.get("netAmount"));
+        // Server-side validation: amounts must be non-negative and the net must reconcile to gross - fee.
+        if (gross < 0 || fee < 0 || net < 0)
+            return ResponseEntity.badRequest().body(Map.of("error", "amounts must be non-negative"));
+        if (Math.abs(net - (gross - fee)) > 0.01)
+            return ResponseEntity.badRequest().body(Map.of("error", "netAmount must equal grossRevenue - platformFee"));
         return tenantRepository.findById(UUID.fromString(tenantIdStr)).map(tenant -> {
             Payout p = new Payout();
             p.setTenant(tenant);
             if (body.get("periodStart") != null) p.setPeriodStart(Instant.parse((String) body.get("periodStart")));
             if (body.get("periodEnd") != null) p.setPeriodEnd(Instant.parse((String) body.get("periodEnd")));
-            p.setGrossRevenue(toDouble(body.get("grossRevenue")));
+            p.setGrossRevenue(gross);
             p.setPlatformFeePercent(toDouble(body.get("platformFeePercent")));
-            p.setPlatformFee(toDouble(body.get("platformFee")));
-            p.setNetAmount(toDouble(body.get("netAmount")));
+            p.setPlatformFee(fee);
+            p.setNetAmount(net);
             if (body.get("notes") != null) p.setNotes((String) body.get("notes"));
             return ResponseEntity.ok(payoutRepository.save(p));
         }).orElse(ResponseEntity.notFound().build());
@@ -72,12 +80,21 @@ public class PayoutController {
     @PatchMapping("/api/superadmin/payouts/{id}")
     @PreAuthorize("hasRole('SUPERADMIN')")
     public ResponseEntity<?> update(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+        // Validate the status against the real enum (PENDING, PAID, ON_HOLD) before binding — reject
+        // anything else with 400 instead of silently ignoring it.
+        Payout.PayoutStatus newStatus = null;
+        if (body.containsKey("status")) {
+            try {
+                newStatus = Payout.PayoutStatus.valueOf(String.valueOf(body.get("status")));
+            } catch (IllegalArgumentException | NullPointerException e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "invalid status"));
+            }
+        }
+        final Payout.PayoutStatus status = newStatus;
         return payoutRepository.findById(id).map(p -> {
-            if (body.containsKey("status")) {
-                try {
-                    p.setStatus(Payout.PayoutStatus.valueOf((String) body.get("status")));
-                    if (p.getStatus() == Payout.PayoutStatus.PAID) p.setPaidAt(Instant.now());
-                } catch (IllegalArgumentException ignored) {}
+            if (status != null) {
+                p.setStatus(status);
+                if (status == Payout.PayoutStatus.PAID) p.setPaidAt(Instant.now());
             }
             if (body.containsKey("reference")) p.setReference((String) body.get("reference"));
             if (body.containsKey("notes")) p.setNotes((String) body.get("notes"));

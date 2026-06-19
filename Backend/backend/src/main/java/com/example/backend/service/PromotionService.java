@@ -60,12 +60,9 @@ public class PromotionService {
     public Optional<Promotion> validateCode(String code) {
         if (code == null || code.isBlank()) return Optional.empty();
         UUID tenantId = TenantContext.getCurrentTenantId();
-        Optional<Promotion> result;
-        if (tenantId != null) {
-            result = promotionRepository.findByCodeAndActiveTrueAndTenant_Id(code.trim(), tenantId);
-        } else {
-            result = promotionRepository.findByCodeAndActiveTrue(code.trim());
-        }
+        // No store context → don't match (and apply) another store's code.
+        if (tenantId == null) return Optional.empty();
+        Optional<Promotion> result = promotionRepository.findByCodeAndActiveTrueAndTenant_Id(code.trim(), tenantId);
         OffsetDateTime now = OffsetDateTime.now();
         // A code is only valid inside its window (started, not ended) AND under its redemption cap.
         return result.filter(p ->

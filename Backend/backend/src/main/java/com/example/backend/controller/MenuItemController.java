@@ -19,13 +19,16 @@ public class MenuItemController {
     private final MenuService menuService;
     private final MenuItemOptionGroupRepository optionGroupRepository;
 
+    // Public storefront views — @JsonView(Public) omits internal fields (food cost, stock counts).
     @GetMapping
+    @com.fasterxml.jackson.annotation.JsonView(com.example.backend.entity.Views.Public.class)
     public ResponseEntity<List<MenuItem>> getMenuItems() {
         List<MenuItem> menuItems = menuService.getAllMenuItems();
         return ResponseEntity.ok(menuItems);
     }
 
     @GetMapping("/{id}")
+    @com.fasterxml.jackson.annotation.JsonView(com.example.backend.entity.Views.Public.class)
     public ResponseEntity<MenuItem> getMenuItemById(@PathVariable UUID id) {
         MenuItem menuItem = menuService.getMenuItemById(id);
         return ResponseEntity.ok(menuItem);

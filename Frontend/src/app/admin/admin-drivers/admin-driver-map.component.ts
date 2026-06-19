@@ -185,6 +185,13 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  /** HTML-escape user-controlled text before it goes into a raw-HTML Mapbox popup (stored-XSS guard:
+   *  driver.email and friends are user-influenced and reach setHTML() unescaped otherwise). */
+  private esc(s: any): string {
+    return String(s ?? '').replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+  }
+
   private popupHtml(driver: any): string {
     const statusColor: Record<string, string> = {
       AVAILABLE: '#22c55e',
@@ -192,12 +199,12 @@ export class AdminDriverMapComponent implements AfterViewInit, OnDestroy {
       UNAVAILABLE: '#94a3b8'
     };
     const color = statusColor[driver.driverStatus] ?? '#94a3b8';
-    const label = this.getStatusLabel(driver.driverStatus);
-    const speed = driver.speed > 0 ? `${driver.speed.toFixed(1)} km/h` : 'Stationary';
-    const ping = driver.lastPing ? new Date(driver.lastPing).toLocaleTimeString() : 'N/A';
+    const label = this.esc(this.getStatusLabel(driver.driverStatus));
+    const speed = driver.speed > 0 ? `${this.esc(driver.speed.toFixed(1))} km/h` : 'Stationary';
+    const ping = driver.lastPing ? this.esc(new Date(driver.lastPing).toLocaleTimeString()) : 'N/A';
     return `
       <div style="font-family:sans-serif;min-width:160px;padding:4px 0">
-        <p style="font-weight:700;font-size:13px;margin:0 0 6px">${driver.email}</p>
+        <p style="font-weight:700;font-size:13px;margin:0 0 6px">${this.esc(driver.email)}</p>
         <p style="margin:0 0 4px;font-size:12px">
           <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:5px"></span>
           ${label}
