@@ -38,15 +38,19 @@ public class GroupCartController {
 
     @GetMapping("/{token}")
     public ResponseEntity<?> get(@PathVariable String token) {
-        Map<String, Object> summary = groupCartService.summarize(token);
+        // The token is the capability — anyone holding it may READ the cart (shareable link).
+        // We never widen access based on the absence of a tenant header: when a tenant context
+        // IS present it must match the cart's tenant, so a tenant-scoped session can't read a
+        // cart from another store. Pricing stays server-side (computed in summarize()).
+        GroupCart cart = groupCartService.getByToken(token); // throws if the token is unknown
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null) {
-            String cartTenantId = groupCartService.getByToken(token).getTenant().getId().toString();
+            String cartTenantId = cart.getTenant().getId().toString();
             if (!tenantId.toString().equals(cartTenantId)) {
                 return ResponseEntity.status(403).body(Map.of("error", "Access denied"));
             }
         }
-        return ResponseEntity.ok(summary);
+        return ResponseEntity.ok(groupCartService.summarize(token));
     }
 
     @PostMapping("/{token}/items")

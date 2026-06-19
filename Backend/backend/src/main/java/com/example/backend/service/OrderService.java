@@ -570,6 +570,7 @@ public class OrderService {
         return updateOrderStatus(orderId, status, null);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public OrderDTO updateOrderStatus(UUID orderId, String status, String cancelReason) {
         UUID tenantId = TenantContext.getCurrentTenantId();
         Order order = (tenantId != null)

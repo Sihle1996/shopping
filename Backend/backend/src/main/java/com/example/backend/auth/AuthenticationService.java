@@ -215,17 +215,34 @@ public class AuthenticationService {
     }
 
     public User findById(UUID id) {
-        // Retrieve a user by ID
-        return repository.findById(id)
+        User user = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + id));
+        // A store admin may only read users in their OWN tenant; only SUPERADMIN sees across tenants.
+        if (!isSuperadmin()) {
+            UUID tenantId = TenantContext.getCurrentTenantId();
+            UUID userTenant = user.getTenant() != null ? user.getTenant().getId() : null;
+            if (tenantId == null || !tenantId.equals(userTenant)) {
+                throw new IllegalArgumentException("User not found with ID: " + id);
+            }
+        }
+        return user;
     }
 
     public List<User> getAllUsers() {
-        try {
+        // SUPERADMIN sees everyone; a store admin sees only their own tenant's users (no cross-tenant
+        // directory leak of every store's customers/staff).
+        if (isSuperadmin()) {
             return repository.findAll();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch users", e);  // genuine server error → stays 500
         }
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return java.util.List.of();
+        return repository.findByTenant_Id(tenantId);
+    }
+
+    private static boolean isSuperadmin() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_SUPERADMIN".equals(a.getAuthority()));
     }
 
     public void sendPasswordResetOtp(String email) {

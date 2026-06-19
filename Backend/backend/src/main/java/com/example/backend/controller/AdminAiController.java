@@ -108,6 +108,7 @@ public class AdminAiController {
      *  for an order (deterministic; recommend-only — the admin still assigns). */
     @GetMapping("/driver-recommendations/{orderId}")
     public ResponseEntity<Map<String, Object>> driverRecommendations(@PathVariable UUID orderId) {
+        gate(subscriptionEnforcementService::assertDriverIntelAccess);   // plan-gated like its siblings
         return ResponseEntity.ok(
                 driverAssignmentService.recommendDrivers(TenantContext.getCurrentTenantId(), orderId));
     }
@@ -135,6 +136,8 @@ public class AdminAiController {
     /** POST /api/admin/ai/menu/bulk-describe — fill descriptions for items missing one */
     @PostMapping("/menu/bulk-describe")
     public ResponseEntity<Map<String, Object>> bulkDescribe() {
+        gate(subscriptionEnforcementService::assertCopilotQuota);   // metered LLM, like /describe-item
+        aiUsageService.record("COPILOT_PROMPT", 0, 0);
         UUID tenantId = TenantContext.getCurrentTenantId();
         return ResponseEntity.ok(adminAiService.bulkGenerateDescriptions(tenantId));
     }
@@ -220,6 +223,8 @@ public class AdminAiController {
         if (action.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("ok", false, "message", "action is required"));
         }
+        gate(subscriptionEnforcementService::assertCopilotQuota);   // copilot action, metered like /query
+        aiUsageService.record("COPILOT_PROMPT", 0, 0);
         return ResponseEntity.ok(adminAgentService.executeAction(action, params));
     }
 
@@ -228,6 +233,8 @@ public class AdminAiController {
     public ResponseEntity<Map<String, Object>> briefing() {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId == null) return ResponseEntity.ok(Map.of("briefing", ""));
+        gate(subscriptionEnforcementService::assertCopilotQuota);   // LLM briefing, metered like /query
+        aiUsageService.record("COPILOT_PROMPT", 0, 0);
         return ResponseEntity.ok(adminAgentService.dailyBriefing(tenantId));
     }
 

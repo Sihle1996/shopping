@@ -95,6 +95,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                                 return null;
                             } else if (destination.startsWith("/topic/driver") && !"ROLE_DRIVER".equals(role)) {
                                 return null;
+                            } else if (destination.startsWith("/topic/group-cart/") && userPrincipal == null) {
+                                // Live group-cart updates require an authenticated subscriber —
+                                // the token alone must not let an anonymous socket stream a cart.
+                                return null;
                             }
                         }
                     } else if (StompCommand.SEND.equals(accessor.getCommand())) {

@@ -36,6 +36,11 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddHttpClient<ResendEmailService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]!;
+// Fail fast rather than boot with the committed placeholder key (which would let anyone forge a
+// SUPERADMIN token). Set a strong secret via the Jwt__Key environment variable in every real env.
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Contains("ChangeInProduction"))
+    throw new InvalidOperationException(
+        "Jwt:Key must be set to a strong secret; the default placeholder is not allowed. Provide it via the Jwt__Key environment variable.");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {

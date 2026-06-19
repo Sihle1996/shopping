@@ -38,9 +38,15 @@ public class AdminUserController {
         try { role = Role.valueOf(roleName.toUpperCase()); }
         catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", "Invalid role: " + roleName)); }
 
+        // A store admin may only assign store-level roles within their OWN store — never SUPERADMIN
+        // (that would be a one-request self-service platform takeover).
+        if (role != Role.USER && role != Role.DRIVER && role != Role.ADMIN) {
+            return ResponseEntity.status(403).body(Map.of("message", "You cannot assign that role."));
+        }
+
         UUID tenantId = TenantContext.getCurrentTenantId();
-        User user = (tenantId != null ? userRepository.findByIdAndTenant_Id(id, tenantId) : userRepository.findById(id))
-                .orElse(null);
+        if (tenantId == null) return ResponseEntity.status(403).build();
+        User user = userRepository.findByIdAndTenant_Id(id, tenantId).orElse(null);
         if (user == null) return ResponseEntity.notFound().build();
         user.setRole(role);
         userRepository.save(user);
@@ -54,8 +60,8 @@ public class AdminUserController {
         Boolean active = body.get("active");
         if (active == null) return ResponseEntity.badRequest().body(Map.of("message", "active is required"));
         UUID tenantId = TenantContext.getCurrentTenantId();
-        User user = (tenantId != null ? userRepository.findByIdAndTenant_Id(id, tenantId) : userRepository.findById(id))
-                .orElse(null);
+        if (tenantId == null) return ResponseEntity.status(403).build();
+        User user = userRepository.findByIdAndTenant_Id(id, tenantId).orElse(null);
         if (user == null) return ResponseEntity.notFound().build();
         user.setActive(active);
         userRepository.save(user);
@@ -67,8 +73,8 @@ public class AdminUserController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        User user = (tenantId != null ? userRepository.findByIdAndTenant_Id(id, tenantId) : userRepository.findById(id))
-                .orElse(null);
+        if (tenantId == null) return ResponseEntity.status(403).build();
+        User user = userRepository.findByIdAndTenant_Id(id, tenantId).orElse(null);
         if (user == null) return ResponseEntity.notFound().build();
         String email = user.getEmail();
         userRepository.delete(user);

@@ -66,17 +66,28 @@ public class TenantService {
         if (updates.getLongitude() != null) tenant.setLongitude(updates.getLongitude());
         if (updates.getDeliveryRadiusKm() != null) tenant.setDeliveryRadiusKm(updates.getDeliveryRadiusKm());
         if (updates.getDeliveryFeeBase() != null) tenant.setDeliveryFeeBase(updates.getDeliveryFeeBase());
-        if (updates.getSubscriptionStatus() != null) tenant.setSubscriptionStatus(updates.getSubscriptionStatus());
-        if (updates.getSubscriptionPlan() != null) planCommissionService.applyPlan(tenant, updates.getSubscriptionPlan());
-        // Explicit commission (e.g. a negotiated rate) overrides the plan default set by applyPlan above.
-        if (updates.getPlatformCommissionPercent() != null) tenant.setPlatformCommissionPercent(updates.getPlatformCommissionPercent());
+        // Billing/economics fields are SUPERADMIN-only. A store admin hitting /api/admin/settings must
+        // never change their own plan, status, or platform commission — that would be revenue theft.
+        boolean isSuperadmin = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication() != null
+                && org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication()
+                        .getAuthorities().stream().anyMatch(a -> "ROLE_SUPERADMIN".equals(a.getAuthority()));
+        if (isSuperadmin) {
+            if (updates.getSubscriptionStatus() != null) tenant.setSubscriptionStatus(updates.getSubscriptionStatus());
+            if (updates.getSubscriptionPlan() != null) planCommissionService.applyPlan(tenant, updates.getSubscriptionPlan());
+            // Explicit commission (e.g. a negotiated rate) overrides the plan default set by applyPlan above.
+            if (updates.getPlatformCommissionPercent() != null) {
+                tenant.setPlatformCommissionPercent(updates.getPlatformCommissionPercent()
+                        .max(java.math.BigDecimal.ZERO).min(new java.math.BigDecimal("100")));
+            }
+        }
         if (updates.getMinimumOrderAmount() != null) tenant.setMinimumOrderAmount(updates.getMinimumOrderAmount());
         if (updates.getIsOpen() != null) tenant.setIsOpen(updates.getIsOpen());
         if (updates.getEstimatedDeliveryMinutes() != null) tenant.setEstimatedDeliveryMinutes(updates.getEstimatedDeliveryMinutes());
         if (updates.getAutoCancelMinutes() != null) tenant.setAutoCancelMinutes(updates.getAutoCancelMinutes());
         if (updates.getOpeningHours() != null) tenant.setOpeningHours(updates.getOpeningHours());
         if (updates.getCuisineType() != null) tenant.setCuisineType(updates.getCuisineType());
-        if (updates.getDriverEarningPercent() != null) tenant.setDriverEarningPercent(updates.getDriverEarningPercent());
+        if (updates.getDriverEarningPercent() != null) tenant.setDriverEarningPercent(updates.getDriverEarningPercent()
+                .max(java.math.BigDecimal.ZERO).min(new java.math.BigDecimal("100")));
 
         Tenant saved = tenantRepository.save(tenant);
         boolean openChanged = oldOpen != null && saved.getIsOpen() != null && !oldOpen.equals(saved.getIsOpen());

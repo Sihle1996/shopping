@@ -33,6 +33,11 @@ public class Order {
     private String guestEmail;
     private String guestPhone;
 
+    // Set once when the store has been credited in the payout ledger for this order — makes crediting
+    // idempotent across the admin and driver delivery paths and under concurrent status updates.
+    @Column(name = "payout_credited")
+    private Boolean payoutCredited;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id")
     @JsonBackReference

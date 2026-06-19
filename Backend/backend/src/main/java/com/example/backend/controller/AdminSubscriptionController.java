@@ -144,19 +144,15 @@ public class AdminSubscriptionController {
             return ResponseEntity.badRequest().body(Map.of("error", "Can only upgrade to a higher plan"));
         }
 
-        // Payment was captured via PayFast redirect — paymentId logged for audit
-        String paymentId = body.getOrDefault("paymentId", "n/a");
-
-        planCommissionService.applyPlan(tenant, planName);   // sets plan + syncs commission from the table
-        tenant.setSubscriptionStatus("ACTIVE");
-        tenant.setBillingPeriodEnd(LocalDateTime.now().plusDays(30));
-        tenant.setSubscriptionCancelledAt(null);
-        tenantRepository.save(tenant);
-
-        return ResponseEntity.ok(Map.of(
-            "message", "Successfully upgraded to " + planName,
+        // SECURITY: a store must NOT be able to grant itself a paid plan by calling this endpoint —
+        // applying the plan here with no payment proof was a free-upgrade hole. Plan activation happens
+        // ONLY via a signature-verified PayFast ITN (PayFastController.activateSubscription). This
+        // endpoint just validates the request and returns the price to start that payment.
+        return ResponseEntity.status(org.springframework.http.HttpStatus.PAYMENT_REQUIRED).body(Map.of(
+            "error", "Payment required",
+            "message", "Complete payment to upgrade to " + planName + "; your plan activates once payment is confirmed.",
             "plan", planName,
-            "status", "ACTIVE"
+            "priceZar", priceForPlan(planName)
         ));
     }
 

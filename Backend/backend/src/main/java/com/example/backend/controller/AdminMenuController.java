@@ -31,6 +31,22 @@ public class AdminMenuController {
     private final MenuService menuService;
     private final CloudinaryService cloudinaryService;
 
+    /** Max data rows accepted per CSV import (guards against memory/DoS on huge uploads). */
+    private static final int MAX_IMPORT_ROWS = 1000;
+
+    /**
+     * Prefix a single quote to any cell that opens with a formula trigger (= + - @) or a
+     * leading control char (tab/CR/LF) so a later CSV export can't be weaponised in Excel/Sheets.
+     */
+    private static String sanitizeCell(String value) {
+        if (value == null || value.isEmpty()) return value;
+        char c = value.charAt(0);
+        if (c == '=' || c == '+' || c == '-' || c == '@' || c == '\t' || c == '\r' || c == '\n') {
+            return "'" + value;
+        }
+        return value;
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public MenuItem createMenuItem(@RequestBody MenuItem menuItem) {
@@ -104,17 +120,25 @@ public class AdminMenuController {
                 new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
             String line;
             int row = 0;
+            int dataRows = 0;
             while ((line = reader.readLine()) != null) {
                 row++;
                 if (row == 1) continue; // skip header
                 if (line.isBlank()) continue;
+                if (++dataRows > MAX_IMPORT_ROWS) {
+                    return ResponseEntity.badRequest()
+                            .body("Too many rows: max " + MAX_IMPORT_ROWS + " data rows allowed per import.");
+                }
                 String[] cols = line.split(",", -1);
                 if (cols.length < 3) { errors.add("Row " + row + ": need at least name,price,category"); skipped++; continue; }
                 try {
-                    String name = cols[0].trim();
+                    // Neutralise CSV/formula injection on free-text fields that get re-exported:
+                    // a leading = + - @ (or tab/CR) is prefixed with a single quote so Excel/Sheets
+                    // treats the cell as text, not a formula.
+                    String name = sanitizeCell(cols[0].trim());
                     Double price = Double.parseDouble(cols[1].trim());
-                    String category = cols[2].trim();
-                    String description = cols.length > 3 ? cols[3].trim() : null;
+                    String category = sanitizeCell(cols[2].trim());
+                    String description = cols.length > 3 ? sanitizeCell(cols[3].trim()) : null;
                     Integer stock = (cols.length > 4 && !cols[4].isBlank()) ? Integer.parseInt(cols[4].trim()) : null;
                     Double cost = (cols.length > 5 && !cols[5].isBlank()) ? Double.parseDouble(cols[5].trim()) : null;
                     boolean isNew = menuService.importMenuItem(name, price, category, description, stock, cost);

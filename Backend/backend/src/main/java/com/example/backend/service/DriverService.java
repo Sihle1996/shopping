@@ -22,6 +22,7 @@ public class DriverService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final OrderService orderService;
+    private final PayoutLedgerService payoutLedgerService;
     private final EmailService emailService;
     private final SimpMessagingTemplate messagingTemplate;
     private final AuditService auditService;
@@ -96,6 +97,7 @@ public class DriverService {
         order.setStatus("Delivered");
         order.setDeliveredBy("DRIVER_OTP"); // gold standard — customer-confirmed
         if (order.getDeliveredAt() == null) order.setDeliveredAt(java.time.Instant.now());
+        payoutLedgerService.recordOrderCredit(order); // credit the store (idempotent) — driver deliveries were previously never credited
         orderRepository.save(order);
         orderService.recordDeliveryPerformance(order);
         auditService.log(AuditService.DRIVER, "ORDER_DELIVERED", "ORDER", orderId, "Delivered — OTP confirmed");
@@ -133,6 +135,7 @@ public class DriverService {
         order.setStatus("Delivered");
         order.setDeliveredBy("DRIVER"); // driver-confirmed without an OTP
         if (order.getDeliveredAt() == null) order.setDeliveredAt(java.time.Instant.now());
+        payoutLedgerService.recordOrderCredit(order); // credit the store (idempotent) — driver deliveries were previously never credited
         orderRepository.save(order);
         orderService.recordDeliveryPerformance(order);
         auditService.log(AuditService.DRIVER, "ORDER_DELIVERED", "ORDER", orderId, "Delivered by driver");

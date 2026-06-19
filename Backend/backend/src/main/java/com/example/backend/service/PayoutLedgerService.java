@@ -22,6 +22,10 @@ public class PayoutLedgerService {
     public void recordOrderCredit(Order order) {
         Tenant tenant = order.getTenant();
         if (tenant == null) return;
+        // Idempotent: never credit the same order twice — guards concurrent Delivered transitions and
+        // the admin + driver delivery paths both firing. The flag is persisted by the caller's save/tx.
+        if (Boolean.TRUE.equals(order.getPayoutCredited())) return;
+        order.setPayoutCredited(true);
 
         BigDecimal orderTotal = BigDecimal.valueOf(order.getTotalAmount());
         BigDecimal platformFee = order.getPlatformFee() != null
@@ -60,14 +64,20 @@ public class PayoutLedgerService {
         if (tenant == null) return;
 
         BigDecimal orderTotal = BigDecimal.valueOf(order.getTotalAmount());
+        BigDecimal platformFee = order.getPlatformFee() != null
+                ? BigDecimal.valueOf(order.getPlatformFee())
+                : BigDecimal.ZERO;
+        // Mirror the original CREDIT (total − fee), NOT the full total — otherwise every refund silently
+        // claws the platform fee back out of the store's balance, drifting it negative over time.
+        BigDecimal debit = orderTotal.subtract(platformFee).setScale(2, RoundingMode.HALF_UP);
         BigDecimal currentBalance = ledgerRepository.computeBalance(tenant.getId());
 
         ledgerRepository.save(PayoutLedgerEntry.builder()
                 .tenant(tenant)
                 .order(order)
                 .entryType("DEBIT")
-                .amountRand(orderTotal)
-                .balanceAfter(currentBalance.subtract(orderTotal))
+                .amountRand(debit)
+                .balanceAfter(currentBalance.subtract(debit))
                 .description("Refund — order #" + order.getId().toString().substring(0, 8) + " cancelled")
                 .build());
     }
