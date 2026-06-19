@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from 'src/app/services/auth.service';
 import { TenantService } from 'src/app/services/tenant.service';
+import { AdminThemeService } from 'src/app/services/theme.service';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -41,10 +42,12 @@ export class AdminLayoutComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private authService: AuthService,
-    private tenantService: TenantService
+    private tenantService: TenantService,
+    public theme: AdminThemeService
   ) {}
 
   ngOnInit(): void {
+    this.theme.init();
     this.loadTenantBranding();
   }
 

@@ -118,6 +118,41 @@ html, body {
 .border-danger { border-color: #EF4444 !important; }
 .hover\:bg-red-600:hover { background-color: #DC2626 !important; }
 
+/*
+ * Admin dark mode (free). Scoped to `.admin-dark` on the admin-layout root — the customer
+ * storefront never renders inside it, so the dark theme cannot leak. Neutral-dark surfaces; the
+ * store brand colour stays the accent (we do NOT touch .bg-primary/.text-primary, which already
+ * resolve to var(--brand-primary)). Danger (red) classes are likewise left untouched.
+ */
+.admin-dark {
+  --admin-canvas: #0f1417;
+  --admin-card:   #1a2128;
+  --admin-border: #2b343d;
+  --admin-text:   #e5e9ed;
+  --admin-muted:  #9aa6b2;
+
+  &.bg-gray-200 { background-color: var(--admin-canvas) !important; }              /* root canvas */
+  .bg-white { background-color: var(--admin-card) !important; }
+  .bg-surface, .bg-gray-50, .bg-gray-100 { background-color: var(--admin-canvas) !important; }
+  .hover\:bg-gray-50:hover, .hover\:bg-surface:hover { background-color: rgba(255,255,255,0.05) !important; }
+
+  .text-textDark { color: var(--admin-text) !important; }
+  .text-textMuted, .text-textLight, .text-gray-400, .text-gray-500, .text-gray-600 { color: var(--admin-muted) !important; }
+
+  .border-borderColor, .border-gray-100, .border-gray-200 { border-color: var(--admin-border) !important; }
+  .divide-borderColor > :not([hidden]) ~ :not([hidden]) { border-color: var(--admin-border) !important; }
+  .shadow-card, .shadow-card-hover { box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; }
+
+  /* Brand-tinted active-nav chip so the light primary-50 tint reads on dark. */
+  .bg-primary-50 { background-color: color-mix(in srgb, var(--brand-primary) 22%, var(--admin-card)) !important; }
+
+  /* Form controls on dark */
+  input:not([type="color"]), select, textarea {
+    background-color: var(--admin-canvas) !important;
+    color: var(--admin-text) !important;
+  }
+}
+
 /* Subtle brand border tint — uses tenant's --brand-primary at low opacity */
 .brand-trim {
   border: 1px solid color-mix(in srgb, var(--brand-primary) 18%, #E5E7EB) !important;

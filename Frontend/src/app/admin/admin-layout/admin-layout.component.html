@@ -1,8 +1,8 @@
-<div class="flex min-h-screen bg-gray-200 overflow-x-hidden">
+<div class="flex min-h-screen bg-gray-200 overflow-x-hidden" [class.admin-dark]="theme.isDark">
 
   <!-- Desktop sidebar (lg+) -->
   <aside class="hidden lg:flex flex-col w-64 bg-white border-r border-borderColor fixed top-14 bottom-0 z-30 overflow-y-auto">
-    <nav class="p-3 pb-6 flex-1 space-y-5">
+    <nav class="p-3 pt-3 flex-1 space-y-5">
       <div *ngFor="let group of navGroups">
         <p class="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400 select-none">{{ group.section }}</p>
         <div class="space-y-0.5">
@@ -22,6 +22,15 @@
         </div>
       </div>
     </nav>
+
+    <!-- Sidebar footer: dark-mode toggle -->
+    <div class="p-3 border-t border-borderColor">
+      <button type="button" (click)="theme.toggle()"
+              class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-textMuted hover:bg-gray-50 hover:text-textDark transition-colors">
+        <i class="text-base w-5 text-center" [ngClass]="theme.isDark ? 'bi bi-sun' : 'bi bi-moon-stars'"></i>
+        <span>{{ theme.isDark ? 'Light mode' : 'Dark mode' }}</span>
+      </button>
+    </div>
   </aside>
 
   <!-- Main content — offset on desktop for sidebar -->
