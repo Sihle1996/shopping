@@ -41,17 +41,32 @@ public class StoreHoursScheduler {
 
         List<Tenant> tenants = tenantRepository.findAll();
         for (Tenant tenant : tenants) {
-            StoreHours todaySchedule = storeHoursRepository
-                    .findByTenant_IdAndDayOfWeek(tenant.getId(), today).orElse(null);
-            StoreHours yesterdaySchedule = storeHoursRepository
-                    .findByTenant_IdAndDayOfWeek(tenant.getId(), yesterday).orElse(null);
-            if (todaySchedule == null && yesterdaySchedule == null) continue;
-            applySchedule(tenant, todaySchedule, yesterdaySchedule, currentTime);
+            // Isolate each store: one tenant's bad data (e.g. a malformed "8:00" open time that
+            // fails LocalTime.parse) must NEVER abort the loop and leave every other store frozen
+            // at its last isOpen value. Skip the offender, keep the rest of the fleet in sync.
+            try {
+                StoreHours todaySchedule = storeHoursRepository
+                        .findByTenant_IdAndDayOfWeek(tenant.getId(), today).orElse(null);
+                StoreHours yesterdaySchedule = storeHoursRepository
+                        .findByTenant_IdAndDayOfWeek(tenant.getId(), yesterday).orElse(null);
+                if (todaySchedule == null && yesterdaySchedule == null) continue;
+                applySchedule(tenant, todaySchedule, yesterdaySchedule, currentTime);
+            } catch (Exception e) {
+                log.warn("StoreHoursScheduler: skipped tenant {} due to bad schedule data ({})",
+                        tenant.getSlug(), e.toString());
+            }
         }
     }
 
     private void applySchedule(Tenant tenant, StoreHours today, StoreHours yesterday, LocalTime now) {
         boolean shouldBeOpen = computeShouldBeOpen(today, yesterday, now);
+
+        // No schedule row for TODAY: the only reason to be open is yesterday's overnight spillover.
+        // Outside that we genuinely don't know today's intended hours, so we must NOT force the store
+        // closed — leave isOpen as the admin/go-live set it. Fail open, never silently close a store
+        // because a day's hours happen to be missing. (Force-closing here is what made a store with an
+        // incomplete weekly schedule go dark mid-trading despite the owner never closing it.)
+        if (today == null && !shouldBeOpen) return;
 
         if (Boolean.TRUE.equals(tenant.getManualOpenOverride())) {
             // A manual/AI override is active: leave isOpen exactly as the admin set it. Hand control
