@@ -63,6 +63,9 @@ export class AppComponent implements OnDestroy {
   }
 
   private restoreBrand(): void {
+    // Only re-apply a stored store theme when the page actually loaded on a store route — otherwise a
+    // reload on the store list / landing / profile would leak the last store's colors.
+    if (!window.location.pathname.startsWith('/store/')) return;
     const color = localStorage.getItem('brandPrimary');
     if (!color) return;
     const root = document.documentElement;

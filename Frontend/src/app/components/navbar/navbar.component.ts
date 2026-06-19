@@ -23,6 +23,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   hasStoreContext = false;
   isLandingPage = true;
   cartCount = 0;
+  inStore = false;
 
   private destroy$ = new Subject<void>();
 
@@ -42,27 +43,30 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ).subscribe((event: any) => {
       const url = event.urlAfterRedirects;
       this.isLandingPage = url === '/';
+      // "In a store" = a specific /store/<slug> route (the /stores list does NOT count).
+      this.inStore = url.split('?')[0].startsWith('/store/');
 
       if (this.isLandingPage && !this.authService.getTenantId()) {
-        localStorage.removeItem('tenantId');
-        localStorage.removeItem('storeName');
-        localStorage.removeItem('storeSlug');
-        this.storeName = null;
-        this.storeLogo = null;
-        this.hasStoreContext = false;
+        ['tenantId', 'storeName', 'storeSlug', 'brandPrimary'].forEach(k => localStorage.removeItem(k));
         this.tenantService.clearTenant();
       }
 
       this.refreshAuthState();
+
+      // Once a customer is no longer viewing a store, drop the store's theme + logo and show CraveIt
+      // branding. (localStorage store context is intentionally kept so they can navigate back.)
+      if (!this.inStore && this.isCustomer) {
+        this.storeName = null;
+        this.storeLogo = null;
+        this.resetBrandColors();
+      }
     });
 
     this.tenantService.currentTenant$
       .pipe(takeUntil(this.destroy$))
       .subscribe(tenant => {
-        if (tenant) {
-          this.storeName = tenant.name;
-          this.storeLogo = this.resolveLogoUrl(tenant.logoUrl);
-        }
+        this.storeName = tenant ? tenant.name : null;
+        this.storeLogo = tenant ? this.resolveLogoUrl(tenant.logoUrl) : null;
       });
 
     // Cart count badge
@@ -80,9 +84,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.isLoggedIn = this.authService.isLoggedIn();
     this.userRole = this.authService.getUserRole();
     this.homeRoute = this.getHomeRoute();
-    const name = localStorage.getItem('storeName');
-    if (name) this.storeName = name;
+    // Only surface the store name in the nav while actually viewing that store.
+    if (this.inStore) {
+      const name = localStorage.getItem('storeName');
+      if (name) this.storeName = name;
+    }
     this.hasStoreContext = !!localStorage.getItem('tenantId');
+  }
+
+  /** Revert the CSS theme to the CraveIt default palette (used when a customer leaves a store). */
+  private resetBrandColors(): void {
+    const root = document.documentElement;
+    root.style.setProperty('--brand-primary', '#E76F51');
+    root.style.setProperty('--brand-primary-light', '#E76F511A');
+    root.style.setProperty('--brand-primary-hover', '#C15A35');
   }
 
   get cartRoute(): string {
