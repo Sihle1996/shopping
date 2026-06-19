@@ -35,8 +35,9 @@ public class ApplicationConfig {
         this.repository = repository;
     }
 
-    // Role priority: ADMIN > DRIVER > USER (higher index = lower priority)
+    // Role priority: SUPERADMIN > ADMIN > DRIVER > USER (lower number = higher priority)
     private static final Map<Role, Integer> ROLE_PRIORITY = Map.of(
+            Role.SUPERADMIN, -1,
             Role.ADMIN, 0,
             Role.DRIVER, 1,
             Role.USER, 2

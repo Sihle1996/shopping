@@ -205,7 +205,8 @@ public class EnrollmentController(AppDbContext db, ResendEmailService email, IHt
         // Reject anything else outright — no internal hosts, no http, no other domains.
         if (!Uri.TryCreate(doc.FileUrl, UriKind.Absolute, out var fileUri)
             || fileUri.Scheme != Uri.UriSchemeHttps
-            || !fileUri.Host.EndsWith("cloudinary.com", StringComparison.OrdinalIgnoreCase))
+            || !(fileUri.Host.Equals("res.cloudinary.com", StringComparison.OrdinalIgnoreCase)
+                 || fileUri.Host.EndsWith(".cloudinary.com", StringComparison.OrdinalIgnoreCase)))
             return NotFound(new { message = "Document storage location is invalid." });
 
         var actorEmail = User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue("email") ?? "unknown";

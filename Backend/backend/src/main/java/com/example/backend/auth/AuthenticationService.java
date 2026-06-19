@@ -126,8 +126,9 @@ public class AuthenticationService {
             // Account temporarily locked after too many failed attempts (brute-force defence).
             throw new IllegalArgumentException("Too many failed attempts. Please try again later.");
         }
+        org.springframework.security.core.Authentication authResult;
         try {
-            authenticationManager.authenticate(
+            authResult = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getEmail(),
                             request.getPassword()
@@ -139,13 +140,10 @@ public class AuthenticationService {
         }
         loginAttempts.remove(lockKey); // a successful login clears the counter
 
-        UUID tenantId = TenantContext.getCurrentTenantId();
-        User user = (tenantId != null)
-                ? repository.findByEmailAndTenant_Id(request.getEmail(), tenantId)
-                        .or(() -> repository.findByEmailAndTenantIsNull(request.getEmail()))
-                        .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"))
-                : repository.findByEmailAndTenantIsNull(request.getEmail())
-                        .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
+        // Use the exact account whose password was just verified (the authenticated principal) as the
+        // token subject — never re-resolve by email, which on a cross-tenant email collision could mint
+        // a token for a DIFFERENT same-email account than the one whose password matched.
+        User user = (User) authResult.getPrincipal();
 
         UUID userTenantId = user.getTenant() != null ? user.getTenant().getId() : null;
         String jwtToken = jwtService.generateTokenWithId(user, user.getId(), userTenantId);
@@ -299,20 +297,25 @@ public class AuthenticationService {
         if (newPassword == null || newPassword.length() < 8) {
             throw new IllegalArgumentException("Password must be at least 8 characters");
         }
-        // Generic error: never reveal whether the account exists. findAllByEmail avoids a crash when the
-        // same email exists across tenants (email is only unique per-tenant).
-        User user = repository.findAllByEmail(email).stream().findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired OTP"));
-
         String key = email == null ? "" : email.trim().toLowerCase();
-        if (user.getResetOtp() == null || otp == null || !user.getResetOtp().equals(otp)) {
-            // Per-account guess limit (IP-independent): burn the OTP after too many wrong tries so the
-            // 6-digit code can't be brute-forced even if the network rate-limiter is dodged via XFF.
+        // Resolve the account that actually HOLDS this OTP (not an arbitrary same-email row), so a correct
+        // code never fails or burns the OTP when the email exists in more than one tenant.
+        User user = (otp == null || otp.isBlank()) ? null
+                : repository.findAllByEmail(email).stream()
+                        .filter(u -> otp.equals(u.getResetOtp()))
+                        .findFirst().orElse(null);
+        if (user == null) {
+            // Per-account guess limit (IP-independent): after too many wrong tries, burn every
+            // outstanding OTP for this email so the 6-digit code can't be brute-forced.
             int attempts = resetAttempts.merge(key, 1, Integer::sum);
             if (attempts >= MAX_RESET_ATTEMPTS) {
-                user.setResetOtp(null);
-                user.setResetOtpExpiresAt(null);
-                repository.save(user);
+                repository.findAllByEmail(email).forEach(u -> {
+                    if (u.getResetOtp() != null) {
+                        u.setResetOtp(null);
+                        u.setResetOtpExpiresAt(null);
+                        repository.save(u);
+                    }
+                });
                 resetAttempts.remove(key);
             }
             throw new IllegalArgumentException("Invalid or expired OTP");
