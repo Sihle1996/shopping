@@ -180,6 +180,34 @@ html, body {
     background-color: var(--admin-canvas) !important;
     color: var(--admin-text) !important;
   }
+  input::placeholder, textarea::placeholder { color: var(--admin-muted) !important; }
+
+  /* Toggle switches: the knob (bg-white + transition-transform) must stay LIGHT, not darken into
+   * the track; the off-track (bg-gray-200/300) darkens so the light knob contrasts. Icon holders
+   * (bg-white without transition-transform) are unaffected. */
+  .bg-white.transition-transform { background-color: #f3f5f7 !important; }
+  .bg-gray-300 { background-color: #39424c !important; }   /* toggle off-tracks */
+
+  /* Selected segment pill (bg-white text-primary) -> brand-tinted dark; brand text kept. */
+  .bg-white.text-primary { background-color: color-mix(in srgb, var(--brand-primary) 22%, var(--admin-card)) !important; }
+
+  /* Shared top navbar (rendered outside the admin shell, so reached only via the body flag).
+   * The bg-white/text/border rules above already darken it; the fallback CraveIt wordmark is dark
+   * artwork, so brighten it to stay visible on the dark bar (store logos are <img> photos — fine). */
+  nav[data-testid="navbar"] img[alt="CraveIt"] { filter: brightness(0) invert(1); opacity: .92; }
+
+  /* ApexCharts (SVG) on dark: axis labels render with a dark fill -> lighten them, plus gridlines
+   * and tooltip. In-bar data labels live in .apexcharts-datalabels (not the axis groups) and stay
+   * white, so they're left alone. */
+  .apexcharts-xaxis text, .apexcharts-yaxis text,
+  .apexcharts-xaxis-title text, .apexcharts-yaxis-title text { fill: var(--admin-muted) !important; }
+  .apexcharts-legend-text { color: var(--admin-muted) !important; }
+  .apexcharts-gridline { stroke: var(--admin-border) !important; }
+  .apexcharts-tooltip.apexcharts-theme-light {
+    background: var(--admin-card) !important; color: var(--admin-text) !important;
+    border-color: var(--admin-border) !important;
+  }
+  .apexcharts-tooltip-title { background: var(--admin-canvas) !important; border-color: var(--admin-border) !important; }
 }
 
 /* Subtle brand border tint — uses tenant's --brand-primary at low opacity */

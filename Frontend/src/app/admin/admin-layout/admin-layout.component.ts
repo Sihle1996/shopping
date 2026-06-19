@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from 'src/app/services/auth.service';
 import { TenantService } from 'src/app/services/tenant.service';
@@ -10,7 +10,7 @@ import { environment } from 'src/environments/environment';
   templateUrl: './admin-layout.component.html',
   styleUrls: ['./admin-layout.component.scss']
 })
-export class AdminLayoutComponent implements OnInit {
+export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   navGroups = [
     { section: 'Overview', items: [
@@ -49,6 +49,11 @@ export class AdminLayoutComponent implements OnInit {
   ngOnInit(): void {
     this.theme.init();
     this.loadTenantBranding();
+  }
+
+  ngOnDestroy(): void {
+    // Drop the body dark flag when leaving the admin shell so the customer storefront stays light.
+    this.theme.teardown();
   }
 
   private loadTenantBranding(): void {
