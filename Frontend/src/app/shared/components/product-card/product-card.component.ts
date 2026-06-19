@@ -32,9 +32,14 @@ export interface ProductCardItem {
           [alt]="item.name"
           loading="lazy"
           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        <!-- Category Badge -->
-        <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/90 text-textDark backdrop-blur-sm">
+        <!-- Category Badge (uses the store's accent colour) -->
+        <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-secondary text-white backdrop-blur-sm">
           {{ item.category }}
+        </span>
+        <!-- Discount badge (accent highlight) -->
+        <span *ngIf="discountPercent"
+              class="absolute bottom-3 left-3 px-2.5 py-1 rounded-full text-xs font-bold bg-brand-secondary text-white shadow-sm">
+          {{ discountPercent }}% OFF
         </span>
         <!-- Favourite button -->
         <button *ngIf="showFavorite && item.id"
@@ -75,8 +80,8 @@ export interface ProductCardItem {
             *ngIf="showAddToCart && item.isAvailable && !item.soldOut"
             (click)="onAddToCart($event)"
             data-testid="add-to-cart-btn"
-            class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center
-                   hover:bg-primary-600 transition-all duration-200 active:scale-90 shadow-sm">
+            class="brand-cta w-9 h-9 flex items-center justify-center
+                   transition-all duration-200 active:scale-90 shadow-sm">
             <i class="bi bi-plus-lg text-base"></i>
           </button>
         </div>
