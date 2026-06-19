@@ -23,7 +23,6 @@ public class OrderRequestDTO {
     private String orderNotes;
     private String guestEmail;
     private String guestPhone;
-    private int loyaltyPointsRedeemed;
     private Double deliveryFee;
     private String scheduledDeliveryTime;
     private String groupCartToken; // set when this order originates from a group cart

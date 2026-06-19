@@ -19,7 +19,6 @@ import { FormControl } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 import { AddressService, UserAddress } from 'src/app/services/address.service';
-import { LoyaltyService, LoyaltyBalance } from 'src/app/services/loyalty.service';
 
 @Component({
   selector: 'app-checkout',
@@ -33,7 +32,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   private groupCheckoutToken: string | null = null;
   discount: number = 0;
   deliveryFee: number = 0;
-  get totalPrice(): number { return Math.max(0, this.subtotal - this.discount - this.loyaltyDiscount + this.deliveryFee); }
+  get totalPrice(): number { return Math.max(0, this.subtotal - this.discount + this.deliveryFee); }
 
   storeIsOpen: boolean = true;
   minimumOrderAmount: number | null = null;
@@ -53,14 +52,6 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   activePromotions: Promotion[] = [];
   nudge: ThresholdNudge | null = null; // "spend RX more to unlock …"
   promoError: string = '';
-
-  // Loyalty
-  loyaltyEnabled = true;  // set from the store's setting
-  loyaltyBalance: LoyaltyBalance | null = null;
-  loyaltyPointsInput = 0;
-  loyaltyDiscount = 0;
-  loyaltyPointsToRedeem = 0;
-  loyaltyLoading = false;
 
   locating = false;
   deliveryFeeLoading = false;
@@ -113,7 +104,6 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
     private addressService: AddressService,
-    private loyaltyService: LoyaltyService,
     private location: Location
   ) {}
 
@@ -151,13 +141,6 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
           this.deliveryFee = Number(t.deliveryFeeBase) || 0;
           this.estimatedDeliveryMinutes = Number(t.estimatedDeliveryMinutes) || 30;
           this.storeHasCoords = !!(t.latitude && t.longitude);
-          this.loyaltyEnabled = t.loyaltyEnabled !== false;
-          if (this.loyaltyEnabled) {
-            this.loyaltyService.getBalance().subscribe({
-              next: b => this.loyaltyBalance = b,
-              error: () => { this.loyaltyBalance = null; }
-            });
-          }
         },
         error: () => {}
       });
@@ -335,33 +318,6 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
     this.promoCode = '';
     this.promoError = '';
     this.discount = 0;
-  }
-
-  applyLoyalty(): void {
-    const pts = this.loyaltyPointsInput;
-    if (!pts || pts < 100 || pts % 100 !== 0) {
-      this.toastr.warning('Enter a multiple of 100 points (minimum 100)');
-      return;
-    }
-    this.loyaltyLoading = true;
-    this.loyaltyService.calculate(pts).subscribe({
-      next: result => {
-        this.loyaltyDiscount = result.discount;
-        this.loyaltyPointsToRedeem = result.pointsUsed;
-        this.loyaltyLoading = false;
-        this.toastr.success(`${result.pointsUsed} pts → R${result.discount.toFixed(2)} off`);
-      },
-      error: (err) => {
-        this.loyaltyLoading = false;
-        this.toastr.error(err?.error || 'Could not apply loyalty points');
-      }
-    });
-  }
-
-  removeLoyalty(): void {
-    this.loyaltyDiscount = 0;
-    this.loyaltyPointsToRedeem = 0;
-    this.loyaltyPointsInput = 0;
   }
 
   useMyLocation(): void {
@@ -577,7 +533,6 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       deliveryFee: this.deliveryFee,
       promoCode: this.appliedPromo?.code?.trim() || null,
       orderNotes: this.orderNotes?.trim() || null,
-      loyaltyPointsRedeemed: this.loyaltyPointsToRedeem || 0,
       paymentId: '',
       payerId: '',
       status: 'PENDING',
@@ -615,7 +570,6 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
           subtotal: this.subtotal,
           deliveryFee: this.deliveryFee,
           address: orderData.deliveryAddress,
-          loyaltyEarned: Math.floor(this.totalPrice),
           estimatedDeliveryMinutes: this.estimatedDeliveryMinutes
         };
         localStorage.setItem('lastOrderSummary', JSON.stringify(summary));

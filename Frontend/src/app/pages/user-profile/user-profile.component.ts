@@ -6,10 +6,9 @@ import { environment } from 'src/environments/environment';
 import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/app/services/auth.service';
-import { LoyaltyService, WalletEntry } from 'src/app/services/loyalty.service';
 import { PushNotificationService } from 'src/app/services/push-notification.service';
 
-type Section = 'personal' | 'security' | 'privacy' | 'wallet';
+type Section = 'personal' | 'security' | 'privacy';
 
 @Component({
   selector: 'app-user-profile',
@@ -31,8 +30,6 @@ export class UserProfileComponent implements OnInit {
   role = '';
   joinedAt = '';
   activeSection: Section = 'personal';
-  wallet: WalletEntry[] = [];
-  walletLoading = false;
   pushState: 'unsupported' | 'default' | 'granted' | 'denied' = 'unsupported';
   pushToggling = false;
 
@@ -46,7 +43,6 @@ export class UserProfileComponent implements OnInit {
     private http: HttpClient,
     private toastr: ToastrService,
     private authService: AuthService,
-    private loyaltyService: LoyaltyService,
     private pushService: PushNotificationService,
     private router: Router
   ) {
@@ -108,19 +104,10 @@ export class UserProfileComponent implements OnInit {
 
   setSection(s: string) {
     this.activeSection = s as Section;
-    if (s === 'wallet' && !this.wallet.length) this.loadWallet();
   }
 
   logoUrl(url?: string | null): string {
     return url ? cloudinaryUrl(url, 80) : '';
-  }
-
-  private loadWallet(): void {
-    this.walletLoading = true;
-    this.loyaltyService.getWallet().subscribe({
-      next: w => { this.wallet = w; this.walletLoading = false; },
-      error: () => this.walletLoading = false
-    });
   }
 
   goToStore(slug: string): void {

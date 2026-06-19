@@ -27,7 +27,6 @@ public class OrderAutoRejectService {
     private final TenantRepository tenantRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final EmailService emailService;
-    private final LoyaltyService loyaltyService;
     private final AuditService auditService;
 
     /** Fallback window when a store has no auto-cancel setting. */
@@ -57,9 +56,6 @@ public class OrderAutoRejectService {
             }
 
             releaseReservedStock(order);
-            if (order.getUser() != null) {
-                loyaltyService.refundPoints(order.getUser(), order);
-            }
 
             order.setStatus("Cancelled");
             order.setCancellationReason("AUTO_TIMEOUT");

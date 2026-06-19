@@ -77,7 +77,6 @@ public class TenantService {
         if (updates.getOpeningHours() != null) tenant.setOpeningHours(updates.getOpeningHours());
         if (updates.getCuisineType() != null) tenant.setCuisineType(updates.getCuisineType());
         if (updates.getDriverEarningPercent() != null) tenant.setDriverEarningPercent(updates.getDriverEarningPercent());
-        if (updates.getLoyaltyEnabled() != null) tenant.setLoyaltyEnabled(updates.getLoyaltyEnabled());
 
         Tenant saved = tenantRepository.save(tenant);
         boolean openChanged = oldOpen != null && saved.getIsOpen() != null && !oldOpen.equals(saved.getIsOpen());

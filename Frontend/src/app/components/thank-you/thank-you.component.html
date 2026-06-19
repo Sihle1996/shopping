@@ -38,15 +38,6 @@
         </div>
       </div>
 
-      <!-- Loyalty earned -->
-      <div *ngIf="summary && summary.loyaltyEarned > 0"
-           class="flex items-center gap-2 bg-amber-50 rounded-xl px-3 py-2.5 border border-amber-100">
-        <i class="bi bi-star-fill text-amber-400 text-sm flex-shrink-0"></i>
-        <span class="text-xs font-medium text-amber-700">
-          You earned <strong>{{ summary.loyaltyEarned }}</strong> loyalty points!
-        </span>
-      </div>
-
       <!-- ETA -->
       <div *ngIf="summary?.estimatedDeliveryMinutes"
            class="flex items-center gap-3 bg-primary-50 border border-primary-100 rounded-xl px-3 py-2.5">

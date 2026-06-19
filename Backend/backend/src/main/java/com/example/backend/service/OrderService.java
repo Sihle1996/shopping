@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
-import com.example.backend.service.LoyaltyService;
 import com.example.backend.service.SubscriptionEnforcementService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -47,7 +46,6 @@ public class OrderService {
     private final SimpMessagingTemplate messagingTemplate;
     private final PromotionService promotionService;
     private final EmailService emailService;
-    private final LoyaltyService loyaltyService;
     private final PayFastService payFastService;
     private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final DeliveryFeeService deliveryFeeService;
@@ -234,18 +232,6 @@ public class OrderService {
             }
         }
 
-        // Apply loyalty points redemption (authenticated users only)
-        double loyaltyDiscount = 0.0;
-        if (user != null && request.getLoyaltyPointsRedeemed() > 0) {
-            UUID loyaltyTenantId = TenantContext.getCurrentTenantId();
-            if (loyaltyTenantId != null) {
-                loyaltyDiscount = loyaltyService.redeemPoints(user, loyaltyTenantId, request.getLoyaltyPointsRedeemed());
-                discountAmount = BigDecimal.valueOf(discountAmount + loyaltyDiscount)
-                        .setScale(2, RoundingMode.HALF_UP)
-                        .doubleValue();
-            }
-        }
-
         double totalAmount = BigDecimal.valueOf(Math.max(0, subtotal - discountAmount))
                 .setScale(2, RoundingMode.HALF_UP)
                 .doubleValue();
@@ -260,9 +246,6 @@ public class OrderService {
         order.setTotalAmount(totalAmount);
         order.setDiscountAmount(discountAmount);
         order.setPromoCode(appliedPromoCode);
-        if (request.getLoyaltyPointsRedeemed() > 0) {
-            order.setLoyaltyPointsRedeemed(request.getLoyaltyPointsRedeemed());
-        }
         order.setOrderDate(Instant.now());
         if (request.getScheduledDeliveryTime() != null && !request.getScheduledDeliveryTime().isBlank()) {
             Instant scheduled = Instant.parse(request.getScheduledDeliveryTime());
@@ -364,7 +347,6 @@ public class OrderService {
         }
 
         Order saved = orderRepository.save(order);
-        // Loyalty points are awarded on delivery, not on placement
         OrderDTO dto = convertToOrderDTO(saved);
 
         if (user != null) {
@@ -581,7 +563,7 @@ public class OrderService {
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
 
         // Idempotent: re-setting the same status is a no-op — never re-fire the delivered email,
-        // loyalty award, payout debit, or stock side-effects.
+        // payout debit, or stock side-effects.
         if (status != null && status.equals(order.getStatus())) {
             return convertToOrderDTO(order);
         }
@@ -688,10 +670,6 @@ public class OrderService {
                     inventoryLogRepository.save(log);
                 }
             }
-            // Refund any redeemed loyalty points
-            if (order.getUser() != null) {
-                loyaltyService.refundPoints(order.getUser(), order);
-            }
             if (wasConsumed) {
                 payoutLedgerService.recordRefundDebit(order);
             }
@@ -731,7 +709,6 @@ public class OrderService {
         if ("Delivered".equals(status)) {
             payoutLedgerService.recordOrderCredit(updated);
             if (updated.getUser() != null) {
-                loyaltyService.awardPoints(updated.getUser(), updated);
                 webPushService.sendToUser(updated.getUser().getId(),
                         "Order delivered! 🎉", "Your order from " + storeName + " has arrived. Enjoy!");
             }
@@ -1023,9 +1000,6 @@ public class OrderService {
                     "status", "Cancelled"
             ));
         }
-
-        // Refund any redeemed loyalty points
-        loyaltyService.refundPoints(order.getUser(), order);
 
         // PayFast refunds are handled manually via the PayFast merchant dashboard
         if (order.getPaymentId() != null && !order.getPaymentId().isBlank()) {

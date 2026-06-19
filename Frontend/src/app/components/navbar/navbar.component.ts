@@ -5,7 +5,6 @@ import { takeUntil, filter } from 'rxjs/operators';
 import { AuthService } from 'src/app/services/auth.service';
 import { TenantService } from 'src/app/services/tenant.service';
 import { CartService } from 'src/app/services/cart.service';
-import { LoyaltyService } from 'src/app/services/loyalty.service';
 import { environment } from 'src/environments/environment';
 import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
 
@@ -24,7 +23,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
   hasStoreContext = false;
   isLandingPage = true;
   cartCount = 0;
-  loyaltyPoints = 0;
 
   private destroy$ = new Subject<void>();
 
@@ -32,7 +30,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     public authService: AuthService,
     private tenantService: TenantService,
     private cartService: CartService,
-    private loyaltyService: LoyaltyService,
     public router: Router
   ) {}
 
@@ -72,17 +69,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.cartService.cartItemCount
       .pipe(takeUntil(this.destroy$))
       .subscribe(count => this.cartCount = count);
-
-    // Loyalty points — load once when logged in
-    this.loadLoyalty();
-  }
-
-  private loadLoyalty(): void {
-    if (!this.authService.isLoggedIn() || !this.hasStoreContext) return;
-    this.loyaltyService.getBalance().pipe(takeUntil(this.destroy$)).subscribe({
-      next: b => this.loyaltyPoints = b.balance || 0,
-      error: () => {}
-    });
   }
 
   ngOnDestroy() {
@@ -97,7 +83,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     const name = localStorage.getItem('storeName');
     if (name) this.storeName = name;
     this.hasStoreContext = !!localStorage.getItem('tenantId');
-    this.loadLoyalty();
   }
 
   get cartRoute(): string {
@@ -175,7 +160,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.hasStoreContext = false;
     this.menuOpen = false;
     this.cartCount = 0;
-    this.loyaltyPoints = 0;
     this.authService.logout();
   }
 }

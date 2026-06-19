@@ -132,11 +132,6 @@ public class Tenant {
     @Builder.Default
     private BigDecimal driverEarningPercent = new BigDecimal("10.00");
 
-    // Whether this store runs its own loyalty-points program
-    @Column(nullable = false)
-    @Builder.Default
-    private Boolean loyaltyEnabled = true;
-
     // Enrollment — structured details (captured via form, not just document uploads)
     @Column(length = 20)
     private String cipcNumber;

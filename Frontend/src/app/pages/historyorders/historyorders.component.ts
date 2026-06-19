@@ -5,7 +5,6 @@ import { AuthService } from 'src/app/services/auth.service';
 import { CartService } from 'src/app/services/cart.service';
 import { NotificationService } from 'src/app/services/notification.service';
 import { ReviewService } from 'src/app/services/review.service';
-import { LoyaltyService, LoyaltyBalance } from 'src/app/services/loyalty.service';
 import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -68,9 +67,6 @@ export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewCheck
   reviewSubmitting = false;
   reviewedOrderIds = new Set<string>();
 
-  // Loyalty
-  loyaltyBalance: LoyaltyBalance | null = null;
-
   // Tracking
   trackingOrder: OrderDTO | null = null;
   private trackingMap: mapboxgl.Map | null = null;
@@ -83,7 +79,6 @@ export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewCheck
     private cartService: CartService,
     private notificationService: NotificationService,
     private reviewService: ReviewService,
-    private loyaltyService: LoyaltyService,
     private toastr: ToastrService,
     private router: Router
   ) {}
@@ -91,9 +86,6 @@ export class HistoryordersComponent implements OnInit, OnDestroy, AfterViewCheck
   ngOnInit(): void {
     this.fetchOrders();
     this.loadReviewedOrders(); // persist the "reviewed" state across reloads (was in-session only)
-    if (this.authService.isLoggedIn()) {
-      this.loyaltyService.getBalance().subscribe({ next: b => this.loyaltyBalance = b, error: () => {} });
-    }
     const userId = this.authService.getUserId();
     if (userId) {
       this.wsSub = this.notificationService.subscribeToOrderUpdates(userId).subscribe(updated => {

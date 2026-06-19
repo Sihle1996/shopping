@@ -315,20 +315,6 @@
           </div>
         </div>
 
-        <!-- Loyalty program toggle -->
-        <div class="mt-4 flex items-center justify-between p-4 rounded-xl border border-borderColor bg-gray-50">
-          <div>
-            <p class="text-sm font-semibold text-textDark">Loyalty Program</p>
-            <p class="text-xs text-textMuted">Customers earn points on orders (1 pt per R10) and redeem them for discounts (100 pts = R10)</p>
-          </div>
-          <button type="button" (click)="settings.loyaltyEnabled = !settings.loyaltyEnabled"
-                  class="relative w-12 h-6 rounded-full transition-colors focus:outline-none flex-shrink-0 ml-3"
-                  [ngClass]="settings.loyaltyEnabled ? 'bg-green-500' : 'bg-gray-300'">
-            <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
-                  [ngClass]="settings.loyaltyEnabled ? 'translate-x-6' : 'translate-x-0'"></span>
-          </button>
-        </div>
-
         <!-- ETA + Cuisine -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>

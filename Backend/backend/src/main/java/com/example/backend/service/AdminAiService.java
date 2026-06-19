@@ -1238,7 +1238,7 @@ public class AdminAiService {
                 "  \"category\": \"<one of: Delivery, Food quality, Payment/Refund, Order issue, Account, Other>\",\n" +
                 "  \"urgency\": \"<low | medium | high>\",\n" +
                 "  \"draftReply\": \"<a warm, concise reply TO THE CUSTOMER, 2-4 sentences, South African English; own the issue, apologise if warranted, and give a clear next step or resolution. No placeholders or brackets.>\",\n" +
-                "  \"suggestedResolution\": \"<short internal note for the owner, e.g. 'Refund the delivery fee', 'Offer R20 loyalty credit', 'Explain — no refund due'>\",\n" +
+                "  \"suggestedResolution\": \"<short internal note for the owner, e.g. 'Refund the delivery fee', 'Explain — no refund due'>\",\n" +
                 "  \"suggestedStatus\": \"<OPEN | IN_PROGRESS | RESOLVED>\"\n" +
                 "}";
         String raw = anthropicClient.call(prompt);

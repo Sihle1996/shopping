@@ -125,7 +125,7 @@ public class TenantController {
             String phone, String email, String address, Double latitude, Double longitude,
             Integer deliveryRadiusKm, java.math.BigDecimal deliveryFeeBase, Boolean isOpen,
             java.math.BigDecimal minimumOrderAmount, Integer estimatedDeliveryMinutes,
-            String openingHours, String cuisineType, Boolean loyaltyEnabled) {
+            String openingHours, String cuisineType) {
         static PublicTenantDto from(Tenant t) {
             return new PublicTenantDto(
                 t.getId(), t.getName(), t.getSlug(), t.getLogoUrl(), t.getPrimaryColor(),
@@ -134,7 +134,7 @@ public class TenantController {
                 t.getPhone(), t.getEmail(), t.getAddress(), t.getLatitude(), t.getLongitude(),
                 t.getDeliveryRadiusKm(), t.getDeliveryFeeBase(), t.getIsOpen(),
                 t.getMinimumOrderAmount(), t.getEstimatedDeliveryMinutes(),
-                t.getOpeningHours(), t.getCuisineType(), t.getLoyaltyEnabled());
+                t.getOpeningHours(), t.getCuisineType());
         }
     }
 

@@ -17,14 +17,6 @@
     <ul class="hidden md:flex items-center gap-1" [ngClass]="isAdmin ? 'pr-6' : ''">
       <ng-container *ngIf="isCustomer">
 
-        <!-- Loyalty points pill -->
-        <li *ngIf="isLoggedIn && loyaltyPoints > 0">
-          <a routerLink="/profile" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors">
-            <i class="bi bi-star-fill text-amber-400 text-xs"></i>
-            {{ loyaltyPoints }} pts
-          </a>
-        </li>
-
         <!-- Cart with badge -->
         <li *ngIf="isLoggedIn && hasStoreContext" class="relative">
           <a [routerLink]="cartRoute" routerLinkActive="text-primary bg-primary-50"
@@ -112,16 +104,6 @@
       <button (click)="toggleMenu()" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
         <i class="bi bi-x-lg text-textDark text-sm"></i>
       </button>
-    </div>
-
-    <!-- Loyalty banner in drawer -->
-    <div *ngIf="isLoggedIn && loyaltyPoints > 0 && isCustomer"
-         class="mx-3 mt-3 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
-      <i class="bi bi-star-fill text-amber-400"></i>
-      <div>
-        <p class="text-xs font-bold text-amber-700">{{ loyaltyPoints }} loyalty points</p>
-        <p class="text-[10px] text-amber-600">Worth R{{ (loyaltyPoints / 10).toFixed(2) }}</p>
-      </div>
     </div>
 
     <!-- Drawer Links -->

@@ -180,9 +180,9 @@ public class CapabilityRegistry {
                 null,
                 List.of(
                         enumField("resolution", true,
-                                List.of("apology_only", "refund_delivery_fee", "refund_full", "loyalty_credit", "escalate"),
-                                "Pick from get_customer_context: high-value customer + SLA breach -> refund delivery fee "
-                                        + "or loyalty credit; minor issue -> apology; payment/fraud -> escalate; full refund only when clearly warranted"),
+                                List.of("apology_only", "refund_delivery_fee", "refund_full", "escalate"),
+                                "Pick from get_customer_context: high-value customer + SLA breach -> refund delivery fee; "
+                                        + "minor issue -> apology; payment/fraud -> escalate; full refund only when clearly warranted"),
                         field("status", "enum", false, null,
                                 List.of("OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"), null,
                                 "Usually RESOLVED once handled — see workflow")),

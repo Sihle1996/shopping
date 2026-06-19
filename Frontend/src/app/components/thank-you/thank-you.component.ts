@@ -8,7 +8,6 @@ interface OrderSummary {
   subtotal?: number;
   deliveryFee?: number;
   address: string;
-  loyaltyEarned: number;
   estimatedDeliveryMinutes?: number;
 }
 

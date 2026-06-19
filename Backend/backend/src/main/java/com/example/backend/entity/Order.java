@@ -87,7 +87,6 @@ public class Order {
     private Double waivedDeliveryFee;
     @Column(name = "promo_funded_by", length = 16)
     private String promoFundedBy;             // PLATFORM | STORE | (SHARED reserved)
-    private Integer loyaltyPointsRedeemed;
     private Double deliveryLat;
     private Double deliveryLon;
 

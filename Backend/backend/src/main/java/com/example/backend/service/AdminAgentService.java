@@ -305,7 +305,7 @@ public class AdminAgentService {
             availability, adjust stock, change a price, add a new menu item, move an order along its lifecycle
             (only valid workflow transitions), create a promotion (choose its scope — one PRODUCT, a CATEGORY,
             or ALL — deliberately from the data; don't default to store-wide),
-            or change a store setting (delivery fee, minimum order, driver earning %%, loyalty on/off,
+            or change a store setting (delivery fee, minimum order, driver earning %%,
             estimated delivery minutes, delivery radius). Note: the delivery_fee setting is only the store's
             BASE fee — customers are charged base + a platform per-km distance premium (so a far address
             costs more), and the per-km rate is platform-set, not store-changeable. These are NOT applied
@@ -449,7 +449,7 @@ public class AdminAgentService {
         tools.add(tool("get_settings",
                 "The store's configuration: contact phone/email, delivery fee (the store's BASE fee — "
                         + "customers also pay a platform per-km distance premium), minimum order, delivery "
-                        + "radius, estimated delivery minutes, driver earning %, loyalty on/off, and platform commission %.",
+                        + "radius, estimated delivery minutes, driver earning %, and platform commission %.",
                 Map.of(), List.of()));
 
         tools.add(tool("subscription",
@@ -505,8 +505,8 @@ public class AdminAgentService {
                         + "the per-km distance premium customers also pay is platform-set and not changeable here.",
                 Map.of("setting", enumProp("Which setting to change",
                             List.of("delivery_fee", "minimum_order", "driver_earning_percent",
-                                    "loyalty_enabled", "estimated_delivery_minutes", "delivery_radius_km")),
-                       "value", numProp("New value (for loyalty_enabled use 1 = on, 0 = off)")),
+                                    "estimated_delivery_minutes", "delivery_radius_km")),
+                       "value", numProp("New value")),
                 List.of("setting", "value")));
 
         tools.add(tool("propose_set_order_status",
@@ -994,7 +994,6 @@ public class AdminAgentService {
         m.put("deliveryRadiusKm", t.getDeliveryRadiusKm());
         m.put("estimatedDeliveryMinutes", t.getEstimatedDeliveryMinutes());
         m.put("driverEarningPercent", t.getDriverEarningPercent());
-        m.put("loyaltyEnabled", t.getLoyaltyEnabled());
         m.put("platformCommissionPercent", t.getPlatformCommissionPercent());
         return json(m);
     }
@@ -1143,7 +1142,6 @@ public class AdminAgentService {
             case "delivery_fee": return "Set base delivery fee to R" + String.format(Locale.UK, "%.2f", v);
             case "minimum_order": return "Set minimum order to R" + String.format(Locale.UK, "%.2f", v);
             case "driver_earning_percent": return "Set driver earnings to " + (int) v + "%";
-            case "loyalty_enabled": return v != 0 ? "Turn loyalty ON" : "Turn loyalty OFF";
             case "estimated_delivery_minutes": return "Set estimated delivery to " + (int) v + " min";
             case "delivery_radius_km": return "Set delivery radius to " + (int) v + " km";
             default: return null;
@@ -1295,7 +1293,7 @@ public class AdminAgentService {
                 if (cur != null && !cur.canTransitionTo(tgt)) {
                     return "An order that's '" + cur.label() + "' can't move to '" + tgt.label() + "'.";
                 }
-                orderService.updateOrderStatus(orderId, tgt.label()); // reuses stock/loyalty/payout side-effects
+                orderService.updateOrderStatus(orderId, tgt.label()); // reuses stock/payout side-effects
                 return "Order moved to " + tgt.label() + ".";
             }
             case "update_setting": {
@@ -1306,7 +1304,6 @@ public class AdminAgentService {
                     case "delivery_fee": t.setDeliveryFeeBase(java.math.BigDecimal.valueOf(v)); break;
                     case "minimum_order": t.setMinimumOrderAmount(java.math.BigDecimal.valueOf(v)); break;
                     case "driver_earning_percent": t.setDriverEarningPercent(java.math.BigDecimal.valueOf(v)); break;
-                    case "loyalty_enabled": t.setLoyaltyEnabled(v != 0); break;
                     case "estimated_delivery_minutes": t.setEstimatedDeliveryMinutes((int) v); break;
                     case "delivery_radius_km": t.setDeliveryRadiusKm((int) v); break;
                     default: throw new IllegalArgumentException("Unknown setting: " + s);

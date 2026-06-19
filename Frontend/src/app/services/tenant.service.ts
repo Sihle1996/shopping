@@ -22,7 +22,6 @@ export interface Tenant {
   estimatedDeliveryMinutes?: number;
   openingHours?: string;
   cuisineType?: string;
-  loyaltyEnabled?: boolean;
   // Internal/financial fields (commission, subscription, etc.) are intentionally
   // NOT exposed by the public /api/tenants/{slug} endpoint.
 }
