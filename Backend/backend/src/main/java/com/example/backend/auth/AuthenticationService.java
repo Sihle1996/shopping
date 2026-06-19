@@ -311,17 +311,25 @@ public class AuthenticationService {
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setResetOtp(null);
         user.setResetOtpExpiresAt(null);
+        user.setTokenVersion(user.getTokenVersion() + 1); // a password reset invalidates all existing tokens
         repository.save(user);
     }
 
     public void changePassword(User user, String currentPassword, String newPassword) {
-        if (currentPassword == null || newPassword == null || newPassword.length() < 6) {
-            throw new IllegalArgumentException("New password must be at least 6 characters");
+        if (currentPassword == null || newPassword == null || newPassword.length() < 8) {
+            throw new IllegalArgumentException("New password must be at least 8 characters");
         }
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             throw new IllegalArgumentException("Current password is incorrect");
         }
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setTokenVersion(user.getTokenVersion() + 1); // invalidate all existing tokens on password change
+        repository.save(user);
+    }
+
+    /** Revoke all of a user's existing JWTs (explicit logout / forced sign-out everywhere). */
+    public void revokeTokens(User user) {
+        user.setTokenVersion(user.getTokenVersion() + 1);
         repository.save(user);
     }
 }

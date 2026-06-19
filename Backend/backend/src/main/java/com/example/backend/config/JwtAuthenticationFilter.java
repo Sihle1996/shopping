@@ -53,7 +53,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-                if (jwtService.isTokenValid(jwt, userDetails)) {
+                if (jwtService.isTokenValid(jwt, userDetails)
+                        && (!(userDetails instanceof com.example.backend.user.User vu)
+                            || jwtService.extractTokenVersion(jwt) == vu.getTokenVersion())) {
                     // Authorities and tenant come from the DB-loaded user, NEVER from the token's own
                     // role/tenant claims. A forged or stale claim must not grant privileges or switch
                     // tenants — so even a leaked signing key cannot escalate beyond impersonating the

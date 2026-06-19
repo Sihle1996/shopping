@@ -118,6 +118,11 @@ export class AuthService {
   }
 
   logout(): void {
+    // Best-effort server-side revocation (bumps the token version so the JWT can't be reused even if it
+    // was copied). Fire BEFORE clearing the token so the request still carries it.
+    if (localStorage.getItem(this.tokenKey)) {
+      this.http.post(`${this.apiUrlAuth}/logout`, {}).subscribe({ next: () => {}, error: () => {} });
+    }
     ['token', 'userId', 'tenantId', 'storeName', 'storeSlug', 'brandPrimary',
      'customer_lat', 'customer_lon', 'customer_address'].forEach(k => localStorage.removeItem(k));
     this.injector.get(AdminService).reset();

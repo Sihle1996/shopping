@@ -47,6 +47,11 @@ public class User implements UserDetails {
     @Builder.Default
     private boolean active = true;
 
+    // Bumped on logout / password change / reset to invalidate all previously-issued JWTs for this user.
+    @Column(name = "token_version", nullable = false)
+    @Builder.Default
+    private int tokenVersion = 0;
+
     @Column(name = "email_verified", nullable = false, columnDefinition = "boolean default true")
     @Builder.Default
     private boolean emailVerified = true;

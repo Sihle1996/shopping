@@ -51,6 +51,11 @@ public class JwtService {
         return id != null ? UUID.fromString(id) : null;
     }
 
+    public int extractTokenVersion(String token) {
+        Integer v = extractClaim(token, claims -> claims.get("tv", Integer.class));
+        return v != null ? v : 0;
+    }
+
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
     }
@@ -73,6 +78,7 @@ public class JwtService {
 
         if (userDetails instanceof User user) {
             claims.put("role", "ROLE_" + user.getRole().name());
+            claims.put("tv", user.getTokenVersion());
         }
 
         return buildToken(claims, userDetails, jwtExpiration);

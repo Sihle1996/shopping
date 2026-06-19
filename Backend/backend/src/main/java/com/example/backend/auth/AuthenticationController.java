@@ -101,6 +101,15 @@ public class AuthenticationController {
         }
     }
 
+    // Server-side logout: bump the user's token version so every previously-issued JWT stops validating
+    // (log out everywhere). The client still clears its local token too.
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@AuthenticationPrincipal User user) {
+        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        service.revokeTokens(user);
+        return ResponseEntity.ok(Map.of("message", "Logged out"));
+    }
+
     @GetMapping("/users")
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public ResponseEntity<List<User>> getAllUsers() {
