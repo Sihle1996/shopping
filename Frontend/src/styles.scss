@@ -185,7 +185,7 @@ html, body {
   /* Toggle switches: the knob (bg-white + transition-transform) must stay LIGHT, not darken into
    * the track; the off-track (bg-gray-200/300) darkens so the light knob contrasts. Icon holders
    * (bg-white without transition-transform) are unaffected. */
-  .bg-white.transition-transform { background-color: #f3f5f7 !important; }
+  .bg-white.rounded-full.transition-transform { background-color: #f3f5f7 !important; }  /* toggle knob only (not the sliding drawer) */
   .bg-gray-300 { background-color: #39424c !important; }   /* toggle off-tracks */
 
   /* Selected segment pill (bg-white text-primary) -> brand-tinted dark; brand text kept. */
