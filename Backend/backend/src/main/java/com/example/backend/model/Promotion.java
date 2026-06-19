@@ -87,6 +87,14 @@ public class Promotion {
     @Column(nullable = false)
     private boolean featured;
 
+    // Redemption cap: null maxRedemptions = unlimited (existing behaviour). redemptionCount is bumped
+    // each time the code is used on a placed order; once it reaches the cap the code stops validating.
+    @Column(name = "max_redemptions")
+    private Integer maxRedemptions;
+
+    @Column(name = "redemption_count", nullable = false)
+    private int redemptionCount;
+
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id")

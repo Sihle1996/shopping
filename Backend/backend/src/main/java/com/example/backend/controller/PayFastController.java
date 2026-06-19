@@ -32,6 +32,7 @@ public class PayFastController {
     private final OrderRepository orderRepository;
     private final PlanCommissionService planCommissionService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final com.example.backend.repository.SubscriptionPlanRepository subscriptionPlanRepository;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -44,12 +45,25 @@ public class PayFastController {
 
     public PayFastController(PayFastService payFastService, TenantRepository tenantRepository,
                              OrderRepository orderRepository, PlanCommissionService planCommissionService,
-                             SimpMessagingTemplate messagingTemplate) {
+                             SimpMessagingTemplate messagingTemplate,
+                             com.example.backend.repository.SubscriptionPlanRepository subscriptionPlanRepository) {
         this.payFastService = payFastService;
         this.tenantRepository = tenantRepository;
         this.orderRepository = orderRepository;
         this.planCommissionService = planCommissionService;
         this.messagingTemplate = messagingTemplate;
+        this.subscriptionPlanRepository = subscriptionPlanRepository;
+    }
+
+    // Static fallback ZAR prices (mirrors AdminSubscriptionController); the subscription_plans table is
+    // the source of truth when present.
+    private static final java.util.Map<String, Double> PLAN_PRICES_ZAR = java.util.Map.of(
+            "BASIC", 299.00, "PRO", 699.00, "ENTERPRISE", 1499.00);
+
+    private double priceForPlan(String planName) {
+        return subscriptionPlanRepository.findByName(planName)
+                .map(p -> p.getPrice() != null ? p.getPrice().doubleValue() : null)
+                .orElse(PLAN_PRICES_ZAR.getOrDefault(planName, 0.0));
     }
 
     /**
@@ -76,6 +90,12 @@ public class PayFastController {
             } catch (IllegalArgumentException ignored) {
                 // paymentId isn't a real order UUID (legacy/placeholder) — keep the provided amount.
             }
+        } else {
+            // Subscription: charge the SERVER plan price, never the client's "total" (so a store can't
+            // pay R1 for ENTERPRISE). m_payment_id is "sub-{tenantId}-{planName}".
+            String planName = paymentId.substring(paymentId.lastIndexOf('-') + 1);
+            double planPrice = priceForPlan(planName);
+            if (planPrice > 0) total = planPrice;
         }
 
         // Return the customer to the exact domain they checked out from (crave-it.co.za,
@@ -171,7 +191,7 @@ public class PayFastController {
 
         if ("COMPLETE".equalsIgnoreCase(paymentStatus)) {
             if (mPaymentId != null && mPaymentId.startsWith("sub-")) {
-                activateSubscription(mPaymentId);
+                activateSubscription(mPaymentId, amountGross);
             } else if (mPaymentId != null) {
                 confirmOrderPayment(mPaymentId, pfPaymentId, amountGross);
             }
@@ -184,7 +204,7 @@ public class PayFastController {
      * Activates a store subscription when PayFast confirms payment.
      * m_payment_id format: "sub-{tenantId}-{planName}"
      */
-    private void activateSubscription(String mPaymentId) {
+    private void activateSubscription(String mPaymentId, String amountGross) {
         // Strip "sub-" prefix, then split on the last "-" to get tenantId and planName
         String payload = mPaymentId.substring(4); // remove "sub-"
         int lastDash = payload.lastIndexOf('-');
@@ -194,6 +214,23 @@ public class PayFastController {
         }
         String tenantIdStr = payload.substring(0, lastDash);
         String planName = payload.substring(lastDash + 1);
+
+        // Verify the amount paid matches the server-side plan price — otherwise a store could initiate a
+        // sub payment for R1 and still get activated on a paid plan.
+        double expected = priceForPlan(planName);
+        if (amountGross != null && expected > 0) {
+            try {
+                double paid = Double.parseDouble(amountGross);
+                if (Math.abs(paid - expected) > 0.01) {
+                    System.err.println("PayFast ITN: subscription amount mismatch for " + mPaymentId
+                            + " — expected " + expected + " got " + paid);
+                    return;
+                }
+            } catch (NumberFormatException nfe) {
+                System.err.println("PayFast ITN: unparseable subscription amount: " + amountGross);
+                return;
+            }
+        }
         try {
             UUID tenantId = UUID.fromString(tenantIdStr);
             tenantRepository.findById(tenantId).ifPresentOrElse(tenant -> {

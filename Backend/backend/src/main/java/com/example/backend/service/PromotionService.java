@@ -67,10 +67,17 @@ public class PromotionService {
             result = promotionRepository.findByCodeAndActiveTrue(code.trim());
         }
         OffsetDateTime now = OffsetDateTime.now();
-        // A code is only valid inside its window — must have started AND not yet ended.
+        // A code is only valid inside its window (started, not ended) AND under its redemption cap.
         return result.filter(p ->
                 (p.getStartAt() == null || !p.getStartAt().isAfter(now))
-                        && (p.getEndAt() == null || p.getEndAt().isAfter(now)));
+                        && (p.getEndAt() == null || p.getEndAt().isAfter(now))
+                        && (p.getMaxRedemptions() == null || p.getRedemptionCount() < p.getMaxRedemptions()));
+    }
+
+    /** Count one redemption toward a promo's cap (atomic). No-op if the promo has no cap. */
+    @org.springframework.transaction.annotation.Transactional
+    public void recordRedemption(UUID promoId) {
+        if (promoId != null) promotionRepository.incrementRedemption(promoId);
     }
 
     /**

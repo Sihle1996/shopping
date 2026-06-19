@@ -44,6 +44,13 @@ public class AuthenticationService {
     private final java.util.concurrent.ConcurrentHashMap<String, long[]> loginAttempts =
             new java.util.concurrent.ConcurrentHashMap<>();
 
+    private static final long EMAIL_COOLDOWN_MS = 60_000L;
+    // email(lowercased) -> last transactional-email epoch. Per-recipient cooldown so an attacker can't
+    // loop forgot-password / resend-verification to mailbomb an address — IP-independent, so it holds
+    // even when X-Forwarded-For is spoofed.
+    private final java.util.concurrent.ConcurrentHashMap<String, Long> emailCooldowns =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
     public AuthenticationResponse register(RegisterRequest request, UUID tenantId) {
         if (request.getPassword() == null || request.getPassword().length() < 8) {
             throw new IllegalArgumentException("Password must be at least 8 characters");
@@ -206,6 +213,7 @@ public class AuthenticationService {
         if (user == null || user.isEmailVerified()) {
             return;
         }
+        if (emailOnCooldown(user.getEmail())) return; // anti-mailbomb: cap per-recipient send rate
         String token = UUID.randomUUID().toString();
         user.setEmailVerificationToken(token);
         user.setEmailVerificationTokenExpiresAt(Instant.now().plusSeconds(86400));
@@ -245,12 +253,24 @@ public class AuthenticationService {
                 .anyMatch(a -> "ROLE_SUPERADMIN".equals(a.getAuthority()));
     }
 
+    /** True if we've already sent a transactional email to this address within the cooldown window. */
+    private boolean emailOnCooldown(String email) {
+        if (email == null) return true;
+        String key = email.trim().toLowerCase();
+        long now = System.currentTimeMillis();
+        Long last = emailCooldowns.get(key);
+        if (last != null && now - last < EMAIL_COOLDOWN_MS) return true;
+        emailCooldowns.put(key, now);
+        return false;
+    }
+
     public void sendPasswordResetOtp(String email) {
         // Generic by design: never reveal whether the account exists (prevents enumeration).
         User user = repository.findByEmail(email).orElse(null);
         if (user == null) {
             return;
         }
+        if (emailOnCooldown(user.getEmail())) return; // anti-mailbomb: cap per-recipient send rate
 
         String otp = String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
         user.setResetOtp(otp);

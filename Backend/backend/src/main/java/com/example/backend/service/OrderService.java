@@ -235,6 +235,7 @@ public class OrderService {
                 appliedPromoCode = promo.getCode() != null ? promo.getCode().trim() : promo.getTitle();
                 appliedPromoType = promoType;
                 appliedPromoId = promo.getId();
+                promotionService.recordRedemption(promo.getId()); // count usage toward any redemption cap
             }
         }
 
