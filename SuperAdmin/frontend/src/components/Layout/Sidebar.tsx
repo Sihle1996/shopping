@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { LayoutDashboard, Store, Users, Truck, CreditCard, LogOut, Zap, ShoppingBag, Settings, ClipboardCheck, Wallet, LifeBuoy, TrendingUp, ScrollText } from 'lucide-react'
+import { LayoutDashboard, Store, Users, Truck, CreditCard, LogOut, Zap, ShoppingBag, Settings, ClipboardCheck, Wallet, LifeBuoy, TrendingUp, ScrollText, RotateCcw, Sparkles } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { enrollmentService } from '../../services/enrollment.service'
 import { supportService } from '../../services/support.service'
@@ -16,6 +16,8 @@ const navItems = [
   { to: '/escalations', label: 'Escalations', icon: LifeBuoy },
   { to: '/payouts', label: 'Payouts', icon: Wallet },
   { to: '/finance', label: 'Finance', icon: TrendingUp },
+  { to: '/refunds', label: 'Refunds', icon: RotateCcw },
+  { to: '/ai-usage', label: 'AI Usage', icon: Sparkles },
   { to: '/audit', label: 'Audit Log', icon: ScrollText },
   { to: '/settings', label: 'Settings', icon: Settings }
 ]

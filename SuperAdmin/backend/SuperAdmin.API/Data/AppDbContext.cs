@@ -15,6 +15,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<SupportMessage> SupportMessages => Set<SupportMessage>();
     public DbSet<Payout> Payouts => Set<Payout>();
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
+    public DbSet<LedgerEntry> LedgerEntries => Set<LedgerEntry>();
+    public DbSet<TenantAiUsage> TenantAiUsages => Set<TenantAiUsage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

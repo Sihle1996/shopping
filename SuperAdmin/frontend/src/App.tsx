@@ -15,6 +15,8 @@ import Settings from './pages/Settings/Settings'
 import Enrollment from './pages/Enrollment/Enrollment'
 import Payouts from './pages/Payouts/Payouts'
 import Finance from './pages/Finance/Finance'
+import Refunds from './pages/Refunds/Refunds'
+import AiUsage from './pages/AiUsage/AiUsage'
 import AuditLog from './pages/AuditLog/AuditLog'
 import Escalations from './pages/Escalations/Escalations'
 import NotFound from './pages/NotFound/NotFound'
@@ -50,6 +52,8 @@ export default function App() {
               <Route path="/enrollment" element={<Enrollment />} />
               <Route path="/payouts" element={<Payouts />} />
               <Route path="/finance" element={<Finance />} />
+              <Route path="/refunds" element={<Refunds />} />
+              <Route path="/ai-usage" element={<AiUsage />} />
               <Route path="/audit" element={<AuditLog />} />
               <Route path="/escalations" element={<Escalations />} />
             </Route>
