@@ -146,12 +146,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
     } else if (this.userRole === 'ROLE_DRIVER') {
       this.router.navigate(['/driver/dashboard']);
     } else {
+      const current = this.router.url.split('?')[0].replace(/\/$/, '');
+      // From the store list, the brand logo returns to the landing page.
+      if (current === '/stores') {
+        this.router.navigate(['/']);
+        return;
+      }
       const slug = localStorage.getItem('storeSlug');
       if (slug) {
         if (this.authService.isLoggedIn()) {
           this.router.navigate(['/store', slug]);
         } else {
-          const current = this.router.url.split('?')[0].replace(/\/$/, '');
           this.router.navigate(current === `/store/${slug}` ? ['/stores'] : ['/store', slug]);
         }
       } else {
