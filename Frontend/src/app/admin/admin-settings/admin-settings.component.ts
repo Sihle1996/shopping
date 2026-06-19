@@ -237,7 +237,11 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
   }
 
   isUploadingCover = false;
-  readonly suggestedColors = ['#E76F51', '#264653', '#2A9D8F', '#E9C46A', '#F4A261', '#1F2937'];
+  readonly suggestedColors = [
+    '#E76F51', '#EF4444', '#F97316', '#F59E0B', '#E9C46A', '#84CC16',
+    '#22C55E', '#10B981', '#2A9D8F', '#14B8A6', '#06B6D4', '#3B82F6',
+    '#6366F1', '#8B5CF6', '#D946EF', '#EC4899', '#264653', '#1F2937',
+  ];
 
   onCoverSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];

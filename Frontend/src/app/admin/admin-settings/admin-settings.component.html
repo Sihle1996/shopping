@@ -197,7 +197,7 @@
                 <input type="text" [(ngModel)]="settings.primaryColor" placeholder="#E76F51"
                        class="flex-1 px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm font-numbers text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
               </div>
-              <div class="flex items-center gap-1.5 mt-2">
+              <div class="flex flex-wrap items-center gap-1.5 mt-2">
                 <button *ngFor="let c of suggestedColors" type="button" (click)="settings.primaryColor = c"
                         class="w-6 h-6 rounded-full border border-borderColor hover:scale-110 transition-transform" [style.background]="c" [title]="c"></button>
               </div>
@@ -241,7 +241,7 @@
                 <span class="absolute top-2 right-2 text-[10px] font-semibold text-white bg-emerald-500 px-2 py-0.5 rounded-full">Open</span>
               </div>
               <div class="px-4 pb-4">
-                <div class="flex items-end gap-3 -mt-7">
+                <div class="flex items-end gap-3 -mt-7 relative z-10">
                   <img *ngIf="settings.logoUrl" [src]="getLogoUrl()" class="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-sm bg-white flex-shrink-0" />
                   <div *ngIf="!settings.logoUrl" class="w-14 h-14 rounded-2xl border-2 border-white shadow-sm flex items-center justify-center text-white font-bold text-xl flex-shrink-0" [style.background]="settings.primaryColor">
                     {{ settings.name?.charAt(0) || 'S' }}
