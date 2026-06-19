@@ -146,6 +146,35 @@ html, body {
   /* Brand-tinted active-nav chip so the light primary-50 tint reads on dark. */
   .bg-primary-50 { background-color: color-mix(in srgb, var(--brand-primary) 22%, var(--admin-card)) !important; }
 
+  /* Light brand-tint GRADIENT cards (e.g. from-primary-50 to-white, via-white) -> flat dark card.
+   * Brand gradients (from-primary / to-primary-600) are deliberately NOT listed, so they stay as
+   * accents (the pink copilot/alert headers, upgrade banners, etc.). */
+  .from-primary-50, .from-primary-100, .from-gray-50 {
+    --tw-gradient-from: var(--admin-card) var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: rgb(26 33 40 / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+  }
+  .to-white, .to-primary-50 { --tw-gradient-to: var(--admin-card) var(--tw-gradient-to-position) !important; }
+  .via-white { --tw-gradient-stops: var(--tw-gradient-from), var(--admin-card) var(--tw-gradient-via-position), var(--tw-gradient-to) !important; }
+
+  /* Solid brand-tint cards (incl. the bg-primary-50/40 opacity variant) -> subtle brand-tinted dark. */
+  .bg-primary-100, [class~="bg-primary-50/40"] { background-color: color-mix(in srgb, var(--brand-primary) 14%, var(--admin-card)) !important; }
+
+  /* Coloured status tints -> a dark tint of the same hue (keeps the red/amber/green meaning). */
+  .bg-red-50, .bg-rose-50, .bg-red-100 { background-color: color-mix(in srgb, #ef4444 16%, var(--admin-card)) !important; }
+  .bg-amber-50, .bg-yellow-50, .bg-amber-100, .bg-yellow-100 { background-color: color-mix(in srgb, #f59e0b 16%, var(--admin-card)) !important; }
+  .bg-green-50, .bg-emerald-50, .bg-green-100, .bg-emerald-100 { background-color: color-mix(in srgb, #10b981 16%, var(--admin-card)) !important; }
+  .bg-blue-50, .bg-sky-50, .bg-blue-100 { background-color: color-mix(in srgb, #3b82f6 16%, var(--admin-card)) !important; }
+  /* Lighten dark status text so it reads on those dark tints. */
+  .text-red-700, .text-red-600 { color: #fca5a5 !important; }
+  .text-amber-700, .text-amber-600 { color: #fcd34d !important; }
+  .text-green-700, .text-emerald-700 { color: #6ee7b7 !important; }
+  .text-blue-700 { color: #93c5fd !important; }
+
+  /* AI briefing / copilot prose (hardcoded dark #1f2937) -> light on the dark cards. */
+  .ai-prose, .ai-prose .ai-h { color: var(--admin-text) !important; }
+  .ai-prose strong { color: color-mix(in srgb, var(--brand-primary) 55%, var(--admin-text)) !important; }
+
   /* Form controls on dark */
   input:not([type="color"]), select, textarea {
     background-color: var(--admin-canvas) !important;
