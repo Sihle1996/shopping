@@ -19,6 +19,12 @@ public class Order
     [Column("total_amount")]
     public double TotalAmount { get; set; }
 
+    [Column("platform_fee")]
+    public double? PlatformFee { get; set; }
+
+    [Column("delivery_fee")]
+    public double? DeliveryFee { get; set; }
+
     [Column("order_date")]
     public DateTime OrderDate { get; set; }
 }
