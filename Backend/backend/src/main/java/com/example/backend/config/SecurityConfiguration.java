@@ -69,7 +69,6 @@ public class SecurityConfiguration {
                                 "/api/tenants/{slug}",
                                 "/api/tenants/{slug}/hours",
                                 "/api/tenants/{slug}/delivery-fee",
-                                "/api/map/route",
                                 "/api/orders/place",
                                 "/api/orders/track/**",
                                 "/api/payfast/**",

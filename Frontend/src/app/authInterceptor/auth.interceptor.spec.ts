@@ -45,10 +45,10 @@ describe('AuthInterceptor', () => {
     req.flush({});
   });
 
-  it('does not modify external requests', () => {
+  it('does not attach the token to external (third-party) requests', () => {
     localStorage.setItem('token', 'abc');
 
-    const url = 'https://openrouteservice.org/test';
+    const url = 'https://api.mapbox.com/geocoding/v5/test';
     http.get(url).subscribe();
 
     const req = httpMock.expectOne(url);

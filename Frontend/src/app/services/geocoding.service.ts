@@ -19,7 +19,6 @@ export interface AddressSuggestion {
   providedIn: 'root'
 })
 export class GeocodingService {
-  private orsApiKey = '5b3ce3597851110001cf62486eb46190526c4d34b70f6499f1ba52c2';
   private userLat: number | null = null;
   private userLon: number | null = null;
 
@@ -36,16 +35,15 @@ export class GeocodingService {
   }
 
   /**
-   * Main autocomplete — uses Mapbox (better SA coverage + POI support)
-   * Falls back to ORS if Mapbox token is not configured.
+   * Main autocomplete — uses Mapbox (better SA coverage + POI support).
    */
   autocomplete(query: string): Observable<AddressSuggestion[]> {
     if (environment.mapboxToken) {
       return this.autocompleteMapbox(query).pipe(
-        catchError(() => this.autocompleteORS(query))
+        catchError(() => of([] as AddressSuggestion[]))
       );
     }
-    return this.autocompleteORS(query);
+    return of([] as AddressSuggestion[]);
   }
 
   /**
@@ -81,33 +79,6 @@ export class GeocodingService {
           isPoi
         } as AddressSuggestion;
       }))
-    );
-  }
-
-  /**
-   * OpenRouteService fallback autocomplete
-   */
-  private autocompleteORS(query: string): Observable<AddressSuggestion[]> {
-    const focusParams = (this.userLat && this.userLon)
-      ? `&focus.point.lat=${this.userLat}&focus.point.lon=${this.userLon}`
-      : '';
-    const url = `https://api.openrouteservice.org/geocode/autocomplete?api_key=${this.orsApiKey}` +
-      `&text=${encodeURIComponent(query)}&boundary.country=ZA${focusParams}`;
-
-    return this.http.get<any>(url).pipe(
-      map(response =>
-        (response.features || []).map((f: any) => ({
-          label: f.properties.label,
-          name: f.properties.name || f.properties.label,
-          street: f.properties.street,
-          city: f.properties.locality,
-          zip: f.properties.postalcode || '',
-          lat: f.geometry.coordinates[1],
-          lon: f.geometry.coordinates[0],
-          isPoi: false
-        } as AddressSuggestion))
-      ),
-      catchError(() => of([] as AddressSuggestion[]))
     );
   }
 
@@ -179,12 +150,4 @@ export class GeocodingService {
     );
   }
 
-  /**
-   * Get route between 2 points (backend proxy)
-   */
-  getRoute(start: [number, number], end: [number, number]): Observable<any> {
-    return this.http.post(`${environment.apiUrl}/api/map/route`, {
-      coordinates: [start, end]
-    }, { headers: { 'Content-Type': 'application/json' } });
-  }
 }
