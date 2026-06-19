@@ -54,7 +54,9 @@ public class FavouriteController {
             return ResponseEntity.ok(Map.of("favourited", false));
         }
 
-        MenuItem menuItem = menuItemRepository.findById(menuItemId).orElse(null);
+        // Verify the item actually belongs to the caller's tenant before attaching the tenant
+        // context to it — otherwise a customer could favourite another store's menu item.
+        MenuItem menuItem = menuItemRepository.findByIdAndTenant_Id(menuItemId, tenantId).orElse(null);
         if (menuItem == null) return ResponseEntity.notFound().build();
         Tenant tenant = tenantRepository.findById(tenantId).orElse(null);
         if (tenant == null) return ResponseEntity.notFound().build();

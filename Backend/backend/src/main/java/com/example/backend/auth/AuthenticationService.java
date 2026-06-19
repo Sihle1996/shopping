@@ -37,6 +37,13 @@ public class AuthenticationService {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+    private static final int MAX_FAILED_LOGINS = 5;
+    private static final long LOGIN_LOCK_MS = 15 * 60 * 1000L;
+    // email(lowercased) -> [failCount, lockUntilEpochMillis]. Per-account brute-force lockout,
+    // independent of client IP (so a spoofed X-Forwarded-For cannot dodge it).
+    private final java.util.concurrent.ConcurrentHashMap<String, long[]> loginAttempts =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
     public AuthenticationResponse register(RegisterRequest request, UUID tenantId) {
         if (request.getPassword() == null || request.getPassword().length() < 8) {
             throw new IllegalArgumentException("Password must be at least 8 characters");
@@ -99,12 +106,25 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
+        String lockKey = request.getEmail() == null ? "" : request.getEmail().trim().toLowerCase();
+        long now = System.currentTimeMillis();
+        long[] state = loginAttempts.get(lockKey);
+        if (state != null && state[1] > now) {
+            // Account temporarily locked after too many failed attempts (brute-force defence).
+            throw new IllegalArgumentException("Too many failed attempts. Please try again later.");
+        }
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
+        } catch (org.springframework.security.core.AuthenticationException ex) {
+            recordFailedLogin(lockKey, now);
+            throw ex;
+        }
+        loginAttempts.remove(lockKey); // a successful login clears the counter
 
         UUID tenantId = TenantContext.getCurrentTenantId();
         User user = (tenantId != null)
@@ -125,6 +145,16 @@ public class AuthenticationService {
                 .token(jwtToken)
                 .approvalStatus(approvalStatus)
                 .build();
+    }
+
+    private void recordFailedLogin(String key, long now) {
+        loginAttempts.compute(key, (k, v) -> {
+            long count = (v == null ? 0 : v[0]) + 1;
+            // Lock for the cooldown once the threshold is hit; reset the count for after the lock.
+            return count >= MAX_FAILED_LOGINS
+                    ? new long[]{0, now + LOGIN_LOCK_MS}
+                    : new long[]{count, 0};
+        });
     }
 
     public AuthenticationResponse verifyEmail(String token) {
@@ -170,10 +200,11 @@ public class AuthenticationService {
     }
 
     public void resendVerificationEmail(String email) {
-        User user = repository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("No account found with that email"));
-        if (user.isEmailVerified()) {
-            throw new IllegalArgumentException("This account is already verified");
+        // Generic by design: never reveal whether the account exists or is already verified
+        // (prevents account-enumeration). Silently no-op when there's nothing to send.
+        User user = repository.findByEmail(email).orElse(null);
+        if (user == null || user.isEmailVerified()) {
+            return;
         }
         String token = UUID.randomUUID().toString();
         user.setEmailVerificationToken(token);

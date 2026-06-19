@@ -97,6 +97,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                                 return null;
                             }
                         }
+                    } else if (StompCommand.SEND.equals(accessor.getCommand())) {
+                        // Every inbound SEND (e.g. /app/drivers, /app/admin/notify) must come from an
+                        // authenticated principal established at CONNECT. Unauthenticated sends are
+                        // dropped, so a client can't spoof a driver's GPS or write to another user's row.
+                        if (accessor.getUser() == null) {
+                            return null;
+                        }
                     }
                 }
                 return message;

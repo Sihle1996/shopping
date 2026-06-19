@@ -26,6 +26,7 @@ public class AuditController {
     public ResponseEntity<?> recent(@RequestParam(defaultValue = "0") int page,
                                     @RequestParam(defaultValue = "30") int size) {
         UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return ResponseEntity.status(403).build();
         var pageable = PageRequest.of(Math.max(0, page), Math.min(Math.max(1, size), 100));
         return ResponseEntity.ok(repository.findByTenantIdOrderByCreatedAtDesc(tenantId, pageable).map(this::toDto));
     }
@@ -33,6 +34,7 @@ public class AuditController {
     @GetMapping("/order/{orderId}")
     public ResponseEntity<?> forOrder(@PathVariable UUID orderId) {
         UUID tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return ResponseEntity.status(403).build();
         return ResponseEntity.ok(
                 repository.findByTenantIdAndEntityIdOrderByCreatedAtDesc(tenantId, orderId).stream().map(this::toDto).toList());
     }

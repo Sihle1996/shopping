@@ -64,6 +64,8 @@ public class AdminAiController {
     /** POST /api/admin/ai/complete-name — append-only name completion for Smart Fill ghost text */
     @PostMapping("/complete-name")
     public ResponseEntity<Map<String, Object>> completeName(@RequestBody Map<String, String> body) {
+        gate(subscriptionEnforcementService::assertCopilotQuota);   // metered like /query
+        aiUsageService.record("COPILOT_PROMPT", 0, 0);
         String partial = body.getOrDefault("partial", "");
         String category = body.getOrDefault("category", "");
         return ResponseEntity.ok(adminAiService.completeName(partial, category));
@@ -72,6 +74,8 @@ public class AdminAiController {
     /** POST /api/admin/ai/describe-item — generate description + tags for a menu item */
     @PostMapping("/describe-item")
     public ResponseEntity<Map<String, Object>> describeItem(@RequestBody AiDescribeItemRequest req) {
+        gate(subscriptionEnforcementService::assertCopilotQuota);   // metered like /query
+        aiUsageService.record("COPILOT_PROMPT", 0, 0);
         Map<String, Object> result = adminAiService.describeItem(req.name(), req.price(), req.category());
         return ResponseEntity.ok(result);
     }

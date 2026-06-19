@@ -42,9 +42,13 @@ public class PushNotificationController {
 
     @DeleteMapping("/unsubscribe")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> unsubscribe(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> unsubscribe(
+            @RequestBody Map<String, String> body,
+            @AuthenticationPrincipal User user) {
+        if (user == null) return ResponseEntity.status(401).build();
         String endpoint = body.get("endpoint");
-        if (endpoint != null) webPushService.deleteSubscription(endpoint);
+        // Scope the delete to the caller — never let one user kill another user's subscription.
+        if (endpoint != null) webPushService.deleteSubscription(endpoint, user.getId());
         return ResponseEntity.noContent().build();
     }
 }

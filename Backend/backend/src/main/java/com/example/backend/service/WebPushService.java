@@ -77,6 +77,12 @@ public class WebPushService {
         pushSubscriptionRepo.deleteByEndpoint(endpoint);
     }
 
+    /** Ownership-scoped unsubscribe: only removes the subscription if it belongs to this user. */
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteSubscription(String endpoint, UUID userId) {
+        pushSubscriptionRepo.deleteByEndpointAndUser_Id(endpoint, userId);
+    }
+
     @Async
     public void sendToUser(UUID userId, String title, String body) {
         if (!enabled) return;

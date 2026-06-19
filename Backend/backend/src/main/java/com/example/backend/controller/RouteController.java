@@ -1,5 +1,6 @@
 package com.example.backend.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -12,7 +13,8 @@ import java.util.Map;
 @CrossOrigin(origins = "http://localhost:4200") // ✅ Allow frontend requests
 public class RouteController {
 
-    private static final String ORS_API_KEY = "5b3ce3597851110001cf62486eb46190526c4d34b70f6499f1ba52c2";
+    @Value("${ors.api-key:}")
+    private String orsApiKey;
 
     @PostMapping("/route")
     public ResponseEntity<?> getRoute(@RequestBody Map<String, Object> payload) {
@@ -20,7 +22,7 @@ public class RouteController {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(ORS_API_KEY); // ✅ cleaner method
+        headers.setBearerAuth(orsApiKey); // ✅ cleaner method
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
 

@@ -105,7 +105,10 @@ public class ReviewController {
         review.setOrder(order);
         review.setUser(user);
         review.setRating(rating);
-        review.setComment(body.get("comment") != null ? body.get("comment").toString() : null);
+        // Cap the free-text comment server-side so a hostile client can't store an unbounded blob.
+        String comment = body.get("comment") != null ? body.get("comment").toString() : null;
+        if (comment != null && comment.length() > 1000) comment = comment.substring(0, 1000);
+        review.setComment(comment);
         if (order.getTenant() != null) review.setTenant(order.getTenant());
 
         reviewRepository.save(review);
@@ -139,11 +142,10 @@ public class ReviewController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteReview(@PathVariable UUID id) {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        if (tenantId != null) {
-            if (reviewRepository.findByIdAndTenant_Id(id, tenantId).isEmpty()) return ResponseEntity.notFound().build();
-        } else {
-            if (!reviewRepository.existsById(id)) return ResponseEntity.notFound().build();
-        }
+        // Never fall back to an unscoped global delete: without a tenant context there is no
+        // store the caller is allowed to act on, so the review is simply "not found" for them.
+        if (tenantId == null) return ResponseEntity.notFound().build();
+        if (reviewRepository.findByIdAndTenant_Id(id, tenantId).isEmpty()) return ResponseEntity.notFound().build();
         reviewRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("message", "Review deleted."));
     }

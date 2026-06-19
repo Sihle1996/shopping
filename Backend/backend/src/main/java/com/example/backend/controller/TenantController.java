@@ -200,6 +200,13 @@ public class TenantController {
         // New stores start inactive; they must submit documents and be approved
         tenant.setActive(false);
         tenant.setApprovalStatus(Tenant.ApprovalStatus.DRAFT);
+        // Financial/plan fields are SERVER-controlled — never trust the client body. Otherwise a public
+        // registration could mint a 0%-commission ENTERPRISE store. Upgrades happen only through the
+        // authenticated, paid subscription flow.
+        tenant.setSubscriptionPlan("BASIC");
+        tenant.setSubscriptionStatus("TRIAL");
+        tenant.setPlatformCommissionPercent(new java.math.BigDecimal("4.00"));
+        tenant.setDriverEarningPercent(new java.math.BigDecimal("10.00"));
         Tenant saved = tenantRepository.save(tenant);
         return ResponseEntity.created(URI.create("/api/tenants/" + saved.getSlug())).body(saved);
     }
