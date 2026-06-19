@@ -7,6 +7,7 @@ import com.example.backend.entity.OrderRequestDTO;
 import com.example.backend.repository.OrderRepository;
 import com.example.backend.service.OrderService;
 import com.example.backend.user.User;
+import com.example.backend.user.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,7 +31,13 @@ public class OrderController {
     @PostMapping("/place")
     public ResponseEntity<?> placeOrder(@AuthenticationPrincipal User authenticatedUser,
                                         @RequestBody OrderRequestDTO request) {
-        // Guest orders allowed — authenticatedUser may be null
+        // Guest orders allowed — authenticatedUser may be null.
+        // Store accounts (admins/drivers/superadmins) must NOT place customer orders,
+        // including at their own store. Only customers (USER) or guests may order.
+        if (authenticatedUser != null && authenticatedUser.getRole() != Role.USER) {
+            return ResponseEntity.status(403).body(Map.of(
+                "error", "Store accounts cannot place customer orders. Please use a customer account to order."));
+        }
         try {
             OrderDTO orderDTO = orderService.placeOrderFromPayment(request, authenticatedUser);
             return ResponseEntity.ok(orderDTO);

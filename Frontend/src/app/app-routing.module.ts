@@ -8,6 +8,7 @@ import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { ThankYouComponent } from './components/thank-you/thank-you.component';
 import { HistoryordersComponent } from './pages/historyorders/historyorders.component';
 import { UserGuard } from './guards/user.guard';
+import { CustomerGuard } from './guards/customer.guard';
 import { AddressBookComponent } from './pages/address-book/address-book.component';
 import { UserProfileComponent } from './pages/user-profile/user-profile.component';
 import { RegisterRestaurantComponent } from './pages/register-restaurant/register-restaurant.component';
@@ -39,8 +40,8 @@ const routes: Routes = [
     children: [
       { path: '', component: HomeComponent },
       { path: 'product/:id', component: ProductComponent },
-      { path: 'cart', component: CartComponent, canActivate: [UserGuard] },
-      { path: 'checkout', component: CheckoutComponent, canActivate: [UserGuard] },
+      { path: 'cart', component: CartComponent, canActivate: [CustomerGuard] },
+      { path: 'checkout', component: CheckoutComponent, canActivate: [CustomerGuard] },
       { path: 'orders', component: HistoryordersComponent, canActivate: [UserGuard] },
       { path: 'thank-you', component: ThankYouComponent },
       { path: 'favourites', component: FavouritesComponent, canActivate: [UserGuard] },
