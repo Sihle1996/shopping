@@ -55,6 +55,10 @@ public class TenantService {
         if (updates.getEmail() != null) tenant.setEmail(updates.getEmail());
         if (updates.getLogoUrl() != null) tenant.setLogoUrl(updates.getLogoUrl());
         if (updates.getPrimaryColor() != null) tenant.setPrimaryColor(updates.getPrimaryColor());
+        if (updates.getBrandFont() != null) tenant.setBrandFont(updates.getBrandFont());
+        if (updates.getSecondaryColor() != null) tenant.setSecondaryColor(updates.getSecondaryColor());
+        if (updates.getButtonStyle() != null) tenant.setButtonStyle(updates.getButtonStyle());
+        if (updates.getButtonFill() != null) tenant.setButtonFill(updates.getButtonFill());
         if (updates.getCoverImageUrl() != null) tenant.setCoverImageUrl(updates.getCoverImageUrl());
         if (updates.getStoreDescription() != null) tenant.setStoreDescription(updates.getStoreDescription());
         if (updates.getInstagramUrl() != null) tenant.setInstagramUrl(updates.getInstagramUrl());

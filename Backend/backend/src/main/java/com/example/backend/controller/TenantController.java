@@ -120,6 +120,7 @@ public class TenantController {
     /** Customer-facing store config. Excludes internal/financial fields. */
     public record PublicTenantDto(
             UUID id, String name, String slug, String logoUrl, String primaryColor,
+            String brandFont, String secondaryColor, String buttonStyle, String buttonFill,
             String coverImageUrl, String storeDescription,
             String instagramUrl, String facebookUrl, String websiteUrl,
             String phone, String email, String address, Double latitude, Double longitude,
@@ -129,6 +130,7 @@ public class TenantController {
         static PublicTenantDto from(Tenant t) {
             return new PublicTenantDto(
                 t.getId(), t.getName(), t.getSlug(), t.getLogoUrl(), t.getPrimaryColor(),
+                t.getBrandFont(), t.getSecondaryColor(), t.getButtonStyle(), t.getButtonFill(),
                 t.getCoverImageUrl(), t.getStoreDescription(),
                 t.getInstagramUrl(), t.getFacebookUrl(), t.getWebsiteUrl(),
                 t.getPhone(), t.getEmail(), t.getAddress(), t.getLatitude(), t.getLongitude(),

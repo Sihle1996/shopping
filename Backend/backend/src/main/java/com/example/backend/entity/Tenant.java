@@ -34,6 +34,19 @@ public class Tenant {
     @Column(length = 7)
     private String primaryColor;
 
+    /** Storefront branding theme (PRO). Font key e.g. "poppins"/"playfair"; accent colour; CTA style. */
+    @Column(length = 40)
+    private String brandFont;
+
+    @Column(length = 7)
+    private String secondaryColor;
+
+    @Column(length = 20)
+    private String buttonStyle;   // "rounded" | "pill" | "square"
+
+    @Column(length = 20)
+    private String buttonFill;    // "solid" | "outline"
+
     /** Storefront hero/cover image (Cloudinary URL) — the store page's banner. */
     private String coverImageUrl;
 

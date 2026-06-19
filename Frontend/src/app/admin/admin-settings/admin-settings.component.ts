@@ -19,6 +19,10 @@ interface TenantSettings {
   slug: string;
   logoUrl: string;
   primaryColor: string;
+  brandFont: string;
+  secondaryColor: string;
+  buttonStyle: string;
+  buttonFill: string;
   coverImageUrl: string;
   storeDescription: string;
   instagramUrl: string;
@@ -51,6 +55,10 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     slug: '',
     logoUrl: '',
     primaryColor: '#E76F51',
+    brandFont: 'poppins',
+    secondaryColor: '#264653',
+    buttonStyle: 'rounded',
+    buttonFill: 'solid',
     coverImageUrl: '',
     storeDescription: '',
     instagramUrl: '',
@@ -194,7 +202,15 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
       headers: this.getHeaders()
     }).subscribe({
       next: (data) => {
-        this.settings = data;
+        // Existing stores have NULL theme fields — fall back to defaults so the controls/preview work.
+        this.settings = {
+          ...data,
+          brandFont: data.brandFont || 'poppins',
+          secondaryColor: data.secondaryColor || '#264653',
+          buttonStyle: data.buttonStyle || 'rounded',
+          buttonFill: data.buttonFill || 'solid',
+        };
+        this.previewBrandFont();
         this.isLoading = false;
       },
       error: () => {
@@ -242,6 +258,77 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     '#22C55E', '#10B981', '#2A9D8F', '#14B8A6', '#06B6D4', '#3B82F6',
     '#6366F1', '#8B5CF6', '#D946EF', '#EC4899', '#264653', '#1F2937',
   ];
+
+  // ── Storefront theme: fonts, button style, one-click presets (PRO) ──────────
+  readonly brandFonts = [
+    { key: 'poppins',    label: 'Poppins',          stack: "'Poppins', sans-serif" },
+    { key: 'montserrat', label: 'Montserrat',       stack: "'Montserrat', sans-serif" },
+    { key: 'inter',      label: 'Inter',            stack: "'Inter', sans-serif" },
+    { key: 'playfair',   label: 'Playfair Display', stack: "'Playfair Display', serif" },
+    { key: 'lora',       label: 'Lora',             stack: "'Lora', serif" },
+    { key: 'oswald',     label: 'Oswald',           stack: "'Oswald', sans-serif" },
+    { key: 'nunito',     label: 'Nunito',           stack: "'Nunito', sans-serif" },
+  ];
+  readonly buttonShapes = [
+    { key: 'rounded', label: 'Rounded' },
+    { key: 'pill',    label: 'Pill' },
+    { key: 'square',  label: 'Square' },
+  ];
+  readonly buttonFills = [
+    { key: 'solid',   label: 'Solid' },
+    { key: 'outline', label: 'Outline' },
+  ];
+  /** One-click looks — each sets colour + accent + font + button together. */
+  readonly themePresets = [
+    { key: 'bold',    label: 'Bold',    primaryColor: '#EF4444', secondaryColor: '#1F2937', brandFont: 'oswald',   buttonStyle: 'square',  buttonFill: 'solid' },
+    { key: 'minimal', label: 'Minimal', primaryColor: '#1F2937', secondaryColor: '#6B7280', brandFont: 'inter',    buttonStyle: 'rounded', buttonFill: 'outline' },
+    { key: 'warm',    label: 'Warm',    primaryColor: '#E76F51', secondaryColor: '#E9C46A', brandFont: 'nunito',   buttonStyle: 'pill',    buttonFill: 'solid' },
+    { key: 'night',   label: 'Night',   primaryColor: '#8B5CF6', secondaryColor: '#264653', brandFont: 'poppins',  buttonStyle: 'rounded', buttonFill: 'solid' },
+    { key: 'elegant', label: 'Elegant', primaryColor: '#264653', secondaryColor: '#E9C46A', brandFont: 'playfair', buttonStyle: 'rounded', buttonFill: 'outline' },
+  ];
+
+  applyPreset(p: any): void {
+    this.settings.primaryColor = p.primaryColor;
+    this.settings.secondaryColor = p.secondaryColor;
+    this.settings.brandFont = p.brandFont;
+    this.settings.buttonStyle = p.buttonStyle;
+    this.settings.buttonFill = p.buttonFill;
+    this.previewBrandFont();
+  }
+
+  /** Resolve the chosen font key to a CSS stack (for the live preview). */
+  previewFontStack(): string {
+    return this.brandFonts.find(f => f.key === this.settings.brandFont)?.stack || "'Poppins', sans-serif";
+  }
+
+  /** Border-radius for the preview CTA from the chosen button shape. */
+  previewBtnRadius(): string {
+    return this.settings.buttonStyle === 'pill' ? '9999px'
+         : this.settings.buttonStyle === 'square' ? '0' : '0.75rem';
+  }
+
+  /** Inject the chosen Google Font <link> so the live preview renders in it. Idempotent. */
+  previewBrandFont(): void {
+    const map: Record<string, string> = {
+      poppins: 'Poppins:wght@400;500;600;700',
+      montserrat: 'Montserrat:wght@400;600;700',
+      inter: 'Inter:wght@400;500;600',
+      playfair: 'Playfair+Display:wght@500;600;700',
+      lora: 'Lora:wght@400;500;600',
+      oswald: 'Oswald:wght@400;500;600',
+      nunito: 'Nunito:wght@400;600;700',
+    };
+    const family = map[this.settings.brandFont];
+    if (!family) return;
+    let link = document.getElementById('brand-font-preview') as HTMLLinkElement | null;
+    if (!link) {
+      link = document.createElement('link');
+      link.id = 'brand-font-preview';
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+    }
+    link.href = `https://fonts.googleapis.com/css2?family=${family}&display=swap`;
+  }
 
   onCoverSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
