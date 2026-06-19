@@ -25,7 +25,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
             "/api/login",
             "/api/register",
             "/api/tenants/register",
-            "/api/forgot-password"
+            "/api/forgot-password",
+            "/api/reset-password"
     );
     private static final int AUTH_LIMIT = 5;
     private static final int GUEST_LIMIT = 3;

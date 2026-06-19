@@ -66,7 +66,11 @@ public class PromotionService {
         } else {
             result = promotionRepository.findByCodeAndActiveTrue(code.trim());
         }
-        return result.filter(p -> p.getEndAt() == null || p.getEndAt().isAfter(OffsetDateTime.now()));
+        OffsetDateTime now = OffsetDateTime.now();
+        // A code is only valid inside its window — must have started AND not yet ended.
+        return result.filter(p ->
+                (p.getStartAt() == null || !p.getStartAt().isAfter(now))
+                        && (p.getEndAt() == null || p.getEndAt().isAfter(now)));
     }
 
     /**

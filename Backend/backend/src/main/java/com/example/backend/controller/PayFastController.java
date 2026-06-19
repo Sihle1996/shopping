@@ -64,6 +64,20 @@ public class PayFastController {
         String itemName = request.getOrDefault("itemName", "Food Order");
         String paymentId = request.getOrDefault("paymentId", "order-" + System.currentTimeMillis());
 
+        // For a food order the amount is NEVER trusted from the client — derive it from the persisted
+        // order so a tampered "total" cannot change what the customer is charged (or be driven to ~0).
+        if (!paymentId.startsWith("sub-")) {
+            try {
+                Order order = orderRepository.findById(UUID.fromString(paymentId)).orElse(null);
+                if (order != null) {
+                    total = order.getTotalAmount()
+                            + (order.getDeliveryFee() != null ? order.getDeliveryFee() : 0.0);
+                }
+            } catch (IllegalArgumentException ignored) {
+                // paymentId isn't a real order UUID (legacy/placeholder) — keep the provided amount.
+            }
+        }
+
         // Return the customer to the exact domain they checked out from (crave-it.co.za,
         // www, or the Vercel URL) so their session/order context survives the round-trip.
         String base = resolveFrontendBase(origin);
@@ -208,7 +222,7 @@ public class PayFastController {
                         double paidAmount = Double.parseDouble(amountGross);
                         double expectedTotal = order.getTotalAmount()
                                 + (order.getDeliveryFee() != null ? order.getDeliveryFee() : 0.0);
-                        if (Math.abs(paidAmount - expectedTotal) > 1.0) {
+                        if (Math.abs(paidAmount - expectedTotal) > 0.01) {
                             System.err.println("PayFast ITN: amount mismatch for order " + orderId
                                     + " — expected " + expectedTotal + " got " + paidAmount);
                             return;

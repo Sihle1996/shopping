@@ -46,7 +46,7 @@ public class AdminOrderController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getOrderById(@PathVariable UUID id) {
         try {
-            OrderDTO orderDTO = orderService.getOrderById(id);
+            OrderDTO orderDTO = orderService.getOrderById(id, null);
             return ResponseEntity.ok(orderDTO);
         } catch (RuntimeException e) {
             log.error("Order not found for id {}", id, e);

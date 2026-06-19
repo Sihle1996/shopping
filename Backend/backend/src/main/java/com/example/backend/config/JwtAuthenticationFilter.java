@@ -49,29 +49,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             userEmail = jwtService.extractUsername(jwt);
             UUID userId = jwtService.extractUserId(jwt);
-            String role = jwtService.extractRole(jwt);
-            UUID tenantId = jwtService.extractTenantId(jwt);
-
             request.setAttribute("userId", userId);
 
-            // A tenant-scoped token (store ADMIN/DRIVER carry a tenantId claim) is AUTHORITATIVE for
-            // tenant context: it OVERRIDES any client-supplied X-Tenant-Id header, so a logged-in user
-            // can never act on another store by spoofing the header. Customers (USER) and SUPERADMIN
-            // carry no tenantId, so their tenant is still resolved from the header/path by TenantFilter.
-            if (tenantId != null) {
-                TenantContext.setCurrentTenantId(tenantId);
-            }
-
-            if (userEmail != null && StringUtils.hasText(role) && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
                 if (jwtService.isTokenValid(jwt, userDetails)) {
-                    List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
-
+                    // Authorities and tenant come from the DB-loaded user, NEVER from the token's own
+                    // role/tenant claims. A forged or stale claim must not grant privileges or switch
+                    // tenants — so even a leaked signing key cannot escalate beyond impersonating the
+                    // (correctly-roled) subject.
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, authorities
+                            userDetails, null, userDetails.getAuthorities()
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                    // Pin a store ADMIN/DRIVER to their OWN tenant (from the DB), overriding any
+                    // client-supplied X-Tenant-Id. Customers/SUPERADMIN carry no tenant here, so
+                    // TenantFilter still resolves theirs from the path/header.
+                    if (userDetails instanceof com.example.backend.user.User u && u.getTenant() != null) {
+                        TenantContext.setCurrentTenantId(u.getTenant().getId());
+                    }
                 }
             }
         } catch (Exception ex) {

@@ -30,8 +30,13 @@ public class User implements UserDetails {
     private UUID id;
 
     private String email;
+    @JsonIgnore
     private String password;
+    @JsonIgnore
     private String resetOtp;
+    @JsonIgnore
+    @Column(name = "reset_otp_expires_at")
+    private java.time.Instant resetOtpExpiresAt;
 
     @Enumerated(EnumType.STRING)
     private Role role;
@@ -47,14 +52,17 @@ public class User implements UserDetails {
     private boolean emailVerified = true;
 
     @Column(name = "email_verification_token")
+    @JsonIgnore
     private String emailVerificationToken;
 
     @Column(name = "email_verification_token_expires_at")
+    @JsonIgnore
     private java.time.Instant emailVerificationTokenExpiresAt;
 
     // The new email a user is changing TO — NOT applied to `email` (their login) until they confirm it via
     // the verification link sent to the new address. Reuses emailVerificationToken for the confirmation.
     @Column(name = "pending_email")
+    @JsonIgnore
     private String pendingEmail;
 
     private String fullName;

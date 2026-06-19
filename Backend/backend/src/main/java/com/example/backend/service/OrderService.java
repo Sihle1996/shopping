@@ -195,18 +195,22 @@ public class OrderService {
                     discountAmount = subtotal * pct;
                 } else if (promo.getAppliesTo() == Promotion.AppliesTo.PRODUCT
                         && promo.getTargetProductId() != null) {
-                    for (OrderItemDTO item : request.getItems()) {
-                        if (promo.getTargetProductId().equals(item.getProductId())) {
-                            discountAmount += item.getPrice() * item.getQuantity() * pct;
+                    // Discount off the SERVER line total (oi.getTotalPrice()), never the client's
+                    // item.price — otherwise a forged high price inflates the % discount and zeroes
+                    // the order total.
+                    for (OrderItem oi : orderItems) {
+                        if (oi.getMenuItem() != null && promo.getTargetProductId().equals(oi.getMenuItem().getId())) {
+                            discountAmount += oi.getTotalPrice() * pct;
                         }
                     }
                 } else if (promo.getAppliesTo() == Promotion.AppliesTo.CATEGORY
                         && promo.getTargetCategoryName() != null) {
                     String targetCat = promo.getTargetCategoryName().toLowerCase();
-                    for (OrderItemDTO item : request.getItems()) {
-                        String itemCat = productCategoryMap.getOrDefault(item.getProductId(), "").toLowerCase();
+                    for (OrderItem oi : orderItems) {
+                        UUID pid = oi.getMenuItem() != null ? oi.getMenuItem().getId() : null;
+                        String itemCat = productCategoryMap.getOrDefault(pid, "").toLowerCase();
                         if (itemCat.equals(targetCat)) {
-                            discountAmount += item.getPrice() * item.getQuantity() * pct;
+                            discountAmount += oi.getTotalPrice() * pct;
                         }
                     }
                 } else if (promo.getAppliesTo() == Promotion.AppliesTo.MULTI_PRODUCT
@@ -214,13 +218,15 @@ public class OrderService {
                     java.util.Set<UUID> targetIds = promo.getTargetProducts().stream()
                             .map(com.example.backend.entity.MenuItem::getId)
                             .collect(java.util.stream.Collectors.toSet());
-                    for (OrderItemDTO item : request.getItems()) {
-                        if (targetIds.contains(item.getProductId())) {
-                            discountAmount += item.getPrice() * item.getQuantity() * pct;
+                    for (OrderItem oi : orderItems) {
+                        if (oi.getMenuItem() != null && targetIds.contains(oi.getMenuItem().getId())) {
+                            discountAmount += oi.getTotalPrice() * pct;
                         }
                     }
                 }
             }
+            // A discount can never exceed the server-computed subtotal (defense in depth).
+            discountAmount = Math.min(discountAmount, subtotal);
             // A promo counts as applied only if it conferred value (a discount or free delivery);
             // a scoped promo that matched nothing in the cart must not tag the order.
             applied = freeDelivery || discountAmount > 0;
@@ -405,13 +411,23 @@ public class OrderService {
         return orders.stream().map(this::convertToOrderDTO).toList();
     }
 
-    public OrderDTO getOrderById(UUID orderId) {
+    public OrderDTO getOrderById(UUID orderId, User caller) {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        Order order = (tenantId != null)
-                ? orderRepository.findByIdAndTenant_Id(orderId, tenantId)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"))
-                : orderRepository.findById(orderId)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+        Order order;
+        if (tenantId != null) {
+            // Store-scoped read (admin) — only orders belonging to the caller's store.
+            order = orderRepository.findByIdAndTenant_Id(orderId, tenantId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+        } else {
+            // Customer-facing read — the caller may only see their OWN order (no cross-customer IDOR).
+            order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+            boolean owns = caller != null && order.getUser() != null
+                    && order.getUser().getId().equals(caller.getId());
+            if (!owns) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found");
+            }
+        }
         return convertToOrderDTO(order);
     }
 

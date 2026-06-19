@@ -16,9 +16,9 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.beans.factory.annotation.Value;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
-import java.util.Random;
 import java.util.UUID;
 
 @Service
@@ -35,7 +35,12 @@ public class AuthenticationService {
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     public AuthenticationResponse register(RegisterRequest request, UUID tenantId) {
+        if (request.getPassword() == null || request.getPassword().length() < 8) {
+            throw new IllegalArgumentException("Password must be at least 8 characters");
+        }
         // Check if the user already exists within this tenant (or globally if no tenant)
         if (tenantId != null) {
             repository.findByEmailAndTenant_Id(request.getEmail(), tenantId)
@@ -57,6 +62,13 @@ public class AuthenticationService {
         if (tenantId != null) {
             tenant = tenantRepository.findById(tenantId)
                     .orElseThrow(() -> new IllegalArgumentException("Tenant not found with ID: " + tenantId));
+            // Claim-once: a store gets its ADMIN only from the first owner to register during
+            // onboarding. Once a store has an admin, public registration with its tenantId must NOT
+            // mint another admin — otherwise anyone who knows a store's id could self-register as its
+            // owner and take it over.
+            if (repository.countByRoleAndTenant_Id(Role.ADMIN, tenant.getId()) > 0) {
+                throw new IllegalArgumentException("This store already has an owner account.");
+            }
         }
 
         // Create and save the user — ADMIN if registering with a tenant, USER otherwise
@@ -186,11 +198,15 @@ public class AuthenticationService {
     }
 
     public void sendPasswordResetOtp(String email) {
-        User user = repository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("No account found with that email"));
+        // Generic by design: never reveal whether the account exists (prevents enumeration).
+        User user = repository.findByEmail(email).orElse(null);
+        if (user == null) {
+            return;
+        }
 
-        String otp = String.format("%06d", new Random().nextInt(999999));
+        String otp = String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
         user.setResetOtp(otp);
+        user.setResetOtpExpiresAt(Instant.now().plusSeconds(900)); // 15 minutes
         repository.save(user);
 
         String html = "<div style='font-family:sans-serif;padding:32px;max-width:480px;margin:0 auto;background:#fff;border-radius:12px;'>"
@@ -206,15 +222,27 @@ public class AuthenticationService {
     }
 
     public void resetPassword(String email, String otp, String newPassword) {
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new IllegalArgumentException("Password must be at least 8 characters");
+        }
+        // Generic error: never reveal whether the account exists.
         User user = repository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("No account found with that email"));
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired OTP"));
 
-        if (user.getResetOtp() == null || !user.getResetOtp().equals(otp)) {
+        if (user.getResetOtp() == null || otp == null || !user.getResetOtp().equals(otp)) {
+            throw new IllegalArgumentException("Invalid or expired OTP");
+        }
+        // Enforce the 15-minute lifetime that the email promises. Expired/used codes are cleared.
+        if (user.getResetOtpExpiresAt() == null || Instant.now().isAfter(user.getResetOtpExpiresAt())) {
+            user.setResetOtp(null);
+            user.setResetOtpExpiresAt(null);
+            repository.save(user);
             throw new IllegalArgumentException("Invalid or expired OTP");
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setResetOtp(null);
+        user.setResetOtpExpiresAt(null);
         repository.save(user);
     }
 

@@ -79,9 +79,10 @@ public class OrderController {
 
     // ✅ Get order by ID
     @GetMapping("/{id}")
-    public ResponseEntity<?> getOrderById(@PathVariable UUID id) {
+    public ResponseEntity<?> getOrderById(@PathVariable UUID id,
+                                          @AuthenticationPrincipal User authenticatedUser) {
         try {
-            OrderDTO orderDTO = orderService.getOrderById(id);
+            OrderDTO orderDTO = orderService.getOrderById(id, authenticatedUser);
             return ResponseEntity.ok(orderDTO);
         } catch (RuntimeException e) {
             return ResponseEntity.status(404).body("Order not found.");

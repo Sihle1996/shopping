@@ -181,7 +181,11 @@ public class SupportController {
     public ResponseEntity<?> storeMessage(@PathVariable UUID id, @RequestBody Map<String, String> body,
                                           @AuthenticationPrincipal User user) {
         SupportTicket ticket = ticketRepository.findById(id).orElse(null);
-        if (ticket == null) return ResponseEntity.notFound().build();
+        // Tenant ownership: a store admin may only touch tickets belonging to their own store.
+        if (ticket == null || ticket.getTenant() == null
+                || !ticket.getTenant().getId().equals(TenantContext.getCurrentTenantId())) {
+            return ResponseEntity.notFound().build();
+        }
         String text = body.get("body");
         if (text == null || text.isBlank()) return ResponseEntity.badRequest().body(Map.of("error", "Message is required"));
         addMessage(ticket, "STORE", user.getEmail(), text);
@@ -194,7 +198,10 @@ public class SupportController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> update(@PathVariable UUID id,
                                     @RequestBody Map<String, String> body) {
-        return ticketRepository.findById(id).map(ticket -> {
+        return ticketRepository.findById(id)
+            .filter(t -> t.getTenant() != null
+                    && t.getTenant().getId().equals(TenantContext.getCurrentTenantId()))
+            .map(ticket -> {
             if (body.containsKey("status")) {
                 try {
                     ticket.setStatus(SupportTicket.TicketStatus.valueOf(body.get("status")));

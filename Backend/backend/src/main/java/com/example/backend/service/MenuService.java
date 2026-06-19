@@ -187,10 +187,16 @@ public class MenuService {
 
     private void setTenantOnEntity(MenuItem item) {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        if (tenantId != null && item.getTenant() == null) {
+        if (tenantId != null) {
+            // ALWAYS pin to the caller's tenant — never trust a client-supplied tenant on the bound
+            // entity. The old `item.getTenant() == null` guard let an admin set tenant.id in the body
+            // and create a menu item in another store (cross-tenant mass-assignment).
             Tenant tenant = tenantRepository.findById(tenantId)
                     .orElseThrow(() -> new RuntimeException("Tenant not found"));
             item.setTenant(tenant);
+        } else {
+            // No tenant context — refuse any client-supplied tenant rather than persist it.
+            item.setTenant(null);
         }
     }
 }
