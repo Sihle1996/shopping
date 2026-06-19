@@ -13,6 +13,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<StoreDocument> StoreDocuments => Set<StoreDocument>();
     public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();
     public DbSet<SupportMessage> SupportMessages => Set<SupportMessage>();
+    public DbSet<Payout> Payouts => Set<Payout>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

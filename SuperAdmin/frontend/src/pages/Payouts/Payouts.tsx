@@ -52,16 +52,16 @@ export default function Payouts() {
 
   const { data: payouts = [], isLoading } = useQuery<Payout[]>({
     queryKey: ['superadmin-payouts'],
-    queryFn: async () => { const { data } = await api.get<Payout[]>('/superadmin/payouts'); return data }
+    queryFn: async () => { const { data } = await api.get<Payout[]>('/payouts'); return data }
   })
 
   const { data: tenants = [] } = useQuery<Tenant[]>({
     queryKey: ['tenants-list'],
-    queryFn: async () => { const { data } = await api.get<Tenant[]>('/superadmin/tenants'); return data }
+    queryFn: async () => { const { data } = await api.get<Tenant[]>('/payouts/tenants'); return data }
   })
 
   const createMutation = useMutation({
-    mutationFn: (body: object) => api.post('/superadmin/payouts', body),
+    mutationFn: (body: object) => api.post('/payouts', body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['superadmin-payouts'] })
       setShowCreate(false)
@@ -72,7 +72,7 @@ export default function Payouts() {
 
   const markPaidMutation = useMutation({
     mutationFn: ({ id, reference }: { id: string; reference: string }) =>
-      api.patch(`/superadmin/payouts/${id}`, { status: 'PAID', reference }),
+      api.patch(`/payouts/${id}`, { status: 'PAID', reference }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['superadmin-payouts'] })
       setMarkingId(null)
