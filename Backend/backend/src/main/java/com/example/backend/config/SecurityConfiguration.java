@@ -52,6 +52,12 @@ public class SecurityConfiguration {
                     return config;
                 }))
                 .csrf(AbstractHttpConfigurer::disable)
+                .headers(h -> h
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000))
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("default-src 'none'; frame-ancestors 'none'")))
                 .authorizeHttpRequests(auth -> auth
                         // ✅ Public routes
                         .requestMatchers(

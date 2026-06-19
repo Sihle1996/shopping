@@ -51,6 +51,12 @@ public class AuthenticationService {
     private final java.util.concurrent.ConcurrentHashMap<String, Long> emailCooldowns =
             new java.util.concurrent.ConcurrentHashMap<>();
 
+    private static final int MAX_RESET_ATTEMPTS = 5;
+    // email(lowercased) -> wrong-OTP count. Per-account brute-force guard on /reset-password
+    // (IP-independent), so the 6-digit OTP can't be brute-forced even if the IP limiter is dodged.
+    private final java.util.concurrent.ConcurrentHashMap<String, Integer> resetAttempts =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
     public AuthenticationResponse register(RegisterRequest request, UUID tenantId) {
         if (request.getPassword() == null || request.getPassword().length() < 8) {
             throw new IllegalArgumentException("Password must be at least 8 characters");
@@ -62,7 +68,7 @@ public class AuthenticationService {
                         throw new IllegalArgumentException("User with email " + request.getEmail() + " already exists in this store");
                     });
         } else {
-            repository.findByEmail(request.getEmail())
+            repository.findByEmailAndTenantIsNull(request.getEmail())
                     .ifPresent(user -> {
                         throw new IllegalArgumentException("User with email " + request.getEmail() + " already exists");
                     });
@@ -138,7 +144,7 @@ public class AuthenticationService {
                 ? repository.findByEmailAndTenant_Id(request.getEmail(), tenantId)
                         .or(() -> repository.findByEmailAndTenantIsNull(request.getEmail()))
                         .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"))
-                : repository.findByEmail(request.getEmail())
+                : repository.findByEmailAndTenantIsNull(request.getEmail())
                         .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
 
         UUID userTenantId = user.getTenant() != null ? user.getTenant().getId() : null;
@@ -209,7 +215,7 @@ public class AuthenticationService {
     public void resendVerificationEmail(String email) {
         // Generic by design: never reveal whether the account exists or is already verified
         // (prevents account-enumeration). Silently no-op when there's nothing to send.
-        User user = repository.findByEmail(email).orElse(null);
+        User user = repository.findAllByEmail(email).stream().findFirst().orElse(null);
         if (user == null || user.isEmailVerified()) {
             return;
         }
@@ -266,7 +272,7 @@ public class AuthenticationService {
 
     public void sendPasswordResetOtp(String email) {
         // Generic by design: never reveal whether the account exists (prevents enumeration).
-        User user = repository.findByEmail(email).orElse(null);
+        User user = repository.findAllByEmail(email).stream().findFirst().orElse(null);
         if (user == null) {
             return;
         }
@@ -293,11 +299,22 @@ public class AuthenticationService {
         if (newPassword == null || newPassword.length() < 8) {
             throw new IllegalArgumentException("Password must be at least 8 characters");
         }
-        // Generic error: never reveal whether the account exists.
-        User user = repository.findByEmail(email)
+        // Generic error: never reveal whether the account exists. findAllByEmail avoids a crash when the
+        // same email exists across tenants (email is only unique per-tenant).
+        User user = repository.findAllByEmail(email).stream().findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired OTP"));
 
+        String key = email == null ? "" : email.trim().toLowerCase();
         if (user.getResetOtp() == null || otp == null || !user.getResetOtp().equals(otp)) {
+            // Per-account guess limit (IP-independent): burn the OTP after too many wrong tries so the
+            // 6-digit code can't be brute-forced even if the network rate-limiter is dodged via XFF.
+            int attempts = resetAttempts.merge(key, 1, Integer::sum);
+            if (attempts >= MAX_RESET_ATTEMPTS) {
+                user.setResetOtp(null);
+                user.setResetOtpExpiresAt(null);
+                repository.save(user);
+                resetAttempts.remove(key);
+            }
             throw new IllegalArgumentException("Invalid or expired OTP");
         }
         // Enforce the 15-minute lifetime that the email promises. Expired/used codes are cleared.
@@ -305,6 +322,7 @@ public class AuthenticationService {
             user.setResetOtp(null);
             user.setResetOtpExpiresAt(null);
             repository.save(user);
+            resetAttempts.remove(key);
             throw new IllegalArgumentException("Invalid or expired OTP");
         }
 
@@ -313,6 +331,7 @@ public class AuthenticationService {
         user.setResetOtpExpiresAt(null);
         user.setTokenVersion(user.getTokenVersion() + 1); // a password reset invalidates all existing tokens
         repository.save(user);
+        resetAttempts.remove(key);
     }
 
     public void changePassword(User user, String currentPassword, String newPassword) {

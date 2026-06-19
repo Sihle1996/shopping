@@ -74,10 +74,17 @@ public class PromotionService {
                         && (p.getMaxRedemptions() == null || p.getRedemptionCount() < p.getMaxRedemptions()));
     }
 
-    /** Count one redemption toward a promo's cap (atomic). No-op if the promo has no cap. */
+    /** Atomically consume one redemption against the cap. Returns false if the cap is already reached. */
     @org.springframework.transaction.annotation.Transactional
-    public void recordRedemption(UUID promoId) {
-        if (promoId != null) promotionRepository.incrementRedemption(promoId);
+    public boolean tryConsumeRedemption(UUID promoId) {
+        if (promoId == null) return true;
+        return promotionRepository.tryConsumeRedemption(promoId) > 0;
+    }
+
+    /** Release a redemption back to the pool (e.g. the order that consumed it was cancelled). */
+    @org.springframework.transaction.annotation.Transactional
+    public void releaseRedemption(UUID promoId) {
+        if (promoId != null) promotionRepository.releaseRedemption(promoId);
     }
 
     /**

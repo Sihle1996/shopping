@@ -28,6 +28,7 @@ public class OrderAutoRejectService {
     private final SimpMessagingTemplate messagingTemplate;
     private final EmailService emailService;
     private final AuditService auditService;
+    private final PromotionService promotionService;
 
     /** Fallback window when a store has no auto-cancel setting. */
     private static final int DEFAULT_AUTO_CANCEL_MINUTES = 15;
@@ -56,6 +57,8 @@ public class OrderAutoRejectService {
             }
 
             releaseReservedStock(order);
+            // Release any promo redemption this timed-out order consumed back to the cap.
+            if (order.getPromoId() != null) promotionService.releaseRedemption(order.getPromoId());
 
             order.setStatus("Cancelled");
             order.setCancellationReason("AUTO_TIMEOUT");

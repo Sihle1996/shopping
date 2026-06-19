@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/payfast")
-@CrossOrigin(origins = "*")
 public class PayFastController {
 
     private final PayFastService payFastService;

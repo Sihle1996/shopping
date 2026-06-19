@@ -74,6 +74,7 @@ public class DriverService {
         return Map.of("message", "OTP sent to customer", "otp", otp);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void verifyDeliveryOtp(User driver, UUID orderId, String otp) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
@@ -121,6 +122,7 @@ public class DriverService {
         }
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void markOrderDelivered(User driver, UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));

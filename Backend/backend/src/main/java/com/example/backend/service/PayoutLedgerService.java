@@ -62,6 +62,9 @@ public class PayoutLedgerService {
     public void recordRefundDebit(Order order) {
         Tenant tenant = order.getTenant();
         if (tenant == null) return;
+        // Idempotent: never debit the same order twice (status flip-flop / re-entry).
+        if (Boolean.TRUE.equals(order.getPayoutDebited())) return;
+        order.setPayoutDebited(true);
 
         BigDecimal orderTotal = BigDecimal.valueOf(order.getTotalAmount());
         BigDecimal platformFee = order.getPlatformFee() != null

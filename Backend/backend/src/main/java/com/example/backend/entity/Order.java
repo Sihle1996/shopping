@@ -38,6 +38,11 @@ public class Order {
     @Column(name = "payout_credited")
     private Boolean payoutCredited;
 
+    // Set once when a refund has been debited from the store's ledger for this order — makes the
+    // refund debit idempotent (mirrors payoutCredited) so a status flip-flop can't double-debit.
+    @Column(name = "payout_debited")
+    private Boolean payoutDebited;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id")
     @JsonBackReference

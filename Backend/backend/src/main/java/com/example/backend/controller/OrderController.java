@@ -118,13 +118,8 @@ public class OrderController {
         result.put("items", order.getOrderItems().stream().map(i ->
             Map.of("name", i.getName(), "quantity", i.getQuantity())
         ).toList());
-        // Include OTP for guest when driver has requested it and it's not yet verified
-        if ("Out for Delivery".equals(order.getStatus())
-                && order.getDeliveryOtp() != null
-                && order.getOtpExpiresAt() != null
-                && java.time.Instant.now().isBefore(order.getOtpExpiresAt())) {
-            result.put("deliveryOtp", order.getDeliveryOtp());
-        }
+        // SECURITY: never expose deliveryOtp (the delivery-handoff secret) on this public
+        // track endpoint — anyone with the orderId + guest email could otherwise read it.
         return ResponseEntity.ok(result);
     }
 

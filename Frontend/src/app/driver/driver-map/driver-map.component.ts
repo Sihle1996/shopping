@@ -255,13 +255,20 @@ export class DriverMapComponent implements AfterViewInit, OnDestroy, OnChanges {
         <div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid ${color};margin-top:-2px"></div>
       </div>`;
       const marker = new mapboxgl.Marker(el).setLngLat(stop.coords)
-        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<b>${stop.label}</b><br><span style="font-size:11px">${stop.address}</span>`))
+        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<b>${this.esc(stop.label)}</b><br><span style="font-size:11px">${this.esc(stop.address)}</span>`))
         .addTo(this.map!);
       this.stopMarkers.push(marker);
     });
   }
 
   private clearStopMarkers(): void { this.stopMarkers.forEach(m => m.remove()); this.stopMarkers = []; }
+
+  /** Escape user-controlled text before it goes into a raw-HTML map popup (stored-XSS guard:
+   *  the delivery address is built from the customer's free-text building/apartment fields). */
+  private esc(s: any): string {
+    return String(s ?? '').replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+  }
 
   /**
    * Greedy nearest-first ordering of the stops, starting from the driver.

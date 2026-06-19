@@ -231,11 +231,18 @@ public class OrderService {
             // a scoped promo that matched nothing in the cart must not tag the order.
             applied = freeDelivery || discountAmount > 0;
             if (applied) {
-                discountAmount = BigDecimal.valueOf(discountAmount).setScale(2, RoundingMode.HALF_UP).doubleValue();
-                appliedPromoCode = promo.getCode() != null ? promo.getCode().trim() : promo.getTitle();
-                appliedPromoType = promoType;
-                appliedPromoId = promo.getId();
-                promotionService.recordRedemption(promo.getId()); // count usage toward any redemption cap
+                // Atomically consume one redemption against the cap. If the cap is already reached
+                // (0 rows updated), the promo no longer applies — revert the discount / free delivery.
+                if (!promotionService.tryConsumeRedemption(promo.getId())) {
+                    discountAmount = 0.0;
+                    freeDelivery = false;
+                    applied = false;
+                } else {
+                    discountAmount = BigDecimal.valueOf(discountAmount).setScale(2, RoundingMode.HALF_UP).doubleValue();
+                    appliedPromoCode = promo.getCode() != null ? promo.getCode().trim() : promo.getTitle();
+                    appliedPromoType = promoType;
+                    appliedPromoId = promo.getId();
+                }
             }
         }
 
@@ -661,6 +668,8 @@ public class OrderService {
         if (isCancelling) {
             order.setCancellationReason(cancelReason != null && !cancelReason.isBlank()
                     ? cancelReason.trim() : "ADMIN_CANCELLED");
+            // Release any promo redemption this order consumed back to the cap.
+            if (order.getPromoId() != null) promotionService.releaseRedemption(order.getPromoId());
             // Mirror the consume rule: if the order's stock had been deducted (a consumed status),
             // restore it; if it was only reserved (Pending/Scheduled), release the reservation.
             boolean wasConsumed = isConsumedStatus(order.getStatus());
@@ -1002,6 +1011,8 @@ public class OrderService {
             }
         }
 
+        // Release any promo redemption this order consumed back to the cap.
+        if (order.getPromoId() != null) promotionService.releaseRedemption(order.getPromoId());
         order.setStatus("Cancelled");
         orderRepository.save(order);
 

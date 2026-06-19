@@ -189,7 +189,14 @@ public class StoresController(AppDbContext db) : ControllerBase
 
         tenant.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        return Ok(tenant);
+        // Project to non-sensitive fields — never return the raw entity, which carries unmasked bank
+        // details that only the compliance-gated enrollment endpoints may expose.
+        return Ok(new {
+            tenant.Id, tenant.Name, tenant.Slug,
+            tenant.SubscriptionStatus, tenant.SubscriptionPlan,
+            tenant.PlatformCommissionPercent, tenant.Active,
+            tenant.ApprovalStatus, tenant.DeliveryRadiusKm, tenant.UpdatedAt
+        });
     }
 
     [HttpPatch("{id}/toggle-active")]

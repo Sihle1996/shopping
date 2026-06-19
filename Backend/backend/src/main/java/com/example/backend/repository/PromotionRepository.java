@@ -40,6 +40,10 @@ public interface PromotionRepository extends JpaRepository<Promotion, UUID> {
     Optional<Promotion> findByIdAndTenant_Id(UUID id, UUID tenantId);
 
     @org.springframework.data.jpa.repository.Modifying
-    @Query("UPDATE Promotion p SET p.redemptionCount = p.redemptionCount + 1 WHERE p.id = :id")
-    void incrementRedemption(@Param("id") UUID id);
+    @Query("UPDATE Promotion p SET p.redemptionCount = p.redemptionCount + 1 WHERE p.id = :id AND (p.maxRedemptions IS NULL OR p.redemptionCount < p.maxRedemptions)")
+    int tryConsumeRedemption(@Param("id") UUID id);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("UPDATE Promotion p SET p.redemptionCount = p.redemptionCount - 1 WHERE p.id = :id AND p.redemptionCount > 0")
+    void releaseRedemption(@Param("id") UUID id);
 }

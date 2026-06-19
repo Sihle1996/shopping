@@ -350,10 +350,14 @@ public class TenantController {
     // SUPERADMIN — enrollment: list stores pending review
     @GetMapping("/api/superadmin/enrollment/pending")
     @PreAuthorize("hasRole('SUPERADMIN')")
-    public ResponseEntity<List<PendingEnrollmentDto>> getPendingEnrollments() {
+    public ResponseEntity<List<PendingEnrollmentDto>> getPendingEnrollments(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.example.backend.user.User principal) {
+        boolean compliance = principal != null && principal.isComplianceOfficer();
         List<Tenant> pending = tenantRepository.findByApprovalStatus(Tenant.ApprovalStatus.PENDING_REVIEW);
         List<PendingEnrollmentDto> result = pending.stream().map(t -> {
-            List<StoreDocument> docs = storeDocumentRepository.findByTenantId(t.getId());
+            // KYB documents are visible ONLY to a Compliance officer; an Operations superadmin sees the
+            // store list but never the regulated document URLs.
+            List<StoreDocument> docs = compliance ? storeDocumentRepository.findByTenantId(t.getId()) : java.util.List.of();
             return new PendingEnrollmentDto(
                     t.getId(), t.getName(), t.getSlug(), t.getEmail(), t.getPhone(),
                     t.getAddress(), t.getSubmittedForReviewAt(), docs, null
@@ -365,10 +369,13 @@ public class TenantController {
     // SUPERADMIN — enrollment: list rejected (non-archived) stores
     @GetMapping("/api/superadmin/enrollment/rejected")
     @PreAuthorize("hasRole('SUPERADMIN')")
-    public ResponseEntity<List<PendingEnrollmentDto>> getRejectedEnrollments() {
+    public ResponseEntity<List<PendingEnrollmentDto>> getRejectedEnrollments(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.example.backend.user.User principal) {
+        boolean compliance = principal != null && principal.isComplianceOfficer();
         List<Tenant> rejected = tenantRepository.findByApprovalStatusAndArchivedFalse(Tenant.ApprovalStatus.REJECTED);
         List<PendingEnrollmentDto> result = rejected.stream().map(t -> {
-            List<StoreDocument> docs = storeDocumentRepository.findByTenantId(t.getId());
+            // KYB documents are visible ONLY to a Compliance officer (see getPendingEnrollments).
+            List<StoreDocument> docs = compliance ? storeDocumentRepository.findByTenantId(t.getId()) : java.util.List.of();
             return new PendingEnrollmentDto(
                     t.getId(), t.getName(), t.getSlug(), t.getEmail(), t.getPhone(),
                     t.getAddress(), t.getSubmittedForReviewAt(), docs, t.getRejectionReason()
