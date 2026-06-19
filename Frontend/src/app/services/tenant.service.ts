@@ -10,6 +10,10 @@ export interface Tenant {
   slug: string;
   logoUrl?: string;
   primaryColor?: string;
+  brandFont?: string;
+  secondaryColor?: string;
+  buttonStyle?: string;
+  buttonFill?: string;
   phone?: string;
   email?: string;
   address?: string;

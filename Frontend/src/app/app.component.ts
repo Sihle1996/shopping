@@ -2,6 +2,7 @@ import { Component, OnDestroy, NgZone } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService } from './services/auth.service';
+import { restoreStoreBranding } from './shared/utils/brand-theme.util';
 
 const IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour
 
@@ -64,19 +65,9 @@ export class AppComponent implements OnDestroy {
 
   private restoreBrand(): void {
     // Only re-apply a stored store theme when the page actually loaded on a store route — otherwise a
-    // reload on the store list / landing / profile would leak the last store's colors.
+    // reload on the store list / landing / profile would leak the last store's colors/font.
     if (!window.location.pathname.startsWith('/store/')) return;
-    const color = localStorage.getItem('brandPrimary');
-    if (!color) return;
-    const root = document.documentElement;
-    root.style.setProperty('--brand-primary', color);
-    root.style.setProperty('--brand-primary-light', color + '1A');
-    const hex = color.replace('#', '');
-    const r = Math.max(0, parseInt(hex.slice(0, 2), 16) - 38);
-    const g = Math.max(0, parseInt(hex.slice(2, 4), 16) - 38);
-    const b = Math.max(0, parseInt(hex.slice(4, 6), 16) - 38);
-    root.style.setProperty('--brand-primary-hover',
-      `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`);
+    restoreStoreBranding();
   }
 
   ngOnDestroy(): void {

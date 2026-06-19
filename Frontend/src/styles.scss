@@ -13,6 +13,13 @@
   --brand-primary: #E76F51;
   --brand-primary-light: #E76F511A;
   --brand-primary-hover: #C15A35;
+  /* Storefront theme (set per-store by brand-theme.util; default = CraveIt) */
+  --brand-secondary: #264653;
+  --brand-font: var(--font-heading);
+  --btn-radius: 0.75rem;
+  --cta-bg: var(--brand-primary);
+  --cta-color: #ffffff;
+  --cta-border: transparent;
 }
 
 body {
@@ -78,6 +85,28 @@ html, body {
 .text-primary-700 { color: var(--brand-primary) !important; }
 .hover\:text-primary:hover { color: var(--brand-primary) !important; }
 .focus\:ring-primary-400:focus { --tw-ring-color: var(--brand-primary) !important; }
+
+/*
+ * Storefront accent (secondary) colour + CTA button + heading font. Driven by the per-store
+ * CSS variables set in brand-theme.util. The .brand-cta button reflects the store's chosen
+ * shape (radius), fill (solid/outline) and font in one class; apply it to storefront CTAs.
+ */
+.bg-brand-secondary { background-color: var(--brand-secondary) !important; }
+.text-brand-secondary { color: var(--brand-secondary) !important; }
+.border-brand-secondary { border-color: var(--brand-secondary) !important; }
+.brand-font { font-family: var(--brand-font) !important; }
+/* Headings follow the store's chosen font on the storefront. On admin/landing --brand-font is
+ * never set, so it resolves to its default (Montserrat) and nothing changes there. */
+.font-heading { font-family: var(--brand-font); }
+.brand-cta {
+  background-color: var(--cta-bg) !important;
+  color: var(--cta-color) !important;
+  border: 2px solid var(--cta-border) !important;
+  border-radius: var(--btn-radius) !important;
+  font-family: var(--brand-font);
+  transition: filter .15s ease;
+}
+.brand-cta:hover { filter: brightness(0.95); }
 
 /*
  * Destructive actions must ALWAYS read as danger (red), never the tenant brand

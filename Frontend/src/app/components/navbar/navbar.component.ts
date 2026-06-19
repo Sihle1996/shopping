@@ -7,6 +7,7 @@ import { TenantService } from 'src/app/services/tenant.service';
 import { CartService } from 'src/app/services/cart.service';
 import { environment } from 'src/environments/environment';
 import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
+import { resetStoreBranding } from 'src/app/shared/utils/brand-theme.util';
 
 @Component({
   selector: 'app-navbar',
@@ -92,12 +93,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.hasStoreContext = !!localStorage.getItem('tenantId');
   }
 
-  /** Revert the CSS theme to the CraveIt default palette (used when a customer leaves a store). */
+  /** Revert the CSS theme (colour, accent, font, button) to CraveIt defaults when a customer
+   *  leaves a store — otherwise a store's font/accent would leak into the CraveIt store list. */
   private resetBrandColors(): void {
-    const root = document.documentElement;
-    root.style.setProperty('--brand-primary', '#E76F51');
-    root.style.setProperty('--brand-primary-light', '#E76F511A');
-    root.style.setProperty('--brand-primary-hover', '#C15A35');
+    resetStoreBranding();
   }
 
   get cartRoute(): string {
