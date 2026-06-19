@@ -120,6 +120,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   setupCategories: any[] = [];
   setupDrivers: any[] = [];
   setupSettings: any = null;
+  // Gate the onboarding card on the data it's computed from actually being loaded — otherwise the
+  // card flashes on first paint (settings null + empty categories/items => "incomplete") and then
+  // vanishes once the calls return. Show it only after all three sources have resolved.
+  private settingsLoaded = false;
+  private categoriesLoaded = false;
+  private menuItemsLoaded = false;
   onboardingDismissed = localStorage.getItem(`onboardingDone_${localStorage.getItem('tenantId') || ''}`) === 'true';
   cardJustArrived = false;
   private activeDriver: any = null;
@@ -165,8 +171,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       .pipe(debounceTime(200), takeUntil(this.destroy$))
       .subscribe(() => this.silentRefresh());
     this.adminService.menuItems$.subscribe(items => this.setupMenuItems = items);
-    this.adminService.loadMenuItems().subscribe({ error: () => {} });
-    this.adminService.getCategories().subscribe({ next: cats => this.setupCategories = cats, error: () => {} });
+    this.adminService.loadMenuItems().subscribe({ next: () => this.menuItemsLoaded = true, error: () => this.menuItemsLoaded = true });
+    this.adminService.getCategories().subscribe({ next: cats => { this.setupCategories = cats; this.categoriesLoaded = true; }, error: () => this.categoriesLoaded = true });
     this.adminService.getDrivers().subscribe({ next: d => this.setupDrivers = d, error: () => {} });
 
     this.subscriptionService.load().subscribe(info => {
@@ -184,9 +190,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         this.isStoreOpen = settings.isOpen ?? false;
         this.setupSettings = settings;
         this.settingsLoading = false;
+        this.settingsLoaded = true;
         this.maybeAutoSpotlight();
       },
-      error: () => { this.settingsLoading = false; }
+      error: () => { this.settingsLoading = false; this.settingsLoaded = true; }
     });
   }
 
@@ -229,7 +236,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
    * Once the store is set up (or the owner dismisses it), it stays hidden —
    * keeping the store closed shouldn't keep nagging an established store.
    */
-  get showOnboarding() { return !this.onboardingDismissed && !this.coreSetupComplete; }
+  /** True only once every source the checklist is computed from has resolved — prevents the flash. */
+  get setupLoaded() { return this.settingsLoaded && this.categoriesLoaded && this.menuItemsLoaded; }
+
+  get showOnboarding() { return this.setupLoaded && !this.onboardingDismissed && !this.coreSetupComplete; }
 
   dismissOnboarding(): void {
     this.onboardingDismissed = true;
