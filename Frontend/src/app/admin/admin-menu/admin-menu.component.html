@@ -6,7 +6,7 @@
       <!-- Hidden CSV file input -->
       <input actions id="csvImportInput" type="file" accept=".csv" class="hidden"
              (change)="onCsvSelected($event)" />
-      <app-button actions variant="ghost" size="md" iconLeft="bi bi-upload"
+      <app-button actions variant="ghost" size="md" iconLeft="ph ph-upload-simple"
                   [disabled]="importLoading"
                   (clicked)="triggerCsvImport()">
         {{ importLoading ? 'Importing...' : 'Import CSV' }}
@@ -14,14 +14,14 @@
       <app-button actions
         [variant]="bulkMode ? 'ghost' : 'outline'"
         size="md"
-        [iconLeft]="bulkMode ? 'bi bi-x-lg' : 'bi bi-pencil-square'"
+        [iconLeft]="bulkMode ? 'ph ph-x' : 'ph ph-note-pencil'"
         (clicked)="toggleBulkMode()">
         {{ bulkMode ? 'Cancel' : 'Bulk Edit' }}
       </app-button>
       <app-button actions
         [variant]="showForm ? 'ghost' : 'primary'"
         size="md"
-        [iconLeft]="showForm ? 'bi bi-x-lg' : 'bi bi-plus-lg'"
+        [iconLeft]="showForm ? 'ph ph-x' : 'ph ph-plus'"
         (clicked)="toggleForm()">
         {{ showForm ? 'Cancel' : 'Add Item' }}
       </app-button>
@@ -29,7 +29,7 @@
 
     <!-- Plan headroom — straight from the capability manifest the AI also reads -->
     <p *ngIf="menuHeadroom && menuHeadroom.max > 0" class="mt-2 text-xs text-textMuted flex items-center gap-1.5">
-      <i class="bi bi-box-seam text-primary"></i>
+      <i class="ph ph-package text-primary"></i>
       {{ menuHeadroom.used }} / {{ menuHeadroom.max }} menu items used
       <span [class.text-danger]="menuHeadroom.remaining <= 0" [class.font-semibold]="menuHeadroom.remaining <= 0">
         · {{ menuHeadroom.remaining }} left on your plan
@@ -39,9 +39,9 @@
     <!-- Import result banner -->
     <div *ngIf="importResult"
          class="mb-4 px-4 py-3 rounded-xl bg-primary-50 border border-primary text-sm text-primary flex items-center justify-between">
-      <span><i class="bi bi-info-circle mr-2"></i>{{ importResult }}</span>
+      <span><i class="ph ph-info mr-2"></i>{{ importResult }}</span>
       <button (click)="importResult = null" class="text-primary hover:opacity-70">
-        <i class="bi bi-x"></i>
+        <i class="ph ph-x"></i>
       </button>
     </div>
 
@@ -113,7 +113,7 @@
           <p class="text-xs mt-1"
              [ngClass]="formData.cost != null && formData.cost >= 0 && formData.price > 0 ? 'text-success' : 'text-textMuted'">
             <ng-container *ngIf="formData.cost != null && formData.cost >= 0 && formData.price > 0; else costHint">
-              <i class="bi bi-graph-up-arrow"></i>
+              <i class="ph ph-trend-up"></i>
               Margin {{ ((formData.price - formData.cost) / formData.price * 100) | number:'1.0-0' }}%
               · profit R{{ (formData.price - formData.cost) | number:'1.2-2' }} per sale
             </ng-container>
@@ -176,7 +176,7 @@
     <div class="flex flex-wrap items-center gap-3 mb-6">
       <div class="relative flex-1 min-w-[200px]">
         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-          <i class="bi bi-search text-textMuted text-sm"></i>
+          <i class="ph ph-magnifying-glass text-textMuted text-sm"></i>
         </div>
         <input [(ngModel)]="searchQuery" placeholder="Search items..."
                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-borderColor bg-white text-sm text-textDark
@@ -206,7 +206,7 @@
 
           <div *ngIf="bulkMode" class="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors"
                [ngClass]="selectedIds.has(item.id) ? 'bg-primary border-primary' : 'bg-white border-gray-300'">
-            <i *ngIf="selectedIds.has(item.id)" class="bi bi-check text-white text-xs"></i>
+            <i *ngIf="selectedIds.has(item.id)" class="ph ph-check text-white text-xs"></i>
           </div>
 
           <img [src]="getImageUrl(item)" [alt]="item.name"
@@ -222,12 +222,12 @@
             <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
               <button *ngFor="let g of item.optionGroups" type="button" (click)="$event.stopPropagation(); toggleOptions(item)"
                       class="inline-flex items-center gap-1 text-[11px] font-medium text-primary bg-primary-50 hover:bg-primary-100 rounded-full px-2 py-0.5 transition-colors">
-                <i class="bi bi-sliders text-[9px]"></i>{{ g.name }} · {{ g.choices?.length || 0 }}
+                <i class="ph ph-sliders-horizontal text-[9px]"></i>{{ g.name }} · {{ g.choices?.length || 0 }}
               </button>
               <button type="button" (click)="$event.stopPropagation(); toggleOptions(item)"
                       class="text-[11px] font-medium text-textMuted hover:text-primary transition-colors inline-flex items-center gap-0.5">
-                <ng-container *ngIf="!item.optionGroups?.length"><i class="bi bi-plus-lg text-[9px]"></i> add extras</ng-container>
-                <ng-container *ngIf="item.optionGroups?.length"><i class="bi" [ngClass]="expandedOptionsItemId === item.id ? 'bi-chevron-up' : 'bi-pencil'"></i> edit</ng-container>
+                <ng-container *ngIf="!item.optionGroups?.length"><i class="ph ph-plus text-[9px]"></i> add extras</ng-container>
+                <ng-container *ngIf="item.optionGroups?.length"><i class="ph" [ngClass]="expandedOptionsItemId === item.id ? 'ph ph-caret-up' : 'ph ph-pencil-simple'"></i> edit</ng-container>
               </button>
             </div>
           </div>
@@ -251,11 +251,11 @@
           <!-- Actions -->
           <div *ngIf="!bulkMode" class="flex items-center gap-0.5 flex-shrink-0">
             <button (click)="editItem(item)" title="Edit"
-                    class="w-8 h-8 flex items-center justify-center rounded-lg text-textMuted hover:text-primary hover:bg-primary-50 transition-colors"><i class="bi bi-pencil text-sm"></i></button>
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-textMuted hover:text-primary hover:bg-primary-50 transition-colors"><i class="ph ph-pencil-simple text-sm"></i></button>
             <button (click)="toggleOptions(item)" title="Extras"
-                    class="w-8 h-8 flex items-center justify-center rounded-lg text-textMuted hover:text-primary hover:bg-primary-50 transition-colors"><i class="bi text-sm" [ngClass]="expandedOptionsItemId === item.id ? 'bi-chevron-up' : 'bi-sliders'"></i></button>
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-textMuted hover:text-primary hover:bg-primary-50 transition-colors"><i class="ph text-sm" [ngClass]="expandedOptionsItemId === item.id ? 'ph ph-caret-up' : 'ph ph-sliders-horizontal'"></i></button>
             <button (click)="confirmDelete(item.id)" title="Delete"
-                    class="w-8 h-8 flex items-center justify-center rounded-lg text-textMuted hover:text-red-600 hover:bg-red-50 transition-colors"><i class="bi bi-trash text-sm"></i></button>
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-textMuted hover:text-red-600 hover:bg-red-50 transition-colors"><i class="ph ph-trash text-sm"></i></button>
           </div>
         </div>
 
@@ -285,7 +285,7 @@
               </div>
               <button (click)="deleteGroup(item.id, group.id)"
                       class="text-danger text-xs hover:bg-red-50 px-2 py-1 rounded-lg transition-colors">
-                <i class="bi bi-trash3"></i>
+                <i class="ph ph-trash"></i>
               </button>
             </div>
 
@@ -300,7 +300,7 @@
                   </span>
                   <button (click)="deleteChoice(item.id, group.id, choice.id)"
                           class="text-danger hover:bg-red-50 rounded p-0.5 transition-colors">
-                    <i class="bi bi-x"></i>
+                    <i class="ph ph-x"></i>
                   </button>
                 </div>
               </div>
@@ -348,7 +348,7 @@
               </label>
               <button (click)="addGroup(item.id)"
                       class="px-4 py-2 bg-primary text-white text-xs font-semibold rounded-xl hover:bg-primary-600 transition-colors">
-                <i class="bi bi-plus-lg mr-1"></i>Add Group
+                <i class="ph ph-plus mr-1"></i>Add Group
               </button>
             </div>
           </div>
@@ -360,7 +360,7 @@
     <!-- Empty state -->
     <app-empty-state
       *ngIf="filteredMenu.length === 0"
-      icon="bi bi-journal-x"
+      icon="ph ph-notebook"
       title="No items found"
       message="Try adjusting your search or filter, or add a new menu item">
     </app-empty-state>

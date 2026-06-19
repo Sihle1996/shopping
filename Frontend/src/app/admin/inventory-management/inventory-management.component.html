@@ -3,16 +3,16 @@
 
     <!-- Header -->
     <app-page-header title="Inventory" subtitle="Track stock, spot low items, and adjust in real time">
-      <app-button actions variant="outline" size="md" iconLeft="bi bi-arrow-repeat" [loading]="syncing" (clicked)="syncAvailability()">
+      <app-button actions variant="outline" size="md" iconLeft="ph ph-arrows-clockwise" [loading]="syncing" (clicked)="syncAvailability()">
         Sync Availability
       </app-button>
-      <app-button actions variant="ghost" size="md" iconLeft="bi bi-unlock" [loading]="reconciling"
+      <app-button actions variant="ghost" size="md" iconLeft="ph ph-lock-open" [loading]="reconciling"
                   title="Recompute reserved stock from current pending orders — clears stuck reservations"
                   (clicked)="reconcileReservations()">
         Fix Reservations
       </app-button>
       <app-button actions variant="secondary" size="md"
-        [iconLeft]="hasInventoryExport ? 'bi bi-download' : 'bi bi-lock'"
+        [iconLeft]="hasInventoryExport ? 'ph ph-download-simple' : 'ph ph-lock'"
         [title]="hasInventoryExport ? '' : 'Export CSV requires PRO or higher'"
         (clicked)="exportCsv()">
         Export CSV
@@ -25,7 +25,7 @@
       <div class="bg-white rounded-2xl shadow-card p-4">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-primary-100 flex items-center justify-center">
-            <i class="bi bi-box-seam text-primary"></i>
+            <i class="ph ph-package text-primary"></i>
           </div>
           <div>
             <p class="text-textMuted text-xs">Total Items</p>
@@ -36,7 +36,7 @@
       <div class="bg-white rounded-2xl shadow-card p-4">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-yellow-100 flex items-center justify-center">
-            <i class="bi bi-exclamation-triangle text-warning"></i>
+            <i class="ph ph-warning text-warning"></i>
           </div>
           <div>
             <p class="text-textMuted text-xs">Low Stock</p>
@@ -47,7 +47,7 @@
       <div class="bg-white rounded-2xl shadow-card p-4">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-primary-100 flex items-center justify-center">
-            <i class="bi bi-lock text-primary"></i>
+            <i class="ph ph-lock text-primary"></i>
           </div>
           <div>
             <p class="text-textMuted text-xs">Reserved</p>
@@ -58,7 +58,7 @@
       <div class="bg-white rounded-2xl shadow-card p-4">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center">
-            <i class="bi bi-check-circle text-success"></i>
+            <i class="ph ph-check-circle text-success"></i>
           </div>
           <div>
             <p class="text-textMuted text-xs">In Stock</p>
@@ -73,7 +73,7 @@
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
         <div class="relative w-full sm:max-w-sm">
           <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-            <i class="bi bi-search text-textMuted text-sm"></i>
+            <i class="ph ph-magnifying-glass text-textMuted text-sm"></i>
           </div>
           <input [(ngModel)]="searchTerm" type="text" placeholder="Search by name..."
                  class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
@@ -244,10 +244,10 @@
     <div class="mt-6 bg-white rounded-2xl shadow-card overflow-hidden">
       <button (click)="toggleAuditGated()" class="flex w-full items-center justify-between px-5 py-4 text-left hover:bg-surface/50 transition-colors">
         <span class="font-heading text-sm font-semibold text-textDark flex items-center gap-2">
-          <i class="bi bi-clock-history text-primary"></i> Audit Log
+          <i class="ph ph-clock-counter-clockwise text-primary"></i> Audit Log
           <span *ngIf="!hasInventoryExport" class="text-xs font-normal text-primary bg-primary-100 px-1.5 py-0.5 rounded-full">PRO</span>
         </span>
-        <i class="bi bi-chevron-down text-textMuted transition-transform duration-200" [class.rotate-180]="showAudit"></i>
+        <i class="ph ph-caret-down text-textMuted transition-transform duration-200" [class.rotate-180]="showAudit"></i>
       </button>
 
       <div *ngIf="showAudit" class="px-5 pb-5 animate-fade-in">

@@ -11,7 +11,7 @@
 
       <div class="relative z-10">
         <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-6">
-          <i class="bi bi-bicycle text-white text-2xl"></i>
+          <i class="ph ph-bicycle text-white text-2xl"></i>
         </div>
         <h1 class="font-heading text-4xl font-extrabold leading-tight mb-4">
           Great food,<br>delivered fast.
@@ -24,13 +24,13 @@
         <div class="flex flex-col gap-3">
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-              <i class="bi bi-shop text-white text-sm"></i>
+              <i class="ph ph-storefront text-white text-sm"></i>
             </div>
             <span class="text-white/90 text-sm">Browse local restaurants</span>
           </div>
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-              <i class="bi bi-clock text-white text-sm"></i>
+              <i class="ph ph-clock text-white text-sm"></i>
             </div>
             <span class="text-white/90 text-sm">Live order tracking</span>
           </div>
@@ -57,7 +57,7 @@
         <!-- Input + button -->
         <div class="relative flex gap-2 mb-4">
           <div class="relative flex-1">
-            <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none"></i>
+            <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none"></i>
             <input
               type="text"
               [(ngModel)]="addressInput"
@@ -73,7 +73,7 @@
                 *ngFor="let s of suggestions"
                 (click)="selectSuggestion(s)"
                 class="w-full text-left px-4 py-3 text-sm text-textDark hover:bg-primary-50 transition-colors border-b border-borderColor last:border-0 flex items-center gap-2">
-                <i class="bi bi-geo-alt text-textMuted flex-shrink-0"></i>
+                <i class="ph ph-map-pin text-textMuted flex-shrink-0"></i>
                 <span class="truncate">{{ s.label }}</span>
               </button>
             </div>
@@ -99,13 +99,13 @@
           (click)="useMyLocation()"
           [disabled]="gpsLoading"
           class="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 border-borderColor bg-white text-textDark text-sm font-medium hover:border-primary hover:text-primary transition-colors disabled:opacity-50 shadow-sm">
-          <i class="bi bi-crosshair2" [class.animate-pulse]="gpsLoading"></i>
+          <i class="ph ph-crosshair" [class.animate-pulse]="gpsLoading"></i>
           {{ gpsLoading ? 'Getting your location…' : 'Use My Current Location' }}
         </button>
 
         <!-- Error -->
         <p *ngIf="addressError" class="mt-4 text-red-500 text-sm flex items-center gap-1.5">
-          <i class="bi bi-exclamation-circle"></i>{{ addressError }}
+          <i class="ph ph-warning-circle"></i>{{ addressError }}
         </p>
 
       </div>
@@ -121,14 +121,14 @@
         <div>
           <h2 class="font-heading text-2xl font-bold text-textDark mb-1">Restaurants Near You</h2>
           <p class="text-textMuted text-sm flex items-center gap-1.5">
-            <i class="bi bi-geo-alt-fill text-primary"></i>
+            <i class="ph-fill ph-map-pin text-primary"></i>
             <span class="truncate max-w-sm">{{ selectedAddress }}</span>
           </p>
         </div>
         <button
           (click)="changeLocation()"
           class="flex items-center gap-1.5 text-sm text-primary hover:text-primary-600 font-medium whitespace-nowrap transition-colors">
-          <i class="bi bi-pencil-square"></i> Change location
+          <i class="ph ph-note-pencil"></i> Change location
         </button>
       </div>
 
@@ -167,14 +167,14 @@
 
       <!-- Error -->
       <div *ngIf="storesError && !isLoading" class="text-center py-8">
-        <p class="text-red-500 text-sm mb-3"><i class="bi bi-exclamation-circle mr-1"></i>{{ storesError }}</p>
+        <p class="text-red-500 text-sm mb-3"><i class="ph ph-warning-circle mr-1"></i>{{ storesError }}</p>
         <button (click)="changeLocation()" class="text-sm text-primary hover:underline font-medium">Try again</button>
       </div>
 
       <!-- Empty state: no stores in area -->
       <div *ngIf="!isLoading && !storesError && stores.length === 0" class="text-center py-12">
         <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <i class="bi bi-shop text-textMuted text-2xl"></i>
+          <i class="ph ph-storefront text-textMuted text-2xl"></i>
         </div>
         <h3 class="font-heading font-semibold text-textDark mb-1">No restaurants nearby</h3>
         <p class="text-textLight text-sm mb-4">There are no restaurants delivering to your area yet.</p>
@@ -186,7 +186,7 @@
       <!-- Empty state: no stores match the active cuisine filter -->
       <div *ngIf="!isLoading && !storesError && stores.length > 0 && filteredStores.length === 0" class="text-center py-12">
         <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <i class="bi bi-funnel text-textMuted text-2xl"></i>
+          <i class="ph ph-funnel text-textMuted text-2xl"></i>
         </div>
         <h3 class="font-heading font-semibold text-textDark mb-1">No {{ selectedCuisine }} restaurants nearby</h3>
         <p class="text-textLight text-sm mb-4">Try a different cuisine or clear the filter.</p>
@@ -220,21 +220,21 @@
                 </span>
               </div>
               <p *ngIf="store.cuisineType" class="text-textMuted text-xs mt-0.5">
-                <i class="bi bi-egg-fried mr-1"></i>{{ store.cuisineType }}
+                <i class="ph ph-egg mr-1"></i>{{ store.cuisineType }}
               </p>
               <p *ngIf="store.address && !store.cuisineType" class="text-textMuted text-xs mt-0.5 truncate">
-                <i class="bi bi-geo-alt mr-1"></i>{{ store.address }}
+                <i class="ph ph-map-pin mr-1"></i>{{ store.address }}
               </p>
               <div class="flex items-center gap-2 flex-wrap mt-1.5">
                 <span class="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
-                  <i class="bi bi-bicycle"></i> {{ store.distanceKm }} km away
+                  <i class="ph ph-bicycle"></i> {{ store.distanceKm }} km away
                 </span>
                 <span *ngIf="store.estimatedDeliveryMinutes" class="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
-                  <i class="bi bi-clock"></i> ~{{ store.estimatedDeliveryMinutes }} min
+                  <i class="ph ph-clock"></i> ~{{ store.estimatedDeliveryMinutes }} min
                 </span>
               </div>
             </div>
-            <i class="bi bi-arrow-right text-textMuted group-hover:text-primary transition-colors flex-shrink-0"></i>
+            <i class="ph ph-arrow-right text-textMuted group-hover:text-primary transition-colors flex-shrink-0"></i>
           </div>
         </div>
       </div>

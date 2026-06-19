@@ -8,13 +8,13 @@
       <p class="text-textLight text-sm mt-1">Sign in to your account</p>
       <div class="grid grid-cols-3 gap-2 mt-3">
         <span class="flex flex-col items-center gap-1 px-2 py-2 rounded-xl bg-primary-50 text-primary text-xs font-medium text-center leading-tight">
-          <i class="bi bi-bag-heart-fill text-sm"></i> Customers
+          <i class="ph-fill ph-handbag text-sm"></i> Customers
         </span>
         <span class="flex flex-col items-center gap-1 px-2 py-2 rounded-xl bg-primary-50 text-primary text-xs font-medium text-center leading-tight">
-          <i class="bi bi-shop-window text-sm"></i> Restaurant Owners
+          <i class="ph ph-storefront text-sm"></i> Restaurant Owners
         </span>
         <span class="flex flex-col items-center gap-1 px-2 py-2 rounded-xl bg-primary-50 text-primary text-xs font-medium text-center leading-tight">
-          <i class="bi bi-bicycle text-sm"></i> Drivers
+          <i class="ph ph-bicycle text-sm"></i> Drivers
         </span>
       </div>
     </div>
@@ -28,7 +28,7 @@
           <label class="block text-sm font-medium text-textDark mb-1.5">Email</label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <i class="bi bi-envelope text-textMuted"></i>
+              <i class="ph ph-envelope text-textMuted"></i>
             </div>
             <input type="email" formControlName="email" data-testid="login-email"
                    class="w-full pl-10 pr-4 py-3 rounded-xl border bg-surface text-textDark
@@ -51,7 +51,7 @@
           <label class="block text-sm font-medium text-textDark mb-1.5">Password</label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <i class="bi bi-lock text-textMuted"></i>
+              <i class="ph ph-lock text-textMuted"></i>
             </div>
             <input [type]="showPassword ? 'text' : 'password'" formControlName="password"
                    data-testid="login-password"
@@ -67,7 +67,7 @@
             <button type="button" (click)="showPassword = !showPassword"
                     data-testid="login-password-toggle"
                     class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-textMuted hover:text-textDark transition-colors">
-              <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+              <i [class]="showPassword ? 'ph ph-eye-slash' : 'ph ph-eye'"></i>
             </button>
           </div>
           <p *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.hasError('required')"
@@ -86,7 +86,7 @@
              data-testid="login-error"
              class="text-sm bg-red-50 border border-red-100 px-4 py-3 rounded-xl space-y-2">
           <div class="flex items-center gap-2 text-danger">
-            <i class="bi bi-exclamation-circle"></i>
+            <i class="ph ph-warning-circle"></i>
             <span>{{ errorMessage }}</span>
           </div>
           <div *ngIf="emailUnverified">
@@ -95,7 +95,7 @@
               {{ resendLoading ? 'Sending…' : 'Resend verification email' }}
             </button>
             <p *ngIf="resendSent" class="text-xs text-green-700">
-              <i class="bi bi-check-circle-fill mr-1"></i>Verification email sent — check your inbox.
+              <i class="ph-fill ph-check-circle mr-1"></i>Verification email sent — check your inbox.
             </p>
           </div>
         </div>

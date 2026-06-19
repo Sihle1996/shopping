@@ -5,7 +5,7 @@
     <app-page-header title="Settings" subtitle="Configure your restaurant's profile and delivery options">
       <button actions *ngIf="!settingsEditing && !isLoading && isStoreSettingsTab" type="button" (click)="editSettings()"
               class="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-borderColor text-sm font-medium text-textDark hover:bg-gray-50 transition-colors">
-        <i class="bi bi-pencil"></i> Edit
+        <i class="ph ph-pencil-simple"></i> Edit
       </button>
     </app-page-header>
 
@@ -27,7 +27,7 @@
       <!-- Store Info Card -->
       <div *ngIf="settingsTab === 'store'" id="store-info-section" class="bg-white rounded-2xl shadow-card p-6">
         <h3 class="font-heading text-base font-semibold text-textDark mb-4">
-          <i class="bi bi-shop text-primary mr-2"></i>Store Information
+          <i class="ph ph-storefront text-primary mr-2"></i>Store Information
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -87,7 +87,7 @@
                       type="button"
                       (mousedown)="selectAddressSuggestion(s)"
                       class="w-full text-left px-4 py-2.5 text-sm text-textDark hover:bg-surface flex items-start gap-2 border-b border-borderColor last:border-0">
-                <i class="bi bi-geo-alt text-primary mt-0.5 flex-shrink-0"></i>
+                <i class="ph ph-map-pin text-primary mt-0.5 flex-shrink-0"></i>
                 <span>{{ s.label }}</span>
               </button>
             </div>
@@ -95,17 +95,17 @@
             <!-- Current location button -->
             <button type="button" (click)="useCurrentLocation()" [disabled]="locating"
                     class="mt-2 flex items-center gap-1.5 text-xs text-primary hover:underline font-medium disabled:opacity-50">
-              <i class="bi bi-crosshair2" *ngIf="!locating"></i>
-              <i class="bi bi-arrow-clockwise animate-spin" *ngIf="locating"></i>
+              <i class="ph ph-crosshair" *ngIf="!locating"></i>
+              <i class="ph ph-arrow-clockwise animate-spin" *ngIf="locating"></i>
               {{ locating ? 'Detecting location...' : 'Use current location' }}
             </button>
 
             <!-- Location status -->
             <p *ngIf="settings.latitude && settings.longitude" class="mt-1 text-xs text-green-600 flex items-center gap-1">
-              <i class="bi bi-check-circle-fill"></i> Location set — store will appear in customer search
+              <i class="ph-fill ph-check-circle"></i> Location set — store will appear in customer search
             </p>
             <p *ngIf="!settings.latitude || !settings.longitude" class="mt-1 text-xs text-amber-500 flex items-center gap-1">
-              <i class="bi bi-exclamation-triangle-fill"></i> No location set — store won't appear in search
+              <i class="ph-fill ph-warning"></i> No location set — store won't appear in search
             </p>
           </div>
         </div>
@@ -118,7 +118,7 @@
         <div class="bg-gradient-to-br from-primary-50 to-white rounded-2xl shadow-card border border-borderColor p-4 flex items-center justify-between gap-3">
           <div class="flex items-center gap-3 min-w-0">
             <div class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center flex-shrink-0 shadow-sm">
-              <i class="bi bi-palette text-lg"></i>
+              <i class="ph ph-palette text-lg"></i>
             </div>
             <div class="min-w-0">
               <h3 class="font-heading text-base font-bold text-textDark flex items-center gap-2">
@@ -135,7 +135,7 @@
 
         <!-- Upgrade prompt for BASIC -->
         <div *ngIf="!hasCustomBranding" class="flex items-start gap-3 p-3 rounded-xl bg-primary-50 border border-primary-100">
-          <i class="bi bi-lock text-primary mt-0.5 flex-shrink-0"></i>
+          <i class="ph ph-lock text-primary mt-0.5 flex-shrink-0"></i>
           <div>
             <p class="text-sm text-textDark font-medium">Custom branding requires PRO or higher</p>
             <p class="text-xs text-textMuted mt-0.5">Upgrade to set your own logo, cover, colour and links.
@@ -156,7 +156,7 @@
               <div class="flex items-center gap-3">
                 <img *ngIf="settings.logoUrl" [src]="getLogoUrl()" class="w-14 h-14 rounded-xl object-cover border border-borderColor flex-shrink-0" />
                 <div *ngIf="!settings.logoUrl" class="w-14 h-14 rounded-xl bg-primary-50 border border-dashed border-primary-200 flex items-center justify-center flex-shrink-0">
-                  <i class="bi bi-image text-primary text-lg"></i>
+                  <i class="ph ph-image text-primary text-lg"></i>
                 </div>
                 <div class="flex-1 min-w-0">
                   <input type="file" (change)="onLogoSelected($event)" accept="image/*" [disabled]="isUploadingLogo"
@@ -173,12 +173,12 @@
               <div class="relative rounded-xl overflow-hidden border border-borderColor aspect-video bg-surface">
                 <img *ngIf="settings.coverImageUrl" [src]="getCoverUrl()" class="w-full h-full object-cover" />
                 <div *ngIf="!settings.coverImageUrl" class="w-full h-full flex flex-col items-center justify-center text-center px-3">
-                  <i class="bi bi-card-image text-primary text-2xl mb-1"></i>
+                  <i class="ph ph-image text-primary text-2xl mb-1"></i>
                   <p class="text-xs text-textMuted">A wide food/banner photo — shown big on your store page.</p>
                 </div>
                 <button type="button" (click)="coverInput.click()" [disabled]="isUploadingCover"
                         class="absolute bottom-2 right-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-white bg-black/55 backdrop-blur px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-black/70 disabled:opacity-60">
-                  <i class="bi bi-upload"></i> {{ settings.coverImageUrl ? 'Replace' : 'Upload' }}
+                  <i class="ph ph-upload-simple"></i> {{ settings.coverImageUrl ? 'Replace' : 'Upload' }}
                 </button>
                 <input #coverInput type="file" (change)="onCoverSelected($event)" accept="image/*" class="hidden" />
                 <div *ngIf="isUploadingCover" class="absolute inset-0 bg-white/60 flex items-center justify-center">
@@ -202,7 +202,7 @@
                         class="w-6 h-6 rounded-full border border-borderColor hover:scale-110 transition-transform" [style.background]="c" [title]="c"></button>
               </div>
               <p *ngIf="brandColorTooLight()" class="text-[11px] text-amber-600 mt-2 flex items-start gap-1">
-                <i class="bi bi-exclamation-triangle mt-0.5 flex-shrink-0"></i> This colour is quite light — white text on buttons may be hard to read.
+                <i class="ph ph-warning mt-0.5 flex-shrink-0"></i> This colour is quite light — white text on buttons may be hard to read.
               </p>
             </div>
 
@@ -276,15 +276,15 @@
             <div class="space-y-2">
               <label class="block text-xs font-semibold text-textDark">Social links</label>
               <div class="flex items-center gap-2">
-                <span class="w-9 h-9 rounded-lg bg-surface border border-borderColor flex items-center justify-center text-textMuted flex-shrink-0"><i class="bi bi-instagram"></i></span>
+                <span class="w-9 h-9 rounded-lg bg-surface border border-borderColor flex items-center justify-center text-textMuted flex-shrink-0"><i class="ph ph-instagram-logo"></i></span>
                 <input type="url" [(ngModel)]="settings.instagramUrl" placeholder="instagram.com/yourstore" class="flex-1 px-3 py-2 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
               </div>
               <div class="flex items-center gap-2">
-                <span class="w-9 h-9 rounded-lg bg-surface border border-borderColor flex items-center justify-center text-textMuted flex-shrink-0"><i class="bi bi-facebook"></i></span>
+                <span class="w-9 h-9 rounded-lg bg-surface border border-borderColor flex items-center justify-center text-textMuted flex-shrink-0"><i class="ph ph-facebook-logo"></i></span>
                 <input type="url" [(ngModel)]="settings.facebookUrl" placeholder="facebook.com/yourstore" class="flex-1 px-3 py-2 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
               </div>
               <div class="flex items-center gap-2">
-                <span class="w-9 h-9 rounded-lg bg-surface border border-borderColor flex items-center justify-center text-textMuted flex-shrink-0"><i class="bi bi-globe"></i></span>
+                <span class="w-9 h-9 rounded-lg bg-surface border border-borderColor flex items-center justify-center text-textMuted flex-shrink-0"><i class="ph ph-globe"></i></span>
                 <input type="url" [(ngModel)]="settings.websiteUrl" placeholder="yourstore.co.za" class="flex-1 px-3 py-2 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
               </div>
             </div>
@@ -318,12 +318,12 @@
                         [style.background]="settings.buttonFill === 'outline' ? 'transparent' : settings.primaryColor"
                         [style.color]="settings.buttonFill === 'outline' ? settings.primaryColor : '#ffffff'"
                         [style.border]="settings.buttonFill === 'outline' ? ('2px solid ' + settings.primaryColor) : 'none'">
-                  <i class="bi bi-bag-plus mr-1"></i> Order now
+                  <i class="ph ph-handbag mr-1"></i> Order now
                 </button>
                 <div class="flex items-center gap-3 mt-3 text-textMuted text-base" *ngIf="settings.instagramUrl || settings.facebookUrl || settings.websiteUrl">
-                  <i *ngIf="settings.instagramUrl" class="bi bi-instagram"></i>
-                  <i *ngIf="settings.facebookUrl" class="bi bi-facebook"></i>
-                  <i *ngIf="settings.websiteUrl" class="bi bi-globe"></i>
+                  <i *ngIf="settings.instagramUrl" class="ph ph-instagram-logo"></i>
+                  <i *ngIf="settings.facebookUrl" class="ph ph-facebook-logo"></i>
+                  <i *ngIf="settings.websiteUrl" class="ph ph-globe"></i>
                 </div>
               </div>
             </div>
@@ -335,7 +335,7 @@
       <!-- Delivery Card -->
       <div *ngIf="settingsTab === 'delivery'" id="delivery-section" class="bg-white rounded-2xl shadow-card p-6">
         <h3 class="font-heading text-base font-semibold text-textDark mb-4">
-          <i class="bi bi-truck text-primary mr-2"></i>Delivery Settings
+          <i class="ph ph-truck text-primary mr-2"></i>Delivery Settings
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -437,7 +437,7 @@
       <!-- Categories Card -->
       <div *ngIf="settingsTab === 'store'" id="category-section" class="bg-white rounded-2xl shadow-card p-6">
         <h3 class="font-heading text-base font-semibold text-textDark mb-1">
-          <i class="bi bi-tags text-primary mr-2"></i>Menu Categories
+          <i class="ph ph-tag text-primary mr-2"></i>Menu Categories
         </h3>
         <p class="text-textMuted text-xs mb-4">
           Add your categories here first — they appear as dropdowns when creating menu items and promotions.
@@ -445,7 +445,7 @@
 
         <!-- Backend error -->
         <div *ngIf="categoryLoadError" class="mb-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-danger flex items-center gap-2">
-          <i class="bi bi-exclamation-triangle"></i>
+          <i class="ph ph-warning"></i>
           Could not reach the backend. Restart the server and refresh this page.
         </div>
 
@@ -475,7 +475,7 @@
                     [disabled]="removingCategoryId === cat.id"
                     class="w-4 h-4 flex items-center justify-center rounded-full hover:bg-red-100 hover:text-danger transition-colors disabled:opacity-50">
               <span *ngIf="removingCategoryId === cat.id" class="inline-block w-3 h-3 border-[1.5px] border-current border-t-transparent rounded-full animate-spin"></span>
-              <i *ngIf="removingCategoryId !== cat.id" class="bi bi-x text-xs"></i>
+              <i *ngIf="removingCategoryId !== cat.id" class="ph ph-x text-xs"></i>
             </button>
           </div>
         </div>
@@ -486,7 +486,7 @@
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
           <div>
             <h3 class="font-heading text-base font-semibold text-textDark">
-              <i class="bi bi-clock text-primary mr-2"></i>Opening Hours
+              <i class="ph ph-clock text-primary mr-2"></i>Opening Hours
             </h3>
             <p class="text-textMuted text-xs mt-0.5">Schedule auto-opens and closes your store every day at these times.</p>
           </div>
@@ -526,7 +526,7 @@
         </div>
 
         <p class="text-[10px] text-textMuted mt-3">
-          <i class="bi bi-info-circle mr-1"></i>The scheduler checks every minute and updates your store's open/closed status automatically (Africa/Johannesburg time). You can still toggle manually from the dashboard.
+          <i class="ph ph-info mr-1"></i>The scheduler checks every minute and updates your store's open/closed status automatically (Africa/Johannesburg time). You can still toggle manually from the dashboard.
         </p>
       </div>
 
@@ -549,20 +549,20 @@
         <div class="flex items-start justify-between mb-5">
           <div>
             <h3 class="font-heading text-base font-semibold text-textDark">
-              <i class="bi bi-bell text-primary mr-2"></i>Notification Preferences
+              <i class="ph ph-bell text-primary mr-2"></i>Notification Preferences
             </h3>
             <p class="text-textMuted text-xs mt-0.5">Choose which alerts you receive.</p>
           </div>
           <button *ngIf="!notifEditing && !notifPrefsLoading" type="button" (click)="editNotifPrefs()"
                   class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-borderColor text-sm font-medium text-textDark hover:bg-gray-50 transition-colors flex-shrink-0">
-            <i class="bi bi-pencil"></i> Edit
+            <i class="ph ph-pencil-simple"></i> Edit
           </button>
         </div>
 
         <!-- Per-device sound (instant — not part of the saved email/push prefs) -->
         <div class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-borderColor bg-surface mb-5">
           <div class="flex items-start gap-2.5 min-w-0">
-            <i class="bi bi-volume-up-fill text-primary mt-0.5"></i>
+            <i class="ph-fill ph-speaker-high text-primary mt-0.5"></i>
             <div class="min-w-0">
               <p class="text-sm text-textDark font-medium">New-order sound <span class="text-xs font-normal text-textMuted">· this device</span></p>
               <p class="text-xs text-textMuted">Chimes when an order arrives and repeats until you open Orders — ideal for a busy kitchen screen.</p>
@@ -578,7 +578,7 @@
         <!-- Sound choice (per-device) — 5 options + preview, shown when the sound is on -->
         <div *ngIf="newOrderSound" class="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-borderColor bg-surface mb-5">
           <div class="flex items-center gap-2.5 min-w-0">
-            <i class="bi bi-music-note-beamed text-primary"></i>
+            <i class="ph ph-music-notes text-primary"></i>
             <p class="text-sm text-textDark font-medium">Sound <span class="text-xs font-normal text-textMuted">· choose &amp; preview</span></p>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0">
@@ -587,7 +587,7 @@
             </select>
             <button type="button" (click)="previewSound()" title="Preview"
                     class="px-3 py-1.5 rounded-lg border border-borderColor text-sm text-textDark hover:bg-gray-50 flex items-center gap-1">
-              <i class="bi bi-play-fill"></i> Preview
+              <i class="ph-fill ph-play"></i> Preview
             </button>
           </div>
         </div>
@@ -601,7 +601,7 @@
           <!-- Email -->
           <div>
             <p class="text-[11px] font-semibold text-textMuted uppercase tracking-wide mb-2 flex items-center gap-1.5">
-              <i class="bi bi-envelope"></i> Email
+              <i class="ph ph-envelope"></i> Email
             </p>
             <div class="divide-y divide-borderColor rounded-xl border border-borderColor">
               <div class="flex items-center justify-between gap-3 px-4 py-3">
@@ -633,7 +633,7 @@
           <!-- In-app -->
           <div>
             <p class="text-[11px] font-semibold text-textMuted uppercase tracking-wide mb-2 flex items-center gap-1.5">
-              <i class="bi bi-app-indicator"></i> In-app
+              <i class="ph ph-app-window"></i> In-app
             </p>
             <div class="divide-y divide-borderColor rounded-xl border border-borderColor">
               <div class="flex items-center justify-between gap-3 px-4 py-3">

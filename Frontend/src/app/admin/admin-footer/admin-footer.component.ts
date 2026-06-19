@@ -9,13 +9,13 @@ export class AdminFooterComponent {
   moreOpen = false;
 
   moreItems = [
-    { route: '/admin/inventory',    label: 'Inventory',  icon: 'bi bi-box-seam' },
-    { route: '/admin/promotions',   label: 'Promos',     icon: 'bi bi-tag' },
-    { route: '/admin/settings',     label: 'Settings',   icon: 'bi bi-gear' },
-    { route: '/admin/subscription', label: 'Plan',       icon: 'bi bi-credit-card-2-front' },
-    { route: '/admin/users',        label: 'Users',      icon: 'bi bi-people' },
-    { route: '/admin/reviews',  label: 'Reviews', icon: 'bi bi-star' },
-    { route: '/admin/support', label: 'Support', icon: 'bi bi-headset' },
-    { route: '/admin/payouts', label: 'Payouts', icon: 'bi bi-wallet2' },
+    { route: '/admin/inventory',    label: 'Inventory',  icon: 'ph ph-package' },
+    { route: '/admin/promotions',   label: 'Promos',     icon: 'ph ph-tag' },
+    { route: '/admin/settings',     label: 'Settings',   icon: 'ph ph-gear-six' },
+    { route: '/admin/subscription', label: 'Plan',       icon: 'ph ph-credit-card' },
+    { route: '/admin/users',        label: 'Users',      icon: 'ph ph-users' },
+    { route: '/admin/reviews',  label: 'Reviews', icon: 'ph ph-star' },
+    { route: '/admin/support', label: 'Support', icon: 'ph ph-headset' },
+    { route: '/admin/payouts', label: 'Payouts', icon: 'ph ph-wallet' },
   ];
 }

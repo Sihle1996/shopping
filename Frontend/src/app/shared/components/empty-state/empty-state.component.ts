@@ -22,7 +22,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmptyStateComponent {
-  @Input() icon = 'bi bi-inbox';
+  @Input() icon = 'ph ph-tray';
   @Input() title = 'Nothing here';
   @Input() message = '';
   @Input() actionLabel = '';

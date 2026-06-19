@@ -20,7 +20,7 @@
       <div class="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm
                   text-white text-[10px] font-bold uppercase tracking-widest
                   px-2.5 py-1 rounded-full mb-2">
-        <i class="bi bi-lightning-fill text-yellow-300"></i>
+        <i class="ph-fill ph-lightning text-yellow-300"></i>
         {{ promotion.badgeText || 'Limited Offer' }}
       </div>
 
@@ -46,14 +46,14 @@
       </div>
       <div *ngIf="!promotion.code" class="mt-2">
         <span class="text-[10px] text-white/80 flex items-center gap-1">
-          <i class="bi bi-check-circle-fill text-xs" style="color: rgba(255,255,255,0.9)"></i>
+          <i class="ph-fill ph-check-circle text-xs" style="color: rgba(255,255,255,0.9)"></i>
           Auto-applied at checkout
         </span>
       </div>
 
       <!-- Countdown pill — only when ending within 24h -->
       <div *ngIf="showCountdown" class="mt-2 inline-flex items-center gap-1 bg-red-500/80 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-        <i class="bi bi-alarm-fill text-[9px]"></i> Ends in {{ countdown }}
+        <i class="ph-fill ph-alarm text-[9px]"></i> Ends in {{ countdown }}
       </div>
     </div>
 

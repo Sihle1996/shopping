@@ -4,7 +4,7 @@
   <div class="bg-white border-b border-borderColor px-4 lg:px-8 py-4 sticky top-14 z-10">
     <div class="max-w-3xl mx-auto flex items-center gap-3">
       <button (click)="goBack()" class="p-2 rounded-xl hover:bg-surface transition-colors text-textMuted flex-shrink-0">
-        <i class="bi bi-arrow-left text-lg"></i>
+        <i class="ph ph-arrow-left text-lg"></i>
       </button>
       <div class="flex-1">
         <h2 class="font-heading text-lg font-bold text-textDark">Saved Addresses</h2>
@@ -12,7 +12,7 @@
       </div>
       <button (click)="openAdd()"
               class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600 transition-colors">
-        <i class="bi bi-plus-lg"></i> Add
+        <i class="ph ph-plus"></i> Add
       </button>
     </div>
   </div>
@@ -28,7 +28,7 @@
     <div *ngIf="!loading && addresses.length === 0"
          class="flex flex-col items-center justify-center py-20 text-center">
       <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-        <i class="bi bi-geo-alt text-2xl text-primary"></i>
+        <i class="ph ph-map-pin text-2xl text-primary"></i>
       </div>
       <p class="text-base font-semibold text-textDark">No saved addresses</p>
       <p class="text-sm text-textMuted mt-1">Add an address to speed up checkout</p>
@@ -46,8 +46,7 @@
         <div class="flex items-start gap-3 flex-1 min-w-0">
           <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
                [ngClass]="a.isDefault ? 'bg-primary/10' : 'bg-surface'">
-            <i class="bi text-base" [class.bi-house]="a.label === 'Home'" [class.bi-briefcase]="a.label === 'Work'"
-               [class.bi-geo-alt]="a.label !== 'Home' && a.label !== 'Work'"
+            <i [class]="'ph ' + (a.label === 'Home' ? 'ph-house' : a.label === 'Work' ? 'ph-briefcase' : 'ph-map-pin') + ' text-base'"
                [class.text-primary]="a.isDefault" [class.text-textMuted]="!a.isDefault"></i>
           </div>
           <div class="min-w-0">
@@ -61,10 +60,10 @@
         </div>
         <div class="flex items-center gap-1 flex-shrink-0">
           <button (click)="openEdit(a)" class="p-2 rounded-xl text-textMuted hover:bg-surface hover:text-primary transition-colors">
-            <i class="bi bi-pencil text-sm"></i>
+            <i class="ph ph-pencil-simple text-sm"></i>
           </button>
           <button (click)="confirmDelete(a.id)" class="p-2 rounded-xl text-textMuted hover:bg-red-50 hover:text-danger transition-colors">
-            <i class="bi bi-trash text-sm"></i>
+            <i class="ph ph-trash text-sm"></i>
           </button>
         </div>
       </div>
@@ -79,7 +78,7 @@
     <div class="flex items-center justify-between mb-4">
       <p class="font-semibold text-textDark">{{ editingId ? 'Edit Address' : 'New Address' }}</p>
       <button (click)="showForm = false" class="p-1.5 rounded-lg text-textMuted hover:bg-surface">
-        <i class="bi bi-x-lg text-sm"></i>
+        <i class="ph ph-x text-sm"></i>
       </button>
     </div>
     <form [formGroup]="form" (ngSubmit)="save()" class="space-y-3">
@@ -126,7 +125,7 @@
       <button type="submit" [disabled]="saving || form.invalid"
               class="w-full py-2.5 rounded-xl bg-primary hover:bg-primary-600 text-white text-sm font-semibold
                      transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-        <i class="bi bi-check-lg"></i>
+        <i class="ph ph-check"></i>
         {{ saving ? 'Saving...' : (editingId ? 'Update Address' : 'Save Address') }}
       </button>
     </form>
@@ -137,7 +136,7 @@
 <div *ngIf="confirmDeleteId" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
     <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
-      <i class="bi bi-trash text-xl text-danger"></i>
+      <i class="ph ph-trash text-xl text-danger"></i>
     </div>
     <p class="font-semibold text-textDark text-center mb-1">Delete address?</p>
     <p class="text-sm text-textMuted text-center mb-5">This cannot be undone.</p>

@@ -25,10 +25,10 @@
             'bg-green-100 text-green-700': info.status === 'ACTIVE',
             'bg-red-100 text-red-700': info.status === 'SUSPENDED'
           }">
-          <i class="bi" [ngClass]="{
-            'bi-hourglass-split': info.status === 'TRIAL',
-            'bi-check-circle-fill': info.status === 'ACTIVE',
-            'bi-x-octagon-fill': info.status === 'SUSPENDED'
+          <i class="ph" [ngClass]="{
+            'ph ph-hourglass': info.status === 'TRIAL',
+            'ph-fill ph-check-circle': info.status === 'ACTIVE',
+            'ph-fill ph-x-circle': info.status === 'SUSPENDED'
           }"></i>
           {{ info.status }}
         </span>
@@ -39,7 +39,7 @@
            [ngClass]="advice.verdict === 'UPGRADE' ? 'bg-primary-50 border-primary-100'
                     : advice.verdict === 'CONSIDER_DOWNGRADE' ? 'bg-amber-50 border-amber-200'
                     : 'bg-emerald-50 border-emerald-200'">
-        <i class="bi bi-stars text-lg mt-0.5"
+        <i class="ph ph-sparkle text-lg mt-0.5"
            [ngClass]="advice.verdict === 'UPGRADE' ? 'text-primary'
                     : advice.verdict === 'CONSIDER_DOWNGRADE' ? 'text-amber-500' : 'text-emerald-600'"></i>
         <div class="min-w-0 flex-1">
@@ -88,7 +88,7 @@
       <div *ngIf="info.status === 'SUSPENDED'"
            class="mb-6 p-5 rounded-2xl bg-red-50 border border-red-200 flex items-start gap-4">
         <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-          <i class="bi bi-x-octagon-fill text-red-500 text-lg"></i>
+          <i class="ph-fill ph-x-circle text-red-500 text-lg"></i>
         </div>
         <div>
           <p class="font-semibold text-red-700">Your trial has ended</p>
@@ -102,7 +102,7 @@
            [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'bg-red-50 border border-red-200' : 'bg-amber-50 border border-amber-200'">
         <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
              [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'bg-red-100' : 'bg-amber-100'">
-          <i class="bi bi-clock text-lg"
+          <i class="ph ph-clock text-lg"
              [ngClass]="(info.trialDaysRemaining ?? 0) <= 3 ? 'text-red-500' : 'text-amber-500'"></i>
         </div>
         <div>
@@ -134,20 +134,20 @@
             <span class="font-heading text-3xl font-bold text-textDark">R299</span>
             <span class="text-textMuted text-sm">/mo</span>
           </div>
-          <p class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal mb-5"><i class="bi bi-percent"></i>4% commission per order</p>
+          <p class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal mb-5"><i class="ph ph-percent"></i>4% commission per order</p>
           <ul class="space-y-2.5 text-sm mb-5">
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>100 menu items</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>5 drivers</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>10 promotions</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>20 km radius</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Scheduled promotions</li>
-            <li class="flex items-center gap-2 text-textMuted"><i class="bi bi-x-circle text-gray-300 text-xs"></i>Analytics</li>
-            <li class="flex items-center gap-2 text-textMuted"><i class="bi bi-x-circle text-gray-300 text-xs"></i>Custom branding</li>
-            <li class="flex items-center gap-2 text-textMuted"><i class="bi bi-x-circle text-gray-300 text-xs"></i>Inventory export</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-stars text-green-500 text-xs"></i>Copilot — 50 prompts/mo</li>
-            <li class="flex items-center gap-2 text-textMuted"><i class="bi bi-x-circle text-gray-300 text-xs"></i>Promo intelligence</li>
-            <li class="flex items-center gap-2 text-textMuted"><i class="bi bi-x-circle text-gray-300 text-xs"></i>Driver intelligence</li>
-            <li class="flex items-center gap-2 text-textMuted"><i class="bi bi-x-circle text-gray-300 text-xs"></i>Review &amp; support Vision</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>100 menu items</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>5 drivers</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>10 promotions</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>20 km radius</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Scheduled promotions</li>
+            <li class="flex items-center gap-2 text-textMuted"><i class="ph ph-x-circle text-gray-300 text-xs"></i>Analytics</li>
+            <li class="flex items-center gap-2 text-textMuted"><i class="ph ph-x-circle text-gray-300 text-xs"></i>Custom branding</li>
+            <li class="flex items-center gap-2 text-textMuted"><i class="ph ph-x-circle text-gray-300 text-xs"></i>Inventory export</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph ph-sparkle text-green-500 text-xs"></i>Copilot — 50 prompts/mo</li>
+            <li class="flex items-center gap-2 text-textMuted"><i class="ph ph-x-circle text-gray-300 text-xs"></i>Promo intelligence</li>
+            <li class="flex items-center gap-2 text-textMuted"><i class="ph ph-x-circle text-gray-300 text-xs"></i>Driver intelligence</li>
+            <li class="flex items-center gap-2 text-textMuted"><i class="ph ph-x-circle text-gray-300 text-xs"></i>Review &amp; support Vision</li>
           </ul>
           <div class="pt-4 border-t border-borderColor text-center">
           </div>
@@ -167,20 +167,20 @@
             <span class="font-heading text-3xl font-bold text-textDark">R699</span>
             <span class="text-textMuted text-sm">/mo</span>
           </div>
-          <p class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal mb-5"><i class="bi bi-percent"></i>3% commission per order</p>
+          <p class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal mb-5"><i class="ph ph-percent"></i>3% commission per order</p>
           <ul class="space-y-2.5 text-sm mb-5">
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>500 menu items</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>20 drivers</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>50 promotions</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>50 km radius</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Scheduled promotions</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Analytics</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Custom branding</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Inventory export</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-stars text-green-500 text-xs"></i>Copilot — 500 prompts/mo</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Promo intelligence</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Driver intelligence</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Review &amp; support Vision</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>500 menu items</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>20 drivers</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>50 promotions</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>50 km radius</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Scheduled promotions</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Analytics</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Custom branding</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Inventory export</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph ph-sparkle text-green-500 text-xs"></i>Copilot — 500 prompts/mo</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Promo intelligence</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Driver intelligence</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Review &amp; support Vision</li>
           </ul>
           <div class="pt-4 border-t border-borderColor text-center">
           </div>
@@ -200,23 +200,23 @@
             <span class="font-heading text-3xl font-bold text-textDark">R1499</span>
             <span class="text-textMuted text-sm">/mo</span>
           </div>
-          <p class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal mb-5"><i class="bi bi-percent"></i>2% commission — our lowest</p>
+          <p class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal mb-5"><i class="ph ph-percent"></i>2% commission — our lowest</p>
           <ul class="space-y-2.5 text-sm mb-5">
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Unlimited items</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Unlimited drivers</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Unlimited promotions</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>200 km radius</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Scheduled promotions</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Analytics</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Custom branding</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Inventory export</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-stars text-green-500 text-xs"></i>Copilot — unlimited</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Promo intelligence</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Driver intelligence</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-green-500 text-xs"></i>Review &amp; support Vision</li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-amber-500 text-xs"></i><span class="font-semibold">API access</span></li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-amber-500 text-xs"></i><span class="font-semibold">Priority Support</span></li>
-            <li class="flex items-center gap-2 text-textDark"><i class="bi bi-check-circle-fill text-amber-500 text-xs"></i><span class="font-semibold">Dedicated Account Manager</span></li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Unlimited items</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Unlimited drivers</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Unlimited promotions</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>200 km radius</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Scheduled promotions</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Analytics</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Custom branding</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Inventory export</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph ph-sparkle text-green-500 text-xs"></i>Copilot — unlimited</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Promo intelligence</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Driver intelligence</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-green-500 text-xs"></i>Review &amp; support Vision</li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-amber-500 text-xs"></i><span class="font-semibold">API access</span></li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-amber-500 text-xs"></i><span class="font-semibold">Priority Support</span></li>
+            <li class="flex items-center gap-2 text-textDark"><i class="ph-fill ph-check-circle text-amber-500 text-xs"></i><span class="font-semibold">Dedicated Account Manager</span></li>
           </ul>
           <div class="pt-4 border-t border-borderColor text-center">
           </div>
@@ -230,14 +230,14 @@
         <!-- Usage -->
         <div class="bg-white rounded-2xl border border-borderColor p-6">
           <h3 class="font-heading font-semibold text-textDark mb-5 flex items-center gap-2">
-            <i class="bi bi-bar-chart-fill text-primary"></i> Current Usage
+            <i class="ph-fill ph-chart-bar text-primary"></i> Current Usage
           </h3>
           <div class="space-y-6">
 
             <div>
               <div class="flex items-center justify-between mb-2">
                 <span class="flex items-center gap-2 text-sm text-textDark">
-                  <i class="bi bi-card-list text-textMuted"></i> Menu Items
+                  <i class="ph ph-list-dashes text-textMuted"></i> Menu Items
                 </span>
                 <span class="text-sm font-numbers font-semibold text-textDark">
                   {{ info.usage.menuItems }} <span class="text-textMuted font-normal">/ {{ info.usage.maxMenuItems }}</span>
@@ -254,7 +254,7 @@
             <div>
               <div class="flex items-center justify-between mb-2">
                 <span class="flex items-center gap-2 text-sm text-textDark">
-                  <i class="bi bi-truck text-textMuted"></i> Drivers
+                  <i class="ph ph-truck text-textMuted"></i> Drivers
                 </span>
                 <span class="text-sm font-numbers font-semibold text-textDark">
                   {{ info.usage.drivers }} <span class="text-textMuted font-normal">/ {{ info.usage.maxDrivers }}</span>
@@ -271,7 +271,7 @@
             <div>
               <div class="flex items-center justify-between mb-2">
                 <span class="flex items-center gap-2 text-sm text-textDark">
-                  <i class="bi bi-tag text-textMuted"></i> Active Promotions
+                  <i class="ph ph-tag text-textMuted"></i> Active Promotions
                 </span>
                 <span class="text-sm font-numbers font-semibold text-textDark">
                   {{ info.usage.activePromotions }} <span class="text-textMuted font-normal">/ {{ info.usage.maxPromotions }}</span>
@@ -293,90 +293,90 @@
 
           <div class="bg-white rounded-2xl border border-borderColor p-6">
             <h3 class="font-heading font-semibold text-textDark mb-5 flex items-center gap-2">
-              <i class="bi bi-toggles text-primary"></i> Feature Access
+              <i class="ph ph-sliders text-primary"></i> Feature Access
             </h3>
             <div class="space-y-3">
 
               <div class="flex items-center justify-between">
                 <span class="flex items-center gap-2 text-sm text-textDark">
-                  <i class="bi bi-graph-up text-textMuted text-base"></i> Analytics &amp; Charts
+                  <i class="ph ph-trend-up text-textMuted text-base"></i> Analytics &amp; Charts
                 </span>
                 <span class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
                       [ngClass]="info.features.hasAnalytics ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'">
-                  <i class="bi text-[10px]" [ngClass]="info.features.hasAnalytics ? 'bi-check-circle-fill' : 'bi-lock-fill'"></i>
+                  <i class="ph text-[10px]" [ngClass]="info.features.hasAnalytics ? 'ph-fill ph-check-circle' : 'ph-fill ph-lock'"></i>
                   {{ info.features.hasAnalytics ? 'Included' : 'Locked' }}
                 </span>
               </div>
 
               <div class="flex items-center justify-between">
                 <span class="flex items-center gap-2 text-sm text-textDark">
-                  <i class="bi bi-palette text-textMuted text-base"></i> Custom Branding
+                  <i class="ph ph-palette text-textMuted text-base"></i> Custom Branding
                 </span>
                 <span class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
                       [ngClass]="info.features.hasCustomBranding ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'">
-                  <i class="bi text-[10px]" [ngClass]="info.features.hasCustomBranding ? 'bi-check-circle-fill' : 'bi-lock-fill'"></i>
+                  <i class="ph text-[10px]" [ngClass]="info.features.hasCustomBranding ? 'ph-fill ph-check-circle' : 'ph-fill ph-lock'"></i>
                   {{ info.features.hasCustomBranding ? 'Included' : 'Locked' }}
                 </span>
               </div>
 
               <div class="flex items-center justify-between">
                 <span class="flex items-center gap-2 text-sm text-textDark">
-                  <i class="bi bi-download text-textMuted text-base"></i> Inventory Export
+                  <i class="ph ph-download-simple text-textMuted text-base"></i> Inventory Export
                 </span>
                 <span class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
                       [ngClass]="info.features.hasInventoryExport ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'">
-                  <i class="bi text-[10px]" [ngClass]="info.features.hasInventoryExport ? 'bi-check-circle-fill' : 'bi-lock-fill'"></i>
+                  <i class="ph text-[10px]" [ngClass]="info.features.hasInventoryExport ? 'ph-fill ph-check-circle' : 'ph-fill ph-lock'"></i>
                   {{ info.features.hasInventoryExport ? 'Included' : 'Locked' }}
                 </span>
               </div>
 
               <div class="flex items-center justify-between">
                 <span class="flex items-center gap-2 text-sm text-textDark">
-                  <i class="bi bi-stars text-textMuted text-base"></i> Promo Intelligence
+                  <i class="ph ph-sparkle text-textMuted text-base"></i> Promo Intelligence
                 </span>
                 <span class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
                       [ngClass]="info.features.hasPromoAi ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'">
-                  <i class="bi text-[10px]" [ngClass]="info.features.hasPromoAi ? 'bi-check-circle-fill' : 'bi-lock-fill'"></i>
+                  <i class="ph text-[10px]" [ngClass]="info.features.hasPromoAi ? 'ph-fill ph-check-circle' : 'ph-fill ph-lock'"></i>
                   {{ info.features.hasPromoAi ? 'Included' : 'Locked' }}
                 </span>
               </div>
 
               <div class="flex items-center justify-between">
                 <span class="flex items-center gap-2 text-sm text-textDark">
-                  <i class="bi bi-truck text-textMuted text-base"></i> Driver Intelligence
+                  <i class="ph ph-truck text-textMuted text-base"></i> Driver Intelligence
                 </span>
                 <span class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
                       [ngClass]="info.features.hasDriverIntel ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'">
-                  <i class="bi text-[10px]" [ngClass]="info.features.hasDriverIntel ? 'bi-check-circle-fill' : 'bi-lock-fill'"></i>
+                  <i class="ph text-[10px]" [ngClass]="info.features.hasDriverIntel ? 'ph-fill ph-check-circle' : 'ph-fill ph-lock'"></i>
                   {{ info.features.hasDriverIntel ? 'Included' : 'Locked' }}
                 </span>
               </div>
 
               <div class="flex items-center justify-between">
                 <span class="flex items-center gap-2 text-sm text-textDark">
-                  <i class="bi bi-chat-heart text-textMuted text-base"></i> Review &amp; Support Vision
+                  <i class="ph ph-chat text-textMuted text-base"></i> Review &amp; Support Vision
                 </span>
                 <span class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
                       [ngClass]="info.features.hasReviewAi ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'">
-                  <i class="bi text-[10px]" [ngClass]="info.features.hasReviewAi ? 'bi-check-circle-fill' : 'bi-lock-fill'"></i>
+                  <i class="ph text-[10px]" [ngClass]="info.features.hasReviewAi ? 'ph-fill ph-check-circle' : 'ph-fill ph-lock'"></i>
                   {{ info.features.hasReviewAi ? 'Included' : 'Locked' }}
                 </span>
               </div>
 
               <div class="flex items-center justify-between">
                 <span class="flex items-center gap-2 text-sm text-textDark">
-                  <i class="bi bi-code-slash text-textMuted text-base"></i> API Access
+                  <i class="ph ph-code text-textMuted text-base"></i> API Access
                 </span>
                 <span class="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
                       [ngClass]="info.features.hasApiAccess ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'">
-                  <i class="bi text-[10px]" [ngClass]="info.features.hasApiAccess ? 'bi-check-circle-fill' : 'bi-lock-fill'"></i>
+                  <i class="ph text-[10px]" [ngClass]="info.features.hasApiAccess ? 'ph-fill ph-check-circle' : 'ph-fill ph-lock'"></i>
                   {{ info.features.hasApiAccess ? 'Included' : 'Locked' }}
                 </span>
               </div>
 
               <div class="flex items-center justify-between">
                 <span class="flex items-center gap-2 text-sm text-textDark">
-                  <i class="bi bi-chat-dots text-textMuted text-base"></i> Copilot prompts / month
+                  <i class="ph ph-chat-dots text-textMuted text-base"></i> Copilot prompts / month
                 </span>
                 <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary-50 text-primary">
                   {{ info.features.copilotMonthlyQuota == null ? 'Unlimited' : info.features.copilotMonthlyQuota }}
@@ -387,7 +387,7 @@
 
               <div class="flex items-center justify-between">
                 <span class="flex items-center gap-2 text-sm text-textDark">
-                  <i class="bi bi-geo-alt text-textMuted text-base"></i> Delivery Radius
+                  <i class="ph ph-map-pin text-textMuted text-base"></i> Delivery Radius
                 </span>
                 <span class="text-sm font-numbers font-semibold text-textDark">{{ info.features.maxDeliveryRadiusKm }} km</span>
               </div>
@@ -401,7 +401,7 @@
                class="bg-gradient-to-br from-primary to-primary-600 rounded-2xl p-6 text-white">
             <div class="flex items-start gap-3 mb-5">
               <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                <i class="bi bi-rocket-takeoff text-white text-lg"></i>
+                <i class="ph ph-rocket-launch text-white text-lg"></i>
               </div>
               <div>
                 <p class="font-semibold text-base">Ready to scale?</p>
@@ -421,7 +421,7 @@
                   Upgrade to {{ plan.name }} — R{{ plan.priceZar }}/mo
                 </span>
                 <span *ngIf="upgradingPlan === plan.name">
-                  <i class="bi bi-x-circle mr-1"></i> Cancel {{ plan.name }} upgrade
+                  <i class="ph ph-x-circle mr-1"></i> Cancel {{ plan.name }} upgrade
                 </span>
               </button>
             </div>
@@ -443,7 +443,7 @@
           <!-- Upgrade success -->
           <div *ngIf="upgradeSuccess"
                class="bg-green-50 rounded-2xl border border-green-200 p-6 text-center">
-            <i class="bi bi-check-circle-fill text-green-500 text-3xl mb-2 block"></i>
+            <i class="ph-fill ph-check-circle text-green-500 text-3xl mb-2 block"></i>
             <p class="font-semibold text-green-700">Upgraded to {{ upgradeSuccessPlan }}!</p>
             <p class="text-xs text-green-600 mt-1">Your new plan is now active.</p>
           </div>
@@ -497,7 +497,7 @@
           <div *ngIf="info.cancelledAt"
                class="bg-orange-50 border border-orange-200 rounded-2xl p-5">
             <div class="flex items-start gap-3">
-              <i class="bi bi-clock-history text-orange-500 text-lg flex-shrink-0 mt-0.5"></i>
+              <i class="ph ph-clock-counter-clockwise text-orange-500 text-lg flex-shrink-0 mt-0.5"></i>
               <div class="flex-1">
                 <p class="font-semibold text-orange-700 text-sm">Downgrade scheduled</p>
                 <p class="text-xs text-orange-600 mt-0.5">
@@ -517,16 +517,16 @@
           <!-- Top plan badge -->
           <div *ngIf="info.plan === 'ENTERPRISE'"
                class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 text-white text-center">
-            <i class="bi bi-award-fill text-amber-400 text-3xl mb-2 block"></i>
+            <i class="ph-fill ph-medal text-amber-400 text-3xl mb-2 block"></i>
             <p class="font-semibold">You're on the top plan</p>
             <p class="text-sm text-gray-400 mt-1">Full access to all features.</p>
             <div class="mt-4 space-y-2 text-left">
               <div class="flex items-center gap-2 text-sm">
-                <i class="bi bi-headset text-amber-400"></i>
+                <i class="ph ph-headset text-amber-400"></i>
                 <span class="text-gray-200">Priority Support</span>
               </div>
               <div class="flex items-center gap-2 text-sm">
-                <i class="bi bi-person-badge text-amber-400"></i>
+                <i class="ph ph-identification-badge text-amber-400"></i>
                 <span class="text-gray-200">Dedicated Account Manager</span>
               </div>
             </div>

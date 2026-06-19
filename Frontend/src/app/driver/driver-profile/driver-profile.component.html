@@ -5,7 +5,7 @@
     <div class="max-w-5xl mx-auto flex items-center gap-3">
       <a routerLink="/driver/dashboard"
          class="p-2 rounded-xl text-textMuted hover:bg-gray-100 transition-colors">
-        <i class="bi bi-arrow-left text-lg"></i>
+        <i class="ph ph-arrow-left text-lg"></i>
       </a>
       <div>
         <h1 class="font-heading text-lg font-bold text-textDark">My Profile</h1>
@@ -40,19 +40,19 @@
             {{ form.get('fullName')?.value || 'Driver' }}
           </p>
           <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary">
-            <i class="bi bi-bicycle mr-1"></i> Driver
+            <i class="ph ph-bicycle mr-1"></i> Driver
           </span>
         </div>
 
         <!-- Earnings card -->
         <div *ngIf="earnings" class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-5 text-white shadow-card">
           <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center mb-3">
-            <i class="bi bi-cash-stack text-white text-lg"></i>
+            <i class="ph ph-money text-white text-lg"></i>
           </div>
           <p class="text-xs font-medium opacity-80">Total Earnings</p>
           <p class="text-3xl font-bold font-numbers mt-1">R{{ earnings.totalEarnings | number:'1.2-2' }}</p>
           <div class="mt-3 pt-3 border-t border-white/20 flex items-center gap-2">
-            <i class="bi bi-check-circle opacity-70"></i>
+            <i class="ph ph-check-circle opacity-70"></i>
             <span class="text-sm opacity-90">{{ earnings.deliveredCount }} deliveries</span>
           </div>
         </div>
@@ -73,7 +73,7 @@
 
         <!-- Tip -->
         <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-xs text-blue-700 hidden lg:block">
-          <i class="bi bi-lightbulb text-blue-400 mr-1"></i>
+          <i class="ph ph-lightbulb text-blue-400 mr-1"></i>
           Keep your profile complete to receive more delivery assignments.
         </div>
 
@@ -86,7 +86,7 @@
           <div *ngIf="!profileEditing" class="flex justify-end">
             <button type="button" (click)="editProfile()"
                     class="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-borderColor text-sm font-medium text-textDark hover:bg-gray-50 transition-colors">
-              <i class="bi bi-pencil"></i> Edit
+              <i class="ph ph-pencil-simple"></i> Edit
             </button>
           </div>
 
@@ -133,7 +133,7 @@
           <div *ngIf="profileEditing" class="flex flex-col sm:flex-row gap-3">
             <button type="submit" [disabled]="saving"
                     class="flex-1 py-3 rounded-xl bg-primary hover:bg-primary-600 text-white text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-              <i class="bi bi-check-lg"></i>
+              <i class="ph ph-check"></i>
               {{ saving ? 'Saving...' : 'Save Profile' }}
             </button>
             <button type="button" (click)="cancelProfileEdit()"
@@ -156,7 +156,7 @@
                        class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
                 <button type="button" (click)="showCurrentPassword = !showCurrentPassword"
                         class="absolute inset-y-0 right-0 pr-3 flex items-center text-textMuted hover:text-textDark">
-                  <i [class]="showCurrentPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                  <i [class]="showCurrentPassword ? 'ph ph-eye-slash' : 'ph ph-eye'"></i>
                 </button>
               </div>
             </div>
@@ -168,7 +168,7 @@
                        class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark focus:outline-none focus:ring-2 focus:ring-primary-400" />
                 <button type="button" (click)="showNewPassword = !showNewPassword"
                         class="absolute inset-y-0 right-0 pr-3 flex items-center text-textMuted hover:text-textDark">
-                  <i [class]="showNewPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                  <i [class]="showNewPassword ? 'ph ph-eye-slash' : 'ph ph-eye'"></i>
                 </button>
               </div>
               <p *ngIf="passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.hasError('minlength')"
@@ -177,7 +177,7 @@
           </div>
           <button type="submit" [disabled]="savingPassword"
                   class="w-full mt-4 py-3 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-            <i class="bi bi-lock"></i>
+            <i class="ph ph-lock"></i>
             {{ savingPassword ? 'Saving...' : 'Change Password' }}
           </button>
         </form>

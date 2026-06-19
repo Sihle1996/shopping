@@ -4,7 +4,7 @@
   <div class="bg-white border-b border-borderColor px-4 lg:px-8 py-4 sticky top-14 z-10">
     <div class="max-w-3xl mx-auto flex items-center gap-3">
       <button (click)="goBack()" class="p-2 rounded-xl hover:bg-surface transition-colors text-textMuted flex-shrink-0">
-        <i class="bi bi-arrow-left text-lg"></i>
+        <i class="ph ph-arrow-left text-lg"></i>
       </button>
       <div>
         <h2 class="font-heading text-lg font-bold text-textDark">My Profile</h2>
@@ -49,15 +49,15 @@
 
       <!-- Section tabs -->
       <div class="flex gap-2 bg-white rounded-2xl border border-borderColor p-1.5 shadow-card">
-        <button *ngFor="let tab of [{id:'personal', icon:'bi-person', label:'Personal'},
-                                    {id:'security', icon:'bi-shield-lock', label:'Security'},
-                                    {id:'privacy',  icon:'bi-eye-slash', label:'Privacy'}]"
+        <button *ngFor="let tab of [{id:'personal', icon:'ph-user', label:'Personal'},
+                                    {id:'security', icon:'ph-shield', label:'Security'},
+                                    {id:'privacy',  icon:'ph-eye-slash', label:'Privacy'}]"
                 (click)="setSection(tab.id)"
                 class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium transition-all"
                 [ngClass]="activeSection === tab.id
                   ? 'bg-primary text-white shadow-sm'
                   : 'text-textMuted hover:text-textDark hover:bg-surface'">
-          <i class="bi {{ tab.icon }} text-sm"></i>
+          <i class="ph {{ tab.icon }} text-sm"></i>
           <span class="hidden sm:inline">{{ tab.label }}</span>
         </button>
       </div>
@@ -73,7 +73,7 @@
             </div>
             <button *ngIf="!profileEditing" type="button" (click)="editProfile()"
                     class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-borderColor text-sm text-textDark hover:bg-gray-50 transition-colors">
-              <i class="bi bi-pencil"></i> Edit
+              <i class="ph ph-pencil-simple"></i> Edit
             </button>
           </div>
 
@@ -95,7 +95,7 @@
             <div class="sm:col-span-2">
               <label class="text-xs font-medium text-textMuted block mb-1">Email address</label>
               <div class="w-full px-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textMuted flex items-center gap-2">
-                <i class="bi bi-envelope text-xs"></i>
+                <i class="ph ph-envelope text-xs"></i>
                 {{ email }}
               </div>
               <button *ngIf="!showEmailChange" type="button" (click)="showEmailChange = true"
@@ -132,7 +132,7 @@
             <button *ngIf="profileEditing" type="submit" [disabled]="saving"
                     class="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary-600 text-white text-sm font-semibold
                            transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-              <i class="bi bi-check-lg"></i>
+              <i class="ph ph-check"></i>
               {{ saving ? 'Saving...' : 'Save Changes' }}
             </button>
             <button *ngIf="profileEditing" type="button" (click)="cancelProfileEdit()"
@@ -142,7 +142,7 @@
             <a routerLink="/profile/addresses"
                class="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-borderColor
                       text-sm text-textDark hover:bg-gray-50 transition-colors">
-              <i class="bi bi-geo-alt"></i> Addresses
+              <i class="ph ph-map-pin"></i> Addresses
             </a>
           </div>
         </div>
@@ -157,7 +157,7 @@
               <p class="text-sm font-semibold text-textDark">Change Password</p>
               <p class="text-xs text-textMuted mt-0.5">Use a strong password you don't use elsewhere</p>
             </div>
-            <i class="bi bi-shield-check text-2xl text-primary/30"></i>
+            <i class="ph ph-shield-check text-2xl text-primary/30"></i>
           </div>
 
           <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="space-y-4">
@@ -206,7 +206,7 @@
             <button type="submit" [disabled]="changingPassword"
                     class="w-full py-2.5 rounded-xl bg-primary hover:bg-primary-600 text-white text-sm font-semibold
                            transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-              <i class="bi bi-lock"></i>
+              <i class="ph ph-lock"></i>
               {{ changingPassword ? 'Updating...' : 'Update Password' }}
             </button>
           </form>
@@ -218,13 +218,13 @@
           <div class="space-y-3">
             <div class="flex items-center justify-between py-2 border-b border-borderColor">
               <div class="flex items-center gap-2 text-sm text-textDark">
-                <i class="bi bi-envelope text-textMuted text-sm"></i> Email
+                <i class="ph ph-envelope text-textMuted text-sm"></i> Email
               </div>
               <span class="text-sm text-textMuted">{{ email }}</span>
             </div>
             <div class="flex items-center justify-between py-2">
               <div class="flex items-center gap-2 text-sm text-textDark">
-                <i class="bi bi-key text-textMuted text-sm"></i> Password
+                <i class="ph ph-key text-textMuted text-sm"></i> Password
               </div>
               <span class="text-sm text-textMuted">••••••••</span>
             </div>
@@ -242,7 +242,7 @@
               <p class="text-sm font-semibold text-textDark">Data & Privacy</p>
               <p class="text-xs text-textMuted mt-0.5">Control how your data is used</p>
             </div>
-            <i class="bi bi-shield text-2xl text-primary/30"></i>
+            <i class="ph ph-shield text-2xl text-primary/30"></i>
           </div>
 
           <!-- Push notification toggle -->
@@ -271,14 +271,14 @@
 
           <div class="space-y-3">
             <div class="flex items-start gap-3 p-3 rounded-xl bg-surface border border-borderColor">
-              <i class="bi bi-person-check text-primary mt-0.5"></i>
+              <i class="ph ph-user-check text-primary mt-0.5"></i>
               <div>
                 <p class="text-sm font-medium text-textDark">Your profile data</p>
                 <p class="text-xs text-textMuted mt-0.5">Name and phone are only visible to the store you order from. Your email is never shared.</p>
               </div>
             </div>
             <div class="flex items-start gap-3 p-3 rounded-xl bg-surface border border-borderColor">
-              <i class="bi bi-cart text-primary mt-0.5"></i>
+              <i class="ph ph-shopping-cart text-primary mt-0.5"></i>
               <div>
                 <p class="text-sm font-medium text-textDark">Order history</p>
                 <p class="text-xs text-textMuted mt-0.5">Your order history is kept to let you reorder and track deliveries.</p>
@@ -294,7 +294,7 @@
           <button (click)="confirmDeleteAccount()"
                   class="px-4 py-2.5 rounded-xl border border-red-300 text-sm font-semibold text-danger
                          hover:bg-red-50 transition-colors flex items-center gap-2">
-            <i class="bi bi-trash3"></i> Delete My Account
+            <i class="ph ph-trash"></i> Delete My Account
           </button>
         </div>
 

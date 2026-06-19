@@ -3,7 +3,7 @@
   <!-- Header -->
   <div class="sticky top-0 z-30 bg-white shadow-sm border-b border-borderColor px-4 py-3 flex items-center gap-3">
     <button (click)="addMyItems()" class="p-2 rounded-xl hover:bg-surface transition-colors">
-      <i class="bi bi-arrow-left text-textDark text-lg"></i>
+      <i class="ph ph-arrow-left text-textDark text-lg"></i>
     </button>
     <div class="flex-1 min-w-0">
       <h1 class="font-heading font-bold text-textDark text-base leading-tight truncate">Group Order</h1>
@@ -13,7 +13,7 @@
     </div>
     <button *ngIf="cart" (click)="copyLink()"
             class="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary-50 px-3 py-1.5 rounded-xl hover:bg-primary-100 transition-colors">
-      <i class="bi bi-share"></i> Share
+      <i class="ph ph-share-network"></i> Share
     </button>
   </div>
 
@@ -25,7 +25,7 @@
   <!-- Error -->
   <div *ngIf="error && !loading" class="flex flex-col items-center py-20 gap-3 text-center px-6">
     <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-2">
-      <i class="bi bi-exclamation-circle text-danger text-2xl"></i>
+      <i class="ph ph-warning-circle text-danger text-2xl"></i>
     </div>
     <p class="text-textDark font-semibold">{{ error }}</p>
   </div>
@@ -35,14 +35,14 @@
     <!-- Checked out banner -->
     <div *ngIf="cart.status === 'CHECKED_OUT'"
          class="bg-green-50 border border-green-200 rounded-2xl px-4 py-3 flex items-center gap-2 text-green-700 text-sm">
-      <i class="bi bi-check-circle-fill"></i>
+      <i class="ph-fill ph-check-circle"></i>
       <span>This group order has been checked out.</span>
     </div>
 
     <!-- Login prompt for guests -->
     <div *ngIf="!isLoggedIn && cart.status === 'OPEN'"
          class="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4 flex items-start gap-3">
-      <i class="bi bi-person-circle text-amber-500 text-xl flex-shrink-0 mt-0.5"></i>
+      <i class="ph ph-user-circle text-amber-500 text-xl flex-shrink-0 mt-0.5"></i>
       <div class="flex-1">
         <p class="text-sm font-semibold text-amber-800">Log in to add your items</p>
         <p class="text-xs text-amber-700 mt-0.5">You're viewing this group order as a guest. Sign in to add your choices.</p>
@@ -57,7 +57,7 @@
     <div *ngIf="isLoggedIn && cart.status === 'OPEN' && personalCartItems.length"
          class="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3">
       <div class="flex items-start gap-3">
-        <i class="bi bi-cart-check text-blue-500 text-xl flex-shrink-0 mt-0.5"></i>
+        <i class="ph ph-shopping-cart text-blue-500 text-xl flex-shrink-0 mt-0.5"></i>
         <div class="flex-1 min-w-0">
           <p class="text-sm font-semibold text-blue-800">
             You have {{ personalCartItems.length }} item{{ personalCartItems.length > 1 ? 's' : '' }} in your personal cart
@@ -88,12 +88,12 @@
     <div *ngIf="isLoggedIn && !isOwner && cart.status === 'OPEN'"
          class="bg-primary/5 border border-primary/20 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
       <div class="flex items-center gap-2">
-        <i class="bi bi-cart-plus text-primary text-lg"></i>
+        <i class="ph ph-shopping-cart text-primary text-lg"></i>
         <p class="text-sm font-semibold text-textDark">Add your items to this order</p>
       </div>
       <button (click)="addMyItems()"
               class="flex items-center gap-1.5 text-xs font-semibold text-white bg-primary px-4 py-2 rounded-xl hover:opacity-90 transition-opacity flex-shrink-0">
-        <i class="bi bi-plus-circle"></i> Add items
+        <i class="ph ph-plus-circle"></i> Add items
       </button>
     </div>
 
@@ -117,12 +117,12 @@
         <button *ngIf="cart.status === 'OPEN' && isLoggedIn"
                 (click)="addMyItems()"
                 class="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary-50 px-3 py-1.5 rounded-xl hover:bg-primary-100 transition-colors">
-          <i class="bi bi-plus-circle"></i> Add items
+          <i class="ph ph-plus-circle"></i> Add items
         </button>
       </div>
 
       <div *ngIf="cart.items.length === 0" class="py-10 text-center text-textMuted text-sm">
-        <i class="bi bi-cart3 text-3xl text-borderColor block mb-2"></i>
+        <i class="ph ph-shopping-cart text-3xl text-borderColor block mb-2"></i>
         No items yet — be the first to add something!
       </div>
 
@@ -136,7 +136,7 @@
               x{{ item.quantity }} · R{{ (item.unitPrice * item.quantity).toFixed(2) }}
             </p>
             <p class="text-xs text-primary mt-0.5 font-medium">
-              <i class="bi bi-person-fill text-[10px] mr-0.5"></i>
+              <i class="ph-fill ph-user text-[10px] mr-0.5"></i>
               {{ item.addedBy?.fullName || item.addedBy?.email }}
               <span *ngIf="item.addedBy?.id === cart.ownerId"
                     class="ml-1 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">host</span>
@@ -148,7 +148,7 @@
                   (click)="removeItem(item.id)"
                   [disabled]="removingId === item.id"
                   class="p-1.5 text-textMuted hover:text-danger transition-colors rounded-lg hover:bg-red-50 flex-shrink-0 disabled:opacity-40">
-            <i [class]="removingId === item.id ? 'bi bi-hourglass-split text-sm animate-spin' : 'bi bi-trash3 text-sm'"></i>
+            <i [class]="removingId === item.id ? 'ph ph-hourglass text-sm animate-spin' : 'ph ph-trash text-sm'"></i>
           </button>
         </li>
       </ul>
@@ -162,7 +162,7 @@
       <div class="bg-white rounded-2xl shadow-card p-4">
         <p class="text-xs font-semibold text-textMuted uppercase tracking-wider mb-2">Share with friends</p>
         <div class="flex items-center gap-2 bg-surface rounded-xl px-3 py-2">
-          <i class="bi bi-link-45deg text-primary flex-shrink-0"></i>
+          <i class="ph ph-link text-primary flex-shrink-0"></i>
           <span class="text-xs text-textMuted truncate flex-1">{{ shareUrl }}</span>
           <button (click)="copyLink()" class="text-primary text-xs font-semibold hover:underline flex-shrink-0">Copy</button>
         </div>
@@ -178,7 +178,7 @@
         <button *ngIf="isOwner && cart.status === 'OPEN' && cart.items.length"
                 (click)="goToCheckout()"
                 class="w-full py-3 bg-primary text-white font-semibold rounded-xl text-sm hover:opacity-90 transition-opacity">
-          <i class="bi bi-bag-check mr-1.5"></i> Proceed to Checkout
+          <i class="ph ph-handbag mr-1.5"></i> Proceed to Checkout
         </button>
         <div *ngIf="!isOwner && cart.status === 'OPEN' && isLoggedIn" class="text-center space-y-1">
           <p class="text-xs text-textMuted flex items-center justify-center gap-1.5">

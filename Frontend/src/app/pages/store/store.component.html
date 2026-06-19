@@ -6,7 +6,7 @@
 <!-- Not Found -->
 <app-empty-state
   *ngIf="notFound"
-  icon="bi bi-shop"
+  icon="ph ph-storefront"
   title="Store not found"
   message="This restaurant doesn't exist or is no longer active"
   actionLabel="Browse Restaurants"
@@ -17,7 +17,7 @@
 <div *ngIf="!notFound && tenant?.isOpen === false"
      class="bg-amber-50 border-b border-amber-200 px-4 py-3 text-sm text-amber-800">
   <div class="max-w-7xl mx-auto flex items-center gap-2">
-    <i class="bi bi-clock text-amber-500"></i>
+    <i class="ph ph-clock text-amber-500"></i>
     <span>This store is currently <strong>closed</strong>. You can still browse the menu.</span>
   </div>
 </div>

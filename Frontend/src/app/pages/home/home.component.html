@@ -4,7 +4,7 @@
   <div class="px-4 pt-4 lg:px-8" *ngIf="!isLoggedIn">
     <a routerLink="/stores"
        class="inline-flex items-center gap-1.5 text-xs text-textMuted hover:text-textDark transition-colors">
-      <i class="bi bi-arrow-left text-xs"></i> All stores
+      <i class="ph ph-arrow-left text-xs"></i> All stores
     </a>
   </div>
 
@@ -46,9 +46,9 @@
               <p *ngIf="storeCuisine" class="text-xs sm:text-sm truncate" [ngClass]="storeCoverUrl ? 'text-white/90' : 'text-textMuted'">{{ storeCuisine }}</p>
             </div>
             <div class="flex items-center gap-2 flex-shrink-0" *ngIf="storeInstagram || storeFacebook || storeWebsite">
-              <a *ngIf="storeInstagram" [href]="storeInstagram" target="_blank" rel="noopener" title="Instagram" class="w-9 h-9 rounded-full bg-white/90 hover:bg-white flex items-center justify-center text-textDark shadow-sm transition-colors"><i class="bi bi-instagram"></i></a>
-              <a *ngIf="storeFacebook" [href]="storeFacebook" target="_blank" rel="noopener" title="Facebook" class="w-9 h-9 rounded-full bg-white/90 hover:bg-white flex items-center justify-center text-textDark shadow-sm transition-colors"><i class="bi bi-facebook"></i></a>
-              <a *ngIf="storeWebsite" [href]="storeWebsite" target="_blank" rel="noopener" title="Website" class="w-9 h-9 rounded-full bg-white/90 hover:bg-white flex items-center justify-center text-textDark shadow-sm transition-colors"><i class="bi bi-globe"></i></a>
+              <a *ngIf="storeInstagram" [href]="storeInstagram" target="_blank" rel="noopener" title="Instagram" class="w-9 h-9 rounded-full bg-white/90 hover:bg-white flex items-center justify-center text-textDark shadow-sm transition-colors"><i class="ph ph-instagram-logo"></i></a>
+              <a *ngIf="storeFacebook" [href]="storeFacebook" target="_blank" rel="noopener" title="Facebook" class="w-9 h-9 rounded-full bg-white/90 hover:bg-white flex items-center justify-center text-textDark shadow-sm transition-colors"><i class="ph ph-facebook-logo"></i></a>
+              <a *ngIf="storeWebsite" [href]="storeWebsite" target="_blank" rel="noopener" title="Website" class="w-9 h-9 rounded-full bg-white/90 hover:bg-white flex items-center justify-center text-textDark shadow-sm transition-colors"><i class="ph ph-globe"></i></a>
             </div>
           </div>
         </div>
@@ -73,12 +73,12 @@
           </span>
           <!-- Delivery estimate -->
           <span class="inline-flex items-center gap-1 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full">
-            <i class="bi bi-clock text-xs"></i> ~{{ estimatedDeliveryMinutes }} min
+            <i class="ph ph-clock text-xs"></i> ~{{ estimatedDeliveryMinutes }} min
           </span>
           <!-- Rating -->
           <span *ngIf="avgRating > 0"
                 class="inline-flex items-center gap-1.5 bg-white border border-borderColor text-textDark px-3 py-1 rounded-full shadow-sm">
-            <i class="bi bi-star-fill text-amber-400 text-sm"></i>
+            <i class="ph-fill ph-star text-amber-400 text-sm"></i>
             <span class="text-sm font-bold">{{ avgRating | number:'1.1-1' }}</span>
             <span class="text-textMuted font-normal text-xs">({{ totalReviews }})</span>
           </span>
@@ -89,7 +89,7 @@
       <div *ngIf="!storeIsOpen"
            class="mb-4 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3.5">
         <div class="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-          <i class="bi bi-moon-stars text-amber-600"></i>
+          <i class="ph ph-moon-stars text-amber-600"></i>
         </div>
         <div class="text-sm min-w-0">
           <p class="font-semibold text-amber-900 leading-tight">We're currently closed</p>
@@ -107,7 +107,7 @@
         <button (click)="showAllHours = !showAllHours"
                 class="w-full flex items-center justify-between px-4 py-3 hover:bg-surface transition-colors">
           <div class="flex items-center gap-2.5 min-w-0">
-            <i class="bi bi-clock text-primary text-base flex-shrink-0"></i>
+            <i class="ph ph-clock text-primary text-base flex-shrink-0"></i>
             <div class="min-w-0">
               <p class="font-semibold text-textDark text-sm leading-tight">Opening Hours</p>
               <ng-container *ngIf="todayHours">
@@ -118,9 +118,7 @@
               </ng-container>
             </div>
           </div>
-          <i class="bi flex-shrink-0 text-textMuted text-xs transition-transform ml-2"
-             [class.bi-chevron-down]="!showAllHours"
-             [class.bi-chevron-up]="showAllHours"></i>
+          <i [class]="'ph ' + (showAllHours ? 'ph-caret-up' : 'ph-caret-down') + ' flex-shrink-0 text-textMuted text-xs transition-transform ml-2'"></i>
         </button>
 
         <!-- Expanded week schedule -->
@@ -183,7 +181,7 @@
       <!-- Promotions -->
       <div class="mb-6" *ngIf="visiblePromotions.length && selectedCategory === 'All' && !searchQuery">
         <h3 class="font-heading text-lg font-semibold text-textDark mb-3">
-          <i class="bi bi-tag text-primary mr-1"></i> Promotions
+          <i class="ph ph-tag text-primary mr-1"></i> Promotions
         </h3>
         <app-promotion-grid [promotions]="visiblePromotions"></app-promotion-grid>
       </div>
@@ -209,7 +207,7 @@
       <!-- Empty state -->
       <app-empty-state
         *ngIf="filteredMenuItems.length === 0 && !isLoading"
-        icon="bi bi-search"
+        icon="ph ph-magnifying-glass"
         title="No items found"
         message="Try adjusting your search or category filter"
         actionLabel="Clear Filters"
@@ -267,7 +265,7 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-heading text-lg font-bold text-textDark">Customer Reviews</h2>
           <span class="text-sm text-textMuted">
-            <i class="bi bi-star-fill text-amber-400 mr-1"></i>
+            <i class="ph-fill ph-star text-amber-400 mr-1"></i>
             {{ avgRating | number:'1.1-1' }} ({{ reviews.length }})
           </span>
         </div>
@@ -279,15 +277,14 @@
               <div class="min-w-0">
                 <p class="text-sm font-semibold text-textDark truncate leading-tight">{{ r.userName || 'Guest' }}</p>
                 <p class="text-[10px] text-emerald-600 font-medium flex items-center gap-1 leading-tight">
-                  <i class="bi bi-patch-check-fill"></i> Verified order
+                  <i class="ph-fill ph-seal-check"></i> Verified order
                 </p>
               </div>
             </div>
             <div class="flex items-center gap-1 mb-2">
               <i *ngFor="let s of [1,2,3,4,5]"
-                 class="bi text-sm"
-                 [class.bi-star-fill]="s <= r.rating"
-                 [class.bi-star]="s > r.rating"
+                 class="ph ph-star text-sm"
+                 [class.ph-fill]="s <= r.rating"
                  [ngClass]="s <= r.rating ? 'text-amber-400' : 'text-gray-300'"></i>
             </div>
             <p *ngIf="r.comment" class="text-textDark text-sm leading-relaxed line-clamp-3">{{ r.comment }}</p>
@@ -304,7 +301,7 @@
        class="fixed bottom-16 left-4 right-4 z-50 md:hidden animate-fade-in">
     <div class="bg-gray-900 text-white rounded-2xl px-4 py-3 flex items-center justify-between shadow-lg">
       <div class="flex items-center gap-2">
-        <i class="bi bi-check-circle-fill text-success text-base"></i>
+        <i class="ph-fill ph-check-circle text-success text-base"></i>
         <span class="text-sm font-medium">{{ cartAddedName }} added</span>
       </div>
       <a [routerLink]="cartRoute"
@@ -355,7 +352,7 @@
       </div>
       <button (click)="closeModifierModal()"
               class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
-        <i class="bi bi-x-lg text-textMuted"></i>
+        <i class="ph ph-x text-textMuted"></i>
       </button>
     </div>
     <div class="overflow-y-auto flex-1 px-5 py-4 space-y-5">

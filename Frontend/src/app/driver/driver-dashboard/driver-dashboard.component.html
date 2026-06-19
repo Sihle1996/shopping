@@ -13,7 +13,7 @@
         <a routerLink="/driver/profile"
            class="p-2 rounded-xl text-textMuted hover:bg-gray-100 transition-colors"
            title="My Profile">
-          <i class="bi bi-person-circle text-xl"></i>
+          <i class="ph ph-user-circle text-xl"></i>
         </a>
         <button (click)="toggleAvailability()"
                 class="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all"
@@ -32,9 +32,9 @@
     <!-- Profile incomplete banner -->
     <a *ngIf="profileIncomplete" routerLink="/driver/profile"
        class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-3 mb-5 text-sm text-amber-800">
-      <i class="bi bi-person-exclamation text-lg text-amber-500 flex-shrink-0"></i>
+      <i class="ph ph-user text-lg text-amber-500 flex-shrink-0"></i>
       <span class="flex-1">Complete your profile to get more deliveries</span>
-      <i class="bi bi-chevron-right text-amber-400"></i>
+      <i class="ph ph-caret-right text-amber-400"></i>
     </a>
 
     <!-- Loading -->
@@ -52,7 +52,7 @@
     <!-- Empty state -->
     <app-empty-state
       *ngIf="!isLoading && orders.length === 0"
-      icon="bi bi-truck"
+      icon="ph ph-truck"
       title="No deliveries yet"
       [message]="isOnline ? 'Waiting for orders to be assigned to you' : 'Go online to receive delivery assignments'">
     </app-empty-state>
@@ -74,7 +74,7 @@
           </div>
           <button (click)="loadOrders()" title="Refresh now"
                   class="p-1.5 rounded-lg text-textMuted hover:bg-gray-100 hover:text-primary transition-colors">
-            <i class="bi bi-arrow-clockwise text-base"></i>
+            <i class="ph ph-arrow-clockwise text-base"></i>
           </button>
         </div>
 
@@ -87,7 +87,7 @@
           </div>
           <div class="px-5 py-3 flex items-center gap-3 text-sm">
             <div class="flex items-center gap-1.5 text-textMuted">
-              <i class="bi bi-percent text-primary"></i>
+              <i class="ph ph-percent text-primary"></i>
               <span class="text-xs">10% per delivery</span>
             </div>
           </div>
@@ -104,7 +104,7 @@
             <div class="p-4 space-y-3">
               <!-- Address -->
               <div class="flex items-start gap-2">
-                <i class="bi bi-geo-alt text-primary mt-0.5 flex-shrink-0"></i>
+                <i class="ph ph-map-pin text-primary mt-0.5 flex-shrink-0"></i>
                 <p class="text-sm font-medium text-textDark leading-snug">{{ cd.deliveryAddress }}</p>
               </div>
 
@@ -128,7 +128,7 @@
               <!-- Order notes -->
               <div *ngIf="cd.orderNotes"
                    class="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-                <i class="bi bi-info-circle text-amber-500 flex-shrink-0 mt-0.5"></i>
+                <i class="ph ph-info text-amber-500 flex-shrink-0 mt-0.5"></i>
                 <p class="text-xs text-amber-800">{{ cd.orderNotes }}</p>
               </div>
 
@@ -155,11 +155,11 @@
               <div class="flex gap-2 pt-1">
                 <button (click)="openNavigation(cd)"
                         class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-primary text-primary text-sm font-semibold hover:bg-primary/5 transition-colors">
-                  <i class="bi bi-map"></i> Navigate
+                  <i class="ph ph-map-trifold"></i> Navigate
                 </button>
                 <button (click)="confirmDeliver(cd.id)"
                         class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-600 transition-colors">
-                  <i class="bi bi-check-circle"></i> Delivered
+                  <i class="ph ph-check-circle"></i> Delivered
                 </button>
               </div>
             </div>
@@ -179,17 +179,17 @@
                 <app-badge variant="neutral" size="sm">{{ order.status }}</app-badge>
               </div>
               <div class="flex items-start gap-2 mb-2">
-                <i class="bi bi-geo-alt text-textMuted text-sm mt-0.5 flex-shrink-0"></i>
+                <i class="ph ph-map-pin text-textMuted text-sm mt-0.5 flex-shrink-0"></i>
                 <p class="text-xs text-textLight">{{ order.deliveryAddress }}</p>
               </div>
               <div *ngIf="order.orderNotes" class="text-xs text-amber-700 bg-amber-50 rounded-lg px-2 py-1 mb-2">
-                <i class="bi bi-info-circle mr-1"></i>{{ order.orderNotes }}
+                <i class="ph ph-info mr-1"></i>{{ order.orderNotes }}
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs text-textMuted">R{{ order.totalAmount?.toFixed(2) }}</span>
                 <button (click)="openNavigation(order)"
                         class="text-xs text-primary font-medium hover:underline">
-                  <i class="bi bi-map mr-1"></i>Navigate
+                  <i class="ph ph-map-trifold mr-1"></i>Navigate
                 </button>
               </div>
             </div>
@@ -206,14 +206,14 @@
              class="bg-white rounded-2xl shadow-card overflow-hidden">
           <div class="px-4 py-3 border-b border-borderColor flex items-center justify-between">
             <h3 class="text-sm font-semibold text-textDark">
-              <i class="bi bi-map text-primary mr-1"></i> Route
+              <i class="ph ph-map-trifold text-primary mr-1"></i> Route
               <span *ngIf="activeOrders.length > 1" class="text-textMuted font-normal ml-1">
                 ({{ activeOrders.length }} stops)
               </span>
             </h3>
             <button (click)="mapFullscreen = true"
                     class="text-xs text-primary font-medium hover:underline">
-              <i class="bi bi-arrows-fullscreen mr-1"></i>Fullscreen
+              <i class="ph ph-arrows-out mr-1"></i>Fullscreen
             </button>
           </div>
           <div class="h-56 lg:h-[420px]">
@@ -323,7 +323,7 @@
       </div>
       <button (click)="mapFullscreen = false"
               class="w-10 h-10 rounded-full bg-white/20 flex-shrink-0 flex items-center justify-center hover:bg-white/30 transition-colors">
-        <i class="bi bi-x-lg text-white"></i>
+        <i class="ph ph-x text-white"></i>
       </button>
     </div>
   </div>
@@ -339,11 +339,11 @@
     <div class="max-w-7xl mx-auto flex gap-3">
       <button (click)="openNavigation(currentDelivery)"
               class="flex-1 py-3 rounded-2xl bg-white/20 text-white font-semibold text-sm hover:bg-white/30 transition-colors">
-        <i class="bi bi-map mr-2"></i>Navigate
+        <i class="ph ph-map-trifold mr-2"></i>Navigate
       </button>
       <button (click)="confirmDeliver(currentDelivery.id); mapFullscreen = false"
               class="flex-1 py-3 rounded-2xl bg-primary text-white font-semibold text-sm hover:bg-primary-600 transition-colors">
-        <i class="bi bi-check-circle mr-2"></i>Mark Delivered
+        <i class="ph ph-check-circle mr-2"></i>Mark Delivered
       </button>
     </div>
   </div>
@@ -357,7 +357,7 @@
     <!-- Header -->
     <div class="text-center mb-5">
       <div class="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
-        <i class="bi bi-shield-lock-fill text-primary text-xl"></i>
+        <i class="ph-fill ph-shield-check text-primary text-xl"></i>
       </div>
       <h3 class="font-heading text-lg font-bold text-textDark">Confirm Delivery</h3>
       <p class="text-sm text-textMuted mt-1">Request an OTP from the customer and enter it below to complete the delivery.</p>
@@ -366,7 +366,7 @@
     <!-- Error -->
     <div *ngIf="otpError"
          class="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-4 text-sm text-red-700">
-      <i class="bi bi-exclamation-circle flex-shrink-0"></i>
+      <i class="ph ph-warning-circle flex-shrink-0"></i>
       <span>{{ otpError }}</span>
     </div>
 
@@ -374,7 +374,7 @@
     <div *ngIf="!otpSent" class="space-y-3">
       <button (click)="requestOtp()" [disabled]="otpSending"
               class="w-full py-3 rounded-2xl bg-primary text-white font-semibold text-sm hover:bg-primary-600 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
-        <i class="bi bi-envelope" *ngIf="!otpSending"></i>
+        <i class="ph ph-envelope" *ngIf="!otpSending"></i>
         <span class="inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin align-middle flex-shrink-0" *ngIf="otpSending"></span>
         {{ otpSending ? 'Sending…' : 'Send OTP to Customer' }}
       </button>
@@ -387,7 +387,7 @@
     <!-- Step 2: enter OTP -->
     <div *ngIf="otpSent" class="space-y-3">
       <p class="text-xs text-green-700 bg-green-50 border border-green-200 rounded-xl px-3 py-2 flex items-center gap-2">
-        <i class="bi bi-check-circle-fill flex-shrink-0"></i>
+        <i class="ph-fill ph-check-circle flex-shrink-0"></i>
         OTP sent! Ask the customer for the code.
       </p>
       <!-- Show OTP directly so driver can complete delivery if customer email fails -->
@@ -400,7 +400,7 @@
              class="w-full px-4 py-3 rounded-xl border border-borderColor text-center text-2xl font-bold tracking-[0.5em] font-mono bg-surface focus:outline-none focus:ring-2 focus:ring-primary-400" />
       <button (click)="verifyOtp()" [disabled]="otpVerifying || otpCode.length < 6"
               class="w-full py-3 rounded-2xl bg-success text-white font-semibold text-sm hover:bg-green-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
-        <i class="bi bi-check-circle" *ngIf="!otpVerifying"></i>
+        <i class="ph ph-check-circle" *ngIf="!otpVerifying"></i>
         <span class="inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin align-middle flex-shrink-0" *ngIf="otpVerifying"></span>
         {{ otpVerifying ? 'Verifying…' : 'Confirm Delivery' }}
       </button>

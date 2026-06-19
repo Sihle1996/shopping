@@ -5,7 +5,7 @@
     <app-page-header title="Users" subtitle="Manage customers and drivers for your store">
       <span actions *ngIf="!loading"
             class="inline-flex items-center gap-1.5 text-sm text-textMuted bg-white border border-borderColor px-3 py-1.5 rounded-xl">
-        <i class="bi bi-people text-primary"></i>
+        <i class="ph ph-users text-primary"></i>
         {{ filtered.length }} users
       </span>
     </app-page-header>
@@ -13,7 +13,7 @@
     <!-- Filters -->
     <div class="flex flex-col sm:flex-row gap-3 mb-6">
       <div class="relative flex-1">
-        <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none text-sm"></i>
+        <i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none text-sm"></i>
         <input [(ngModel)]="search" (ngModelChange)="applyFilter()"
                placeholder="Search by name or email..."
                data-testid="user-search"
@@ -37,7 +37,7 @@
 
     <!-- Empty -->
     <div *ngIf="!loading && filtered.length === 0" class="text-center py-16 text-textMuted">
-      <i class="bi bi-people text-4xl block mb-3 opacity-30"></i>
+      <i class="ph ph-users text-4xl block mb-3 opacity-30"></i>
       <p class="font-medium text-textDark">No users found</p>
       <p class="text-sm mt-1">Try adjusting your search or filter</p>
     </div>
@@ -91,7 +91,7 @@
                       class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors disabled:opacity-50"
                       [ngClass]="user.active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-600 hover:bg-red-200'">
                 <span *ngIf="updatingId === user.id" class="inline-block w-3 h-3 border-[1.5px] border-current border-t-transparent rounded-full animate-spin"></span>
-                <i *ngIf="updatingId !== user.id" class="bi text-[10px]" [ngClass]="user.active ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
+                <i *ngIf="updatingId !== user.id" class="ph text-[10px]" [ngClass]="user.active ? 'ph-fill ph-check-circle' : 'ph-fill ph-x-circle'"></i>
                 {{ user.active ? 'Active' : 'Deactivated' }}
               </button>
             </td>
@@ -102,7 +102,7 @@
                       [disabled]="updatingId === user.id"
                       class="w-8 h-8 flex items-center justify-center rounded-xl text-textMuted
                              hover:text-danger hover:bg-red-50 transition-colors disabled:opacity-50 ml-auto">
-                <i class="bi bi-trash text-base"></i>
+                <i class="ph ph-trash text-base"></i>
               </button>
             </td>
           </tr>
@@ -141,7 +141,7 @@
           </select>
           <button (click)="confirmDelete(user.id)"
                   class="w-8 h-8 flex items-center justify-center rounded-xl text-textMuted hover:text-danger hover:bg-red-50 transition-colors">
-            <i class="bi bi-trash text-base"></i>
+            <i class="ph ph-trash text-base"></i>
           </button>
         </div>
       </div>
@@ -156,7 +156,7 @@
   <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl animate-fade-in">
     <div class="flex items-center gap-3 mb-5">
       <div class="w-11 h-11 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-        <i class="bi bi-exclamation-triangle text-red-500 text-lg"></i>
+        <i class="ph ph-warning text-red-500 text-lg"></i>
       </div>
       <div>
         <p class="font-semibold text-textDark">Delete this user?</p>

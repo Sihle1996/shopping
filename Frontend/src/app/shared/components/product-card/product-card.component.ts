@@ -45,7 +45,7 @@ export interface ProductCardItem {
         <button *ngIf="showFavorite && item.id"
                 (click)="onFavorite($event)"
                 class="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm z-10 transition-transform active:scale-90">
-          <i class="bi text-base transition-colors" [class.bi-heart-fill]="isFav" [class.bi-heart]="!isFav"
+          <i class="ph ph-heart text-base transition-colors" [class.ph-fill]="isFav"
              [class.text-red-500]="isFav" [class.text-textMuted]="!isFav"></i>
         </button>
         <!-- Low stock badge -->
@@ -82,7 +82,7 @@ export interface ProductCardItem {
             data-testid="add-to-cart-btn"
             class="brand-cta w-9 h-9 flex items-center justify-center
                    transition-all duration-200 active:scale-90 shadow-sm">
-            <i class="bi bi-plus-lg text-base"></i>
+            <i class="ph ph-plus text-base"></i>
           </button>
         </div>
       </div>

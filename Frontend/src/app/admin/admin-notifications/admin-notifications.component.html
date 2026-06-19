@@ -11,7 +11,7 @@
               (click)="markAllRead()"
               class="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-700
                      bg-primary-50 hover:bg-primary-100 px-4 py-2 rounded-xl transition-colors">
-        <i class="bi bi-check2-all text-base"></i>
+        <i class="ph ph-checks text-base"></i>
         Mark all read
       </button>
     </app-page-header>
@@ -19,7 +19,7 @@
     <!-- Empty state -->
     <div *ngIf="notifications.length === 0"
          class="flex flex-col items-center justify-center py-24 text-textMuted">
-      <i class="bi bi-bell text-5xl opacity-20 mb-4"></i>
+      <i class="ph ph-bell text-5xl opacity-20 mb-4"></i>
       <p class="font-medium text-textDark text-base">No notifications yet</p>
       <p class="text-sm mt-1">Live order updates will appear here as they arrive</p>
     </div>
@@ -33,7 +33,7 @@
 
         <!-- Icon -->
         <div class="flex-shrink-0 w-10 h-10 rounded-full bg-white border border-borderColor flex items-center justify-center shadow-sm">
-          <i class="bi bi-receipt text-primary text-lg"></i>
+          <i class="ph ph-receipt text-primary text-lg"></i>
         </div>
 
         <!-- Content -->

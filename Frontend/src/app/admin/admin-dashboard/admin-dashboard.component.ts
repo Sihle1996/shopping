@@ -473,14 +473,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   statusIcon(status: string): string {
     switch (status) {
-      case 'Pending':          return 'bi-clock';
-      case 'Confirmed':        return 'bi-check';
-      case 'Preparing':        return 'bi-fire';
-      case 'Out for Delivery': return 'bi-truck';
-      case 'Delivered':        return 'bi-check-circle-fill';
-      case 'Cancelled':        return 'bi-x-circle';
-      case 'Rejected':         return 'bi-slash-circle';
-      default:                 return 'bi-circle';
+      case 'Pending':          return 'ph ph-clock';
+      case 'Confirmed':        return 'ph ph-check';
+      case 'Preparing':        return 'ph ph-fire';
+      case 'Out for Delivery': return 'ph ph-truck';
+      case 'Delivered':        return 'ph-fill ph-check-circle';
+      case 'Cancelled':        return 'ph ph-x-circle';
+      case 'Rejected':         return 'ph ph-prohibit';
+      default:                 return 'ph ph-circle';
     }
   }
 

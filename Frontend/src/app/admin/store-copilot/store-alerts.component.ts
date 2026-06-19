@@ -128,7 +128,7 @@ export class StoreAlertsComponent implements OnInit, OnDestroy {
     return v > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700';
   }
   trendArrow(v: number | null): string {
-    return (v == null || v === 0) ? 'bi-dash' : v > 0 ? 'bi-caret-up-fill' : 'bi-caret-down-fill';
+    return (v == null || v === 0) ? 'ph ph-minus' : v > 0 ? 'ph-fill ph-caret-up' : 'ph-fill ph-caret-down';
   }
 
   refresh(): void {
@@ -166,9 +166,9 @@ export class StoreAlertsComponent implements OnInit, OnDestroy {
   }
 
   icon(sev: string): string {
-    return sev === 'high' ? 'bi-exclamation-octagon-fill'
-         : sev === 'medium' ? 'bi-exclamation-triangle-fill'
-         : 'bi-trophy-fill';
+    return sev === 'high' ? 'ph-fill ph-warning-octagon'
+         : sev === 'medium' ? 'ph-fill ph-warning'
+         : 'ph-fill ph-trophy';
   }
 
   iconColor(sev: string): string {

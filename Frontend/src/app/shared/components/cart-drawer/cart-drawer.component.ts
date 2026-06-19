@@ -29,14 +29,14 @@ import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
         <button
           (click)="close.emit()"
           class="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors">
-          <i class="bi bi-x-lg text-textDark"></i>
+          <i class="ph ph-x text-textDark"></i>
         </button>
       </div>
 
       <!-- Empty state -->
       <div *ngIf="items.length === 0" class="flex-1 flex items-center justify-center">
         <app-empty-state
-          icon="bi bi-cart3"
+          icon="ph ph-shopping-cart"
           title="Your cart is empty"
           message="Browse our menu and add your favourite items"
           actionLabel="Browse Menu"
@@ -61,7 +61,7 @@ import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
             <button
               (click)="removeItem.emit(item.id)"
               class="text-textMuted hover:text-danger transition-colors">
-              <i class="bi bi-trash text-sm"></i>
+              <i class="ph ph-trash text-sm"></i>
             </button>
             <app-quantity-selector
               [quantity]="item.quantity"

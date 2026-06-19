@@ -59,9 +59,9 @@ export class ConfirmModalComponent {
 
   get icon(): string {
     switch (this.variant) {
-      case 'danger': return 'bi bi-exclamation-triangle';
-      case 'warning': return 'bi bi-question-circle';
-      default: return 'bi bi-info-circle';
+      case 'danger': return 'ph ph-warning';
+      case 'warning': return 'ph ph-question';
+      default: return 'ph ph-info';
     }
   }
 

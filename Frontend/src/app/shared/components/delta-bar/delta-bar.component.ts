@@ -16,7 +16,7 @@ import { CommonModule } from '@angular/common';
         <span class="text-[11px] font-semibold uppercase tracking-wide text-textMuted">{{ label }}</span>
         <span class="inline-flex items-center gap-1 text-xs font-bold font-numbers px-1.5 py-0.5 rounded-lg"
               [ngClass]="chipClass">
-          <i class="bi text-[10px]" [ngClass]="arrow"></i>{{ deltaText }}
+          <i class="ph text-[10px]" [ngClass]="arrow"></i>{{ deltaText }}
         </span>
       </div>
 
@@ -67,7 +67,7 @@ export class DeltaBarComponent {
   private get up(): boolean { return this.during > this.before; }
   private get down(): boolean { return this.during < this.before; }
 
-  get arrow(): string { return this.up ? 'bi-caret-up-fill' : this.down ? 'bi-caret-down-fill' : 'bi-dash'; }
+  get arrow(): string { return this.up ? 'ph-fill ph-caret-up' : this.down ? 'ph-fill ph-caret-down' : 'ph ph-minus'; }
   get chipClass(): string {
     return this.up ? 'bg-emerald-50 text-emerald-700' : this.down ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-textMuted';
   }

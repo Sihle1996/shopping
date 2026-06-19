@@ -48,20 +48,20 @@ const ROUTE_COLORS = ['#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981'];
            class="absolute top-3 left-3 right-14 z-10 bg-white/95 backdrop-blur-sm rounded-xl shadow-card px-4 py-2.5">
         <div class="flex items-center gap-4 mb-1">
           <div class="flex items-center gap-1.5">
-            <i class="bi bi-signpost-2 text-primary text-sm"></i>
+            <i class="ph ph-signpost text-primary text-sm"></i>
             <span class="text-xs font-semibold text-textDark">{{ distance }}</span>
           </div>
           <div class="flex items-center gap-1.5">
-            <i class="bi bi-clock text-primary text-sm"></i>
+            <i class="ph ph-clock text-primary text-sm"></i>
             <span class="text-xs font-semibold text-textDark">{{ eta }}</span>
           </div>
           <div *ngIf="totalStops > 1" class="flex items-center gap-1.5">
-            <i class="bi bi-pin-map text-primary text-sm"></i>
+            <i class="ph ph-map-pin text-primary text-sm"></i>
             <span class="text-xs font-semibold text-textDark">{{ totalStops }} stops</span>
           </div>
         </div>
         <p *ngIf="nextInstruction" class="text-[11px] text-textLight truncate">
-          <i class="bi bi-arrow-turn-right text-primary mr-1"></i>{{ nextInstruction }}
+          <i class="ph ph-arrow-bend-up-right text-primary mr-1"></i>{{ nextInstruction }}
         </p>
       </div>
 
@@ -79,24 +79,24 @@ const ROUTE_COLORS = ['#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981'];
       <div class="absolute top-3 right-3 z-10 flex flex-col gap-2">
         <button (click)="recenterMap()"
           class="w-10 h-10 bg-white rounded-full shadow-card flex items-center justify-center hover:bg-gray-50 transition-colors">
-          <i class="bi bi-crosshair text-primary"></i>
+          <i class="ph ph-crosshair text-primary"></i>
         </button>
         <button (click)="toggleVoice()"
           class="w-10 h-10 rounded-full shadow-card flex items-center justify-center transition-colors"
           [class]="voiceEnabled ? 'bg-primary text-white' : 'bg-white text-primary hover:bg-gray-50'">
-          <i [class]="voiceEnabled ? 'bi bi-volume-up-fill' : 'bi bi-volume-mute'"></i>
+          <i [class]="voiceEnabled ? 'ph-fill ph-speaker-high' : 'ph ph-speaker-x'"></i>
         </button>
         <button (click)="toggleTraffic()"
           class="w-10 h-10 rounded-full shadow-card flex items-center justify-center transition-colors"
           [class]="showTraffic ? 'bg-primary text-white' : 'bg-white text-primary hover:bg-gray-50'">
-          <i class="bi bi-car-front"></i>
+          <i class="ph ph-car"></i>
         </button>
       </div>
 
       <!-- Arrival banner -->
       <div *ngIf="isNearDestination"
            class="absolute bottom-4 right-3 left-3 z-10 bg-success text-white rounded-xl shadow-float px-4 py-3 text-center animate-bounce-in">
-        <i class="bi bi-geo-alt-fill mr-2"></i>
+        <i class="ph-fill ph-map-pin mr-2"></i>
         <span class="font-semibold text-sm">You have arrived!</span>
       </div>
     </div>

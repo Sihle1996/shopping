@@ -4,7 +4,7 @@
     <!-- Header -->
     <div class="text-center mb-8">
       <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
-        <i class="bi bi-shop text-white text-2xl"></i>
+        <i class="ph ph-storefront text-white text-2xl"></i>
       </div>
       <h1 class="font-heading text-2xl font-bold text-textDark">Register Your Restaurant</h1>
       <p class="text-textLight text-sm mt-1">Start selling online in minutes</p>
@@ -37,7 +37,7 @@
           <label class="block text-sm font-medium text-textDark mb-1.5">Restaurant Name</label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <i class="bi bi-shop text-textMuted"></i>
+              <i class="ph ph-storefront text-textMuted"></i>
             </div>
             <input type="text" formControlName="name"
                    class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
@@ -52,7 +52,7 @@
           <label class="block text-sm font-medium text-textDark mb-1.5">Store URL</label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <i class="bi bi-link-45deg text-textMuted"></i>
+              <i class="ph ph-link text-textMuted"></i>
             </div>
             <input type="text" formControlName="slug"
                    class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
@@ -72,7 +72,7 @@
           <label class="block text-sm font-medium text-textDark mb-1.5">Business Email</label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <i class="bi bi-envelope text-textMuted"></i>
+              <i class="ph ph-envelope text-textMuted"></i>
             </div>
             <input type="email" formControlName="email"
                    class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
@@ -87,7 +87,7 @@
           <label class="block text-sm font-medium text-textDark mb-1.5">Phone Number <span class="text-textMuted">(optional)</span></label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <i class="bi bi-telephone text-textMuted"></i>
+              <i class="ph ph-phone text-textMuted"></i>
             </div>
             <input type="tel" formControlName="phone"
                    class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
@@ -106,7 +106,7 @@
           </label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <i class="bi bi-geo-alt text-textMuted"></i>
+              <i class="ph ph-map-pin text-textMuted"></i>
             </div>
             <input type="text" formControlName="address"
                    class="w-full pl-10 pr-4 py-3 rounded-xl border border-borderColor bg-surface text-textDark
@@ -122,7 +122,7 @@
                 *ngFor="let s of addressSuggestions"
                 (click)="selectAddressSuggestion(s)"
                 class="w-full text-left px-4 py-3 text-sm text-textDark hover:bg-primary-50 transition-colors border-b border-borderColor last:border-0 flex items-center gap-2">
-                <i class="bi bi-geo-alt text-textMuted flex-shrink-0"></i>
+                <i class="ph ph-map-pin text-textMuted flex-shrink-0"></i>
                 <span class="truncate">{{ s.label }}</span>
               </button>
             </div>
@@ -133,22 +133,22 @@
             (click)="useMyLocation()"
             [disabled]="gpsLoading"
             class="mt-2 flex items-center gap-1.5 text-xs text-primary hover:text-primary-600 font-medium transition-colors disabled:opacity-50">
-            <i class="bi bi-crosshair2" [class.animate-pulse]="gpsLoading"></i>
+            <i class="ph ph-crosshair" [class.animate-pulse]="gpsLoading"></i>
             {{ gpsLoading ? 'Getting location…' : 'Use my current location' }}
           </button>
           <p *ngIf="gpsError" class="text-xs text-red-500 mt-1 flex items-center gap-1">
-            <i class="bi bi-exclamation-circle"></i>{{ gpsError }}
+            <i class="ph ph-warning-circle"></i>{{ gpsError }}
           </p>
           <!-- Geocoded confirmation -->
           <p *ngIf="geocodedLat !== null" class="text-xs text-green-600 mt-1 flex items-center gap-1">
-            <i class="bi bi-check-circle-fill"></i> Location pinned — customers nearby will find you
+            <i class="ph-fill ph-check-circle"></i> Location pinned — customers nearby will find you
           </p>
         </div>
 
         <!-- Error -->
         <div *ngIf="errorMessage"
              class="flex items-center gap-2 text-danger text-sm bg-red-50 px-4 py-2.5 rounded-xl">
-          <i class="bi bi-exclamation-circle"></i>
+          <i class="ph ph-warning-circle"></i>
           <span>{{ errorMessage }}</span>
         </div>
 

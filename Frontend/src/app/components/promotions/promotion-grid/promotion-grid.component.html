@@ -11,7 +11,7 @@
            class="w-full h-full object-cover" />
       <div *ngIf="!promo.imageUrl"
            class="absolute inset-0 flex items-center justify-center">
-        <i class="bi bi-tag text-4xl" style="color: var(--brand-primary); opacity: 0.35"></i>
+        <i class="ph ph-tag text-4xl" style="color: var(--brand-primary); opacity: 0.35"></i>
       </div>
 
       <!-- Discount badge -->
@@ -40,14 +40,14 @@
               [style.color]="'var(--brand-primary)'"
               [style.borderColor]="'var(--brand-primary)'"
               [style.background]="'rgba(255,255,255,0.6)'">
-          <i class="bi bi-upc text-xs"></i>{{ promo.code }}
+          <i class="ph ph-barcode text-xs"></i>{{ promo.code }}
         </span>
         <span *ngIf="!promo.code"
               class="inline-flex items-center gap-1 text-[10px] font-medium
                      px-2 py-0.5 rounded-lg"
               [style.color]="'var(--brand-primary)'"
               [style.background]="'rgba(255,255,255,0.6)'">
-          <i class="bi bi-lightning-fill text-xs"></i>Auto-applied
+          <i class="ph-fill ph-lightning text-xs"></i>Auto-applied
         </span>
       </div>
     </div>

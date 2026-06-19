@@ -11,8 +11,8 @@
     <div *ngFor="let item of items"
          class="flex items-start gap-3 px-3 py-2.5 rounded-xl border transition-colors"
          [ngClass]="item.done ? 'bg-green-50/60 border-green-100' : 'bg-white border-borderColor'">
-      <i class="bi flex-shrink-0 mt-0.5 text-lg"
-         [ngClass]="item.done ? 'bi-check-circle-fill text-green-500' : 'bi-circle text-gray-300'"></i>
+      <i class="ph flex-shrink-0 mt-0.5 text-lg"
+         [ngClass]="item.done ? 'ph-fill ph-check-circle text-green-500' : 'ph ph-circle text-gray-300'"></i>
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2 flex-wrap">
           <p class="text-sm font-medium" [ngClass]="item.done ? 'text-green-700' : 'text-textDark'">{{ item.title }}</p>
@@ -23,7 +23,7 @@
       </div>
       <a *ngIf="!item.done && item.route" [routerLink]="item.route" [queryParams]="item.queryParams"
          class="flex-shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-700 bg-primary-50 hover:bg-primary-100 px-3 py-1.5 rounded-lg transition-colors">
-        {{ item.ctaLabel || 'Set up' }} <i class="bi bi-arrow-right text-[10px]"></i>
+        {{ item.ctaLabel || 'Set up' }} <i class="ph ph-arrow-right text-[10px]"></i>
       </a>
       <span *ngIf="item.done" class="flex-shrink-0 text-[11px] font-semibold text-green-600 mt-1">Done</span>
     </div>

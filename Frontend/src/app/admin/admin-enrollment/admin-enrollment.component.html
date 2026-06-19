@@ -12,7 +12,7 @@
       <div *ngIf="state.approvalStatus === 'PENDING_REVIEW'"
            class="bg-white rounded-2xl shadow-card p-8 text-center">
         <div class="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <i class="bi bi-hourglass-split text-amber-500 text-2xl"></i>
+          <i class="ph ph-hourglass text-amber-500 text-2xl"></i>
         </div>
         <h2 class="font-heading text-xl font-bold text-textDark mb-2">Application Under Review</h2>
         <p class="text-textMuted text-sm mb-6">
@@ -22,14 +22,14 @@
         <button (click)="checkStatus()" [disabled]="loading"
                 class="mb-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 text-textDark text-sm font-semibold hover:bg-gray-200 transition-colors disabled:opacity-60">
           <span *ngIf="loading" class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-          <i *ngIf="!loading" class="bi bi-arrow-clockwise"></i>
+          <i *ngIf="!loading" class="ph ph-arrow-clockwise"></i>
           Check Status
         </button>
         <div class="text-left space-y-2 mt-4">
           <p class="text-xs font-semibold text-textMuted uppercase tracking-wide mb-3">Submitted documents</p>
           <div *ngFor="let doc of state.documents"
                class="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 text-sm">
-            <i class="bi bi-file-earmark-check text-green-500"></i>
+            <i class="ph ph-file-text text-green-500"></i>
             <span class="flex-1 text-textDark font-medium">{{ docLabel(doc.documentType) }}</span>
             <a [href]="doc.fileUrl" target="_blank" class="text-primary hover:underline text-xs">View</a>
           </div>
@@ -94,14 +94,14 @@
           </div>
 
           <div class="sf-hours" *ngIf="state.hasHours">
-            <i class="bi bi-clock-fill"></i> Hours set
+            <i class="ph-fill ph-clock"></i> Hours set
           </div>
 
           <div class="sf-scrim"></div>
           <div class="sf-glow"></div>
 
           <div class="sf-success" *ngIf="launched">
-            <i class="bi bi-shop-window"></i>
+            <i class="ph ph-storefront"></i>
             <p class="sf-success-title">Your store is now live</p>
             <p class="sf-success-sub">Customers can discover and order from you.</p>
           </div>
@@ -129,7 +129,7 @@
           <button (click)="goLive()" [disabled]="!canGoLive || goingLive || launching"
                   class="w-full max-w-sm py-4 rounded-xl font-bold text-sm text-white transition-all disabled:cursor-not-allowed"
                   [style.background]="canGoLive ? '#16a34a' : '#9ca3af'">
-            <span *ngIf="!goingLive && !launching"><i class="bi bi-shop mr-2"></i>Go Live</span>
+            <span *ngIf="!goingLive && !launching"><i class="ph ph-storefront mr-2"></i>Go Live</span>
             <span *ngIf="goingLive || launching"><span class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin align-middle mr-2"></span>Going live…</span>
           </button>
           <p *ngIf="!canGoLive" class="text-xs text-textMuted text-center">Finish the required steps to light up the OPEN sign.</p>
@@ -154,7 +154,7 @@
         <!-- Rejection alert -->
         <div *ngIf="state.approvalStatus === 'REJECTED' && state.rejectionReason"
              class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex gap-3">
-          <i class="bi bi-exclamation-triangle-fill text-red-500 flex-shrink-0 mt-0.5"></i>
+          <i class="ph-fill ph-warning text-red-500 flex-shrink-0 mt-0.5"></i>
           <div>
             <p class="text-sm font-semibold text-red-700 mb-1">Application rejected</p>
             <p class="text-sm text-red-600">{{ state.rejectionReason }}</p>
@@ -165,7 +165,7 @@
         <!-- Documents the reviewer flagged — re-upload these -->
         <div *ngIf="rejectedDocs.length > 0" class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
           <p class="text-sm font-semibold text-amber-800 mb-2 flex items-center gap-2">
-            <i class="bi bi-flag-fill text-amber-500"></i> Documents needing attention
+            <i class="ph-fill ph-flag text-amber-500"></i> Documents needing attention
           </p>
           <ul class="space-y-1.5">
             <li *ngFor="let d of rejectedDocs" class="text-sm">
@@ -197,7 +197,7 @@
             <div class="flex items-start gap-3 flex-1">
               <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                    [class]="getDoc('CIPC') ? 'bg-green-50' : 'bg-gray-100'">
-                <i class="bi text-base" [class]="getDoc('CIPC') ? 'bi-file-earmark-check text-green-500' : 'bi-file-earmark text-textMuted'"></i>
+                <i class="ph text-base" [class]="getDoc('CIPC') ? 'ph ph-file-text text-green-500' : 'ph ph-file text-textMuted'"></i>
               </div>
               <div class="flex-1 min-w-0">
                 <p class="font-medium text-textDark text-sm">CIPC Certificate / SA ID <span class="text-red-500">*</span></p>
@@ -213,7 +213,7 @@
                    class="flex-shrink-0 inline-flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
                    [class]="getDoc('CIPC') ? 'bg-gray-100 text-textMuted hover:bg-gray-200' : 'bg-primary text-white hover:bg-primary-600'">
               <span *ngIf="uploading['CIPC']" class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-              <i *ngIf="!uploading['CIPC']" class="bi bi-upload"></i>
+              <i *ngIf="!uploading['CIPC']" class="ph ph-upload-simple"></i>
               {{ getDoc('CIPC') ? 'Replace' : 'Upload' }}
             </label>
             <input id="upload-CIPC" type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png"
@@ -231,7 +231,7 @@
             <div class="flex items-start gap-3 flex-1">
               <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                    [class]="getDoc('COA') ? 'bg-green-50' : 'bg-gray-100'">
-                <i class="bi text-base" [class]="getDoc('COA') ? 'bi-file-earmark-check text-green-500' : 'bi-file-earmark text-textMuted'"></i>
+                <i class="ph text-base" [class]="getDoc('COA') ? 'ph ph-file-text text-green-500' : 'ph ph-file text-textMuted'"></i>
               </div>
               <div class="flex-1 min-w-0">
                 <p class="font-medium text-textDark text-sm">Certificate of Acceptability <span class="text-red-500">*</span></p>
@@ -247,7 +247,7 @@
                    class="flex-shrink-0 inline-flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
                    [class]="getDoc('COA') ? 'bg-gray-100 text-textMuted hover:bg-gray-200' : 'bg-primary text-white hover:bg-primary-600'">
               <span *ngIf="uploading['COA']" class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-              <i *ngIf="!uploading['COA']" class="bi bi-upload"></i>
+              <i *ngIf="!uploading['COA']" class="ph ph-upload-simple"></i>
               {{ getDoc('COA') ? 'Replace' : 'Upload' }}
             </label>
             <input id="upload-COA" type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png"
@@ -309,7 +309,7 @@
             <div class="flex items-start gap-3 flex-1">
               <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                    [class]="getDoc('BANK_DETAILS') ? 'bg-green-50' : 'bg-gray-100'">
-                <i class="bi text-base" [class]="getDoc('BANK_DETAILS') ? 'bi-file-earmark-check text-green-500' : 'bi-file-earmark text-textMuted'"></i>
+                <i class="ph text-base" [class]="getDoc('BANK_DETAILS') ? 'ph ph-file-text text-green-500' : 'ph ph-file text-textMuted'"></i>
               </div>
               <div class="flex-1 min-w-0">
                 <p class="font-medium text-textDark text-sm">Bank Statement / Confirmation Letter <span class="text-red-500">*</span></p>
@@ -325,7 +325,7 @@
                    class="flex-shrink-0 inline-flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
                    [class]="getDoc('BANK_DETAILS') ? 'bg-gray-100 text-textMuted hover:bg-gray-200' : 'bg-primary text-white hover:bg-primary-600'">
               <span *ngIf="uploading['BANK_DETAILS']" class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-              <i *ngIf="!uploading['BANK_DETAILS']" class="bi bi-upload"></i>
+              <i *ngIf="!uploading['BANK_DETAILS']" class="ph ph-upload-simple"></i>
               {{ getDoc('BANK_DETAILS') ? 'Replace' : 'Upload' }}
             </label>
             <input id="upload-BANK_DETAILS" type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png"
@@ -337,7 +337,7 @@
             <button (click)="saveDetails()" [disabled]="savingDetails"
                     class="px-4 py-2 bg-gray-100 text-textDark rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors disabled:opacity-60">
               <span *ngIf="savingDetails" class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-              <i *ngIf="!savingDetails" class="bi bi-floppy"></i>
+              <i *ngIf="!savingDetails" class="ph ph-floppy-disk"></i>
               {{ savingDetails ? 'Saving…' : 'Save Details' }}
             </button>
           </div>
@@ -353,7 +353,7 @@
             <div class="flex items-start gap-3 flex-1">
               <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                    [class]="getDoc('STOREFRONT_PHOTO') ? 'bg-green-50' : 'bg-gray-100'">
-                <i class="bi text-base" [class]="getDoc('STOREFRONT_PHOTO') ? 'bi-image-fill text-green-500' : 'bi-image text-textMuted'"></i>
+                <i class="ph text-base" [class]="getDoc('STOREFRONT_PHOTO') ? 'ph-fill ph-image text-green-500' : 'ph ph-image text-textMuted'"></i>
               </div>
               <div class="flex-1 min-w-0">
                 <p class="font-medium text-textDark text-sm">Photo of your restaurant or kitchen</p>
@@ -369,7 +369,7 @@
                    class="flex-shrink-0 inline-flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
                    [class]="getDoc('STOREFRONT_PHOTO') ? 'bg-gray-100 text-textMuted hover:bg-gray-200' : 'bg-gray-100 text-textDark hover:bg-gray-200'">
               <span *ngIf="uploading['STOREFRONT_PHOTO']" class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-              <i *ngIf="!uploading['STOREFRONT_PHOTO']" class="bi bi-upload"></i>
+              <i *ngIf="!uploading['STOREFRONT_PHOTO']" class="ph ph-upload-simple"></i>
               {{ getDoc('STOREFRONT_PHOTO') ? 'Replace' : 'Upload' }}
             </label>
             <input id="upload-STOREFRONT_PHOTO" type="file" class="hidden" accept=".jpg,.jpeg,.png"

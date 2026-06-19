@@ -14,13 +14,13 @@
         </div>
       </div>
       <button (click)="toggle()" class="text-textMuted hover:text-textDark transition-colors">
-        <i class="bi bi-x-lg text-sm"></i>
+        <i class="ph ph-x text-sm"></i>
       </button>
     </div>
 
     <!-- AI not configured: Copilot still answers from your data, but the full LLM assistant is off -->
     <div *ngIf="aiOff" class="px-4 py-2 bg-amber-50 border-b border-amber-200 text-xs text-amber-800 flex items-start gap-2">
-      <i class="bi bi-info-circle-fill mt-0.5"></i>
+      <i class="ph-fill ph-info mt-0.5"></i>
       <span>Basic mode — answers come from your store data. Add an <strong>Anthropic API key</strong> (ANTHROPIC_API_KEY) to enable the full Vision Copilot, promo suggestions, and Vision replies.</span>
     </div>
 
@@ -96,7 +96,7 @@
               [disabled]="!input.trim() || loading"
               class="px-3 py-2 rounded-xl bg-primary text-white text-sm disabled:opacity-50
                      hover:bg-primary-600 transition-colors flex-shrink-0">
-        <i class="bi bi-send"></i>
+        <i class="ph ph-paper-plane-tilt"></i>
       </button>
     </div>
   </div>
@@ -106,7 +106,7 @@
           class="w-14 h-14 rounded-full bg-primary text-white shadow-lg hover:bg-primary-600
                  transition-all flex items-center justify-center text-xl"
           [class.ai-glow]="!open">
-    <i *ngIf="open" class="bi bi-x-lg"></i>
+    <i *ngIf="open" class="ph ph-x"></i>
     <app-brand-mark *ngIf="!open" [size]="26" [dark]="false" [mode]="loading ? 'thinking' : 'idle'"></app-brand-mark>
   </button>
 </div>

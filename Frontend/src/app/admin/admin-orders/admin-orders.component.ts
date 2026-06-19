@@ -297,11 +297,11 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   /** Icon + colour for an activity-trail source (ADMIN/DRIVER/AI/SYSTEM). */
   auditSourceMeta(source: string): { icon: string; cls: string } {
     return ({
-      ADMIN:  { icon: 'bi-person-fill', cls: 'bg-blue-100 text-blue-600' },
-      DRIVER: { icon: 'bi-truck',       cls: 'bg-emerald-100 text-emerald-600' },
-      AI:     { icon: 'bi-stars',       cls: 'bg-primary-100 text-primary' },
-      SYSTEM: { icon: 'bi-gear-fill',   cls: 'bg-gray-100 text-gray-500' }
-    } as any)[source] ?? { icon: 'bi-dot', cls: 'bg-gray-100 text-gray-500' };
+      ADMIN:  { icon: 'ph-fill ph-user', cls: 'bg-blue-100 text-blue-600' },
+      DRIVER: { icon: 'ph-truck',        cls: 'bg-emerald-100 text-emerald-600' },
+      AI:     { icon: 'ph-sparkle',      cls: 'bg-primary-100 text-primary' },
+      SYSTEM: { icon: 'ph-fill ph-gear-six', cls: 'bg-gray-100 text-gray-500' }
+    } as any)[source] ?? { icon: 'ph-circle', cls: 'bg-gray-100 text-gray-500' };
   }
 
   /** Friendly label for a stored cancellation reason (markers map to text; free text passes through). */

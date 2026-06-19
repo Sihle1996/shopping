@@ -13,7 +13,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
              animate-slide-up lg:hidden">
       <div class="flex items-center gap-3">
         <div class="relative">
-          <i class="bi bi-cart3 text-xl"></i>
+          <i class="ph ph-shopping-cart text-xl"></i>
           <span class="absolute -top-2 -right-2 w-5 h-5 bg-white text-primary text-xs font-bold
                        rounded-full flex items-center justify-center">
             {{ itemCount }}

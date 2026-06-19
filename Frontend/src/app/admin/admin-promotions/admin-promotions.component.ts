@@ -44,7 +44,7 @@ export class AdminPromotionsComponent implements OnInit {
   }
   /** Stock-ticker arrow for a signed value — the up/down the lift represents. */
   trendArrow(v: number | null): string {
-    return (v == null || v === 0) ? 'bi-dash' : v > 0 ? 'bi-caret-up-fill' : 'bi-caret-down-fill';
+    return (v == null || v === 0) ? 'ph ph-minus' : v > 0 ? 'ph-fill ph-caret-up' : 'ph-fill ph-caret-down';
   }
   /** Ticker chip colour (tinted bg + text) for a signed value. */
   tickerClass(v: number | null): string {
@@ -158,9 +158,9 @@ export class AdminPromotionsComponent implements OnInit {
   ];
 
   rewardTypes = [
-    { value: 'PERCENT_OFF',   label: '% off',         icon: 'bi-percent' },
-    { value: 'AMOUNT_OFF',    label: 'R off',         icon: 'bi-cash-stack' },
-    { value: 'FREE_DELIVERY', label: 'Free delivery', icon: 'bi-truck' },
+    { value: 'PERCENT_OFF',   label: '% off',         icon: 'ph-percent' },
+    { value: 'AMOUNT_OFF',    label: 'R off',         icon: 'ph-money' },
+    { value: 'FREE_DELIVERY', label: 'Free delivery', icon: 'ph-truck' },
   ];
 
   categories: any[] = [];
@@ -584,9 +584,9 @@ export class AdminPromotionsComponent implements OnInit {
     return `${p.discountPercent ?? 0}% off${min}`;
   }
   rewardIcon(p: Promotion): string {
-    if (p.type === 'FREE_DELIVERY') return 'bi-truck';
-    if (p.type === 'AMOUNT_OFF') return 'bi-cash-stack';
-    return 'bi-percent';
+    if (p.type === 'FREE_DELIVERY') return 'ph ph-truck';
+    if (p.type === 'AMOUNT_OFF') return 'ph ph-money';
+    return 'ph ph-percent';
   }
 
   scopeLabel(p: Promotion): string {

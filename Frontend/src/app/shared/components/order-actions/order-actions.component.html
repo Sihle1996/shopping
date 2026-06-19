@@ -1,7 +1,7 @@
 <div *ngIf="items.length" class="flex items-center gap-1.5 flex-wrap">
   <!-- Compact unpaid tag — comes first so the Cancel button stays right-aligned with other rows -->
   <span *ngIf="unpaid" class="inline-flex items-center gap-1 text-[11px] text-amber-600 whitespace-nowrap mr-1">
-    <i class="bi bi-exclamation-triangle-fill text-[10px]"></i> Awaiting payment
+    <i class="ph-fill ph-warning text-[10px]"></i> Awaiting payment
   </span>
 
   <ng-container *ngFor="let a of items">
@@ -9,7 +9,7 @@
     <button *ngIf="a.kind === 'link'" type="button" (click)="onClick(a, $event)"
             class="inline-flex items-center gap-1 font-semibold text-textDark hover:text-primary whitespace-nowrap px-2 py-1"
             [ngClass]="compact ? 'text-xs' : 'text-sm'">
-      {{ a.label }} <i class="bi bi-arrow-right text-[10px]"></i>
+      {{ a.label }} <i class="ph ph-arrow-right text-[10px]"></i>
     </button>
 
     <!-- Soft actions: ONE filled primary for the forward action, a quiet ghost for Cancel -->

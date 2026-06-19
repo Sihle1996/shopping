@@ -7,7 +7,7 @@ import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
   template: `
     <div class="relative">
       <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-        <i class="bi bi-search text-textMuted"></i>
+        <i class="ph ph-magnifying-glass text-textMuted"></i>
       </div>
       <input
         type="text"
@@ -22,7 +22,7 @@ import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
         *ngIf="value"
         (click)="clear()"
         class="absolute inset-y-0 right-0 pr-4 flex items-center text-textMuted hover:text-textDark transition-colors">
-        <i class="bi bi-x-lg text-sm"></i>
+        <i class="ph ph-x text-sm"></i>
       </button>
     </div>
   `,

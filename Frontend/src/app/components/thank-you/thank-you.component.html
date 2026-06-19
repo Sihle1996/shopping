@@ -5,7 +5,7 @@
     <div class="px-6 pt-8 pb-12 text-center text-white"
          style="background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)">
       <div class="w-16 h-16 mx-auto rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-3">
-        <i class="bi bi-check-lg text-white text-4xl"></i>
+        <i class="ph ph-check text-white text-4xl"></i>
       </div>
       <h1 class="font-heading text-2xl font-extrabold mb-1">Order Placed!</h1>
       <p class="text-white/80 text-sm">Payment successful — we're preparing your order.</p>
@@ -25,7 +25,7 @@
           <span class="text-xs text-textDark text-right">{{ itemsSummary }}</span>
         </div>
         <div *ngIf="summary.deliveryFee && summary.deliveryFee > 0" class="flex items-center justify-between">
-          <span class="text-xs text-textMuted flex items-center gap-1"><i class="bi bi-truck text-xs"></i> Delivery</span>
+          <span class="text-xs text-textMuted flex items-center gap-1"><i class="ph ph-truck text-xs"></i> Delivery</span>
           <span class="font-numbers text-xs text-textDark">R{{ summary.deliveryFee.toFixed(2) }}</span>
         </div>
         <div class="flex items-center justify-between border-t border-borderColor pt-2.5">
@@ -33,7 +33,7 @@
           <span class="font-numbers font-bold text-primary text-base">R{{ summary.total.toFixed(2) }}</span>
         </div>
         <div class="flex items-start gap-2 pt-1">
-          <i class="bi bi-geo-alt text-textMuted text-xs mt-0.5 flex-shrink-0"></i>
+          <i class="ph ph-map-pin text-textMuted text-xs mt-0.5 flex-shrink-0"></i>
           <span class="text-xs text-textMuted">{{ summary.address }}</span>
         </div>
       </div>
@@ -41,7 +41,7 @@
       <!-- ETA -->
       <div *ngIf="summary?.estimatedDeliveryMinutes"
            class="flex items-center gap-3 bg-primary-50 border border-primary-100 rounded-xl px-3 py-2.5">
-        <i class="bi bi-clock-history text-primary text-lg flex-shrink-0"></i>
+        <i class="ph ph-clock-counter-clockwise text-primary text-lg flex-shrink-0"></i>
         <div>
           <p class="text-sm font-semibold text-primary-700 leading-tight">Estimated delivery</p>
           <p class="text-xs text-primary-500">~{{ summary!.estimatedDeliveryMinutes }} minutes</p>
@@ -49,7 +49,7 @@
       </div>
 
       <p class="text-xs text-textMuted text-center">
-        <i class="bi bi-bell mr-1"></i>We'll notify you when your order status changes.
+        <i class="ph ph-bell mr-1"></i>We'll notify you when your order status changes.
       </p>
 
       <!-- Actions -->
@@ -57,11 +57,11 @@
         <button (click)="goToOrders()"
                 class="flex-1 px-6 py-3 rounded-2xl text-white font-semibold text-sm shadow-md transition-all active:scale-95"
                 style="background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%)">
-          <i class="bi bi-receipt mr-2"></i>View My Orders
+          <i class="ph ph-receipt mr-2"></i>View My Orders
         </button>
         <button (click)="goToMenu()"
                 class="flex-1 px-6 py-3 rounded-2xl font-semibold text-sm border-2 border-primary text-primary bg-white hover:bg-surface transition-all active:scale-95">
-          <i class="bi bi-shop mr-2"></i>Back to Menu
+          <i class="ph ph-storefront mr-2"></i>Back to Menu
         </button>
       </div>
 
@@ -70,7 +70,7 @@
          [routerLink]="['/track']"
          [queryParams]="{ id: summary!.orderId }"
          class="block text-center text-xs text-primary hover:underline pt-1">
-        <i class="bi bi-search"></i> Track this order
+        <i class="ph ph-magnifying-glass"></i> Track this order
       </a>
     </div>
   </div>

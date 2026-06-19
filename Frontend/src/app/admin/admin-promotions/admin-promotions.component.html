@@ -7,7 +7,7 @@
               (click)="openForm()"
               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors"
               style="background: var(--brand-primary)">
-        <i class="bi bi-plus-lg"></i> New Promotion
+        <i class="ph ph-plus"></i> New Promotion
       </button>
     </app-page-header>
 
@@ -41,8 +41,8 @@
       <div *ngIf="aiSuggestionsLoading" class="bg-white rounded-2xl shadow-card p-10 flex flex-col items-center text-center">
         <div class="relative inline-flex">
           <app-brand-mark [size]="72" mode="thinking"></app-brand-mark>
-          <i class="bi bi-stars text-primary text-xl ai-twinkle absolute -top-2 -right-3"></i>
-          <i class="bi bi-stars text-primary text-xs ai-twinkle absolute -bottom-1 -left-2" style="animation-delay:.6s"></i>
+          <i class="ph ph-sparkle text-primary text-xl ai-twinkle absolute -top-2 -right-3"></i>
+          <i class="ph ph-sparkle text-primary text-xs ai-twinkle absolute -bottom-1 -left-2" style="animation-delay:.6s"></i>
         </div>
         <p class="text-sm text-textDark font-medium mt-5 ai-generating-text">Analysing your sales &amp; margins…</p>
         <p class="text-xs text-textMuted mt-1">Scanning slow movers, margins and demand to find experiments worth testing.</p>
@@ -58,7 +58,7 @@
       <!-- Cards -->
       <div *ngIf="visibleSuggestions.length">
         <p class="text-[11px] text-textMuted mb-3 flex items-start gap-1.5">
-          <i class="bi bi-info-circle mt-0.5 flex-shrink-0"></i>
+          <i class="ph ph-info mt-0.5 flex-shrink-0"></i>
           <span *ngIf="!hasPromoHistory">No promo history yet — these are <strong>experiments to test</strong>, ranked by demand &amp; margin. Outcomes are unknown until you run them.</span>
           <span *ngIf="hasPromoHistory">Ranked by demand, margin &amp; how past promos here performed — still <strong>experiments</strong>, so outcomes aren't guaranteed.</span>
         </p>
@@ -76,7 +76,7 @@
                   <span class="text-sm font-semibold text-textDark truncate">{{ x.s.proposedPromo.targetProductName || (x.s.proposedPromo.type === 'AMOUNT_OFF' ? 'Store-wide · over R' + x.s.proposedPromo.minSpend : x.s.proposedPromo.title) }}</span>
                 </div>
                 <span *ngIf="x.s.analysis?.insightStrength" class="flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" [ngClass]="tierClass(x.s.analysis?.insightStrength || '')">
-                  <i class="bi bi-bar-chart-fill text-[9px]"></i>{{ x.s.analysis?.insightStrength }}
+                  <i class="ph-fill ph-chart-bar text-[9px]"></i>{{ x.s.analysis?.insightStrength }}
                 </span>
               </div>
 
@@ -95,7 +95,7 @@
               <!-- Footer -->
               <div class="flex items-center justify-between gap-2 flex-wrap pt-2.5 border-t border-borderColor">
                 <div class="flex items-center gap-2 text-[11px] text-textMuted">
-                  <span *ngIf="x.s.analysis?.recommendationType" class="inline-flex items-center gap-1 text-amber-700 font-semibold"><i class="bi bi-flask"></i> {{ x.s.analysis?.recommendationType }}</span>
+                  <span *ngIf="x.s.analysis?.recommendationType" class="inline-flex items-center gap-1 text-amber-700 font-semibold"><i class="ph ph-flask"></i> {{ x.s.analysis?.recommendationType }}</span>
                   <span class="whitespace-nowrap">{{ x.s.proposedPromo.startAt }} → {{ x.s.proposedPromo.endAt }}</span>
                 </div>
                 <div class="flex gap-2">
@@ -130,7 +130,7 @@
           <div>
             <p class="text-[11px] uppercase tracking-wide text-textMuted mb-1.5">Net revenue lift · store-wide</p>
             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-4xl font-bold font-numbers leading-none" [ngClass]="tickerClass(totalNetLiftR)">
-              <i class="bi text-2xl" [ngClass]="trendArrow(totalNetLiftR)"></i>{{ randSigned(totalNetLiftR) }}
+              <i class="ph text-2xl" [ngClass]="trendArrow(totalNetLiftR)"></i>{{ randSigned(totalNetLiftR) }}
             </span>
             <p class="text-[11px] text-textMuted mt-2.5">{{ positiveOutcomesCount }} of {{ outcomes.length }} promos positive · observed vs the prior window, not a controlled test.</p>
           </div>
@@ -152,7 +152,7 @@
 
       <!-- Store-wide promos (Rand lift) -->
       <div *ngIf="storeWideOutcomes.length" class="mb-7">
-        <h3 class="text-xs font-bold uppercase tracking-wide text-textMuted mb-3 flex items-center gap-1.5"><i class="bi bi-shop"></i> Store-wide promotions <span class="text-gray-400 font-medium normal-case">· Rand lift</span></h3>
+        <h3 class="text-xs font-bold uppercase tracking-wide text-textMuted mb-3 flex items-center gap-1.5"><i class="ph ph-storefront"></i> Store-wide promotions <span class="text-gray-400 font-medium normal-case">· Rand lift</span></h3>
         <app-paged-list [items]="storeWideOutcomes" #plA>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
             <div *ngFor="let o of plA.pageItems" class="relative bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-shadow overflow-hidden">
@@ -169,7 +169,7 @@
                 <!-- hero net lift -->
                 <div class="flex items-baseline gap-2 mb-3.5">
                   <span class="inline-flex items-center gap-1 text-3xl font-bold font-numbers leading-none" [ngClass]="changeClass(o.netRevenueLift)">
-                    <i class="bi text-xl" [ngClass]="trendArrow(o.netRevenueLift)"></i>{{ o.netRevenueLift != null ? randSigned(o.netRevenueLift) : (o.status === 'ended' ? 'inconclusive' : 'measuring…') }}
+                    <i class="ph text-xl" [ngClass]="trendArrow(o.netRevenueLift)"></i>{{ o.netRevenueLift != null ? randSigned(o.netRevenueLift) : (o.status === 'ended' ? 'inconclusive' : 'measuring…') }}
                   </span>
                   <span class="text-xs text-textMuted">net lift</span>
                 </div>
@@ -213,7 +213,7 @@
 
       <!-- Item promos (% vs store) -->
       <div *ngIf="itemOutcomes.length">
-        <h3 class="text-xs font-bold uppercase tracking-wide text-textMuted mb-1 flex items-center gap-1.5"><i class="bi bi-tag"></i> Item promotions <span class="text-gray-400 font-medium normal-case">· % vs store</span></h3>
+        <h3 class="text-xs font-bold uppercase tracking-wide text-textMuted mb-1 flex items-center gap-1.5"><i class="ph ph-tag"></i> Item promotions <span class="text-gray-400 font-medium normal-case">· % vs store</span></h3>
         <p class="text-[11px] text-textMuted mb-3">A reliable read needs ~2 days of orders against the prior-window baseline — still-running items show <span class="font-semibold text-gray-500">measuring</span>, ended ones that never got there show <span class="font-semibold text-gray-500">inconclusive</span>.</p>
         <app-paged-list [items]="itemOutcomes" #plB>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
@@ -231,7 +231,7 @@
                 <!-- hero: measured % vs store -->
                 <div *ngIf="o.signal === 'MEASURED' || o.signal === 'MEASURING'" class="flex items-baseline gap-2 mb-3.5">
                   <span class="inline-flex items-center gap-1 text-3xl font-bold font-numbers leading-none" [ngClass]="changeClass(o.netLiftPercent)" title="Observed vs the store baseline — not a controlled result">
-                    <i class="bi text-xl" [ngClass]="trendArrow(o.netLiftPercent)"></i>{{ signed(o.netLiftPercent) }}
+                    <i class="ph text-xl" [ngClass]="trendArrow(o.netLiftPercent)"></i>{{ signed(o.netLiftPercent) }}
                   </span>
                   <span class="text-xs text-textMuted">net vs store</span>
                 </div>
@@ -271,12 +271,12 @@
     <div *ngIf="promoTab === 'promotions' && formOpen" class="bg-white rounded-2xl shadow-card p-6 mb-8">
       <div class="flex items-center justify-between mb-5">
         <h3 class="font-heading text-base font-semibold text-textDark flex items-center gap-2">
-          <i class="bi bi-tag text-primary"></i>
+          <i class="ph ph-tag text-primary"></i>
           {{ editingId ? 'Edit Promotion' : 'New Promotion' }}
         </h3>
         <button type="button" (click)="resetForm()"
                 class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-textMuted">
-          <i class="bi bi-x-lg text-sm"></i>
+          <i class="ph ph-x text-sm"></i>
         </button>
       </div>
 
@@ -351,7 +351,7 @@
               <span class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold cursor-pointer transition-colors
                            border-borderColor bg-surface text-textDark
                            peer-checked:border-primary peer-checked:bg-primary-100 peer-checked:text-primary">
-                <i class="bi" [ngClass]="rt.icon"></i>{{ rt.label }}
+                <i class="ph" [ngClass]="rt.icon"></i>{{ rt.label }}
               </span>
             </label>
           </div>
@@ -444,7 +444,7 @@
 
           <!-- Search -->
           <div class="relative mb-3">
-            <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-textMuted text-sm"></i>
+            <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-textMuted text-sm"></i>
             <input type="text" [(ngModel)]="productSearch" [ngModelOptions]="{standalone: true}"
                    placeholder="Search products..."
                    class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-borderColor bg-surface text-sm text-textDark
@@ -459,7 +459,7 @@
               {{ getProductNameById(id) }}
               <button type="button" (click)="toggleProductSelection(id)"
                       class="w-4 h-4 flex items-center justify-center rounded-full bg-white/30 hover:bg-white/50 transition-colors">
-                <i class="bi bi-x text-[10px]"></i>
+                <i class="ph ph-x text-[10px]"></i>
               </button>
             </span>
           </div>
@@ -474,7 +474,7 @@
                    [class.border-primary]="isProductSelected(item.id)"
                    [class.bg-primary]="isProductSelected(item.id)"
                    [class.border-gray-300]="!isProductSelected(item.id)">
-                <i *ngIf="isProductSelected(item.id)" class="bi bi-check text-white text-[10px]"></i>
+                <i *ngIf="isProductSelected(item.id)" class="ph ph-check text-white text-[10px]"></i>
               </div>
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-textDark truncate">{{ item.name }}</p>
@@ -551,14 +551,14 @@
         <!-- Error -->
         <div *ngIf="submitError"
              class="mb-4 flex items-start gap-3 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
-          <i class="bi bi-exclamation-circle text-danger mt-0.5 flex-shrink-0"></i>
+          <i class="ph ph-warning-circle text-danger mt-0.5 flex-shrink-0"></i>
           <div class="flex-1 min-w-0">
             <p class="text-sm text-danger font-medium">{{ submitError }}</p>
             <a routerLink="/admin/subscription"
                class="text-xs text-primary underline mt-0.5 inline-block">View your plan</a>
           </div>
           <button type="button" (click)="submitError = null" class="text-textMuted hover:text-textDark flex-shrink-0">
-            <i class="bi bi-x"></i>
+            <i class="ph ph-x"></i>
           </button>
         </div>
 
@@ -575,7 +575,7 @@
     <!-- PERFORMANCE TAB — empty state -->
     <div *ngIf="promoTab === 'performance' && !outcomes.length"
          class="bg-white rounded-2xl shadow-card p-10 text-center text-sm text-textMuted mb-8">
-      <i class="bi bi-graph-up-arrow text-3xl text-gray-300 block mb-2"></i>
+      <i class="ph ph-trend-up text-3xl text-gray-300 block mb-2"></i>
       Experiment results appear here once your promotions run and collect orders.
     </div>
 
@@ -583,7 +583,7 @@
     <div *ngIf="promoTab === 'promotions'" class="bg-white rounded-2xl shadow-card overflow-hidden">
       <div class="flex items-center justify-between px-5 py-4 border-b border-borderColor">
         <h3 class="font-heading text-sm font-semibold text-textDark">All Promotions</h3>
-        <app-button variant="secondary" size="sm" iconLeft="bi bi-arrow-clockwise" (clicked)="refresh()">
+        <app-button variant="secondary" size="sm" iconLeft="ph ph-arrow-clockwise" (clicked)="refresh()">
           Refresh
         </app-button>
       </div>
@@ -605,7 +605,7 @@
       <!-- Empty -->
       <div *ngIf="!loading && filteredPromotions.length === 0"
            class="p-12 flex flex-col items-center gap-3 text-textMuted">
-        <i class="bi bi-tag text-4xl"></i>
+        <i class="ph ph-tag text-4xl"></i>
         <p class="text-sm font-medium">
           {{ promotions.length === 0 ? 'No promotions yet' : 'No ' + statusFilter.toLowerCase() + ' promotions' }}
         </p>
@@ -627,7 +627,7 @@
           </div>
           <div *ngIf="!p.imageUrl" class="h-28 bg-gradient-to-br from-primary-100 to-primary-50
                                           flex items-center justify-center">
-            <i class="bi bi-tag text-4xl text-primary opacity-40"></i>
+            <i class="ph ph-tag text-4xl text-primary opacity-40"></i>
           </div>
 
           <div class="p-4">
@@ -646,16 +646,16 @@
             <!-- Stats row -->
             <div class="flex items-center gap-2 mb-3 flex-wrap">
               <span class="inline-flex items-center gap-1 bg-green-50 text-green-700 text-xs font-bold px-2 py-1 rounded-lg">
-                <i class="bi" [ngClass]="rewardIcon(p)"></i>{{ promoLabel(p) }}
+                <i class="ph" [ngClass]="rewardIcon(p)"></i>{{ promoLabel(p) }}
               </span>
               <span class="inline-flex items-center gap-1 bg-surface text-textMuted text-xs px-2 py-1 rounded-lg">
-                <i class="bi bi-bullseye"></i>{{ scopeLabel(p) }}
+                <i class="ph ph-target"></i>{{ scopeLabel(p) }}
               </span>
               <span *ngIf="p.code" class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-xs font-mono font-bold px-2 py-1 rounded-lg">
-                <i class="bi bi-upc"></i>{{ p.code }}
+                <i class="ph ph-barcode"></i>{{ p.code }}
               </span>
               <span *ngIf="!p.code" class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 text-xs px-2 py-1 rounded-lg">
-                <i class="bi bi-lightning-fill"></i>Auto-applied
+                <i class="ph-fill ph-lightning"></i>Auto-applied
               </span>
             </div>
 
@@ -673,20 +673,20 @@
 
             <!-- Schedule -->
             <p class="text-[11px] text-textMuted mb-3 flex items-center gap-1">
-              <i class="bi bi-calendar3"></i>
+              <i class="ph ph-calendar"></i>
               {{ p.startAt | date:'dd MMM yyyy' }} — {{ p.endAt | date:'dd MMM yyyy' }}
             </p>
 
             <!-- Featured badge -->
             <p *ngIf="p.featured" class="text-[11px] text-amber-600 mb-3 flex items-center gap-1 font-medium">
-              <i class="bi bi-star-fill"></i>Featured on store banner
+              <i class="ph-fill ph-star"></i>Featured on store banner
             </p>
 
             <!-- Actions -->
             <div class="flex items-center gap-2 pt-3 border-t border-borderColor">
               <button (click)="edit(p)"
                       class="flex-1 text-xs font-medium text-primary hover:bg-primary-50 py-1.5 rounded-lg transition-colors">
-                <i class="bi bi-pencil mr-1"></i>Edit
+                <i class="ph ph-pencil-simple mr-1"></i>Edit
               </button>
               <button (click)="toggleActive(p)"
                       [title]="(!p.active && isExpired(p)) ? 'This promo has ended — extend its end date in Edit to run it again' : ''"
@@ -695,23 +695,23 @@
                       [class.hover:bg-surface]="p.active || (!p.active && isExpired(p))"
                       [class.text-success]="!p.active && !isExpired(p)"
                       [class.hover:bg-green-50]="!p.active && !isExpired(p)">
-                <i class="bi mr-1" [class.bi-pause-circle]="p.active" [class.bi-play-circle]="!p.active"></i>
+                <i [class]="(p.active ? 'ph ph-pause-circle' : 'ph ph-play-circle') + ' mr-1'"></i>
                 {{ p.active ? 'Pause' : 'Activate' }}
               </button>
               <button (click)="toggleFeatured(p)"
                       class="flex-1 text-xs font-medium transition-colors py-1.5 rounded-lg"
                       [class.text-amber-500]="!p.featured" [class.hover:bg-amber-50]="!p.featured"
                       [class.text-textMuted]="p.featured" [class.hover:bg-surface]="p.featured">
-                <i class="bi mr-1" [class.bi-star]="!p.featured" [class.bi-star-fill]="p.featured"></i>
+                <i class="ph ph-star mr-1" [class.ph-fill]="p.featured"></i>
                 {{ p.featured ? 'Unfeature' : 'Feature' }}
               </button>
               <button *ngIf="p.active" (click)="notifySubscribers(p)" [disabled]="notifyingId === p.id"
                       class="flex-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 py-1.5 rounded-lg transition-colors disabled:opacity-50">
-                <i class="bi bi-send mr-1"></i>{{ notifyingId === p.id ? 'Sending...' : 'Notify' }}
+                <i class="ph ph-paper-plane-tilt mr-1"></i>{{ notifyingId === p.id ? 'Sending...' : 'Notify' }}
               </button>
               <button (click)="confirmDelete(p)"
                       class="text-danger hover:bg-red-50 p-1.5 rounded-lg transition-colors">
-                <i class="bi bi-trash3"></i>
+                <i class="ph ph-trash"></i>
               </button>
             </div>
           </div>

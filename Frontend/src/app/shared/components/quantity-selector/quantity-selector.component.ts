@@ -9,7 +9,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
         (click)="decrease()"
         [disabled]="quantity <= min"
         class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-textDark transition-colors disabled:opacity-40 disabled:cursor-not-allowed active:scale-90">
-        <i class="bi bi-dash text-lg"></i>
+        <i class="ph ph-minus text-lg"></i>
       </button>
       <span class="font-numbers font-semibold text-base min-w-[24px] text-center select-none">
         {{ quantity }}
@@ -19,7 +19,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
         (click)="increase()"
         [disabled]="quantity >= max"
         class="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-white hover:bg-primary-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed active:scale-90">
-        <i class="bi bi-plus text-lg"></i>
+        <i class="ph ph-plus text-lg"></i>
       </button>
     </div>
   `,
