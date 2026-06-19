@@ -465,13 +465,11 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
           document.documentElement.style.setProperty('--brand-primary', updated.primaryColor);
           document.documentElement.style.setProperty('--brand-primary-light', updated.primaryColor + '1A');
         }
-        // Save hours in the same action so the user doesn't need a separate click
-        if (this.storeHours.length > 0) {
-          this.http.put<any[]>(`${environment.apiUrl}/api/admin/store-hours`, this.storeHours, { headers: this.getHeaders() }).subscribe({
-            next: saved => this.storeHours = saved,
-            error: () => this.toastr.error('Settings saved but hours failed — try "Save Hours" above')
-          });
-        }
+        // NOTE: deliberately do NOT re-save store hours here. The hours form is pre-filled with
+        // fabricated 08:00–22:00 defaults for any day without a saved row, so saving them as a side
+        // effect of a theme/settings save would silently materialize those defaults and overwrite the
+        // real trading schedule — which then makes the scheduler open/close the store at the wrong
+        // times. Hours are saved only via their own explicit "Save Hours" button (saveStoreHours()).
         this.toastr.success('Settings saved successfully');
         this.isSaving = false;
         this.settingsEditing = false;

@@ -81,7 +81,10 @@ public class TenantService {
             }
         }
         if (updates.getMinimumOrderAmount() != null) tenant.setMinimumOrderAmount(updates.getMinimumOrderAmount());
-        if (updates.getIsOpen() != null) tenant.setIsOpen(updates.getIsOpen());
+        // Open/closed is deliberately NOT settable here. It is owned solely by setStoreOpen(), which
+        // also sets manualOpenOverride so the scheduler respects the admin's choice. Letting a generic
+        // settings/theme save flip isOpen (without an override) is how a theme update was closing the
+        // store and then "not sticking" — the scheduler reverted it on the next tick.
         if (updates.getEstimatedDeliveryMinutes() != null) tenant.setEstimatedDeliveryMinutes(updates.getEstimatedDeliveryMinutes());
         if (updates.getAutoCancelMinutes() != null) tenant.setAutoCancelMinutes(updates.getAutoCancelMinutes());
         if (updates.getOpeningHours() != null) tenant.setOpeningHours(updates.getOpeningHours());
