@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from 'src/app/services/auth.service';
 import { TenantService } from 'src/app/services/tenant.service';
 import { AdminThemeService } from 'src/app/services/theme.service';
+import { applyBrandFontOnly } from 'src/app/shared/utils/brand-theme.util';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -54,6 +55,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     // Drop the body dark flag when leaving the admin shell so the customer storefront stays light.
     this.theme.teardown();
+    // Reset the heading font to default so the admin's store font doesn't bleed into the store list
+    // (the store page re-applies its own font on a /store/ route).
+    document.documentElement.style.setProperty('--brand-font', 'var(--font-heading)');
   }
 
   private loadTenantBranding(): void {
@@ -70,6 +74,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
           if (tenant.primaryColor) {
             this.applyBrandColor(tenant.primaryColor);
           }
+          // Admin adopts ONLY the store's heading font (accent/buttons stay standard in admin).
+          applyBrandFontOnly(tenant.brandFont);
         }
       }
     });

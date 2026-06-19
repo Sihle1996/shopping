@@ -89,6 +89,13 @@ export function applyStoreBranding(t: BrandTheme): void {
   }));
 }
 
+/** Apply ONLY the store heading font (used by the admin shell — accent/buttons stay standard
+ *  there). Idempotent; pass null/unknown to fall back to the CraveIt default. */
+export function applyBrandFontOnly(key?: string | null): void {
+  document.documentElement.style.setProperty('--brand-font', fontStack(key));
+  loadFont(key);
+}
+
 /** Re-apply the persisted store theme (called on a /store/ reload). */
 export function restoreStoreBranding(): void {
   const primary = localStorage.getItem('brandPrimary');

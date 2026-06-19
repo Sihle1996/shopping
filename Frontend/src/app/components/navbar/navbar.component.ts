@@ -8,6 +8,7 @@ import { CartService } from 'src/app/services/cart.service';
 import { environment } from 'src/environments/environment';
 import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
 import { resetStoreBranding } from 'src/app/shared/utils/brand-theme.util';
+import { AdminThemeService } from 'src/app/services/theme.service';
 
 @Component({
   selector: 'app-navbar',
@@ -32,7 +33,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     public authService: AuthService,
     private tenantService: TenantService,
     private cartService: CartService,
-    public router: Router
+    public router: Router,
+    public theme: AdminThemeService
   ) {}
 
   ngOnInit() {
