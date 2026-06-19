@@ -2,15 +2,25 @@
 
   <!-- Desktop sidebar (lg+) -->
   <aside class="hidden lg:flex flex-col w-64 bg-white border-r border-borderColor fixed top-14 bottom-0 z-30 overflow-y-auto">
-    <nav class="p-3 space-y-1 flex-1">
-      <a *ngFor="let item of navItems"
-         [routerLink]="item.route"
-         routerLinkActive="bg-primary-50 text-primary"
-         [routerLinkActiveOptions]="{ exact: item.exact }"
-         class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-textMuted hover:bg-gray-50 hover:text-textDark transition-colors">
-        <i [class]="item.icon + ' text-base w-5 text-center'"></i>
-        <span class="font-medium">{{ item.label }}</span>
-      </a>
+    <nav class="p-3 pb-6 flex-1 space-y-5">
+      <div *ngFor="let group of navGroups">
+        <p class="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400 select-none">{{ group.section }}</p>
+        <div class="space-y-0.5">
+          <a *ngFor="let item of group.items"
+             [routerLink]="item.route"
+             routerLinkActive #rla="routerLinkActive"
+             [routerLinkActiveOptions]="{ exact: item.exact }"
+             [ngClass]="rla.isActive
+               ? 'bg-primary-50 text-primary font-semibold'
+               : 'text-textMuted font-medium hover:bg-gray-50 hover:text-textDark'"
+             class="relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-colors">
+            <span *ngIf="rla.isActive"
+                  class="absolute left-1 top-1/2 -translate-y-1/2 h-5 w-1 rounded-full bg-primary"></span>
+            <i [class]="item.icon + ' text-base w-5 text-center'"></i>
+            <span>{{ item.label }}</span>
+          </a>
+        </div>
+      </div>
     </nav>
   </aside>
 

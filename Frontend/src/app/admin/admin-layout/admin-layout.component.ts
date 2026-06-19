@@ -11,21 +11,31 @@ import { environment } from 'src/environments/environment';
 })
 export class AdminLayoutComponent implements OnInit {
 
-  navItems = [
-    { route: '/admin/dashboard', label: 'Dashboard', icon: 'bi bi-grid', exact: true },
-    { route: '/admin/orders', label: 'Orders', icon: 'bi bi-receipt', exact: false },
-    { route: '/admin/menu', label: 'Menu', icon: 'bi bi-journal-text', exact: false },
-    { route: '/admin/inventory', label: 'Inventory', icon: 'bi bi-box-seam', exact: false },
-    { route: '/admin/promotions', label: 'Promos', icon: 'bi bi-tag', exact: false },
-    { route: '/admin/drivers', label: 'Drivers', icon: 'bi bi-truck', exact: false },
-    { route: '/admin/activity', label: 'Activity', icon: 'bi bi-clock-history', exact: false },
-    { route: '/admin/settings', label: 'Settings', icon: 'bi bi-gear', exact: false },
-    { route: '/admin/subscription', label: 'Plan', icon: 'bi bi-credit-card-2-front', exact: false },
-    { route: '/admin/users', label: 'Users', icon: 'bi bi-people', exact: false },
-    { route: '/admin/reviews', label: 'Reviews', icon: 'bi bi-star', exact: false },
-    { route: '/admin/support', label: 'Support', icon: 'bi bi-headset', exact: false },
-    { route: '/admin/payouts', label: 'Payouts', icon: 'bi bi-wallet2', exact: false },
-    { route: '/admin/books', label: 'Books', icon: 'bi bi-journal-bookmark', exact: false },
+  navGroups = [
+    { section: 'Overview', items: [
+      { route: '/admin/dashboard', label: 'Dashboard', icon: 'bi bi-grid', exact: true },
+      { route: '/admin/activity', label: 'Activity', icon: 'bi bi-clock-history', exact: false },
+    ]},
+    { section: 'Operations', items: [
+      { route: '/admin/orders', label: 'Orders', icon: 'bi bi-receipt', exact: false },
+      { route: '/admin/menu', label: 'Menu', icon: 'bi bi-journal-text', exact: false },
+      { route: '/admin/inventory', label: 'Inventory', icon: 'bi bi-box-seam', exact: false },
+      { route: '/admin/drivers', label: 'Drivers', icon: 'bi bi-truck', exact: false },
+    ]},
+    { section: 'Growth', items: [
+      { route: '/admin/promotions', label: 'Promos', icon: 'bi bi-tag', exact: false },
+      { route: '/admin/reviews', label: 'Reviews', icon: 'bi bi-star', exact: false },
+    ]},
+    { section: 'Finance', items: [
+      { route: '/admin/payouts', label: 'Payouts', icon: 'bi bi-wallet2', exact: false },
+      { route: '/admin/books', label: 'Books', icon: 'bi bi-journal-bookmark', exact: false },
+      { route: '/admin/subscription', label: 'Plan', icon: 'bi bi-credit-card-2-front', exact: false },
+    ]},
+    { section: 'Account', items: [
+      { route: '/admin/users', label: 'Users', icon: 'bi bi-people', exact: false },
+      { route: '/admin/settings', label: 'Settings', icon: 'bi bi-gear', exact: false },
+      { route: '/admin/support', label: 'Support', icon: 'bi bi-headset', exact: false },
+    ]},
   ];
 
   constructor(
