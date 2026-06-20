@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { AuthService } from 'src/app/services/auth.service';
 
 export interface UserSummary {
   id: string;
@@ -27,12 +28,55 @@ export class AdminUsersComponent implements OnInit {
   confirmDeleteId: string | null = null;
   updatingId: string | null = null;
   deletingUserId: string | null = null;
+  currentUserId: string | null = null;
+
+  // Invite a staff member (driver / co-admin)
+  showInvite = false;
+  inviteEmail = '';
+  inviteName = '';
+  inviteRole: 'DRIVER' | 'ADMIN' = 'DRIVER';
+  inviting = false;
 
   private api = environment.apiUrl + '/api/admin/users';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private auth: AuthService) {}
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.currentUserId = this.auth.getUserId();
+    this.load();
+  }
+
+  /** The row representing the signed-in admin — destructive actions are blocked on yourself. */
+  isMe(user: UserSummary): boolean { return !!this.currentUserId && user.id === this.currentUserId; }
+
+  roleLabel(role: string): string {
+    switch (role) {
+      case 'ADMIN': return 'Admin';
+      case 'DRIVER': return 'Driver';
+      case 'USER': return 'Customer';
+      case 'SUPERADMIN': return 'Superadmin';
+      default: return role;
+    }
+  }
+
+  openInvite() { this.showInvite = true; this.inviteEmail = ''; this.inviteName = ''; this.inviteRole = 'DRIVER'; }
+  closeInvite() { if (!this.inviting) this.showInvite = false; }
+
+  invite() {
+    const email = this.inviteEmail.trim().toLowerCase();
+    if (!email || !email.includes('@')) { this.showToast('Enter a valid email', 'error'); return; }
+    this.inviting = true;
+    this.http.post<{ message: string; user: UserSummary }>(`${this.api}/invite`,
+      { email, fullName: this.inviteName.trim(), role: this.inviteRole }).subscribe({
+      next: res => {
+        this.inviting = false;
+        this.showInvite = false;
+        this.showToast(res.message || 'Invite sent');
+        this.load();
+      },
+      error: err => { this.inviting = false; this.showToast(err.error?.message || 'Could not send invite', 'error'); }
+    });
+  }
 
   load() {
     this.loading = true;
@@ -70,7 +114,7 @@ export class AdminUsersComponent implements OnInit {
         this.updatingId = null;
         this.showToast(updated.active ? 'User activated' : 'User deactivated');
       },
-      error: () => { this.updatingId = null; this.showToast('Failed to update status', 'error'); }
+      error: err => { this.updatingId = null; this.showToast(err.error?.message || 'Failed to update status', 'error'); }
     });
   }
 
@@ -90,10 +134,10 @@ export class AdminUsersComponent implements OnInit {
         this.deletingUserId = null;
         this.showToast('User deleted');
       },
-      error: () => {
+      error: err => {
         this.confirmDeleteId = null;
         this.deletingUserId = null;
-        this.showToast('Failed to delete user', 'error');
+        this.showToast(err.error?.message || 'Failed to delete user', 'error');
       }
     });
   }

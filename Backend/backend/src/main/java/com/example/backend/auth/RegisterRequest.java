@@ -11,6 +11,9 @@ public class RegisterRequest {
     @NotEmpty(message = "Password is required")
     private String password;
 
+    public RegisterRequest() {}
+    public RegisterRequest(String email, String password) { this.email = email; this.password = password; }
+
     public String getEmail() {
         return email;
     }

@@ -13,7 +13,7 @@ export class AdminFooterComponent {
     { route: '/admin/promotions',   label: 'Promos',     icon: 'ph ph-tag' },
     { route: '/admin/settings',     label: 'Settings',   icon: 'ph ph-gear-six' },
     { route: '/admin/subscription', label: 'Plan',       icon: 'ph ph-credit-card' },
-    { route: '/admin/users',        label: 'Users',      icon: 'ph ph-users' },
+    { route: '/admin/users',        label: 'Team',       icon: 'ph ph-users' },
     { route: '/admin/reviews',  label: 'Reviews', icon: 'ph ph-star' },
     { route: '/admin/support', label: 'Support', icon: 'ph ph-headset' },
     { route: '/admin/payouts', label: 'Payouts', icon: 'ph ph-wallet' },

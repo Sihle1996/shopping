@@ -35,7 +35,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       { route: '/admin/subscription', label: 'Plan', icon: 'ph-credit-card', exact: false },
     ]},
     { section: 'Account', items: [
-      { route: '/admin/users', label: 'Users', icon: 'ph-users', exact: false },
+      { route: '/admin/users', label: 'Team', icon: 'ph-users', exact: false },
       { route: '/admin/settings', label: 'Settings', icon: 'ph-gear-six', exact: false },
       { route: '/admin/support', label: 'Support', icon: 'ph-headset', exact: false },
     ]},
