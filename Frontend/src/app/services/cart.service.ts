@@ -238,6 +238,22 @@ export class CartService {
     this.cartItemCount.next(0);
   }
 
+  /**
+   * Like clearCart() but returns an Observable that completes once the SERVER cart is cleared, so
+   * callers can sequence work that reads the server cart afterwards (e.g. converting the personal
+   * cart into a group order, then navigating to a page that re-fetches the personal cart).
+   */
+  clearCartServer$(): Observable<unknown> {
+    this.cartItems.next([]);
+    this.totalPrice.next(0);
+    this.cartItemCount.next(0);
+    if (!this.authService.isLoggedIn()) {
+      localStorage.removeItem(this.LOCAL_CART_KEY);
+      return of(undefined);
+    }
+    return this.http.delete(`${this.apiUrl}/clear`, { headers: this.getAuthHeaders() });
+  }
+
   clearCart(): void {
     if (!this.authService.isLoggedIn()) {
       localStorage.removeItem(this.LOCAL_CART_KEY);

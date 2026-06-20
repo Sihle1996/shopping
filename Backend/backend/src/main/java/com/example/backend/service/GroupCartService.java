@@ -104,6 +104,11 @@ public class GroupCartService {
         boolean isAdder = item.getAddedBy() != null && item.getAddedBy().getId().equals(user.getId());
         if (!isOwner && !isAdder)
             throw new IllegalStateException("Not authorised to remove this item");
+        // GroupCart.items is EAGER + cascade=ALL + orphanRemoval=true, so the parent is loaded with
+        // this item still in its collection. A bare repo.delete() is silently undone at flush —
+        // the managed parent re-cascades the still-referenced child (the item "comes back" on the
+        // next fetch). Detach it from the parent collection so orphanRemoval deletes it for real.
+        item.getGroupCart().getItems().remove(item);
         groupCartItemRepo.delete(item);
     }
 

@@ -122,6 +122,7 @@ export class CartComponent implements OnInit {
       return;
     }
     this.sharingCart = true;
+    const hadItems = this.cartItems.length > 0;
     this.groupCartService.create().pipe(
       switchMap(res => {
         localStorage.setItem('groupCartToken', res.token);
@@ -131,12 +132,20 @@ export class CartComponent implements OnInit {
             this.groupCartService.addItem(res.token, item.menuItemId, item.quantity,
               item.selectedChoicesJson ?? null, item.itemNotes ?? null)
           )
-        ).pipe(map(() => res.token));
+        ).pipe(
+          // MOVE the items into the group order, don't copy them: clear the personal cart once it's
+          // been seeded. Leaving it populated made those same items resurface as the group-cart
+          // "merge" prompt and get re-added — duplicating items, and making a removed item reappear.
+          // Wait for the SERVER clear to complete BEFORE navigating, otherwise the group-cart page
+          // re-fetches the personal cart before the delete lands and still shows the merge prompt.
+          // Group checkout reads the GROUP cart (not the personal cart), so clearing is safe.
+          switchMap(() => this.cartService.clearCartServer$()),
+          map(() => res.token)
+        );
       })
     ).subscribe({
       next: token => {
-        // Keep the personal cart intact — it's only cleared at checkout. Clearing
-        // here made the cart appear empty when returning from the group-order page.
+        if (hadItems) { this.cartItems = []; this.updateTotals(); }
         const url = `${window.location.origin}/store/${slug}/group-cart/${token}`;
         navigator.clipboard.writeText(url)
           .then(() => this.toastr.success('Group order link copied! Share it with your friends.'))
