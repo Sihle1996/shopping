@@ -154,7 +154,7 @@
             <div>
               <label class="block text-xs font-semibold text-textDark mb-1.5">Logo</label>
               <div class="flex items-center gap-3">
-                <img *ngIf="settings.logoUrl" [src]="getLogoUrl()" class="w-14 h-14 rounded-xl object-cover border border-borderColor flex-shrink-0" />
+                <img *ngIf="settings.logoUrl" [src]="getLogoUrl()" class="w-14 h-14 rounded-xl object-contain bg-white border border-borderColor flex-shrink-0" />
                 <div *ngIf="!settings.logoUrl" class="w-14 h-14 rounded-xl bg-primary-50 border border-dashed border-primary-200 flex items-center justify-center flex-shrink-0">
                   <i class="ph ph-image text-primary text-lg"></i>
                 </div>
@@ -299,7 +299,7 @@
               </div>
               <div class="px-4 pb-4" [style.fontFamily]="previewFontStack()">
                 <div class="flex items-end gap-3 -mt-7 relative z-10">
-                  <img *ngIf="settings.logoUrl" [src]="getLogoUrl()" class="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-sm bg-white flex-shrink-0" />
+                  <img *ngIf="settings.logoUrl" [src]="getLogoUrl()" class="w-14 h-14 rounded-2xl object-contain border-2 border-white shadow-sm bg-white flex-shrink-0" />
                   <div *ngIf="!settings.logoUrl" class="w-14 h-14 rounded-2xl border-2 border-white shadow-sm flex items-center justify-center text-white font-bold text-xl flex-shrink-0" [style.background]="settings.primaryColor">
                     {{ settings.name?.charAt(0) || 'S' }}
                   </div>

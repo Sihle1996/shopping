@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
-import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
+import { logoUrl } from 'src/app/shared/utils/cloudinary.util';
 import { GeocodingService } from '../../services/geocoding.service';
 
 interface StoreSummary {
@@ -247,6 +247,6 @@ export class StoreListComponent implements OnInit, OnDestroy {
   getLogoUrl(store: StoreSummary): string {
     if (!store.logoUrl) return '';
     const full = store.logoUrl.startsWith('http') ? store.logoUrl : `${environment.apiUrl}${store.logoUrl}`;
-    return cloudinaryUrl(full, 200);
+    return logoUrl(full, { mode: 'square', box: 56 });
   }
 }

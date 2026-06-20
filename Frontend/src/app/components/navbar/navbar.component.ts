@@ -6,7 +6,7 @@ import { AuthService } from 'src/app/services/auth.service';
 import { TenantService } from 'src/app/services/tenant.service';
 import { CartService } from 'src/app/services/cart.service';
 import { environment } from 'src/environments/environment';
-import { cloudinaryUrl } from 'src/app/shared/utils/cloudinary.util';
+import { logoUrl } from 'src/app/shared/utils/cloudinary.util';
 import { resetStoreBranding } from 'src/app/shared/utils/brand-theme.util';
 import { AdminThemeService } from 'src/app/services/theme.service';
 
@@ -138,7 +138,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private resolveLogoUrl(url?: string): string | null {
     if (!url) return null;
     const full = url.startsWith('http') ? url : `${environment.apiUrl}${url}`;
-    return cloudinaryUrl(full, 96);
+    return logoUrl(full, { mode: 'fit', box: 32 });
   }
 
   goHome(): void {

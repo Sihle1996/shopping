@@ -15,6 +15,7 @@ import { ProductCardItem } from 'src/app/shared/components/product-card/product-
 import { ToastrService } from 'ngx-toastr';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
+import { logoUrl } from 'src/app/shared/utils/cloudinary.util';
 
 @Component({
   selector: 'app-home',
@@ -224,7 +225,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.storeName = t.name || '';
       this.storeCuisine = t.cuisineType || '';
       this.storeDescription = t.storeDescription || '';
-      this.storeLogoUrl = this.resolveImg(t.logoUrl);
+      this.storeLogoUrl = logoUrl(this.resolveImg(t.logoUrl), { mode: 'square', box: 56 });
       this.storeCoverUrl = this.resolveImg(t.coverImageUrl);
       this.storeInstagram = this.normalizeLink(t.instagramUrl);
       this.storeFacebook = this.normalizeLink(t.facebookUrl);

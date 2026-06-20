@@ -203,7 +203,7 @@
                     hover:border-primary hover:shadow-card-hover transition-all duration-200 group">
           <div class="flex items-center gap-4">
             <img *ngIf="store.logoUrl" [src]="getLogoUrl(store)"
-                 class="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+                 class="w-14 h-14 rounded-xl object-contain bg-white flex-shrink-0" />
             <div *ngIf="!store.logoUrl"
                  class="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0"
                  [style.backgroundColor]="store.primaryColor || '#E76F51'">

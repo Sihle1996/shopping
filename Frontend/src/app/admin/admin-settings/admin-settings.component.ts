@@ -12,6 +12,7 @@ import { ToastrService } from 'ngx-toastr';
 import { ConfirmService } from 'src/app/shared/services/confirm.service';
 import { TabItem } from 'src/app/shared/components/tabbed-list/tabbed-list.component';
 import { environment } from 'src/environments/environment';
+import { logoUrl } from 'src/app/shared/utils/cloudinary.util';
 
 interface TenantSettings {
   id: string;
@@ -247,9 +248,10 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
 
   getLogoUrl(): string {
     if (!this.settings.logoUrl) return '';
-    return this.settings.logoUrl.startsWith('http')
+    const full = this.settings.logoUrl.startsWith('http')
       ? this.settings.logoUrl
       : `${environment.apiUrl}${this.settings.logoUrl}`;
+    return logoUrl(full, { mode: 'square', box: 56 });
   }
 
   isUploadingCover = false;

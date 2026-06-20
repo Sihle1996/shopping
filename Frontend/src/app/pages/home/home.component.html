@@ -40,7 +40,7 @@
           </div>
           <div *ngIf="storeCoverUrl" class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent"></div>
           <div class="absolute bottom-0 left-0 right-0 p-4 flex items-end gap-3">
-            <img *ngIf="storeLogoUrl" [src]="storeLogoUrl" [alt]="storeName" class="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-md bg-white flex-shrink-0" />
+            <img *ngIf="storeLogoUrl" [src]="storeLogoUrl" [alt]="storeName" class="w-14 h-14 rounded-2xl object-contain border-2 border-white shadow-md bg-white flex-shrink-0" />
             <div class="min-w-0 flex-1">
               <h1 class="font-heading text-xl sm:text-2xl font-bold truncate" [ngClass]="storeCoverUrl ? 'text-white' : 'text-textDark'">{{ storeName }}</h1>
               <p *ngIf="storeCuisine" class="text-xs sm:text-sm truncate" [ngClass]="storeCoverUrl ? 'text-white/90' : 'text-textMuted'">{{ storeCuisine }}</p>
