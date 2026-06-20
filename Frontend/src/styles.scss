@@ -307,3 +307,28 @@ html, body {
 .ai-prose .ai-table td { padding: .5rem .65rem; border-top: 1px solid #eef0f2; vertical-align: top; }
 .ai-prose .ai-table tbody tr:nth-child(even) { background: #fafafa; }
 .ai-prose .ai-table tbody tr:hover { background: color-mix(in srgb, var(--brand-primary) 6%, #ffffff); }
+
+/* ── Thin, refined scrollbars (app-wide: sidebar, content, panels) ───────────
+ * A slim rounded thumb on a transparent track. The 2px transparent border +
+ * padding-box clip makes the visible thumb ~5px — a subtle pill that brightens
+ * to the store's brand colour on hover. (.scrollbar-hide above still opts out.) */
+* {
+  scrollbar-width: thin;                      /* Firefox */
+  scrollbar-color: #cbd5e1 transparent;       /* thumb · track */
+}
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color .2s ease;
+}
+::-webkit-scrollbar-thumb:hover { background-color: var(--brand-primary); }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* Admin dark mode — lighter thumb that reads on the dark surfaces */
+.admin-dark { scrollbar-color: #3a434d transparent; }
+.admin-dark ::-webkit-scrollbar-thumb { background-color: #3a434d; }
+.admin-dark ::-webkit-scrollbar-thumb:hover { background-color: var(--brand-primary); }
