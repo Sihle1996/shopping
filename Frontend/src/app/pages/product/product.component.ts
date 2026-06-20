@@ -214,11 +214,10 @@ export class ProductComponent implements OnInit, OnDestroy {
         .subscribe({
           next: () => {
             this.isAddingToCart = false;
-            clearTimeout(this.addedBannerTimer);
-            this.showAddedBanner = true;
-            this.addedBannerTimer = setTimeout(() => this.showAddedBanner = false, 3000);
-            this.toastr.success('Added to group order!');
-            if (this.slug) this.router.navigate(['/store', this.slug, 'group-cart', groupToken]);
+            this.toastr.success('Added to group order');
+            // Back to the menu (group-add mode stays ON) so they can keep adding more items; they
+            // return to the group order via the menu banner's "View group order" button.
+            if (this.slug) this.router.navigate(['/store', this.slug]);
           },
           error: err => { this.toastr.error(err?.error || 'Failed to add to group order'); this.isAddingToCart = false; }
         });

@@ -1,5 +1,19 @@
 <div class="min-h-screen bg-surface flex flex-col pb-28 max-w-7xl mx-auto">
 
+  <!-- Group-add mode: stay on the menu and add as many items as you like, then return -->
+  <div *ngIf="inGroupAddMode"
+       class="sticky top-0 z-30 px-4 py-2.5 lg:px-8 flex items-center justify-between gap-3 shadow-md text-white"
+       style="background: var(--brand-primary)">
+    <div class="flex items-center gap-2 min-w-0">
+      <i class="ph-fill ph-users text-lg flex-shrink-0"></i>
+      <p class="text-sm font-medium truncate">Adding to your group order — tap items to add them</p>
+    </div>
+    <button (click)="viewGroupOrder()"
+            class="flex-shrink-0 inline-flex items-center gap-1.5 bg-white text-primary text-xs font-semibold px-3 py-1.5 rounded-xl hover:bg-white/90 transition-colors">
+      View group order <i class="ph ph-arrow-right"></i>
+    </button>
+  </div>
+
   <!-- Back to stores (guests only) -->
   <div class="px-4 pt-4 lg:px-8" *ngIf="!isLoggedIn">
     <a routerLink="/stores"

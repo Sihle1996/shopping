@@ -154,6 +154,19 @@ export class HomeComponent implements OnInit, OnDestroy {
       .every(g => (this.modifierSelections[g.id] || []).length > 0);
   }
 
+  /** True while the user is browsing the menu to add items to an existing group order. */
+  get inGroupAddMode(): boolean {
+    return !!localStorage.getItem('groupCartToken') && sessionStorage.getItem('groupAddMode') === 'true';
+  }
+
+  /** Done adding — leave group-add mode and return to the group order. */
+  viewGroupOrder(): void {
+    const token = localStorage.getItem('groupCartToken');
+    const slug = localStorage.getItem('storeSlug');
+    sessionStorage.removeItem('groupAddMode');
+    if (token && slug) this.router.navigate(['/store', slug, 'group-cart', token]);
+  }
+
   confirmModifiers(): void {
     if (!this.authService.isLoggedIn()) {
       const slug = localStorage.getItem('storeSlug');
@@ -174,13 +187,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     const groupToken = localStorage.getItem('groupCartToken');
     const groupAddMode = sessionStorage.getItem('groupAddMode') === 'true';
     if (groupToken && groupAddMode) {
+      const name = this.modifierItem.name;
       this.groupCartService.addItem(groupToken, this.modifierItem.id!, 1, selectedChoicesJson, null).subscribe({
         next: () => {
-          sessionStorage.removeItem('groupAddMode');
-          this.toastr.success('Added to group order!');
+          // Stay on the menu with group-add mode ON so they can keep adding items. The banner's
+          // "View group order" button is how they return when done — no more bounce-per-item.
+          this.toastr.success(`${name} added to group order`);
           this.closeModifierModal();
-          const slug = localStorage.getItem('storeSlug');
-          if (slug) this.router.navigate(['/store', slug, 'group-cart', groupToken]);
         },
         error: () => {
           sessionStorage.removeItem('groupAddMode');
@@ -482,10 +495,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (groupToken && groupAddMode) {
       this.groupCartService.addItem(groupToken, item.id!, 1, null, null).subscribe({
         next: () => {
-          sessionStorage.removeItem('groupAddMode');
-          this.toastr.success('Added to group order!');
-          const slug = localStorage.getItem('storeSlug');
-          if (slug) this.router.navigate(['/store', slug, 'group-cart', groupToken]);
+          // Stay on the menu with group-add mode ON so they can keep adding. They return via the
+          // banner's "View group order" button when done.
+          this.toastr.success(`${item.name} added to group order`);
         },
         error: () => {
           sessionStorage.removeItem('groupAddMode');
