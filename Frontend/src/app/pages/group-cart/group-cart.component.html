@@ -104,7 +104,7 @@
     <div class="lg:col-span-2">
     <!-- Items list -->
     <div class="bg-white rounded-2xl shadow-card overflow-hidden">
-      <div class="px-4 pt-4 pb-2 border-b border-borderColor flex items-center justify-between">
+      <div class="px-4 py-3.5 border-b border-borderColor flex items-center justify-between">
         <div class="flex items-center gap-2">
           <span class="text-sm font-semibold text-textDark">Items ({{ cart.items.length }})</span>
           <!-- Live indicator -->
@@ -127,29 +127,33 @@
       </div>
 
       <ul class="divide-y divide-borderColor">
-        <li *ngFor="let item of cart.items" class="px-4 py-3 flex items-start gap-3">
+        <li *ngFor="let item of cart.items" class="px-4 py-4 flex items-start gap-3.5">
           <img [src]="getImageUrl(item.menuItem?.image)" alt=""
-               class="w-12 h-12 rounded-xl object-cover flex-shrink-0 bg-surface">
+               class="w-14 h-14 rounded-xl object-cover flex-shrink-0 bg-surface">
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-textDark leading-tight">{{ item.menuItem?.name }}</p>
-            <p class="text-xs text-textMuted mt-0.5">
-              x{{ item.quantity }} · R{{ (item.unitPrice * item.quantity).toFixed(2) }}
+            <p class="text-sm font-semibold text-textDark leading-snug">{{ item.menuItem?.name }}</p>
+            <p class="text-xs text-textMuted mt-1 flex items-center gap-1.5">
+              <span class="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-md bg-surface border border-borderColor text-textDark font-semibold text-[11px]">×{{ item.quantity }}</span>
+              <span>R{{ item.unitPrice.toFixed(2) }} each</span>
             </p>
-            <p class="text-xs text-primary mt-0.5 font-medium">
-              <i class="ph-fill ph-user text-[10px] mr-0.5"></i>
-              {{ item.addedBy?.fullName || item.addedBy?.email }}
+            <p class="text-xs text-primary mt-1.5 font-medium flex items-center gap-1 flex-wrap">
+              <i class="ph-fill ph-user text-[10px]"></i>
+              <span class="truncate">{{ item.addedBy?.fullName || item.addedBy?.email }}</span>
               <span *ngIf="item.addedBy?.id === cart.ownerId"
-                    class="ml-1 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">host</span>
+                    class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">host</span>
             </p>
-            <p *ngIf="item.itemNotes" class="text-xs text-textMuted italic mt-0.5">"{{ item.itemNotes }}"</p>
+            <p *ngIf="item.itemNotes" class="text-xs text-textMuted italic mt-1.5">"{{ item.itemNotes }}"</p>
           </div>
-          <!-- Remove own items only -->
-          <button *ngIf="cart.status === 'OPEN' && item.addedBy?.id === currentUserId"
-                  (click)="removeItem(item.id)"
-                  [disabled]="removingId === item.id"
-                  class="p-1.5 text-textMuted hover:text-danger transition-colors rounded-lg hover:bg-red-50 flex-shrink-0 disabled:opacity-40">
-            <i [class]="removingId === item.id ? 'ph ph-hourglass text-sm animate-spin' : 'ph ph-trash text-sm'"></i>
-          </button>
+          <!-- Line total + remove (own items only) -->
+          <div class="flex flex-col items-end gap-2 flex-shrink-0">
+            <span class="text-sm font-numbers font-bold text-textDark">R{{ (item.unitPrice * item.quantity).toFixed(2) }}</span>
+            <button *ngIf="cart.status === 'OPEN' && item.addedBy?.id === currentUserId"
+                    (click)="removeItem(item.id)"
+                    [disabled]="removingId === item.id"
+                    class="p-1.5 -mr-1 text-textMuted hover:text-danger transition-colors rounded-lg hover:bg-red-50 disabled:opacity-40">
+              <i [class]="removingId === item.id ? 'ph ph-hourglass text-sm animate-spin' : 'ph ph-trash text-sm'"></i>
+            </button>
+          </div>
         </li>
       </ul>
     </div>
@@ -170,10 +174,10 @@
       </div>
 
       <!-- Total + checkout (owner only) -->
-      <div class="bg-white rounded-2xl shadow-card p-4 space-y-3">
+      <div class="bg-white rounded-2xl shadow-card p-5 space-y-3.5">
         <div class="flex items-center justify-between">
-          <span class="text-sm text-textMuted">Group total</span>
-          <span class="font-numbers text-lg font-bold text-primary">R{{ cart.total.toFixed(2) }}</span>
+          <span class="text-sm font-medium text-textMuted">Group total</span>
+          <span class="font-numbers text-xl font-bold text-primary">R{{ cart.total.toFixed(2) }}</span>
         </div>
         <button *ngIf="isOwner && cart.status === 'OPEN' && cart.items.length"
                 (click)="goToCheckout()"

@@ -81,6 +81,18 @@ public class GroupCartService {
             } catch (Exception ignored) {}
         }
 
+        // Dedupe: the same person adding the same item with the same options bumps the quantity
+        // instead of creating a second identical line (the "added one item twice" duplicate).
+        String choicesKey = (selectedChoicesJson == null || selectedChoicesJson.isBlank()) ? "" : selectedChoicesJson;
+        for (GroupCartItem existing : gc.getItems()) {
+            if (existing.getAddedBy() != null && existing.getAddedBy().getId().equals(user.getId())
+                    && existing.getMenuItem() != null && existing.getMenuItem().getId().equals(menuItemId)
+                    && choicesKey.equals(existing.getSelectedChoicesJson() == null ? "" : existing.getSelectedChoicesJson())) {
+                existing.setQuantity(Math.min(50, existing.getQuantity() + quantity));
+                return groupCartItemRepo.save(existing);
+            }
+        }
+
         GroupCartItem item = new GroupCartItem();
         item.setGroupCart(gc);
         item.setAddedBy(user);
