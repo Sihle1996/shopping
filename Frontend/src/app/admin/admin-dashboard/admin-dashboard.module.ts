@@ -24,6 +24,7 @@ import { AdminPromotionsComponent } from '../admin-promotions/admin-promotions.c
 import { AdminSettingsComponent } from '../admin-settings/admin-settings.component';
 import { AdminSubscriptionComponent } from '../admin-subscription/admin-subscription.component';
 import { AdminUsersComponent } from '../admin-users/admin-users.component';
+import { AdminCustomersComponent } from '../admin-customers/admin-customers.component';
 import { AdminReviewsComponent } from '../admin-reviews/admin-reviews.component';
 import { AdminEnrollmentComponent } from '../admin-enrollment/admin-enrollment.component';
 import { AdminSupportComponent } from '../admin-support/admin-support.component';
@@ -53,6 +54,7 @@ import { DeltaBarComponent } from '../../shared/components/delta-bar/delta-bar.c
     AdminSettingsComponent,
     AdminSubscriptionComponent,
     AdminUsersComponent,
+    AdminCustomersComponent,
     AdminReviewsComponent,
     AdminEnrollmentComponent,
     AdminSupportComponent,

@@ -27,6 +27,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     ]},
     { section: 'Growth', items: [
       { route: '/admin/promotions', label: 'Promos', icon: 'ph-tag', exact: false },
+      { route: '/admin/customers', label: 'Customers', icon: 'ph-users-three', exact: false },
       { route: '/admin/reviews', label: 'Reviews', icon: 'ph-star', exact: false },
     ]},
     { section: 'Finance', items: [

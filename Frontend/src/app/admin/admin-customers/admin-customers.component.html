@@ -1,0 +1,102 @@
+<div class="px-4 pt-6 lg:px-8 lg:pt-8">
+  <div class="w-full">
+
+    <!-- Header -->
+    <app-page-header title="Customers" subtitle="People who’ve ordered from your store — your regulars and big spenders">
+      <span actions *ngIf="!loading"
+            class="inline-flex items-center gap-1.5 text-sm text-textMuted bg-white border border-borderColor px-3 py-1.5 rounded-xl">
+        <i class="ph ph-users-three text-primary"></i> {{ customers.length }}
+      </span>
+    </app-page-header>
+
+    <!-- Summary -->
+    <div *ngIf="!loading && customers.length > 0" class="grid grid-cols-2 gap-3 mb-6">
+      <div class="bg-white rounded-2xl border border-borderColor p-4 shadow-card">
+        <p class="text-xs text-textMuted">Total customers</p>
+        <p class="font-numbers text-2xl font-bold text-textDark mt-0.5">{{ customers.length }}</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-borderColor p-4 shadow-card">
+        <p class="text-xs text-textMuted">Lifetime revenue</p>
+        <p class="font-numbers text-2xl font-bold text-success mt-0.5">R{{ totalRevenue | number:'1.0-0' }}</p>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="relative mb-6 max-w-md">
+      <i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none text-sm"></i>
+      <input [(ngModel)]="search" (ngModelChange)="applyFilter()" placeholder="Search by name or email..."
+             class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-borderColor bg-white text-sm text-textDark
+                    focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="space-y-3">
+      <div *ngFor="let i of [1,2,3,4,5]" class="h-16 bg-white rounded-2xl animate-pulse border border-borderColor"></div>
+    </div>
+
+    <!-- Empty -->
+    <div *ngIf="!loading && filtered.length === 0" class="text-center py-16 text-textMuted">
+      <i class="ph ph-users-three text-4xl block mb-3 opacity-30"></i>
+      <p class="font-medium text-textDark">No customers yet</p>
+      <p class="text-sm mt-1">Customers appear here once they place their first order.</p>
+    </div>
+
+    <!-- Desktop table -->
+    <div *ngIf="!loading && filtered.length > 0"
+         class="hidden md:block bg-white rounded-2xl border border-borderColor overflow-hidden shadow-card">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-borderColor">
+          <tr>
+            <th class="text-left px-5 py-3.5 font-semibold text-textMuted text-xs uppercase tracking-wide">Customer</th>
+            <th class="text-right px-5 py-3.5 font-semibold text-textMuted text-xs uppercase tracking-wide">Orders</th>
+            <th class="text-right px-5 py-3.5 font-semibold text-textMuted text-xs uppercase tracking-wide">Total spent</th>
+            <th class="text-right px-5 py-3.5 font-semibold text-textMuted text-xs uppercase tracking-wide">Last order</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-borderColor">
+          <tr *ngFor="let c of filtered" class="hover:bg-gray-50/60 transition-colors">
+            <td class="px-5 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                  {{ initial(c) }}
+                </div>
+                <div class="min-w-0">
+                  <p class="font-medium text-textDark truncate flex items-center gap-1.5">
+                    <span class="truncate">{{ c.name || c.email }}</span>
+                    <span *ngIf="!c.registered" class="flex-shrink-0 text-[10px] font-semibold text-textMuted bg-gray-100 px-1.5 py-0.5 rounded-full">Guest</span>
+                  </p>
+                  <p *ngIf="c.name" class="text-xs text-textMuted truncate">{{ c.email }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-4 text-right font-numbers text-textDark">{{ c.orderCount }}</td>
+            <td class="px-5 py-4 text-right font-numbers font-semibold text-success">R{{ c.totalSpent | number:'1.0-0' }}</td>
+            <td class="px-5 py-4 text-right text-textMuted text-xs">{{ c.lastOrderAt ? (c.lastOrderAt | date:'mediumDate') : '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile cards -->
+    <div *ngIf="!loading && filtered.length > 0" class="md:hidden space-y-3">
+      <div *ngFor="let c of filtered" class="bg-white rounded-2xl border border-borderColor p-4 shadow-card">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">{{ initial(c) }}</div>
+          <div class="min-w-0">
+            <p class="font-semibold text-textDark text-sm truncate flex items-center gap-1.5">
+              <span class="truncate">{{ c.name || c.email }}</span>
+              <span *ngIf="!c.registered" class="flex-shrink-0 text-[10px] font-semibold text-textMuted bg-gray-100 px-1.5 py-0.5 rounded-full">Guest</span>
+            </p>
+            <p *ngIf="c.name" class="text-xs text-textMuted truncate">{{ c.email }}</p>
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-textMuted">{{ c.orderCount }} order{{ c.orderCount === 1 ? '' : 's' }}</span>
+          <span class="font-numbers font-semibold text-success">R{{ c.totalSpent | number:'1.0-0' }}</span>
+          <span class="text-textMuted">{{ c.lastOrderAt ? (c.lastOrderAt | date:'mediumDate') : '—' }}</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

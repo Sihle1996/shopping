@@ -14,6 +14,7 @@ import { AdminPromotionsComponent } from './admin-promotions/admin-promotions.co
 import { AdminSettingsComponent } from './admin-settings/admin-settings.component';
 import { AdminSubscriptionComponent } from './admin-subscription/admin-subscription.component';
 import { AdminUsersComponent } from './admin-users/admin-users.component';
+import { AdminCustomersComponent } from './admin-customers/admin-customers.component';
 import { AdminReviewsComponent } from './admin-reviews/admin-reviews.component';
 import { AdminEnrollmentComponent } from './admin-enrollment/admin-enrollment.component';
 import { AdminSupportComponent } from './admin-support/admin-support.component';
@@ -38,6 +39,7 @@ const routes: Routes = [
       { path: 'diagnostics', canActivate: [EnrollmentGuard], component: AdminDiagnosticsComponent },
       { path: 'subscription', component: AdminSubscriptionComponent },
       { path: 'users', canActivate: [EnrollmentGuard], component: AdminUsersComponent },
+      { path: 'customers', canActivate: [EnrollmentGuard], component: AdminCustomersComponent },
       { path: 'reviews', canActivate: [EnrollmentGuard], component: AdminReviewsComponent },
       { path: 'support', canActivate: [EnrollmentGuard], component: AdminSupportComponent },
       { path: 'payouts', canActivate: [EnrollmentGuard], component: AdminPayoutsComponent },
