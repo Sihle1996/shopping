@@ -95,6 +95,8 @@ public class TenantService {
         if (updates.getCuisineType() != null) tenant.setCuisineType(updates.getCuisineType());
         if (updates.getDriverEarningPercent() != null) tenant.setDriverEarningPercent(updates.getDriverEarningPercent()
                 .max(java.math.BigDecimal.ZERO).min(new java.math.BigDecimal("100")));
+        if (updates.getDriverBaseFee() != null) tenant.setDriverBaseFee(
+                updates.getDriverBaseFee().max(java.math.BigDecimal.ZERO));
 
         Tenant saved = tenantRepository.save(tenant);
         boolean openChanged = oldOpen != null && saved.getIsOpen() != null && !oldOpen.equals(saved.getIsOpen());

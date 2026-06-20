@@ -42,5 +42,17 @@ public class AdminDriverController {
     public ResponseEntity<List<DriverLocationDTO>> getDriverLocations() {
         return ResponseEntity.ok(adminDriverService.getDriverLocations());
     }
+
+    /** Settlement — record that the store paid this driver, clearing that much of their owed balance. */
+    @PostMapping("/{id}/payout")
+    public ResponseEntity<?> recordPayout(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
+        try {
+            java.math.BigDecimal amount = new java.math.BigDecimal(String.valueOf(body.getOrDefault("amount", "0")));
+            String note = body.get("note") != null ? String.valueOf(body.get("note")) : null;
+            return ResponseEntity.ok(adminDriverService.recordPayout(id, amount, note));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 }
 

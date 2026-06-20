@@ -12,4 +12,5 @@ public class DriverDTO {
     private UUID id;
     private String email;
     private DriverStatus driverStatus;
+    private Double owedBalance; // unpaid driver-ledger balance (base pay + tips not yet settled)
 }

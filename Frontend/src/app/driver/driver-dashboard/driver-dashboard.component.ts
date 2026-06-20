@@ -23,6 +23,7 @@ interface DriverOrder {
   items: Array<{ name: string; quantity: number; size?: string }>;
   deliveryLat?: number;
   deliveryLon?: number;
+  tipAmount?: number;
 }
 
 @Component({
@@ -38,7 +39,8 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
   deliverTargetId: string | null = null;
   mapFullscreen = false;
   deliveryStops: DeliveryStop[] = [];
-  earnings: { deliveredCount: number; totalEarnings: number } | null = null;
+  earnings: { deliveredCount: number; totalEarnings: number; thisWeekEarnings: number; owedBalance: number; baseFee: number } | null = null;
+  earningByOrder = new Map<string, { base: number; tip: number; total: number }>();
   profileIncomplete = false;
   showAllCompleted = false;
 
@@ -70,6 +72,9 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
     this.availability = 'AVAILABLE';
     this.driverService.getEarnings().pipe(takeUntil(this.destroy$)).subscribe({
       next: e => this.earnings = e
+    });
+    this.driverService.getEarningsBreakdown().pipe(takeUntil(this.destroy$)).subscribe({
+      next: rows => { this.earningByOrder.clear(); rows.forEach(r => this.earningByOrder.set(r.orderId, r)); }
     });
     this.driverService.getProfile().pipe(takeUntil(this.destroy$)).subscribe({
       next: p => this.profileIncomplete = !p.fullName || !p.phone
@@ -257,12 +262,16 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${dest}`, '_blank');
   }
 
+  // Actual pay for a completed delivery (base + tip) from the driver ledger; falls back to the
+  // expected amount (base fee + this order's tip) for an in-progress delivery not yet credited.
   driverEarning(order: DriverOrder): number {
-    return Math.round((order.totalAmount ?? 0) * 0.1 * 100) / 100;
+    const actual = this.earningByOrder.get((order.id ?? '').substring(0, 8));
+    if (actual) return actual.total;
+    return Math.round(((this.earnings?.baseFee ?? 0) + (order.tipAmount ?? 0)) * 100) / 100;
   }
 
   get visibleCompletedEarnings(): number {
     const visible = this.showAllCompleted ? this.completedOrders : this.completedOrders.slice(0, 4);
-    return Math.round(visible.reduce((sum, o) => sum + (o.totalAmount ?? 0) * 0.1, 0) * 100) / 100;
+    return Math.round(visible.reduce((sum, o) => sum + this.driverEarning(o), 0) * 100) / 100;
   }
 }

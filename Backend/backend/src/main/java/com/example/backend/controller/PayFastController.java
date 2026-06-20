@@ -84,7 +84,8 @@ public class PayFastController {
                 Order order = orderRepository.findById(UUID.fromString(paymentId)).orElse(null);
                 if (order != null) {
                     total = order.getTotalAmount()
-                            + (order.getDeliveryFee() != null ? order.getDeliveryFee() : 0.0);
+                            + (order.getDeliveryFee() != null ? order.getDeliveryFee() : 0.0)
+                            + (order.getTipAmount() != null ? order.getTipAmount() : 0.0);
                 }
             } catch (IllegalArgumentException ignored) {
                 // paymentId isn't a real order UUID (legacy/placeholder) — keep the provided amount.

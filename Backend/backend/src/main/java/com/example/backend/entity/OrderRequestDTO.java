@@ -24,6 +24,7 @@ public class OrderRequestDTO {
     private String guestEmail;
     private String guestPhone;
     private Double deliveryFee;
+    private Double tip; // optional driver tip, paid on top — credited 100% to the driver
     private String scheduledDeliveryTime;
     private String groupCartToken; // set when this order originates from a group cart
 }

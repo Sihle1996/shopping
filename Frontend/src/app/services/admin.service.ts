@@ -215,6 +215,12 @@ orders$ = this.ordersSubject.asObservable();
     });
   }
 
+  public recordDriverPayout(id: string, amount: number, note?: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/drivers/${id}/payout`, { amount, note }, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
   /**
    * Fetches real-time driver locations for the admin map view.
    */

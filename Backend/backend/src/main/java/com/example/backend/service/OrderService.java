@@ -51,6 +51,7 @@ public class OrderService {
     private final DeliveryFeeService deliveryFeeService;
     private final WebPushService webPushService;
     private final PayoutLedgerService payoutLedgerService;
+    private final DriverLedgerService driverLedgerService;
     private final AuditService auditService;
     private final com.example.backend.repository.RecommendationDecisionRepository recommendationDecisionRepository;
     private final com.example.backend.repository.GroupCartRepository groupCartRepository;
@@ -342,6 +343,10 @@ public class OrderService {
                 // distance premium — the fee is platform revenue funding the drivers).
                 order.setDeliveryFee(deliveryFeeService
                         .compute(tenant, request.getDeliveryLat(), request.getDeliveryLon()).fee());
+                // Driver tip — paid on top, credited 100% to the driver on delivery. Kept OUT of
+                // totalAmount and platformFee so store revenue/commission are untouched. Clamped ≥ 0.
+                double tip = request.getTip() != null ? Math.max(0, request.getTip()) : 0.0;
+                order.setTipAmount(BigDecimal.valueOf(tip).setScale(2, RoundingMode.HALF_UP).doubleValue());
                 if (tenant.getPlatformCommissionPercent() != null) {
                     double fee = BigDecimal.valueOf(totalAmount)
                             .multiply(tenant.getPlatformCommissionPercent())
@@ -735,6 +740,7 @@ public class OrderService {
 
         if ("Delivered".equals(status)) {
             payoutLedgerService.recordOrderCredit(updated);
+            driverLedgerService.recordDriverCredit(updated); // credit the driver their base pay + tip (idempotent)
             if (updated.getUser() != null) {
                 webPushService.sendToUser(updated.getUser().getId(),
                         "Order delivered! 🎉", "Your order from " + storeName + " has arrived. Enjoy!");
@@ -864,6 +870,7 @@ public class OrderService {
                 order.getTenant() != null ? order.getTenant().getId() : null,
                 order.getDiscountAmount() != null ? order.getDiscountAmount() : 0.0,
                 order.getDeliveryFee() != null ? order.getDeliveryFee() : 0.0,
+                order.getTipAmount() != null ? order.getTipAmount() : 0.0,
                 order.getPromoCode(),
                 order.getDeliveryLat(),
                 order.getDeliveryLon(),

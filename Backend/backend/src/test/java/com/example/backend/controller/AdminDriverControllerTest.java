@@ -49,7 +49,7 @@ class AdminDriverControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void createDriverReturnsCreatedDriver() throws Exception {
-        DriverDTO driver = new DriverDTO(TEST_ID, "driver@example.com", DriverStatus.AVAILABLE);
+        DriverDTO driver = new DriverDTO(TEST_ID, "driver@example.com", DriverStatus.AVAILABLE, 0.0);
         when(adminDriverService.createDriver(any(RegisterRequest.class))).thenReturn(driver);
 
         mockMvc.perform(post("/api/admin/drivers")
@@ -62,7 +62,7 @@ class AdminDriverControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void getAllDriversReturnsList() throws Exception {
-        List<DriverDTO> drivers = List.of(new DriverDTO(TEST_ID, "a@b.com", DriverStatus.AVAILABLE));
+        List<DriverDTO> drivers = List.of(new DriverDTO(TEST_ID, "a@b.com", DriverStatus.AVAILABLE, 0.0));
         when(adminDriverService.getAllDrivers()).thenReturn(drivers);
 
         mockMvc.perform(get("/api/admin/drivers"))

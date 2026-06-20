@@ -42,6 +42,7 @@ interface TenantSettings {
   autoCancelMinutes: number;
   cuisineType: string;
   driverEarningPercent: number;
+  driverBaseFee: number;
 }
 
 @Component({
@@ -77,7 +78,8 @@ export class AdminSettingsComponent implements OnInit, OnDestroy {
     estimatedDeliveryMinutes: 30,
     autoCancelMinutes: 15,
     cuisineType: '',
-    driverEarningPercent: 10
+    driverEarningPercent: 10,
+    driverBaseFee: 25
   };
   isLoading = false;
   isSaving = false;

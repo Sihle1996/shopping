@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,6 +31,7 @@ public class AdminDriverService {
     private final SubscriptionEnforcementService subscriptionEnforcementService;
     private final EmailService emailService;
     private final AuditService auditService;
+    private final DriverLedgerService driverLedgerService;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -64,15 +66,34 @@ public class AdminDriverService {
         emailService.sendDriverWelcomeEmail(
                 saved.getEmail(), request.getPassword(), storeName, frontendUrl + "/login");
 
-        return new DriverDTO(saved.getId(), saved.getEmail(), saved.getDriverStatus());
+        return new DriverDTO(saved.getId(), saved.getEmail(), saved.getDriverStatus(), 0.0);
     }
 
     public List<DriverDTO> getAllDrivers() {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId == null) throw new SecurityException("Tenant context required");
         return userRepository.findByRoleAndTenant_Id(Role.DRIVER, tenantId).stream()
-                .map(u -> new DriverDTO(u.getId(), u.getEmail(), u.getDriverStatus()))
+                .map(u -> new DriverDTO(u.getId(), u.getEmail(), u.getDriverStatus(),
+                        driverLedgerService.owedBalance(u.getId()).doubleValue()))
                 .toList();
+    }
+
+    /** Settlement: the store paid this driver, debiting their owed balance. Tenant-scoped. */
+    public DriverDTO recordPayout(UUID driverId, BigDecimal amount, String note) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        User driver = (tenantId != null
+                ? userRepository.findByIdAndTenant_Id(driverId, tenantId)
+                : userRepository.findById(driverId))
+                .orElseThrow(() -> new RuntimeException("Driver not found"));
+        if (driver.getRole() != Role.DRIVER) throw new RuntimeException("User is not a driver");
+        if (amount == null || amount.signum() <= 0) throw new IllegalArgumentException("Payout amount must be greater than 0.");
+        BigDecimal owed = driverLedgerService.owedBalance(driverId);
+        if (amount.compareTo(owed) > 0) throw new IllegalArgumentException("Payout can't exceed the owed balance of R" + owed);
+
+        driverLedgerService.recordDriverPayout(driver, amount, note);
+        auditService.log(AuditService.ADMIN, "DRIVER_PAYOUT", "DRIVER", driverId, "Paid driver R" + amount);
+        return new DriverDTO(driver.getId(), driver.getEmail(), driver.getDriverStatus(),
+                driverLedgerService.owedBalance(driverId).doubleValue());
     }
 
     public void deleteDriver(UUID id) {

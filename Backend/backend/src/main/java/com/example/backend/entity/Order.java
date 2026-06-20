@@ -43,6 +43,11 @@ public class Order {
     @Column(name = "payout_debited")
     private Boolean payoutDebited;
 
+    // Set once when the driver has been credited (base pay + tip) in the driver ledger for this
+    // order — makes the driver credit idempotent across the admin + driver delivery paths.
+    @Column(name = "driver_credited")
+    private Boolean driverCredited;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id")
     @JsonBackReference
@@ -85,6 +90,11 @@ public class Order {
     private Double deliveryFee;
     private Double discountAmount;
     private String promoCode;
+
+    // Customer tip — paid on top of the order and credited 100% to the driver. Kept SEPARATE from
+    // totalAmount (like deliveryFee) so store revenue and platform commission are unaffected.
+    @Column(name = "tip_amount")
+    private Double tipAmount;
 
     /** Promo-economics capture (V52) — what lever applied, what the platform waived, who funded it.
      *  All NULL when no promo applied. waivedDeliveryFee is set ONLY for FREE_DELIVERY (never 0.0-for-N/A). */

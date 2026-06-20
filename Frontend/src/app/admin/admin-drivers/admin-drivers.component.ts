@@ -145,6 +145,32 @@ export class AdminDriversComponent implements OnInit, OnDestroy {
     });
   }
 
+  payingId: string | null = null;
+
+  payoutDriver(d: any): void {
+    const owed = d.owedBalance || 0;
+    if (owed <= 0) { this.showToast('Nothing owed to this driver yet', 'error'); return; }
+    this.confirm.ask({
+      title: 'Record payout?',
+      message: `Mark R${owed.toFixed(2)} as paid to ${d.email}. This clears their owed balance.`,
+      confirmLabel: 'Mark paid',
+    }).subscribe(ok => {
+      if (!ok) return;
+      this.payingId = d.id;
+      this.adminService.recordDriverPayout(d.id, owed).subscribe({
+        next: (updated: any) => {
+          d.owedBalance = updated?.owedBalance ?? 0;
+          this.payingId = null;
+          this.showToast(`Paid R${owed.toFixed(2)} to ${d.email}`, 'success');
+        },
+        error: (err: any) => {
+          this.payingId = null;
+          this.showToast(err?.error?.message || 'Failed to record payout', 'error');
+        }
+      });
+    });
+  }
+
   private showToast(msg: string, type: 'success' | 'error'): void {
     this.toast = msg;
     this.toastType = type;

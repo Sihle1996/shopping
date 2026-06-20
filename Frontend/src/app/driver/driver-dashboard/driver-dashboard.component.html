@@ -81,15 +81,23 @@
         <!-- Earnings card -->
         <div *ngIf="earnings" class="bg-white rounded-2xl shadow-card overflow-hidden">
           <div class="bg-gradient-to-br from-green-500 to-emerald-600 px-5 py-5 text-white">
-            <p class="text-xs font-medium opacity-80 mb-1">Total Earnings</p>
+            <p class="text-xs font-medium opacity-80 mb-1">Total earnings</p>
             <p class="text-3xl font-bold font-numbers">R{{ earnings.totalEarnings | number:'1.2-2' }}</p>
             <p class="text-xs opacity-70 mt-1">{{ earnings.deliveredCount }} deliveries completed</p>
           </div>
-          <div class="px-5 py-3 flex items-center gap-3 text-sm">
-            <div class="flex items-center gap-1.5 text-textMuted">
-              <i class="ph ph-percent text-primary"></i>
-              <span class="text-xs">10% per delivery</span>
+          <div class="px-5 py-3 grid grid-cols-2 gap-3 text-sm border-b border-borderColor">
+            <div>
+              <p class="text-[11px] text-textMuted">This week</p>
+              <p class="font-numbers font-bold text-textDark">R{{ earnings.thisWeekEarnings | number:'1.2-2' }}</p>
             </div>
+            <div>
+              <p class="text-[11px] text-textMuted">Owed to you</p>
+              <p class="font-numbers font-bold text-success">R{{ earnings.owedBalance | number:'1.2-2' }}</p>
+            </div>
+          </div>
+          <div class="px-5 py-2.5 flex items-center gap-1.5 text-xs text-textMuted">
+            <i class="ph ph-money text-primary"></i>
+            <span>R{{ earnings.baseFee | number:'1.0-0' }} base per delivery + 100% of tips</span>
           </div>
         </div>
 
@@ -138,7 +146,7 @@
                 <span class="font-numbers font-bold text-textDark">R{{ cd.totalAmount?.toFixed(2) }}</span>
               </div>
               <div class="flex items-center justify-between text-sm">
-                <span class="text-textMuted text-xs">Your earning (10%)</span>
+                <span class="text-textMuted text-xs">Your earning (base + tip)</span>
                 <span class="font-numbers font-semibold text-success">R{{ driverEarning(cd).toFixed(2) }}</span>
               </div>
 

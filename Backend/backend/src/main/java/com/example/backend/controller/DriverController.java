@@ -1,9 +1,12 @@
 package com.example.backend.controller;
 
 import com.example.backend.config.AuthUtil;
+import com.example.backend.entity.DriverLedgerEntry;
 import com.example.backend.entity.Order;
 import com.example.backend.entity.OrderDTO;
+import com.example.backend.repository.DriverLedgerRepository;
 import com.example.backend.repository.OrderRepository;
+import com.example.backend.repository.TenantRepository;
 import com.example.backend.service.DriverService;
 import com.example.backend.user.DriverStatus;
 import com.example.backend.user.User;
@@ -16,6 +19,12 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -30,6 +39,8 @@ public class DriverController {
     private final AuthUtil authUtil;
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
+    private final DriverLedgerRepository driverLedgerRepository;
+    private final TenantRepository tenantRepository;
 
     @GetMapping("/orders")
     public ResponseEntity<List<OrderDTO>> getMyAssignedOrders(Authentication authentication) {
@@ -115,20 +126,60 @@ public class DriverController {
     @GetMapping("/earnings")
     public ResponseEntity<EarningsResponse> getEarnings(Authentication authentication) {
         User driver = authUtil.getCurrentUser(authentication);
-        List<Order> delivered = orderRepository.findByDriver(driver)
-                .stream().filter(o -> "Delivered".equals(o.getStatus())).toList();
-        // Driver earns the store-configured percentage of each order's delivery fee.
-        double total = delivered.stream()
-                .mapToDouble(o -> {
-                    double fee = o.getDeliveryFee() != null ? o.getDeliveryFee() : 0.0;
-                    java.math.BigDecimal pct = (o.getTenant() != null && o.getTenant().getDriverEarningPercent() != null)
-                            ? o.getTenant().getDriverEarningPercent()
-                            : new java.math.BigDecimal("10.00");
-                    return fee * pct.doubleValue() / 100.0;
-                })
-                .sum();
-        return ResponseEntity.ok(new EarningsResponse(delivered.size(), Math.round(total * 100.0) / 100.0));
+        UUID driverId = driver.getId();
+        long deliveredCount = orderRepository.findByDriver(driver).stream()
+                .filter(o -> "Delivered".equals(o.getStatus())).count();
+
+        // Real, accruing pay from the driver ledger (base fee + tips). owed = not-yet-settled balance.
+        double lifetime = driverLedgerRepository.sumEarnings(driverId).doubleValue();
+        double owed = driverLedgerRepository.computeBalance(driverId).doubleValue();
+
+        ZoneId zone = ZoneId.systemDefault();
+        LocalDate today = LocalDate.now(zone);
+        Instant weekStart = today.with(DayOfWeek.MONDAY).atStartOfDay(zone).toInstant();
+        Instant weekEnd = today.plusDays(1).atStartOfDay(zone).toInstant();
+        double thisWeek = driverLedgerRepository.sumEarningsInPeriod(driverId, weekStart, weekEnd).doubleValue();
+
+        // Look the base fee up by id (the lazy tenant proxy is detached here, so navigating it would
+        // throw — but its id is known without a DB hit).
+        double baseFee = 25.0;
+        if (driver.getTenant() != null) {
+            baseFee = tenantRepository.findById(driver.getTenant().getId())
+                    .map(t -> t.getDriverBaseFee() != null ? t.getDriverBaseFee().doubleValue() : 25.0)
+                    .orElse(25.0);
+        }
+
+        return ResponseEntity.ok(new EarningsResponse((int) deliveredCount,
+                round(lifetime), round(thisWeek), round(owed), round(baseFee)));
     }
+
+    @GetMapping("/earnings/breakdown")
+    public ResponseEntity<List<DeliveryEarning>> getEarningsBreakdown(Authentication authentication) {
+        User driver = authUtil.getCurrentUser(authentication);
+        // Group the driver's EARNING/TIP ledger rows by order (entries come back most-recent-first).
+        Map<UUID, double[]> sums = new LinkedHashMap<>();   // [base, tip]
+        Map<UUID, Instant> dates = new LinkedHashMap<>();
+        for (DriverLedgerEntry e : driverLedgerRepository.findByDriver_IdOrderByCreatedAtDesc(driver.getId())) {
+            if (e.getOrder() == null) continue; // PAYOUT settlement entries have no order
+            boolean earning = "EARNING".equals(e.getEntryType());
+            boolean tip = "TIP".equals(e.getEntryType());
+            if (!earning && !tip) continue;
+            UUID oid = e.getOrder().getId();
+            double[] bt = sums.computeIfAbsent(oid, k -> new double[2]);
+            dates.putIfAbsent(oid, e.getCreatedAt());
+            if (earning) bt[0] += e.getAmountRand().doubleValue();
+            else bt[1] += e.getAmountRand().doubleValue();
+        }
+        List<DeliveryEarning> out = new ArrayList<>();
+        for (Map.Entry<UUID, double[]> en : sums.entrySet()) {
+            double[] bt = en.getValue();
+            out.add(new DeliveryEarning(en.getKey().toString().substring(0, 8), dates.get(en.getKey()),
+                    round(bt[0]), round(bt[1]), round(bt[0] + bt[1])));
+        }
+        return ResponseEntity.ok(out);
+    }
+
+    private static double round(double v) { return Math.round(v * 100.0) / 100.0; }
 
     record DriverProfileResponse(String fullName, String phone, String vehicleType,
                                   String vehiclePlate, String email, String driverStatus) {
@@ -142,5 +193,8 @@ public class DriverController {
 
     record DriverProfileRequest(String fullName, String phone, String vehicleType, String vehiclePlate) {}
 
-    record EarningsResponse(int deliveredCount, double totalEarnings) {}
+    record EarningsResponse(int deliveredCount, double totalEarnings,
+                            double thisWeekEarnings, double owedBalance, double baseFee) {}
+
+    record DeliveryEarning(String orderId, Instant date, double base, double tip, double total) {}
 }

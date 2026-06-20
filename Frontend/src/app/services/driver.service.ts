@@ -39,8 +39,13 @@ export class DriverService {
     return this.http.put<any>(`${this.baseUrl}/profile`, data);
   }
 
-  getEarnings(): Observable<{ deliveredCount: number; totalEarnings: number }> {
+  getEarnings(): Observable<{ deliveredCount: number; totalEarnings: number;
+      thisWeekEarnings: number; owedBalance: number; baseFee: number }> {
     return this.http.get<any>(`${this.baseUrl}/earnings`);
+  }
+
+  getEarningsBreakdown(): Observable<{ orderId: string; date: string; base: number; tip: number; total: number }[]> {
+    return this.http.get<any>(`${this.baseUrl}/earnings/breakdown`);
   }
 
   getBranding(): Observable<{ primaryColor: string; storeName: string; logoUrl: string }> {

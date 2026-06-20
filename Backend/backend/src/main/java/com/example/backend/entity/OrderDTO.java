@@ -31,6 +31,7 @@ public class OrderDTO {
     private UUID tenantId;
     private Double discountAmount;
     private Double deliveryFee;
+    private Double tipAmount;
     private String promoCode;
     private Double deliveryLat;
     private Double deliveryLon;

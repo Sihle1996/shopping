@@ -140,10 +140,16 @@ public class Tenant {
     @Column(length = 50)
     private String cuisineType;
 
-    // Share of each delivery fee paid to the driver (store-configurable)
+    // Share of each delivery fee paid to the driver (store-configurable).
+    // DEPRECATED — superseded by driverBaseFee; kept to avoid a destructive migration.
     @Column(precision = 5, scale = 2)
     @Builder.Default
     private BigDecimal driverEarningPercent = new BigDecimal("10.00");
+
+    // Flat pay per completed delivery (store-configurable). The driver also keeps 100% of any tip.
+    @Column(name = "driver_base_fee", precision = 8, scale = 2)
+    @Builder.Default
+    private BigDecimal driverBaseFee = new BigDecimal("25.00");
 
     // Enrollment — structured details (captured via form, not just document uploads)
     @Column(length = 20)

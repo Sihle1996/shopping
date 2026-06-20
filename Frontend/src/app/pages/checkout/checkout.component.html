@@ -385,6 +385,26 @@
             <div *ngIf="deliveryFeeError" class="flex items-center gap-1 text-xs text-red-600 mt-1">
               <i class="ph ph-warning-circle"></i>{{ deliveryFeeError }}
             </div>
+
+            <!-- Driver tip — 100% to the driver -->
+            <div class="pt-2">
+              <div class="flex items-center justify-between text-sm mb-2">
+                <span class="text-textMuted flex items-center gap-1"><i class="ph ph-hand-heart text-xs"></i> Tip your driver</span>
+                <span *ngIf="tip > 0" class="font-numbers font-semibold text-textDark">R{{ tip.toFixed(2) }}</span>
+              </div>
+              <div class="flex gap-1.5">
+                <button *ngFor="let t of tipPresets" type="button" (click)="setTip(t)"
+                        class="flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-colors"
+                        [ngClass]="tip === t && customTip === null ? 'bg-primary text-white border-primary' : 'border-borderColor text-textMuted hover:border-primary'">
+                  {{ t === 0 ? 'None' : 'R' + t }}
+                </button>
+                <input type="number" min="0" inputmode="decimal" [(ngModel)]="customTip" name="customTip"
+                       (ngModelChange)="onCustomTip($event)" placeholder="R"
+                       class="w-14 py-1.5 rounded-lg text-xs text-center border border-borderColor focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent" />
+              </div>
+              <p class="text-[11px] text-textMuted mt-1">100% goes to your driver</p>
+            </div>
+
             <div class="flex justify-between text-base font-bold text-textDark pt-1 border-t border-borderColor">
               <span>Total</span>
               <span class="font-numbers text-primary">R{{ totalPrice.toFixed(2) }}</span>

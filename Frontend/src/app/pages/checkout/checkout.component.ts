@@ -32,7 +32,14 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
   private groupCheckoutToken: string | null = null;
   discount: number = 0;
   deliveryFee: number = 0;
-  get totalPrice(): number { return Math.max(0, this.subtotal - this.discount + this.deliveryFee); }
+  // Driver tip — paid on top, 100% to the driver. Kept out of subtotal/discount.
+  tip: number = 0;
+  customTip: number | null = null;
+  tipPresets: number[] = [0, 10, 15, 20];
+  get totalPrice(): number { return Math.max(0, this.subtotal - this.discount + this.deliveryFee) + (this.tip || 0); }
+
+  setTip(t: number): void { this.tip = t; this.customTip = null; }
+  onCustomTip(v: any): void { const n = Number(v); this.tip = isNaN(n) || n < 0 ? 0 : Math.round(n * 100) / 100; }
 
   storeIsOpen: boolean = true;
   minimumOrderAmount: number | null = null;
@@ -531,6 +538,7 @@ export class CheckoutComponent implements OnInit, AfterViewInit {
       })),
       total: this.subtotal,
       deliveryFee: this.deliveryFee,
+      tip: this.tip || 0,
       promoCode: this.appliedPromo?.code?.trim() || null,
       orderNotes: this.orderNotes?.trim() || null,
       paymentId: '',
