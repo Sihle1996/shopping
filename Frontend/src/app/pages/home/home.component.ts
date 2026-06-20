@@ -154,9 +154,22 @@ export class HomeComponent implements OnInit, OnDestroy {
       .every(g => (this.modifierSelections[g.id] || []).length > 0);
   }
 
+  /** Running count of items in the group order, shown in the add-mode banner. */
+  groupItemCount = 0;
+
   /** True while the user is browsing the menu to add items to an existing group order. */
   get inGroupAddMode(): boolean {
     return !!localStorage.getItem('groupCartToken') && sessionStorage.getItem('groupAddMode') === 'true';
+  }
+
+  /** Pull the real group-order item count (sum of quantities) for the banner. */
+  private refreshGroupCount(): void {
+    const token = localStorage.getItem('groupCartToken');
+    if (!token) return;
+    this.groupCartService.get(token).subscribe({
+      next: gc => { this.groupItemCount = (gc.items || []).reduce((s, i) => s + (i.quantity || 1), 0); },
+      error: () => {}
+    });
   }
 
   /** Done adding — leave group-add mode and return to the group order. */
@@ -192,6 +205,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         next: () => {
           // Stay on the menu with group-add mode ON so they can keep adding items. The banner's
           // "View group order" button is how they return when done — no more bounce-per-item.
+          this.groupItemCount += 1;
           this.toastr.success(`${name} added to group order`);
           this.closeModifierModal();
         },
@@ -230,6 +244,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.isAdmin = this.authService.getUserRole() === 'ROLE_ADMIN';
     this.isLoggedIn = this.authService.isLoggedIn();
+    if (this.inGroupAddMode) this.refreshGroupCount();
     const tenant = this.tenantService.getCurrentTenant();
     if (tenant) {
       const t: any = tenant;
@@ -497,6 +512,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         next: () => {
           // Stay on the menu with group-add mode ON so they can keep adding. They return via the
           // banner's "View group order" button when done.
+          this.groupItemCount += 1;
           this.toastr.success(`${item.name} added to group order`);
         },
         error: () => {
