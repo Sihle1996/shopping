@@ -425,7 +425,7 @@ public class AdminAiService {
                 tAnalysis.put("insightStrength", nearMissShare >= 0.30 ? "STRONG" : nearMissShare >= 0.22 ? "MODERATE" : "WEAK");
                 tAnalysis.put("recommendationType", "EXPERIMENT");
                 tAnalysis.put("discountBasis", String.format(Locale.UK,
-                        "R%.0f is ~%.0f%% of the ~R%.0f margin on a R%.0f order (at your median margin) — stays profitable.",
+                        "R%.0f uses ~%.0f%% of the estimated R%.0f gross margin on a R%.0f threshold order. The retained-margin buffer is preserved; actual basket costs and payment/platform fees are not included.",
                         amountOff, amountOff / marginAtThreshold * 100, marginAtThreshold, threshold));
                 double[] aovHist = scopeHistory.get("ALL");
                 if (aovHist != null && aovHist[1] > 0) {                      // self-measurement: what past threshold deals did
@@ -450,12 +450,12 @@ public class AdminAiService {
 
         // Multi-product "clear the slow tail": the eligible items that DIDN'T make the top-3 per-item
         // cut — slower movers that still have margin room. One MULTI_PRODUCT deal nudges them together
-        // instead of N separate promos. The % is sized to the LOWEST margin in the set, so even the
-        // thinnest-margin item stays profitable. Fact-grounded; only emitted when ≥2 such items exist.
+        // instead of N separate promos. The % is sized to the LOWEST gross margin in the set and keeps
+        // a retained-margin buffer; payment/platform fees are not modeled. Only emitted when ≥2 exist.
         List<MenuItem> slowTail = eligible.stream().skip(3).limit(4).collect(Collectors.toList());
         double mpMinMargin = slowTail.stream().mapToDouble(MenuItem::getMarginPercent).min().orElse(0);
-        // BREAK-EVEN GUARD: size the cut to the LOWEST margin in the set and never give up more than
-        // 60% of it; if even that can't reach a meaningful discount, the thinnest item is too thin — skip.
+        // RETAINED-MARGIN GUARD: size the cut to the LOWEST gross margin in the set and preserve
+        // the minimum margin buffer; if no meaningful discount fits, the thinnest item is too thin — skip.
         int mpDiscount = (int) Math.floor(Math.min(Math.max(5.0, mpMinMargin * 0.30),
                 PromotionDemandAssessment.maxSafeDiscountPercent(mpMinMargin)));
         if (slowTail.size() >= 2 && mpDiscount >= 4) {
