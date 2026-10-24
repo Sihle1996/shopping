@@ -362,6 +362,13 @@ public class AdminAiService {
             analysis.put("dataSufficiency", dataSufficiency);
             analysis.put("recommendationType", "EXPERIMENT");
             analysis.put("discountBasis", discountBasis);   // show-the-math: why THIS %
+            Double breakEvenVolumeIncrease = PromotionDemandAssessment
+                    .requiredVolumeIncreasePercent(margin, discount);
+            if (breakEvenVolumeIncrease != null) {
+                analysis.put("breakEvenVolumeIncreasePercent", Math.ceil(breakEvenVolumeIncrease));
+                analysis.put("breakEvenVolumeNote",
+                        "Estimated extra unit volume needed to preserve the same gross profit after discount. Excludes payment/platform fees and assumes unit costs and demand remain unchanged.");
+            }
             // Learning data lives in its OWN typed block, permanently stamped OBSERVATIONAL,
             // so it can't leak into the UI (or any narration) as causal truth.
             if (samples > 0) {
@@ -494,6 +501,13 @@ public class AdminAiService {
             mAnalysis.put("discountBasis", String.format(Locale.UK,
                     "%d%% off uses %d%% of the LOWEST gross margin in the set (%.0f%%); the retained-margin buffer is preserved. Payment/platform fees are not included.",
                     mpDiscount, Math.round(mpDiscount / minMargin * 100.0), minMargin));
+            Double bundleBreakEvenVolumeIncrease = PromotionDemandAssessment
+                    .requiredVolumeIncreasePercent(minMargin, mpDiscount);
+            if (bundleBreakEvenVolumeIncrease != null) {
+                mAnalysis.put("breakEvenVolumeIncreasePercent", Math.ceil(bundleBreakEvenVolumeIncrease));
+                mAnalysis.put("breakEvenVolumeNote",
+                        "Estimated extra unit volume needed to preserve the same gross profit at the lowest-margin item in this bundle. Excludes payment/platform fees and assumes unit costs and demand remain unchanged.");
+            }
             double[] mpHist = scopeHistory.get("MULTI_PRODUCT");
             if (mpHist != null && mpHist[1] > 0) {                            // self-measurement: what past bundle deals did
                 Map<String, Object> prior = new LinkedHashMap<>();
