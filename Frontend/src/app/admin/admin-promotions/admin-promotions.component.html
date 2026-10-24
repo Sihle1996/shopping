@@ -75,8 +75,8 @@
                   <span class="text-lg font-bold text-primary leading-none">{{ x.s.proposedPromo.type === 'AMOUNT_OFF' ? 'R' + x.s.proposedPromo.discountAmount + ' off' : x.s.proposedPromo.discountPercent + '% off' }}</span>
                   <span class="text-sm font-semibold text-textDark truncate">{{ x.s.proposedPromo.targetProductName || (x.s.proposedPromo.type === 'AMOUNT_OFF' ? 'Store-wide · over R' + x.s.proposedPromo.minSpend : x.s.proposedPromo.title) }}</span>
                 </div>
-                <span *ngIf="x.s.analysis?.insightStrength" class="flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" [ngClass]="tierClass(x.s.analysis?.insightStrength || '')">
-                  <i class="ph-fill ph-chart-bar text-[9px]"></i>{{ x.s.analysis?.insightStrength }}
+                <span *ngIf="evidenceBadge(x.s) as badge" class="flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" [ngClass]="evidenceBadgeClass(x.s)">
+                  <i class="ph ph-chart-bar text-[9px]"></i>{{ badge }}
                 </span>
               </div>
 
@@ -91,7 +91,14 @@
               <p *ngIf="!x.s.analysis && x.s.reason" class="text-sm text-textDark leading-snug mb-2.5">{{ x.s.reason }}</p>
 
               <!-- Why this % (show the math) -->
-              <p *ngIf="x.s.analysis?.discountBasis" class="text-[11px] text-textMuted mb-2.5">{{ x.s.analysis?.discountBasis }}</p>
+              <p *ngIf="x.s.analysis?.discountBasis" class="text-[11px] text-textMuted mb-1.5">{{ x.s.analysis?.discountBasis }}</p>
+              <p *ngIf="x.s.analysis?.estimatedGrossMarginAfterDiscountPercent != null" class="text-[11px] font-medium text-textDark mb-2.5">
+                Estimated gross margin after discount: {{ x.s.analysis?.estimatedGrossMarginAfterDiscountPercent | number:'1.0-1' }}% of the discounted selling price, before payment/platform fees.
+              </p>
+              <div *ngIf="x.s.proposedPromo.targetProductNames?.length" class="flex flex-wrap items-center gap-1.5 mb-2.5">
+                <span class="text-[11px] text-textMuted">Applies separately to:</span>
+                <span *ngFor="let name of x.s.proposedPromo.targetProductNames" class="text-[11px] font-medium bg-primary-50 text-primary-700 rounded-md px-2 py-1">{{ name }}</span>
+              </div>
               <div *ngIf="x.s.analysis?.breakEvenVolumeIncreasePercent != null" class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 mb-2.5">
                 <p class="text-xs font-semibold text-amber-900">Break-even volume: about {{ x.s.analysis?.breakEvenVolumeIncreasePercent }}% more units</p>
                 <p class="text-[11px] text-amber-800 mt-0.5">{{ x.s.analysis?.breakEvenVolumeNote }}</p>

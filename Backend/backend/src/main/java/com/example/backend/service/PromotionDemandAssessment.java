@@ -62,6 +62,20 @@ final class PromotionDemandAssessment {
     }
 
     /**
+     * Estimated gross margin as a percentage of the discounted selling price.
+     * This is a gross-margin estimate only; fees and other operating costs are excluded.
+     * @return percentage, or null when the discount would consume the gross margin or inputs are invalid.
+     */
+    static Double estimatedGrossMarginAfterDiscountPercent(double grossMarginPercent, double discountPercent) {
+        if (!Double.isFinite(grossMarginPercent) || !Double.isFinite(discountPercent)
+                || grossMarginPercent <= 0 || discountPercent < 0 || discountPercent >= grossMarginPercent
+                || discountPercent >= 100) {
+            return null;
+        }
+        return ((grossMarginPercent - discountPercent) / (100.0 - discountPercent)) * 100.0;
+    }
+
+    /**
      * Estimated percentage increase in units needed to preserve the same gross profit
      * after a percentage discount. Excludes payment/platform fees, fixed costs, and
      * demand response.
