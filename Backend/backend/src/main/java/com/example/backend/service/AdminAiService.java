@@ -277,8 +277,10 @@ public class AdminAiService {
         };
         candidates.sort((a, b) -> Double.compare(scoreOf.applyAsDouble(b), scoreOf.applyAsDouble(a)));
 
-        String today = LocalDate.now().toString();
-        String endAt = LocalDate.now().plusDays(5).toString();
+        // Promo dates are shown and submitted as South African local dates; do not depend on the host timezone.
+        LocalDate promoStartDate = LocalDate.now(ZoneId.of("Africa/Johannesburg"));
+        String today = promoStartDate.toString();
+        String endAt = promoStartDate.plusDays(5).toString();
         List<Map<String, Object>> suggestions = new ArrayList<>();
         for (MenuItem item : candidates) {
             long units = itemUnits.getOrDefault(item.getId(), 0L);
