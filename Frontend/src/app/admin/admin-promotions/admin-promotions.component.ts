@@ -144,6 +144,27 @@ export class AdminPromotionsComponent implements OnInit {
       WEAK: 'bg-sky-100 text-sky-700'
     } as any)[s || ''] ?? 'bg-gray-100 text-gray-600';
   }
+
+  /** Never show a strong-looking badge when the actual order sample is small, including older API responses. */
+  evidenceBadge(s: AiPromoSuggestion): string | null {
+    const sufficiency = s.analysis?.dataSufficiency;
+    if (sufficiency === 'LOW') return 'LOW EVIDENCE';
+    if (sufficiency === 'LIMITED') return 'LIMITED EVIDENCE';
+    const orderFact = (s.facts || []).find(f => /orders?\b/i.test(f) && /last 30 days/i.test(f));
+    const match = orderFact?.match(/(\d+)\s+(?:(?:distinct|delivered)\s+)?orders?\b/i);
+    if (match) {
+      const orders = Number(match[1]);
+      if (orders <= 4) return 'LOW EVIDENCE';
+      if (orders <= 14) return 'LIMITED EVIDENCE';
+    }
+    return s.analysis?.insightStrength || null;
+  }
+
+  evidenceBadgeClass(s: AiPromoSuggestion): string {
+    const badge = this.evidenceBadge(s);
+    if (badge === 'LOW EVIDENCE' || badge === 'LIMITED EVIDENCE') return 'bg-amber-100 text-amber-800';
+    return this.tierClass(badge || undefined);
+  }
   applyingIndex: number | null = null;
 
   // Multi-product selection
