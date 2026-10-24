@@ -290,13 +290,12 @@ public class AdminAiService {
             long samples = h != null ? (long) h[1] : 0;
             String strength = PromotionDemandAssessment.insightStrength(orders, composite);
             String dataSufficiency = PromotionDemandAssessment.dataSufficiency(orders);
-            // Discount is demand-AWARE, not just margin: a deeper cut for slow movers (move stock),
-            // shallower for strong sellers (protect margin) — always a fraction of the item's margin
-            // so the promo still profits. This is what makes the % vary instead of clustering.
-            double demandShare = mu > 0 ? (double) units / mu : 0;                 // 0..1 vs the busiest item
-            double pctOfMargin = 0.15 + 0.15 * (1 - demandShare);                  // slow→0.30, busy→0.15 of margin
-            // BREAK-EVEN GUARD: a promo profits only while discount% < margin%. Never give up more than
-            // 60% of the margin, and never let a minimum-useful floor exceed what the margin can absorb.
+            // Use relative unit sales only to vary the proposed test size; it is not proof of demand.
+            // The discount cap protects product gross margin, not net profit after fees and other costs.
+            double demandShare = mu > 0 ? (double) units / mu : 0;                 // 0..1 vs the busiest candidate
+            double pctOfMargin = 0.15 + 0.15 * (1 - demandShare);                  // lower for busier items
+            // GROSS-MARGIN GUARD: cap the discount at 60% of the product's gross-margin percentage.
+            // This does not guarantee net profitability once platform, payment and other costs are included.
             double maxSafe = margin * 0.6;
             int discount = (int) Math.floor(Math.min(Math.max(5.0, margin * pctOfMargin), Math.min(maxSafe, 18.0)));
             if (discount < 4) continue;   // margin too thin to discount meaningfully without eroding it
@@ -317,16 +316,16 @@ public class AdminAiService {
             promo.put("badgeText", discount + "% OFF");
 
             String hypothesis;
-            if (avgNet != null && avgNet > 0) {
-                hypothesis = String.format(Locale.UK, "Prior promos here averaged +%d%% net over %d run%s — worth repeating.",
+            if (orders < 5) {
+                hypothesis = String.format(Locale.UK,
+                        "Limited evidence: only %d delivered order%s in the last 30 days. Treat this as a small experiment, not a proven high-demand product.",
+                        orders, orders == 1 ? "" : "s");
+            } else if (avgNet != null && avgNet > 0) {
+                hypothesis = String.format(Locale.UK, "Prior promos here averaged +%d%% net over %d run%s — worth repeating cautiously.",
                         Math.round(avgNet), samples, samples == 1 ? "" : "s");
             } else if (avgNet != null) {
                 hypothesis = String.format(Locale.UK, "Prior promos here averaged %d%% net over %d run%s — test cautiously.",
                         Math.round(avgNet), samples, samples == 1 ? "" : "s");
-            } else if (orders < 5) {
-                hypothesis = String.format(Locale.UK,
-                        "Limited evidence: only %d delivered order%s in the last 30 days. Treat this as a small experiment, not a proven high-demand product.",
-                        orders, orders == 1 ? "" : "s");
             } else if (orders < 15) {
                 hypothesis = String.format(Locale.UK,
                         "Early signal: %d delivered orders in the last 30 days. Ranked by unit sales and gross-margin headroom; promotion results are unknown.",
