@@ -630,6 +630,13 @@ public class AdminAiService {
             r.put("netLiftPercent", netLift);          // item lift minus store-wide trend
             r.put("netLiftCi", netCi);                 // ± 1σ noise band on the net lift (F2)
             r.put("dataQuality", dataQuality);         // now significance-based, not raw volume
+            // Direct attribution: count non-voided orders carrying this stable promo_id.
+            // This is a redemption count, not proof that the promo caused the order.
+            double[] promoCosts = promoCost(tenantId, p.getId(), start, duringEnd);
+            r.put("redeemedOrders", (long) promoCosts[0]);
+            r.put("promoCost", Math.round(promoCosts[1] * 100.0) / 100.0);
+            r.put("platformCost", Math.round(promoCosts[2] * 100.0) / 100.0);
+            r.put("redemptionBasis", "orders linked by promo_id; observed attribution, not causal lift");
             r.put("comparisonGroup", "PRODUCT_SCOPE"); // NOT magnitude-comparable to ORDER_SCOPE rows
             out.add(r);
         }
@@ -782,6 +789,8 @@ public class AdminAiService {
     private double[] promoCost(UUID tenantId, UUID promoId, Instant from, Instant to) {
         long redeemed = 0; double discountCost = 0, deliveryCost = 0;
         for (Order o : orderRepository.findByOrderDateBetweenAndTenant_Id(from, to, tenantId)) {
+            OrderStatus status = OrderStatus.fromLabel(o.getStatus());
+            if (status != null && status.isVoided()) continue;
             if (!promoId.equals(o.getPromoId())) continue;
             redeemed++;
             discountCost += o.getDiscountAmount() != null ? o.getDiscountAmount() : 0;
