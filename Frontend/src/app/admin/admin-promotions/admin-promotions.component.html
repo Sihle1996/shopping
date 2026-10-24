@@ -75,14 +75,8 @@
                   <span class="text-lg font-bold text-primary leading-none">{{ x.s.proposedPromo.type === 'AMOUNT_OFF' ? 'R' + x.s.proposedPromo.discountAmount + ' off' : x.s.proposedPromo.discountPercent + '% off' }}</span>
                   <span class="text-sm font-semibold text-textDark truncate">{{ x.s.proposedPromo.targetProductName || (x.s.proposedPromo.type === 'AMOUNT_OFF' ? 'Store-wide · over R' + x.s.proposedPromo.minSpend : x.s.proposedPromo.title) }}</span>
                 </div>
-                <span *ngIf="x.s.analysis?.dataSufficiency === 'LOW'" class="flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                  <i class="ph ph-warning-circle text-[9px]"></i>LOW EVIDENCE
-                </span>
-                <span *ngIf="x.s.analysis?.dataSufficiency === 'LIMITED'" class="flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                  <i class="ph ph-chart-bar text-[9px]"></i>LIMITED EVIDENCE
-                </span>
-                <span *ngIf="x.s.analysis?.dataSufficiency !== 'LOW' && x.s.analysis?.dataSufficiency !== 'LIMITED' && x.s.analysis?.insightStrength" class="flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" [ngClass]="tierClass(x.s.analysis?.insightStrength || '')">
-                  <i class="ph-fill ph-chart-bar text-[9px]"></i>{{ x.s.analysis?.insightStrength }}
+                <span *ngIf="evidenceBadge(x.s) as badge" class="flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" [ngClass]="evidenceBadgeClass(x.s)">
+                  <i class="ph ph-chart-bar text-[9px]"></i>{{ badge }}
                 </span>
               </div>
 
