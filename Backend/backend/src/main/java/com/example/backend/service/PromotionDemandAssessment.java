@@ -60,4 +60,20 @@ final class PromotionDemandAssessment {
         double retainedMargin = Math.max(10.0, grossMarginPercent * 0.40);
         return Math.max(0.0, Math.min(18.0, grossMarginPercent - retainedMargin));
     }
+
+    /**
+     * Estimated percentage increase in units needed to preserve the same gross profit
+     * after a percentage discount. Excludes payment/platform fees, fixed costs, and
+     * demand response.
+     *
+     * @return percentage increase, or null when inputs cannot produce positive post-discount contribution.
+     */
+    static Double requiredVolumeIncreasePercent(double grossMarginPercent, double discountPercent) {
+        if (!Double.isFinite(grossMarginPercent) || !Double.isFinite(discountPercent)
+                || grossMarginPercent <= 0 || discountPercent < 0
+                || discountPercent >= grossMarginPercent) {
+            return null;
+        }
+        return (discountPercent / (grossMarginPercent - discountPercent)) * 100.0;
+    }
 }

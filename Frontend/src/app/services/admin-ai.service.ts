@@ -57,6 +57,8 @@ export interface AiPromoAnalysis {
   dataSufficiency?: string;        // LOW | LIMITED | ADEQUATE — distinct delivered orders in the last 30 days
   recommendationType: string;      // 'EXPERIMENT' — recommendations are tests, not guaranteed outcomes
   discountBasis?: string;          // show-the-math: why this discount % (margin × demand)
+  breakEvenVolumeIncreasePercent?: number; // estimated extra units needed to preserve gross profit
+  breakEvenVolumeNote?: string;            // caveats for this gross-profit estimate
   priorObserved?: AiPriorObserved; // learning data — structurally non-causal
   uncertainty?: string;            // legacy; the uncertainty note now lives in one global banner
 }
