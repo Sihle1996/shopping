@@ -38,6 +38,21 @@ class PromotionDemandAssessmentTest {
     }
 
     @Test
+    void calculatesExtraUnitVolumeNeededToOffsetDiscountAtGrossMarginLevel() {
+        assertEquals(50.0, PromotionDemandAssessment.requiredVolumeIncreasePercent(30.0, 10.0), 0.001);
+        assertEquals(100.0, PromotionDemandAssessment.requiredVolumeIncreasePercent(30.0, 15.0), 0.001);
+        assertEquals(0.0, PromotionDemandAssessment.requiredVolumeIncreasePercent(30.0, 0.0), 0.001);
+    }
+
+    @Test
+    void breakEvenVolumeIsUnavailableWhenDiscountConsumesAllGrossMargin() {
+        org.junit.jupiter.api.Assertions.assertNull(
+                PromotionDemandAssessment.requiredVolumeIncreasePercent(10.0, 10.0));
+        org.junit.jupiter.api.Assertions.assertNull(
+                PromotionDemandAssessment.requiredVolumeIncreasePercent(Double.NaN, 5.0));
+    }
+
+    @Test
     void sufficientOrderHistoryAllowsRelativeRankingToSetStrength() {
         assertEquals("STRONG", PromotionDemandAssessment.insightStrength(20, 0.8));
         assertEquals("MODERATE", PromotionDemandAssessment.insightStrength(20, 0.5));
