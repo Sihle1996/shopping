@@ -422,7 +422,8 @@ public class AdminAiService {
                         String.format(Locale.UK, "Typical (median) order R%.0f across %d delivered orders", typical, orderTotals.size()),
                         String.format(Locale.UK, "%d (%.0f%%) landed between R%.0f and R%.0f — within reach", nearMiss, nearMissShare * 100, typical, threshold),
                         String.format(Locale.UK, "%d already over R%.0f also get the R%.0f", alreadyOver, threshold, amountOff)));
-                tAnalysis.put("insightStrength", nearMissShare >= 0.30 ? "STRONG" : nearMissShare >= 0.22 ? "MODERATE" : "WEAK");
+                tAnalysis.put("insightStrength", PromotionDemandAssessment.basketThresholdStrength(orderTotals.size(), nearMissShare));
+                tAnalysis.put("dataSufficiency", PromotionDemandAssessment.dataSufficiency(orderTotals.size()));
                 tAnalysis.put("recommendationType", "EXPERIMENT");
                 tAnalysis.put("discountBasis", String.format(Locale.UK,
                         "R%.0f uses ~%.0f%% of the estimated R%.0f gross margin on a R%.0f threshold order. The retained-margin buffer is preserved; actual basket costs and payment/platform fees are not included.",
@@ -460,8 +461,8 @@ public class AdminAiService {
                 PromotionDemandAssessment.maxSafeDiscountPercent(mpMinMargin)));
         if (slowTail.size() >= 2 && mpDiscount >= 4) {
             double minMargin = mpMinMargin;
-            long minU = slowTail.stream().mapToLong(i -> itemUnits.getOrDefault(i.getId(), 0L)).min().orElse(0);
-            long maxU = slowTail.stream().mapToLong(i -> itemUnits.getOrDefault(i.getId(), 0L)).max().orElse(0);
+            long minOrders = slowTail.stream().mapToLong(i -> itemOrderCounts.getOrDefault(i.getId(), 0L)).min().orElse(0);
+            long maxOrders = slowTail.stream().mapToLong(i -> itemOrderCounts.getOrDefault(i.getId(), 0L)).max().orElse(0);
             List<String> ids = slowTail.stream().map(i -> i.getId().toString()).collect(Collectors.toList());
             String names = slowTail.stream().map(MenuItem::getName).collect(Collectors.joining(", "));
 
@@ -483,9 +484,12 @@ public class AdminAiService {
                     names, slowTail.size()));
             mAnalysis.put("evidence", List.of(
                     names,
-                    String.format(Locale.UK, "%d–%d orders each in 30 days — your long tail, not the top sellers", minU, maxU),
+                    String.format(Locale.UK, "%d–%d distinct delivered orders each in 30 days — your long tail, not the top sellers", minOrders, maxOrders),
                     "All at/above your median margin and in stock"));
-            mAnalysis.put("insightStrength", "MODERATE");
+            // Use the least-supported item as the evidence floor for a multi-product deal.
+            // A bundle must not inherit MODERATE confidence just because it contains several items.
+            mAnalysis.put("insightStrength", PromotionDemandAssessment.insightStrength(minOrders, 0.5));
+            mAnalysis.put("dataSufficiency", PromotionDemandAssessment.dataSufficiency(minOrders));
             mAnalysis.put("recommendationType", "EXPERIMENT");
             mAnalysis.put("discountBasis", String.format(Locale.UK,
                     "%d%% off uses %d%% of the LOWEST gross margin in the set (%.0f%%); the retained-margin buffer is preserved. Payment/platform fees are not included.",

@@ -21,6 +21,14 @@ class PromotionDemandAssessmentTest {
     }
 
     @Test
+    void basketThresholdStrengthRequiresAdequateSampleForStrongLabel() {
+        assertEquals("MODERATE", PromotionDemandAssessment.basketThresholdStrength(12, 0.35));
+        assertEquals("MODERATE", PromotionDemandAssessment.basketThresholdStrength(14, 0.30));
+        assertEquals("STRONG", PromotionDemandAssessment.basketThresholdStrength(15, 0.30));
+        assertEquals("WEAK", PromotionDemandAssessment.basketThresholdStrength(15, 0.15));
+    }
+
+    @Test
     void promotionDiscountPreservesConservativeGrossMarginBuffer() {
         assertEquals(0.0, PromotionDemandAssessment.maxSafeDiscountPercent(8.0));
         assertEquals(5.0, PromotionDemandAssessment.maxSafeDiscountPercent(15.0));

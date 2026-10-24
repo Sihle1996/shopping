@@ -36,6 +36,18 @@ final class PromotionDemandAssessment {
     }
 
     /**
+     * Basket-threshold evidence must account for sample size as well as the near-miss share.
+     * A high percentage from 12–14 orders is not enough to label a recommendation STRONG.
+     */
+    static String basketThresholdStrength(long distinctOrders, double nearMissShare) {
+        if (distinctOrders < 15) {
+            return nearMissShare >= 0.22 ? "MODERATE" : "WEAK";
+        }
+        if (nearMissShare >= 0.30) return "STRONG";
+        return nearMissShare >= 0.22 ? "MODERATE" : "WEAK";
+    }
+
+    /**
      * Conservative discount ceiling in percentage points of the selling price.
      * Keep at least 10 percentage points of price as gross margin, or 40% of the
      * item's original gross margin when that is larger. This is a gross-margin
