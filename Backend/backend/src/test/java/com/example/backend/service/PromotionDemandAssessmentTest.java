@@ -21,6 +21,15 @@ class PromotionDemandAssessmentTest {
     }
 
     @Test
+    void promotionDiscountPreservesConservativeGrossMarginBuffer() {
+        assertEquals(0.0, PromotionDemandAssessment.maxSafeDiscountPercent(8.0));
+        assertEquals(5.0, PromotionDemandAssessment.maxSafeDiscountPercent(15.0));
+        assertEquals(18.0, PromotionDemandAssessment.maxSafeDiscountPercent(30.0));
+        assertEquals(18.0, PromotionDemandAssessment.maxSafeDiscountPercent(60.0));
+        assertEquals(0.0, PromotionDemandAssessment.maxSafeDiscountPercent(Double.NaN));
+    }
+
+    @Test
     void sufficientOrderHistoryAllowsRelativeRankingToSetStrength() {
         assertEquals("STRONG", PromotionDemandAssessment.insightStrength(20, 0.8));
         assertEquals("MODERATE", PromotionDemandAssessment.insightStrength(20, 0.5));

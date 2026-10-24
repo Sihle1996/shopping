@@ -264,6 +264,17 @@
                 </div>
                 <p *ngIf="!o.ordered" class="text-[11px] text-textMuted">No orders during this promo.</p>
 
+                <div class="mt-3 rounded-lg bg-gray-50 p-3">
+                  <div class="flex items-center justify-between gap-3 text-[11px]">
+                    <span class="text-textMuted">Orders using this promo</span>
+                    <span class="font-semibold text-textDark font-numbers">{{ o.redeemedOrders || 0 }}</span>
+                  </div>
+                  <div class="flex items-center justify-between gap-3 text-[11px] mt-1">
+                    <span class="text-textMuted">Store-funded discounts</span>
+                    <span class="font-semibold text-textDark font-numbers">R{{ (o.promoCost || 0) | number:'1.2-2' }}</span>
+                  </div>
+                  <p class="text-[10px] text-textMuted mt-2">Promo-linked orders are counted directly; sales lift is observational, not proof the promotion caused it.</p>
+                </div>
                 <p *ngIf="o.signal === 'MEASURED' || o.signal === 'MEASURING'" class="text-[11px] text-textMuted mt-2.5">vs store-wide {{ signed(o.storeChangePercent) }} in the same window</p>
                 <p *ngIf="o.signal === 'MEASURING' && o.note" class="text-[11px] text-amber-700 italic mt-1">{{ o.note }}</p>
               </div>
