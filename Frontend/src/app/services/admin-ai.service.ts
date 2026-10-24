@@ -37,6 +37,7 @@ export interface AiProposedPromo {
   minSpend?: number;              // AMOUNT_OFF: qualifying order-subtotal threshold
   appliesTo: string;
   targetProductName?: string;
+  targetProductNames?: string[];    // MULTI_PRODUCT: explicit separate items shown on the suggestion
   targetProductId?: string;
   targetProductIds?: string[];    // MULTI_PRODUCT: the bundled item ids
   startAt: string;
@@ -57,6 +58,7 @@ export interface AiPromoAnalysis {
   dataSufficiency?: string;        // LOW | LIMITED | ADEQUATE — distinct delivered orders in the last 30 days
   recommendationType: string;      // 'EXPERIMENT' — recommendations are tests, not guaranteed outcomes
   discountBasis?: string;          // show-the-math: why this discount % (margin × demand)
+  estimatedGrossMarginAfterDiscountPercent?: number; // estimated margin on discounted price, before fees
   breakEvenVolumeIncreasePercent?: number; // estimated extra units needed to preserve gross profit
   breakEvenVolumeNote?: string;            // caveats for this gross-profit estimate
   priorObserved?: AiPriorObserved; // learning data — structurally non-causal
