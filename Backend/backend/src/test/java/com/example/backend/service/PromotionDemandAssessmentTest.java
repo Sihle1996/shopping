@@ -13,10 +13,11 @@ class PromotionDemandAssessmentTest {
     }
 
     @Test
-    void fiveToFifteenOrdersAreCappedAtModerateStrength() {
+    void fiveToFourteenOrdersAreCappedAtModerateStrength() {
         assertEquals("MODERATE", PromotionDemandAssessment.insightStrength(5, 1.0));
         assertEquals("LIMITED", PromotionDemandAssessment.dataSufficiency(5));
-        assertEquals("MODERATE", PromotionDemandAssessment.insightStrength(15, 1.0));
+        assertEquals("STRONG", PromotionDemandAssessment.insightStrength(15, 1.0));
+        assertEquals("ADEQUATE", PromotionDemandAssessment.dataSufficiency(15));
     }
 
     @Test
