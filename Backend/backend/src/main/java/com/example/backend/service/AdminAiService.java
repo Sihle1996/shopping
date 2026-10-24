@@ -294,14 +294,15 @@ public class AdminAiService {
             // The discount cap protects product gross margin, not net profit after fees and other costs.
             double demandShare = mu > 0 ? (double) units / mu : 0;                 // 0..1 vs the busiest candidate
             double pctOfMargin = 0.15 + 0.15 * (1 - demandShare);                  // lower for busier items
-            // GROSS-MARGIN GUARD: cap the discount at 60% of the product's gross-margin percentage.
-            // This does not guarantee net profitability once platform, payment and other costs are included.
-            double maxSafe = margin * 0.6;
-            int discount = (int) Math.floor(Math.min(Math.max(5.0, margin * pctOfMargin), Math.min(maxSafe, 18.0)));
-            if (discount < 4) continue;   // margin too thin to discount meaningfully without eroding it
+            // Conservative gross-margin guard: preserve at least 10 percentage points of
+            // selling price, or 40% of the original gross margin, whichever is larger.
+            // Variable platform/payment fees are not available in this calculation and are not claimed as covered.
+            double maxSafe = PromotionDemandAssessment.maxSafeDiscountPercent(margin);
+            int discount = (int) Math.floor(Math.min(Math.max(5.0, margin * pctOfMargin), maxSafe));
+            if (discount < 4) continue;   // no meaningful discount fits inside the retained-margin buffer
             int marginUse = (int) Math.round(discount / margin * 100.0);
             String discountBasis = String.format(Locale.UK,
-                    "%d%% off is about %d%% of the product's %.0f%% gross margin. Fees and other variable costs are not included.",
+                    "%d%% off uses about %d%% of the product's %.0f%% gross margin; a minimum 10-point or 40%% margin buffer is retained. Payment/platform fees are not included.",
                     discount, marginUse, margin);
 
             Map<String, Object> promo = new LinkedHashMap<>();
@@ -387,12 +388,15 @@ public class AdminAiService {
         if (orderTotals.size() >= 12) {
             double typical = orderTotals.get(orderTotals.size() / 2);                 // MEDIAN — robust to big-order outliers
             double threshold = Math.ceil((typical * 1.2) / 25.0) * 25.0;              // ~20% above the typical order, up to R25
-            // MARGIN GUARD: a threshold-sized order carries ~threshold × (median margin) in rand profit;
-            // cap the R-off at 60% of that so the deal can't lose money on a thin-margin store.
+            // Conservative basket-level guard: preserve at least 10% of the threshold order value,
+            // or 40% of estimated gross margin, whichever is larger. Uses median item margin as a proxy,
+            // not a basket-level cost model; variable fees are not included.
             double orderMarginPct = (medianMargin != null ? medianMargin : 30.0) / 100.0;
             double marginAtThreshold = threshold * orderMarginPct;
+            double retainedMargin = Math.max(threshold * 0.10, marginAtThreshold * 0.40);
+            double availableDiscount = Math.max(0.0, marginAtThreshold - retainedMargin);
             double amountOff = Math.min(50, Math.round(typical * 0.10 / 5.0) * 5.0);  // ~10% of the typical order, R5 steps
-            amountOff = Math.min(amountOff, Math.floor(marginAtThreshold * 0.6 / 5.0) * 5.0);
+            amountOff = Math.min(amountOff, Math.floor(availableDiscount / 5.0) * 5.0);
             long nearMiss = orderTotals.stream().filter(v -> v >= typical && v < threshold).count();
             long alreadyOver = orderTotals.stream().filter(v -> v >= threshold).count();   // giveaway base — would order anyway
             double nearMissShare = (double) nearMiss / orderTotals.size();
@@ -452,7 +456,8 @@ public class AdminAiService {
         double mpMinMargin = slowTail.stream().mapToDouble(MenuItem::getMarginPercent).min().orElse(0);
         // BREAK-EVEN GUARD: size the cut to the LOWEST margin in the set and never give up more than
         // 60% of it; if even that can't reach a meaningful discount, the thinnest item is too thin — skip.
-        int mpDiscount = (int) Math.floor(Math.min(Math.max(5.0, mpMinMargin * 0.30), Math.min(mpMinMargin * 0.6, 20.0)));
+        int mpDiscount = (int) Math.floor(Math.min(Math.max(5.0, mpMinMargin * 0.30),
+                PromotionDemandAssessment.maxSafeDiscountPercent(mpMinMargin)));
         if (slowTail.size() >= 2 && mpDiscount >= 4) {
             double minMargin = mpMinMargin;
             long minU = slowTail.stream().mapToLong(i -> itemUnits.getOrDefault(i.getId(), 0L)).min().orElse(0);
@@ -483,7 +488,7 @@ public class AdminAiService {
             mAnalysis.put("insightStrength", "MODERATE");
             mAnalysis.put("recommendationType", "EXPERIMENT");
             mAnalysis.put("discountBasis", String.format(Locale.UK,
-                    "%d%% off uses %d%% of the LOWEST margin in the set (%.0f%%) — even the thinnest item stays profitable.",
+                    "%d%% off uses %d%% of the LOWEST gross margin in the set (%.0f%%); the retained-margin buffer is preserved. Payment/platform fees are not included.",
                     mpDiscount, Math.round(mpDiscount / minMargin * 100.0), minMargin));
             double[] mpHist = scopeHistory.get("MULTI_PRODUCT");
             if (mpHist != null && mpHist[1] > 0) {                            // self-measurement: what past bundle deals did
