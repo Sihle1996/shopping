@@ -1,47 +1,5 @@
-<div class="flex min-h-screen bg-gray-200 overflow-x-hidden" [class.admin-dark]="theme.isDark">
-
-  <!-- Desktop sidebar (lg+) -->
-  <aside class="hidden lg:flex flex-col w-64 bg-white border-r border-borderColor fixed top-14 bottom-0 z-30 overflow-y-auto">
-    <nav class="p-3 pt-3 flex-1 space-y-5">
-      <div *ngFor="let group of navGroups">
-        <p class="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400 select-none">{{ group.section }}</p>
-        <div class="space-y-0.5">
-          <a *ngFor="let item of group.items"
-             [routerLink]="item.route"
-             routerLinkActive #rla="routerLinkActive"
-             [routerLinkActiveOptions]="{ exact: item.exact }"
-             [ngClass]="rla.isActive
-               ? 'bg-primary-50 text-primary font-semibold'
-               : 'text-textMuted font-medium hover:bg-gray-50 hover:text-textDark'"
-             class="relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-colors">
-            <span *ngIf="rla.isActive"
-                  class="absolute left-1 top-1/2 -translate-y-1/2 h-5 w-1 rounded-full bg-primary"></span>
-            <i [class]="(rla.isActive ? 'ph-fill' : 'ph') + ' ' + item.icon + ' text-lg w-5 text-center'"></i>
-            <span>{{ item.label }}</span>
-          </a>
-        </div>
-      </div>
-    </nav>
-
-    <!-- Sidebar footer: dark-mode toggle -->
-    <div class="p-3 border-t border-borderColor">
-      <button type="button" (click)="theme.toggle()"
-              class="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-textMuted hover:bg-gray-50 hover:text-textDark transition-colors">
-        <i class="ph text-lg w-5 text-center" [ngClass]="theme.isDark ? 'ph-sun' : 'ph-moon-stars'"></i>
-        <span>{{ theme.isDark ? 'Light mode' : 'Dark mode' }}</span>
-      </button>
-    </div>
-  </aside>
-
-  <!-- Main content — offset on desktop for sidebar -->
-  <main class="flex-1 min-w-0 lg:ml-64 pb-24 lg:pb-6 min-h-screen overflow-x-hidden">
+<div class="min-h-screen bg-gray-100">
+  <main class="w-full p-6 overflow-y-auto">
     <router-outlet></router-outlet>
   </main>
-
-  <!-- Mobile bottom nav -->
-  <app-admin-footer></app-admin-footer>
-
-  <!-- Global AI copilot + proactive Smart Alerts (every admin page) -->
-  <app-store-copilot></app-store-copilot>
-  <app-store-alerts></app-store-alerts>
 </div>
