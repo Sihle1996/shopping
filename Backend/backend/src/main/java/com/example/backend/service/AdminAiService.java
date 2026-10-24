@@ -183,16 +183,21 @@ public class AdminAiService {
                 .filter(o -> OrderStatus.DELIVERED.matches(o.getStatus()))
                 .collect(Collectors.toList());
 
-        // Item order-count map: menuItemId → count
-        Map<UUID, Long> itemCounts = new HashMap<>();
+        // Keep units and distinct orders separate: quantity is not an order count.
+        Map<UUID, Long> itemUnits = new HashMap<>();
+        Map<UUID, Long> itemOrderCounts = new HashMap<>();
         for (Order o : recentOrders) {
             if (o.getOrderItems() == null) continue;
+            Set<UUID> itemsInThisOrder = new HashSet<>();
             o.getOrderItems().forEach(oi -> {
-                if (oi.getMenuItem() != null) {
-                    long qty = oi.getQuantity() != null ? oi.getQuantity() : 0L;
-                    itemCounts.merge(oi.getMenuItem().getId(), qty, Long::sum);
+                if (oi.getMenuItem() != null && oi.getMenuItem().getId() != null) {
+                    UUID itemId = oi.getMenuItem().getId();
+                    long qty = oi.getQuantity() != null ? Math.max(0L, oi.getQuantity()) : 0L;
+                    itemUnits.merge(itemId, qty, Long::sum);
+                    if (qty > 0) itemsInThisOrder.add(itemId);
                 }
             });
+            itemsInThisOrder.forEach(itemId -> itemOrderCounts.merge(itemId, 1L, Long::sum));
         }
 
         List<MenuItem> menuItems = menuItemRepository.findByTenant_Id(tenantId)
@@ -224,10 +229,8 @@ public class AdminAiService {
         if (storeWidePromo) return Map.of("suggestions", List.of(), // a store-wide deal already covers everything
                 "reason", "A store-wide promo is already running — per-item suggestions resume once it ends.");
 
-        // LEVEL-3: the BACKEND decides deterministically (no LLM) — there is no
-        // elasticity/promo-history data to "reason" over. Pick the store's most-ordered
-        // items that it can afford to discount (margin at/above its OWN median, in stock),
-        // and emit STRUCTURED facts + an explicit confidence contract. The UI narrates.
+        // Deterministic candidate selection. Unit sales help rank products, but relative rank
+        // is not evidence of strong absolute demand; data sufficiency is assessed separately.
         List<Double> margins = menuItems.stream().map(MenuItem::getMarginPercent)
                 .filter(Objects::nonNull).sorted().collect(Collectors.toList());
         Double medianMargin = margins.isEmpty() ? null : margins.get(margins.size() / 2);
@@ -235,18 +238,18 @@ public class AdminAiService {
         // Eligible pool (ordered ≥1, in stock, margin at/above the store median, not already promoted),
         // strongest demand first. Top 3 drive per-item % cards; the slower tail feeds a multi-product deal.
         List<MenuItem> eligible = menuItems.stream()
-                .filter(i -> itemCounts.getOrDefault(i.getId(), 0L) > 0)
+                .filter(i -> itemUnits.getOrDefault(i.getId(), 0L) > 0)
                 .filter(i -> !promotedItems.contains(i.getId()))  // not already promoted (PRODUCT/MULTI)
                 .filter(i -> i.getCategory() == null || !promotedCategories.contains(i.getCategory().toLowerCase())) // nor via a category promo
                 .filter(i -> i.getMarginPercent() != null && (medianMargin == null || i.getMarginPercent() >= medianMargin))
                 .filter(i -> (i.getStock() - i.getReservedStock()) > 0 && i.getPrice() != null && i.getPrice() > 0)
-                .sorted((a, b) -> Long.compare(itemCounts.getOrDefault(b.getId(), 0L), itemCounts.getOrDefault(a.getId(), 0L)))
+                .sorted((a, b) -> Long.compare(itemUnits.getOrDefault(b.getId(), 0L), itemUnits.getOrDefault(a.getId(), 0L)))
                 .collect(Collectors.toList());
         List<MenuItem> candidates = eligible.stream().limit(3).collect(Collectors.toList());
 
         // Self-diagnose the common "no suggestions" cases so the owner isn't left staring at nothing.
         if (candidates.isEmpty()) {
-            long ordered = menuItems.stream().filter(i -> itemCounts.getOrDefault(i.getId(), 0L) > 0).count();
+            long ordered = menuItems.stream().filter(i -> itemUnits.getOrDefault(i.getId(), 0L) > 0).count();
             boolean anyMargin = menuItems.stream().anyMatch(i -> i.getMarginPercent() != null);
             String reason = ordered == 0
                     ? "No items have been ordered in the last 30 days — suggestions need recent delivered sales to learn from."
@@ -260,12 +263,12 @@ public class AdminAiService {
         // headroom (over the store median) + historical response, then ORDER the cards by that
         // score so the strongest test candidate is first (not merely the highest volume — a
         // top-volume item at the median margin has no room to discount, so it scores lower).
-        long maxUnits = candidates.stream().mapToLong(i -> itemCounts.getOrDefault(i.getId(), 0L)).max().orElse(1);
+        long maxUnits = candidates.stream().mapToLong(i -> itemUnits.getOrDefault(i.getId(), 0L)).max().orElse(1);
         double medM = medianMargin != null ? medianMargin : 0;
         double maxMargin = candidates.stream().mapToDouble(MenuItem::getMarginPercent).max().orElse(medM);
         final long mu = maxUnits; final double mm = maxMargin, md = medM;
         java.util.function.ToDoubleFunction<MenuItem> scoreOf = it -> {
-            double dS = mu > 0 ? (double) itemCounts.getOrDefault(it.getId(), 0L) / mu : 0;     // demand 0..1
+            double dS = mu > 0 ? (double) itemUnits.getOrDefault(it.getId(), 0L) / mu : 0;     // demand 0..1
             double mS = mm > md ? (it.getMarginPercent() - md) / (mm - md) : 0.5;               // margin headroom 0..1
             double c = dS * 0.6 + mS * 0.4;
             double[] hh = history.get(it.getId());
@@ -278,13 +281,15 @@ public class AdminAiService {
         String endAt = LocalDate.now().plusDays(5).toString();
         List<Map<String, Object>> suggestions = new ArrayList<>();
         for (MenuItem item : candidates) {
-            long units = itemCounts.getOrDefault(item.getId(), 0L);
+            long units = itemUnits.getOrDefault(item.getId(), 0L);
+            long orders = itemOrderCounts.getOrDefault(item.getId(), 0L);
             double margin = item.getMarginPercent();
             double composite = scoreOf.applyAsDouble(item);
             double[] h = history.get(item.getId());
             Double avgNet = (h != null && h[1] > 0) ? h[0] / h[1] : null;
             long samples = h != null ? (long) h[1] : 0;
-            String strength = composite >= 0.66 ? "STRONG" : composite >= 0.33 ? "MODERATE" : "WEAK";
+            String strength = PromotionDemandAssessment.insightStrength(orders, composite);
+            String dataSufficiency = PromotionDemandAssessment.dataSufficiency(orders);
             // Discount is demand-AWARE, not just margin: a deeper cut for slow movers (move stock),
             // shallower for strong sellers (protect margin) — always a fraction of the item's margin
             // so the promo still profits. This is what makes the % vary instead of clustering.
@@ -295,11 +300,10 @@ public class AdminAiService {
             double maxSafe = margin * 0.6;
             int discount = (int) Math.floor(Math.min(Math.max(5.0, margin * pctOfMargin), Math.min(maxSafe, 18.0)));
             if (discount < 4) continue;   // margin too thin to discount meaningfully without eroding it
-            String sellerWord = demandShare >= 0.66 ? "strong seller" : demandShare >= 0.33 ? "steady seller" : "slow mover";
-            int marginUse = (int) Math.round(discount / margin * 100.0);           // honest: share of the margin this cut uses
+            int marginUse = (int) Math.round(discount / margin * 100.0);
             String discountBasis = String.format(Locale.UK,
-                    "%d%% off uses %d%% of its %.0f%% margin — %s, so it stays profitable",
-                    discount, marginUse, margin, sellerWord);
+                    "%d%% off is about %d%% of the product's %.0f%% gross margin. Fees and other variable costs are not included.",
+                    discount, marginUse, margin);
 
             Map<String, Object> promo = new LinkedHashMap<>();
             promo.put("title", item.getName() + " — featured");
@@ -319,19 +323,28 @@ public class AdminAiService {
             } else if (avgNet != null) {
                 hypothesis = String.format(Locale.UK, "Prior promos here averaged %d%% net over %d run%s — test cautiously.",
                         Math.round(avgNet), samples, samples == 1 ? "" : "s");
+            } else if (orders < 5) {
+                hypothesis = String.format(Locale.UK,
+                        "Limited evidence: only %d delivered order%s in the last 30 days. Treat this as a small experiment, not a proven high-demand product.",
+                        orders, orders == 1 ? "" : "s");
+            } else if (orders < 15) {
+                hypothesis = String.format(Locale.UK,
+                        "Early signal: %d delivered orders in the last 30 days. Ranked by unit sales and gross-margin headroom; promotion results are unknown.",
+                        orders);
             } else {
                 hypothesis = switch (strength) {
-                    case "STRONG"   -> "Strongest test candidate — high demand with a clear margin buffer.";
-                    case "MODERATE" -> "Solid secondary test — good demand with an adequate margin buffer.";
-                    default          -> "Optional test — a moderate signal worth a small experiment.";
+                    case "STRONG"   -> "Top-ranked test candidate based on recent unit sales and gross-margin headroom; promotion impact is still unknown.";
+                    case "MODERATE" -> "Promising test candidate based on recent sales and gross-margin headroom; test results are not yet known.";
+                    default          -> "Lower-priority experiment. Consider other options or gather more evidence before discounting.";
                 };
             }
 
             Map<String, Object> s = new LinkedHashMap<>();
             // FACTS — observed, immutable (the data layer)
             s.put("facts", List.of(
-                    units + " orders in the last 30 days",
-                    String.format(Locale.UK, "%.0f%% margin (store median %.0f%%)", margin, medM),
+                    String.format(Locale.UK, "%d unit%s sold across %d delivered order%s in the last 30 days",
+                            units, units == 1 ? "" : "s", orders, orders == 1 ? "" : "s"),
+                    String.format(Locale.UK, "%.0f%% gross margin (store median %.0f%%)", margin, medM),
                     String.format(Locale.UK, "R%.2f current price", item.getPrice())));
             // ANALYSIS — structured tokens (epistemic layer). insightStrength + recommendationType
             // are the SEMANTIC signals; the global uncertainty note lives once in the UI banner.
@@ -341,11 +354,12 @@ public class AdminAiService {
             // response is kept OUT of here so a learning number can never sit among the
             // facts as if it were one.
             analysis.put("evidence", List.of(
-                    units + " orders in the last 30 days",
-                    String.format(Locale.UK, "%.0f%% margin — %s the store median",
+                    String.format(Locale.UK, "%d units sold across %d delivered orders in the last 30 days", units, orders),
+                    String.format(Locale.UK, "%.0f%% gross margin — %s the store median",
                             margin, margin >= medM ? "at or above" : "below"),
                     "In stock now"));
             analysis.put("insightStrength", strength);
+            analysis.put("dataSufficiency", dataSufficiency);
             analysis.put("recommendationType", "EXPERIMENT");
             analysis.put("discountBasis", discountBasis);   // show-the-math: why THIS %
             // Learning data lives in its OWN typed block, permanently stamped OBSERVATIONAL,
@@ -442,8 +456,8 @@ public class AdminAiService {
         int mpDiscount = (int) Math.floor(Math.min(Math.max(5.0, mpMinMargin * 0.30), Math.min(mpMinMargin * 0.6, 20.0)));
         if (slowTail.size() >= 2 && mpDiscount >= 4) {
             double minMargin = mpMinMargin;
-            long minU = slowTail.stream().mapToLong(i -> itemCounts.getOrDefault(i.getId(), 0L)).min().orElse(0);
-            long maxU = slowTail.stream().mapToLong(i -> itemCounts.getOrDefault(i.getId(), 0L)).max().orElse(0);
+            long minU = slowTail.stream().mapToLong(i -> itemUnits.getOrDefault(i.getId(), 0L)).min().orElse(0);
+            long maxU = slowTail.stream().mapToLong(i -> itemUnits.getOrDefault(i.getId(), 0L)).max().orElse(0);
             List<String> ids = slowTail.stream().map(i -> i.getId().toString()).collect(Collectors.toList());
             String names = slowTail.stream().map(MenuItem::getName).collect(Collectors.joining(", "));
 
