@@ -38,6 +38,21 @@ class PromotionDemandAssessmentTest {
     }
 
     @Test
+    void calculatesGrossMarginOnDiscountedSellingPrice() {
+        assertEquals(56.043956, PromotionDemandAssessment.estimatedGrossMarginAfterDiscountPercent(60.0, 9.0), 0.001);
+        assertEquals(51.764706, PromotionDemandAssessment.estimatedGrossMarginAfterDiscountPercent(59.0, 15.0), 0.001);
+        assertEquals(43.529412, PromotionDemandAssessment.estimatedGrossMarginAfterDiscountPercent(52.0, 15.0), 0.001);
+    }
+
+    @Test
+    void postDiscountGrossMarginIsUnavailableForUnsafeOrInvalidInputs() {
+        org.junit.jupiter.api.Assertions.assertNull(
+                PromotionDemandAssessment.estimatedGrossMarginAfterDiscountPercent(10.0, 10.0));
+        org.junit.jupiter.api.Assertions.assertNull(
+                PromotionDemandAssessment.estimatedGrossMarginAfterDiscountPercent(Double.NaN, 5.0));
+    }
+
+    @Test
     void calculatesExtraUnitVolumeNeededToOffsetDiscountAtGrossMarginLevel() {
         assertEquals(50.0, PromotionDemandAssessment.requiredVolumeIncreasePercent(30.0, 10.0), 0.001);
         assertEquals(100.0, PromotionDemandAssessment.requiredVolumeIncreasePercent(30.0, 15.0), 0.001);
