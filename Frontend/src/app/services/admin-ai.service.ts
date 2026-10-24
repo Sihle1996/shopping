@@ -53,8 +53,9 @@ export interface AiPriorObserved {
 export interface AiPromoAnalysis {
   hypothesis: string;
   evidence: string[];
-  insightStrength?: string;        // STRONG | MODERATE | WEAK — the decision gradient
-  recommendationType: string;      // 'EXPERIMENT' — the SEMANTIC confidence, not a label
+  insightStrength?: string;        // STRONG | MODERATE | WEAK — strength capped by evidence sufficiency
+  dataSufficiency?: string;        // LOW | LIMITED | ADEQUATE — distinct delivered orders in the last 30 days
+  recommendationType: string;      // 'EXPERIMENT' — recommendations are tests, not guaranteed outcomes
   discountBasis?: string;          // show-the-math: why this discount % (margin × demand)
   priorObserved?: AiPriorObserved; // learning data — structurally non-causal
   uncertainty?: string;            // legacy; the uncertainty note now lives in one global banner
