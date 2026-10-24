@@ -364,6 +364,11 @@ public class AdminAiService {
             analysis.put("dataSufficiency", dataSufficiency);
             analysis.put("recommendationType", "EXPERIMENT");
             analysis.put("discountBasis", discountBasis);   // show-the-math: why THIS %
+            Double postDiscountMargin = PromotionDemandAssessment
+                    .estimatedGrossMarginAfterDiscountPercent(margin, discount);
+            if (postDiscountMargin != null) {
+                analysis.put("estimatedGrossMarginAfterDiscountPercent", Math.round(postDiscountMargin * 10.0) / 10.0);
+            }
             Double breakEvenVolumeIncrease = PromotionDemandAssessment
                     .requiredVolumeIncreasePercent(margin, discount);
             if (breakEvenVolumeIncrease != null) {
@@ -481,7 +486,8 @@ public class AdminAiService {
             mPromo.put("discountPercent", mpDiscount);
             mPromo.put("appliesTo", "MULTI_PRODUCT");
             mPromo.put("targetProductIds", ids);
-            mPromo.put("targetProductName", names);   // card subtitle (display only)
+            mPromo.put("targetProductName", slowTail.stream().map(MenuItem::getName).collect(Collectors.joining(" + ")));
+            mPromo.put("targetProductNames", slowTail.stream().map(MenuItem::getName).collect(Collectors.toList()));
             mPromo.put("startAt", today);
             mPromo.put("endAt", endAt);
             mPromo.put("description", String.format(Locale.UK, "%d%% off any of these %d picks — mix, match and save.", mpDiscount, slowTail.size()));
@@ -489,10 +495,10 @@ public class AdminAiService {
 
             Map<String, Object> mAnalysis = new LinkedHashMap<>();
             mAnalysis.put("hypothesis", String.format(Locale.UK,
-                    "Slower movers with margin to spare — one deal nudges %s together instead of %d separate promos.",
-                    names, slowTail.size()));
+                    "Test these %d separate slower-moving products together. Their sales history is limited; the offer is an experiment, not proof a discount will increase demand.",
+                    slowTail.size()));
             mAnalysis.put("evidence", List.of(
-                    names,
+                    "Separate products included: " + String.join("; ", slowTail.stream().map(MenuItem::getName).collect(Collectors.toList())),
                     String.format(Locale.UK, "%d–%d distinct delivered orders each in 30 days — your long tail, not the top sellers", minOrders, maxOrders),
                     "All at/above your median margin and in stock"));
             // Use the least-supported item as the evidence floor for a multi-product deal.
@@ -503,6 +509,11 @@ public class AdminAiService {
             mAnalysis.put("discountBasis", String.format(Locale.UK,
                     "%d%% off uses %d%% of the LOWEST gross margin in the set (%.0f%%); the retained-margin buffer is preserved. Payment/platform fees are not included.",
                     mpDiscount, Math.round(mpDiscount / minMargin * 100.0), minMargin));
+            Double bundlePostDiscountMargin = PromotionDemandAssessment
+                    .estimatedGrossMarginAfterDiscountPercent(minMargin, mpDiscount);
+            if (bundlePostDiscountMargin != null) {
+                mAnalysis.put("estimatedGrossMarginAfterDiscountPercent", Math.round(bundlePostDiscountMargin * 10.0) / 10.0);
+            }
             Double bundleBreakEvenVolumeIncrease = PromotionDemandAssessment
                     .requiredVolumeIncreasePercent(minMargin, mpDiscount);
             if (bundleBreakEvenVolumeIncrease != null) {
