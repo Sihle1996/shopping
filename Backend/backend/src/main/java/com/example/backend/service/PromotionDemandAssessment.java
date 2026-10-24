@@ -34,4 +34,18 @@ final class PromotionDemandAssessment {
         }
         return "ADEQUATE";
     }
+
+    /**
+     * Conservative discount ceiling in percentage points of the selling price.
+     * Keep at least 10 percentage points of price as gross margin, or 40% of the
+     * item's original gross margin when that is larger. This is a gross-margin
+     * guard only; payment, platform and other variable fees are not modeled here.
+     */
+    static double maxSafeDiscountPercent(double grossMarginPercent) {
+        if (!Double.isFinite(grossMarginPercent) || grossMarginPercent <= 0) {
+            return 0.0;
+        }
+        double retainedMargin = Math.max(10.0, grossMarginPercent * 0.40);
+        return Math.max(0.0, Math.min(18.0, grossMarginPercent - retainedMargin));
+    }
 }
